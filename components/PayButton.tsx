@@ -91,7 +91,7 @@ export default function PayButton({ amount, onSuccess }: PayButtonProps) {
             alert("Payment verification failed");
           }
         },
-        theme: { color: "#16a34a" },
+        theme: { color: "#404040" },
       };
 
       const rzp = new (window as any).Razorpay(options);
@@ -104,10 +104,10 @@ export default function PayButton({ amount, onSuccess }: PayButtonProps) {
 
   return (
     <motion.button
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.97 }}
+      whileHover={{ scale: 1.05, y: -2 }}
+      whileTap={{ scale: 0.95 }}
       onClick={payNow}
-      className="w-full bg-green-600 text-white py-4 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-md hover:bg-green-700 transition"
+      className="w-full bg-gradient-to-r from-[#404040] to-[#6b6b6b] hover:from-[#6b6b6b] hover:to-[#404040] text-white py-4 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg border border-[#333333] hover:border-[#808080] transition-all duration-300"
     >
       <CreditCard size={20} />
       Pay ₹{amount}

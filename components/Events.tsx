@@ -162,18 +162,18 @@ export default function EventsPage() {
     }
   };
 
-  if (status === "loading") return <p className="p-6">Loading session…</p>;
-  if (!session) return <p className="p-6 text-red-600">Not authenticated</p>;
+  if (status === "loading") return <p className="p-6 text-white">Loading session…</p>;
+  if (!session) return <p className="p-6 text-red-400">Not authenticated</p>;
 
   return (
-    <div className="min-h-screen bg-green-50 p-6">
+    <div className="min-h-screen bg-black p-6">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-green-700">Events & Workshops</h1>
+          <h1 className="text-2xl font-bold text-white">Events & Workshops</h1>
           {session.user.role === "TEACHER" && (
             <button
               onClick={() => setShowForm(!showForm)}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition"
+              className="bg-[#404040] hover:bg-[#6b6b6b] text-white px-6 py-2 rounded-lg font-medium transition border border-[#333333]"
             >
               {showForm ? "Cancel" : "Create Event"}
             </button>
@@ -182,10 +182,10 @@ export default function EventsPage() {
 
         {message && (
           <div
-            className={`p-4 mb-4 rounded ${
+            className={`p-4 mb-4 rounded border ${
               message.includes("success")
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
+                ? "bg-[#2d2d2d] text-white border-[#404040]"
+                : "bg-red-500/10 text-red-400 border-red-500/30"
             }`}
           >
             {message}
@@ -194,11 +194,11 @@ export default function EventsPage() {
 
         {/* Create Event Form (Teachers only) */}
         {showForm && session.user.role === "TEACHER" && (
-          <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-            <h2 className="text-xl font-bold mb-4 text-green-700">Create New Event</h2>
+          <div className="bg-[#1a1a1a] border border-[#333333] p-6 rounded-lg shadow-lg mb-6">
+            <h2 className="text-xl font-bold mb-4 text-white">Create New Event</h2>
             <form onSubmit={handleCreateEvent} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[#808080] mb-1">
                   Title <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -206,12 +206,12 @@ export default function EventsPage() {
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   required
-                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+                  className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent placeholder-[#6b6b6b]"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[#808080] mb-1">
                   Description <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -219,13 +219,13 @@ export default function EventsPage() {
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   required
                   rows={4}
-                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+                  className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent placeholder-[#6b6b6b]"
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[#808080] mb-1">
                     Amount (Optional)
                   </label>
                   <input
@@ -234,32 +234,32 @@ export default function EventsPage() {
                     value={form.amount}
                     onChange={(e) => setForm({ ...form, amount: e.target.value })}
                     placeholder="0.00"
-                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+                    className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent placeholder-[#6b6b6b]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[#808080] mb-1">
                     Event Date (Optional)
                   </label>
                   <input
                     type="datetime-local"
                     value={form.eventDate}
                     onChange={(e) => setForm({ ...form, eventDate: e.target.value })}
-                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+                    className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent placeholder-[#6b6b6b]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[#808080] mb-1">
                     Class (Optional - leave empty for school-wide)
                   </label>
                   <select
                     value={form.classId}
                     onChange={(e) => setForm({ ...form, classId: e.target.value })}
-                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+                    className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent placeholder-[#6b6b6b]"
                   >
                     <option value="">All Classes (School-wide)</option>
                     {classes.map((c) => (
@@ -271,7 +271,7 @@ export default function EventsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[#808080] mb-1">
                     Photo URL (Optional)
                   </label>
                   <input
@@ -279,7 +279,7 @@ export default function EventsPage() {
                     value={form.photo}
                     onChange={(e) => setForm({ ...form, photo: e.target.value })}
                     placeholder="https://example.com/photo.jpg"
-                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+                    className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent placeholder-[#6b6b6b]"
                   />
                 </div>
               </div>
@@ -287,7 +287,7 @@ export default function EventsPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-medium transition disabled:opacity-50"
+                className="w-full bg-[#404040] hover:bg-[#6b6b6b] text-white py-2 rounded-lg font-medium transition disabled:opacity-50 border border-[#333333]"
               >
                 {loading ? "Creating..." : "Create Event"}
               </button>
@@ -297,11 +297,11 @@ export default function EventsPage() {
 
         {/* Events List */}
         {events.length === 0 ? (
-          <p className="text-center p-6 text-gray-500">No events found</p>
+          <p className="text-center p-6 text-[#808080]">No events found</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {events.map((event) => (
-              <div key={event.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                <div key={event.id} className="bg-[#1a1a1a] border border-[#333333] rounded-lg shadow-lg overflow-hidden">
                 {event.photo && (
                   <img
                     src={event.photo}
@@ -311,7 +311,7 @@ export default function EventsPage() {
                 )}
                 <div className="p-6">
                   <h3 className="text-xl font-bold mb-2">{event.title}</h3>
-                  <p className="text-gray-600 mb-4 line-clamp-3">{event.description}</p>
+                  <p className="text-[#808080] mb-4 line-clamp-3">{event.description}</p>
                   
                   <div className="space-y-2 mb-4 text-sm">
                     {event.class && (
@@ -345,8 +345,8 @@ export default function EventsPage() {
                       disabled={loading || event.isRegistered}
                       className={`w-full py-2 rounded-lg font-medium transition ${
                         event.isRegistered
-                          ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                          : "bg-green-600 hover:bg-green-700 text-white"
+                        ? "bg-[#2d2d2d] text-[#6b6b6b] cursor-not-allowed"
+                        : "bg-[#404040] hover:bg-[#6b6b6b] text-white"
                       }`}
                     >
                       {event.isRegistered

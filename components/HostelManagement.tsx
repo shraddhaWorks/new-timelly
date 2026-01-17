@@ -170,153 +170,209 @@ export default function HostelManagement() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-          <p className="mt-4 text-green-700 font-medium">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#808080] mx-auto mb-4"></div>
+          <p className="text-white">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-green-700">Hostel Management</h1>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setActiveTab("hostels")}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              activeTab === "hostels"
-                ? "bg-green-600 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
-          >
-            All Hostels
-          </button>
-          <button
-            onClick={() => setActiveTab("create")}
-            className={`px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 ${
-              activeTab === "create"
-                ? "bg-green-600 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
-          >
-            <Plus size={18} />
-            Create Hostel
-          </button>
-          <button
-            onClick={() => setActiveTab("bookings")}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              activeTab === "bookings"
-                ? "bg-green-600 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
-          >
-            All Bookings
-          </button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-black p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+        >
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-[#2d2d2d] to-[#404040] rounded-xl flex items-center justify-center border border-[#333333] shadow-lg">
+                <Building2 className="w-6 h-6 text-white" />
+              </div>
+              Hostel Management
+            </h1>
+            <p className="text-[#808080] text-sm md:text-base">Manage hostels, rooms, and bookings</p>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setActiveTab("hostels")}
+              className={`px-4 py-2.5 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 ${
+                activeTab === "hostels"
+                  ? "bg-gradient-to-r from-[#404040] to-[#6b6b6b] text-white shadow-lg border border-[#808080]"
+                  : "bg-[#2d2d2d] text-[#808080] hover:bg-[#404040] hover:text-white border border-[#333333]"
+              }`}
+            >
+              <Building2 size={18} />
+              All Hostels
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setActiveTab("create")}
+              className={`px-4 py-2.5 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 ${
+                activeTab === "create"
+                  ? "bg-gradient-to-r from-[#404040] to-[#6b6b6b] text-white shadow-lg border border-[#808080]"
+                  : "bg-[#2d2d2d] text-[#808080] hover:bg-[#404040] hover:text-white border border-[#333333]"
+              }`}
+            >
+              <Plus size={18} />
+              Create Hostel
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setActiveTab("bookings")}
+              className={`px-4 py-2.5 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 ${
+                activeTab === "bookings"
+                  ? "bg-gradient-to-r from-[#404040] to-[#6b6b6b] text-white shadow-lg border border-[#808080]"
+                  : "bg-[#2d2d2d] text-[#808080] hover:bg-[#404040] hover:text-white border border-[#333333]"
+              }`}
+            >
+              <Users size={18} />
+              All Bookings
+            </motion.button>
+          </div>
+        </motion.div>
 
       {activeTab === "create" && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl shadow-lg p-6 border border-green-200"
+          className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 md:p-8 border border-[#333333] hover:border-[#404040] transition-all duration-300"
         >
-          <h2 className="text-2xl font-bold text-green-700 mb-6">Create New Hostel</h2>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+          <div className="relative">
+            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white flex items-center gap-3">
+              <Plus className="w-7 h-7 text-[#808080]" />
+              Create New Hostel
+            </h2>
           <form onSubmit={handleCreateHostel} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Hostel Name *</label>
+                <label className="block text-sm font-medium text-[#808080] mb-2 flex items-center gap-2">
+                  <Building2 size={16} />
+                  Hostel Name <span className="text-red-400">*</span>
+                </label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+                  className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent hover:border-[#808080] transition placeholder-[#6b6b6b]"
                   placeholder="e.g., Boys Hostel A"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Address *</label>
+                <label className="block text-sm font-medium text-[#808080] mb-2 flex items-center gap-2">
+                  <MapPin size={16} />
+                  Address <span className="text-red-400">*</span>
+                </label>
                 <input
                   type="text"
                   required
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+                  className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent hover:border-[#808080] transition placeholder-[#6b6b6b]"
                   placeholder="Hostel address"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
+                <label className="block text-sm font-medium text-[#808080] mb-2 flex items-center gap-2">
+                  <Users size={16} />
+                  Gender <span className="text-red-400">*</span>
+                </label>
                 <select
                   required
                   value={formData.gender}
                   onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                  className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+                  className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent hover:border-[#808080] transition"
                 >
-                  <option value="MALE">Male</option>
-                  <option value="FEMALE">Female</option>
-                  <option value="UNISEX">Unisex</option>
+                  <option value="MALE" className="bg-[#2d2d2d]">Male</option>
+                  <option value="FEMALE" className="bg-[#2d2d2d]">Female</option>
+                  <option value="UNISEX" className="bg-[#2d2d2d]">Unisex</option>
                 </select>
               </div>
             </div>
 
-            <div className="border-t pt-6">
+            <div className="border-t border-[#333333] pt-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-700">Rooms & Pricing</h3>
-                <button
+                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <Bed size={20} />
+                  Rooms & Pricing
+                </h3>
+                <motion.button
                   type="button"
                   onClick={addRoom}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition text-sm font-medium"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#2d2d2d] hover:bg-[#404040] text-white rounded-lg transition text-sm font-medium border border-[#333333] hover:border-[#808080]"
                 >
                   <Plus size={16} />
                   Add Room
-                </button>
+                </motion.button>
               </div>
               <div className="space-y-3">
                 {rooms.map((room, index) => (
-                  <div key={index} className="flex gap-3 items-start">
-                    <div className="flex-1 grid grid-cols-4 gap-3">
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="flex gap-3 items-start p-4 bg-[#2d2d2d]/50 border border-[#404040] rounded-lg hover:bg-[#404040]/50 transition"
+                  >
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-3">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Room Number *</label>
+                        <label className="block text-sm font-medium text-[#808080] mb-1 flex items-center gap-2">
+                          <Building2 size={14} />
+                          Room Number <span className="text-red-400">*</span>
+                        </label>
                         <input
                           type="text"
                           required
                           value={room.roomNumber}
                           onChange={(e) => updateRoom(index, "roomNumber", e.target.value)}
-                          className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+                          className="w-full bg-[#1a1a1a] border border-[#404040] text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent hover:border-[#808080] transition placeholder-[#6b6b6b]"
                           placeholder="e.g., 101, A-1"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Floor *</label>
+                        <label className="block text-sm font-medium text-[#808080] mb-1">Floor <span className="text-red-400">*</span></label>
                         <input
                           type="number"
                           required
                           min="0"
                           value={room.floor}
                           onChange={(e) => updateRoom(index, "floor", e.target.value)}
-                          className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+                          className="w-full bg-[#1a1a1a] border border-[#404040] text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent hover:border-[#808080] transition placeholder-[#6b6b6b]"
                           placeholder="0"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Cots *</label>
+                        <label className="block text-sm font-medium text-[#808080] mb-1 flex items-center gap-2">
+                          <Bed size={14} />
+                          Cots <span className="text-red-400">*</span>
+                        </label>
                         <input
                           type="number"
                           required
                           min="1"
                           value={room.cotCount}
                           onChange={(e) => updateRoom(index, "cotCount", e.target.value)}
-                          className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+                          className="w-full bg-[#1a1a1a] border border-[#404040] text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent hover:border-[#808080] transition placeholder-[#6b6b6b]"
                           placeholder="e.g., 2"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Amount (₹) *</label>
+                        <label className="block text-sm font-medium text-[#808080] mb-1 flex items-center gap-2">
+                          <IndianRupee size={14} />
+                          Amount (₹) <span className="text-red-400">*</span>
+                        </label>
                         <input
                           type="number"
                           required
@@ -324,46 +380,63 @@ export default function HostelManagement() {
                           step="0.01"
                           value={room.amount}
                           onChange={(e) => updateRoom(index, "amount", e.target.value)}
-                          className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+                          className="w-full bg-[#1a1a1a] border border-[#404040] text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent hover:border-[#808080] transition placeholder-[#6b6b6b]"
                           placeholder="e.g., 5000"
                         />
                       </div>
                     </div>
                     {rooms.length > 1 && (
-                      <button
+                      <motion.button
                         type="button"
                         onClick={() => removeRoom(index)}
-                        className="mt-6 p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        className="mt-6 p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition border border-red-500/30 hover:border-red-400"
                       >
                         <X size={20} />
-                      </button>
+                      </motion.button>
                     )}
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
 
             <div className="flex gap-4 pt-4">
-              <button
+              <motion.button
                 type="submit"
                 disabled={creating}
-                className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-6 py-2 rounded-lg font-medium transition"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="bg-gradient-to-r from-[#404040] to-[#6b6b6b] hover:from-[#6b6b6b] hover:to-[#404040] disabled:opacity-50 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 border border-[#333333] hover:border-[#808080] shadow-lg disabled:cursor-not-allowed"
               >
-                {creating ? "Creating..." : "Create Hostel"}
-              </button>
-              <button
+                {creating ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <span>Creating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus size={18} />
+                    <span>Create Hostel</span>
+                  </>
+                )}
+              </motion.button>
+              <motion.button
                 type="button"
                 onClick={() => {
                   setActiveTab("hostels");
                   setFormData({ name: "", address: "", gender: "MALE" });
                   setRooms([{ roomNumber: "", floor: "", cotCount: "", amount: "" }]);
                 }}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-medium transition"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="bg-[#2d2d2d] hover:bg-[#404040] text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 border border-[#333333] hover:border-[#808080]"
               >
                 Cancel
-              </button>
+              </motion.button>
             </div>
           </form>
+          </div>
         </motion.div>
       )}
 
@@ -438,71 +511,89 @@ export default function HostelManagement() {
       )}
 
       {activeTab === "bookings" && (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold text-green-700 mb-6">All Student Bookings</h2>
-          {bookings.length === 0 ? (
-            <div className="text-center py-12">
-              <Users size={48} className="mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-500 text-lg">No bookings yet</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-green-600 text-white">
-                  <tr>
-                    <th className="px-4 py-3 text-left">Student Name</th>
-                    <th className="px-4 py-3 text-left">Class</th>
-                    <th className="px-4 py-3 text-left">Hostel</th>
-                    <th className="px-4 py-3 text-left">Room</th>
-                    <th className="px-4 py-3 text-left">Cot</th>
-                    <th className="px-4 py-3 text-left">Amount</th>
-                    <th className="px-4 py-3 text-left">Payment</th>
-                    <th className="px-4 py-3 text-left">Booked On</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {bookings.map((booking) => (
-                    <tr key={booking.id} className="hover:bg-green-50">
-                      <td className="px-4 py-3 font-medium">
-                        {booking.student.user.name || "N/A"}
-                      </td>
-                      <td className="px-4 py-3">
-                        {booking.student.class
-                          ? `${booking.student.class.name}${booking.student.class.section ? ` - ${booking.student.class.section}` : ""}`
-                          : "N/A"}
-                      </td>
-                      <td className="px-4 py-3 font-medium text-green-700">
-                        {booking.room.hostel.name}
-                      </td>
-                      <td className="px-4 py-3">Room {booking.room.roomNumber}</td>
-                      <td className="px-4 py-3">
-                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm font-medium">
-                          Cot {booking.cotNumber}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 font-semibold text-green-700">₹{booking.amount}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          booking.paymentStatus === "PAID" 
-                            ? "bg-green-100 text-green-800" 
-                            : booking.paymentStatus === "FAILED"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}>
-                          {booking.paymentStatus}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {new Date(booking.createdAt).toLocaleDateString()}
-                      </td>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 md:p-8 border border-[#333333] hover:border-[#404040] transition-all duration-300"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+          <div className="relative">
+            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white flex items-center gap-3">
+              <Users className="w-7 h-7 text-[#808080]" />
+              All Student Bookings
+            </h2>
+            {bookings.length === 0 ? (
+              <div className="text-center py-12">
+                <Users size={48} className="mx-auto text-[#808080] mb-4" />
+                <p className="text-[#808080] text-lg">No bookings yet</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead className="bg-[#2d2d2d] border-b border-[#333333]">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-white font-semibold">Student Name</th>
+                      <th className="px-4 py-3 text-left text-white font-semibold">Class</th>
+                      <th className="px-4 py-3 text-left text-white font-semibold">Hostel</th>
+                      <th className="px-4 py-3 text-left text-white font-semibold">Room</th>
+                      <th className="px-4 py-3 text-left text-white font-semibold">Cot</th>
+                      <th className="px-4 py-3 text-left text-white font-semibold">Amount</th>
+                      <th className="px-4 py-3 text-left text-white font-semibold">Payment</th>
+                      <th className="px-4 py-3 text-left text-white font-semibold">Booked On</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+                  </thead>
+                  <tbody className="divide-y divide-[#333333]">
+                    {bookings.map((booking, index) => (
+                      <motion.tr
+                        key={booking.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        whileHover={{ backgroundColor: "#2d2d2d" }}
+                        className="hover:bg-[#2d2d2d]/50 transition"
+                      >
+                        <td className="px-4 py-3 font-medium text-white">
+                          {booking.student.user.name || "N/A"}
+                        </td>
+                        <td className="px-4 py-3 text-[#808080]">
+                          {booking.student.class
+                            ? `${booking.student.class.name}${booking.student.class.section ? ` - ${booking.student.class.section}` : ""}`
+                            : "N/A"}
+                        </td>
+                        <td className="px-4 py-3 font-medium text-white">
+                          {booking.room.hostel.name}
+                        </td>
+                        <td className="px-4 py-3 text-white">Room {booking.room.roomNumber}</td>
+                        <td className="px-4 py-3">
+                          <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-sm font-medium border border-green-500/30">
+                            Cot {booking.cotNumber}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-green-400">₹{booking.amount}</td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 rounded text-xs font-medium border ${
+                            booking.paymentStatus === "PAID" 
+                              ? "bg-green-500/20 text-green-400 border-green-500/30" 
+                              : booking.paymentStatus === "FAILED"
+                              ? "bg-red-500/20 text-red-400 border-red-500/30"
+                              : "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+                          }`}>
+                            {booking.paymentStatus}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-[#808080]">
+                          {new Date(booking.createdAt).toLocaleDateString()}
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </motion.div>
       )}
+      </div>
     </div>
   );
 }

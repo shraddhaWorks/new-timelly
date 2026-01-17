@@ -30,7 +30,11 @@ export const redis = {
   async set(key: string, value: any, options?: { ex?: number }) {
     if (!redisClient) return;
     try {
-      await redisClient.set(key, value, options);
+      if (options?.ex) {
+        await redisClient.set(key, value, { ex: options.ex });
+      } else {
+        await redisClient.set(key, value);
+      }
     } catch (error) {
       console.warn(`Redis set error for key ${key}:`, error);
     }

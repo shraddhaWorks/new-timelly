@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { motion } from "framer-motion";
+import { Newspaper, BookOpen, Award, CreditCard, MessageCircle, FileText, Calendar, User, CheckCircle2, XCircle, Clock, Send, ExternalLink, Download } from "lucide-react";
 import PayButton from "./PayButton";
 import BusBooking from "./BusBooking";
 import HostelBooking from "./HostelBooking";
+import TimetableView from "./TimetableView";
 
 interface Mark {
   id: string;
@@ -115,7 +118,7 @@ export default function StudentDashboardPage() {
   const [fee, setFee] = useState<StudentFee | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "marks" | "attendance" | "events" | "newsfeed" | "homework" | "certificates" | "tc" | "payments" | "communication" | "bus" | "hostel">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "marks" | "attendance" | "events" | "newsfeed" | "homework" | "certificates" | "tc" | "payments" | "communication" | "bus" | "hostel" | "timetable">("overview");
 
   useEffect(() => {
     if (session && session.user.role === "STUDENT") {
@@ -364,33 +367,33 @@ export default function StudentDashboardPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "PRESENT":
-        return "bg-green-100 text-green-800 border-green-300";
+        return "bg-green-500/20 text-green-400 border-green-500/30";
       case "ABSENT":
-        return "bg-red-100 text-red-800 border-red-300";
+        return "bg-red-500/20 text-red-400 border-red-500/30";
       case "LATE":
-        return "bg-yellow-100 text-yellow-800 border-yellow-300";
+        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-300";
+        return "bg-[#2d2d2d] text-[#808080] border-[#404040]";
     }
   };
 
   const getGradeColor = (grade: string | null) => {
-    if (!grade) return "bg-gray-100 text-gray-800";
-    if (grade === "A+") return "bg-green-100 text-green-800";
-    if (grade === "A") return "bg-green-100 text-green-800";
-    if (grade === "B+") return "bg-blue-100 text-blue-800";
-    if (grade === "B") return "bg-blue-100 text-blue-800";
-    if (grade === "C") return "bg-yellow-100 text-yellow-800";
-    if (grade === "D") return "bg-orange-100 text-orange-800";
-    return "bg-red-100 text-red-800";
+    if (!grade) return "bg-[#2d2d2d] text-[#808080]";
+    if (grade === "A+") return "bg-green-500/20 text-green-400";
+    if (grade === "A") return "bg-green-500/20 text-green-400";
+    if (grade === "B+") return "bg-blue-500/20 text-blue-400";
+    if (grade === "B") return "bg-blue-500/20 text-blue-400";
+    if (grade === "C") return "bg-yellow-500/20 text-yellow-400";
+    if (grade === "D") return "bg-orange-500/20 text-orange-400";
+    return "bg-red-500/20 text-red-400";
   };
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen bg-green-50 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-          <p className="mt-4 text-green-700 font-medium">Loading your dashboard...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#808080]"></div>
+          <p className="mt-4 text-white font-medium">Loading your dashboard...</p>
         </div>
       </div>
     );
@@ -398,10 +401,10 @@ export default function StudentDashboardPage() {
 
   if (!session || session.user.role !== "STUDENT") {
     return (
-      <div className="min-h-screen bg-green-50 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-2xl shadow-lg text-center">
-          <p className="text-red-600 text-lg font-medium">Access Denied</p>
-          <p className="text-gray-600 mt-2">This page is only for students.</p>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="bg-[#1a1a1a] border border-[#333333] p-8 rounded-2xl shadow-2xl text-center">
+          <p className="text-red-400 text-lg font-medium">Access Denied</p>
+          <p className="text-[#808080] mt-2">This page is only for students.</p>
         </div>
       </div>
     );
@@ -416,27 +419,27 @@ export default function StudentDashboardPage() {
     .slice(0, 3);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-white">
+    <div className="min-h-screen bg-black">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-green-200">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex justify-between items-center">
+      <div className="bg-[#1a1a1a] border-b border-[#333333] shadow-lg sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-green-700">
+              <h1 className="text-2xl md:text-3xl font-bold text-white">
                 Welcome, {session.user?.name || "Student"}!
               </h1>
-              <p className="text-gray-600 mt-1">Your academic dashboard</p>
+              <p className="text-[#808080] mt-1 text-sm md:text-base">Your academic dashboard</p>
             </div>
-            <div className="bg-green-100 px-4 py-2 rounded-lg">
-              <p className="text-sm text-gray-600">Student Portal</p>
+            <div className="bg-[#2d2d2d] border border-[#404040] px-4 py-2 rounded-lg">
+              <p className="text-sm text-white font-medium">Student Portal</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Navigation Tabs */}
-      <div className="max-w-7xl mx-auto px-6 py-4">
-        <div className="flex gap-2 bg-white rounded-lg p-1 shadow-md border border-green-200 overflow-x-auto">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
+        <div className="flex gap-2 bg-[#1a1a1a] border border-[#333333] rounded-lg p-1 shadow-lg overflow-x-auto scrollbar-hide">
           {[
             { id: "overview", label: "Overview", icon: "📊" },
             { id: "newsfeed", label: "News Feed", icon: "📰" },
@@ -450,114 +453,115 @@ export default function StudentDashboardPage() {
             { id: "communication", label: "Communication", icon: "💬" },
             { id: "bus", label: "Bus Booking", icon: "🚌" },
             { id: "hostel", label: "Hostel Booking", icon: "🏠" },
+            { id: "timetable", label: "Timetable", icon: "📅" },
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex-1 px-4 py-3 rounded-md font-medium transition-all ${
+              className={`flex-shrink-0 px-3 md:px-4 py-2 md:py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
                 activeTab === tab.id
-                  ? "bg-green-600 text-white shadow-md"
-                  : "text-gray-600 hover:bg-green-50"
+                  ? "bg-[#404040] text-white shadow-md"
+                  : "text-[#808080] hover:bg-[#2d2d2d] hover:text-white"
               }`}
             >
-              <span className="mr-2">{tab.icon}</span>
-              {tab.label}
+              <span className="mr-1 md:mr-2">{tab.icon}</span>
+              <span className="hidden sm:inline">{tab.label}</span>
             </button>
           ))}
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 pb-8">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pb-8">
         {/* Overview Tab */}
         {activeTab === "overview" && (
           <div className="space-y-6">
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Attendance Card */}
-              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+              <div className="bg-[#1a1a1a] border border-[#333333] rounded-xl shadow-2xl p-6 border-l-4 border-[#808080]">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-gray-600 text-sm font-medium">Attendance</p>
-                    <p className="text-3xl font-bold text-green-700 mt-2">
+                    <p className="text-[#808080] text-sm font-medium">Attendance</p>
+                    <p className="text-3xl font-bold text-white mt-2">
                       {attendanceStats.percentage}%
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-[#6b6b6b] mt-1">
                       {attendanceStats.present} present out of {attendanceStats.total}
                     </p>
                   </div>
-                  <div className="bg-green-100 rounded-full p-4">
+                  <div className="bg-[#2d2d2d] rounded-full p-4">
                     <span className="text-3xl">✅</span>
                   </div>
                 </div>
               </div>
 
               {/* Marks Card */}
-              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+              <div className="bg-[#1a1a1a] border border-[#333333] rounded-xl shadow-2xl p-6 border-l-4 border-[#808080]">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-gray-600 text-sm font-medium">Average Marks</p>
-                    <p className="text-3xl font-bold text-blue-700 mt-2">
+                    <p className="text-[#808080] text-sm font-medium">Average Marks</p>
+                    <p className="text-3xl font-bold text-white mt-2">
                       {marksStats.average}%
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-[#6b6b6b] mt-1">
                       {marksStats.totalSubjects} subjects
                     </p>
                   </div>
-                  <div className="bg-blue-100 rounded-full p-4">
+                  <div className="bg-[#2d2d2d] rounded-full p-4">
                     <span className="text-3xl">📝</span>
                   </div>
                 </div>
               </div>
 
               {/* Events Card */}
-              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+              <div className="bg-[#1a1a1a] border border-[#333333] rounded-xl shadow-2xl p-6 border-l-4 border-[#808080]">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-gray-600 text-sm font-medium">Upcoming Events</p>
-                    <p className="text-3xl font-bold text-purple-700 mt-2">
+                    <p className="text-[#808080] text-sm font-medium">Upcoming Events</p>
+                    <p className="text-3xl font-bold text-white mt-2">
                       {upcomingEvents.length}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-[#6b6b6b] mt-1">
                       Available for registration
                     </p>
                   </div>
-                  <div className="bg-purple-100 rounded-full p-4">
+                  <div className="bg-[#2d2d2d] rounded-full p-4">
                     <span className="text-3xl">🎉</span>
                   </div>
                 </div>
               </div>
 
               {/* Homework Card */}
-              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-500">
+              <div className="bg-[#1a1a1a] border border-[#333333] rounded-xl shadow-2xl p-6 border-l-4 border-[#808080]">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-gray-600 text-sm font-medium">Pending Homework</p>
-                    <p className="text-3xl font-bold text-orange-700 mt-2">
+                    <p className="text-[#808080] text-sm font-medium">Pending Homework</p>
+                    <p className="text-3xl font-bold text-white mt-2">
                       {homeworks.filter((h) => !h.hasSubmitted).length}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-[#6b6b6b] mt-1">
                       {homeworks.filter((h) => h.hasSubmitted).length} submitted
                     </p>
                   </div>
-                  <div className="bg-orange-100 rounded-full p-4">
+                  <div className="bg-[#2d2d2d] rounded-full p-4">
                     <span className="text-3xl">📚</span>
                   </div>
                 </div>
               </div>
 
               {/* Certificates Card */}
-              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500">
+              <div className="bg-[#1a1a1a] border border-[#333333] rounded-xl shadow-2xl p-6 border-l-4 border-[#808080]">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-gray-600 text-sm font-medium">Certificates</p>
-                    <p className="text-3xl font-bold text-yellow-700 mt-2">
+                    <p className="text-[#808080] text-sm font-medium">Certificates</p>
+                    <p className="text-3xl font-bold text-white mt-2">
                       {certificates.length}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-[#6b6b6b] mt-1">
                       Total issued
                     </p>
                   </div>
-                  <div className="bg-yellow-100 rounded-full p-4">
+                  <div className="bg-[#2d2d2d] rounded-full p-4">
                     <span className="text-3xl">🏆</span>
                   </div>
                 </div>
@@ -565,232 +569,47 @@ export default function StudentDashboardPage() {
             </div>
 
             {/* Recent Marks */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-green-700">Recent Marks</h2>
-                <button
-                  onClick={() => setActiveTab("marks")}
-                  className="text-green-600 hover:text-green-700 text-sm font-medium"
-                >
-                  View All →
-                </button>
-              </div>
-              {recentMarks.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No marks available yet</p>
-              ) : (
-                <div className="space-y-3">
-                  {recentMarks.map((mark) => (
-                    <div
-                      key={mark.id}
-                      className="flex items-center justify-between p-4 bg-green-50 rounded-lg hover:bg-green-100 transition"
-                    >
-                      <div className="flex-1">
-                        <p className="font-semibold text-gray-800">{mark.subject}</p>
-                        <p className="text-sm text-gray-600">
-                          {mark.class.name} {mark.class.section ? `- ${mark.class.section}` : ""}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-green-700">
-                          {mark.marks}/{mark.totalMarks}
-                        </p>
-                        <span
-                          className={`px-2 py-1 rounded text-xs font-medium ${getGradeColor(
-                            mark.grade
-                          )}`}
-                        >
-                          {mark.grade || "N/A"}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 md:p-8 border border-[#333333] hover:border-[#404040] transition-all duration-300"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+              <div className="relative">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-bold text-white flex items-center gap-2">📝 Recent Marks</h2>
+                  <motion.button
+                    onClick={() => setActiveTab("marks")}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="text-[#808080] hover:text-white text-sm font-medium transition"
+                  >
+                    View All →
+                  </motion.button>
                 </div>
-              )}
-            </div>
-
-            {/* Recent Attendance */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-green-700">Recent Attendance</h2>
-                <button
-                  onClick={() => setActiveTab("attendance")}
-                  className="text-green-600 hover:text-green-700 text-sm font-medium"
-                >
-                  View All →
-                </button>
-              </div>
-              {recentAttendance.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No attendance records yet</p>
-              ) : (
-                <div className="space-y-3">
-                  {recentAttendance.map((att) => (
-                    <div
-                      key={att.id}
-                      className="flex items-center justify-between p-4 bg-green-50 rounded-lg hover:bg-green-100 transition"
-                    >
-                      <div>
-                        <p className="font-semibold text-gray-800">
-                          {new Date(att.date).toLocaleDateString()}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Period {att.period} • {att.class.name}
-                        </p>
-                      </div>
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                          att.status
-                        )}`}
+                {recentMarks.length === 0 ? (
+                  <p className="text-[#808080] text-center py-8">No marks available yet</p>
+                ) : (
+                  <div className="space-y-3">
+                    {recentMarks.map((mark, index) => (
+                      <motion.div
+                        key={mark.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        whileHover={{ y: -4, scale: 1.01 }}
+                        className="flex items-center justify-between p-4 bg-[#2d2d2d]/50 rounded-lg hover:bg-[#404040]/50 transition border border-[#333333] hover:border-[#404040]"
                       >
-                        {att.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Recent News Feed */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-green-700">Latest News</h2>
-                <button
-                  onClick={() => setActiveTab("newsfeed")}
-                  className="text-green-600 hover:text-green-700 text-sm font-medium"
-                >
-                  View All →
-                </button>
-              </div>
-              {newsFeeds.slice(0, 3).length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No news available</p>
-              ) : (
-                <div className="space-y-4">
-                  {newsFeeds.slice(0, 3).map((feed) => (
-                    <div
-                      key={feed.id}
-                      className="bg-green-50 rounded-lg p-4 border border-green-200 hover:bg-green-100 transition"
-                    >
-                      <h3 className="font-bold text-green-700 mb-2">{feed.title}</h3>
-                      <p className="text-sm text-gray-600 line-clamp-2">{feed.description}</p>
-                      <p className="text-xs text-gray-500 mt-2">
-                        {new Date(feed.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Pending Homework */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-green-700">Pending Homework</h2>
-                <button
-                  onClick={() => setActiveTab("homework")}
-                  className="text-green-600 hover:text-green-700 text-sm font-medium"
-                >
-                  View All →
-                </button>
-              </div>
-              {homeworks.filter((h) => !h.hasSubmitted).slice(0, 3).length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No pending homework</p>
-              ) : (
-                <div className="space-y-3">
-                  {homeworks
-                    .filter((h) => !h.hasSubmitted)
-                    .slice(0, 3)
-                    .map((homework) => (
-                      <div
-                        key={homework.id}
-                        className="bg-orange-50 rounded-lg p-4 border border-orange-200 hover:bg-orange-100 transition"
-                      >
-                        <h3 className="font-bold text-orange-700 mb-1">{homework.title}</h3>
-                        <p className="text-sm text-gray-600">
-                          {homework.subject} • {homework.class.name}
-                        </p>
-                        {homework.dueDate && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            Due: {new Date(homework.dueDate).toLocaleDateString()}
+                        <div className="flex-1">
+                          <p className="font-semibold text-white">{mark.subject}</p>
+                          <p className="text-sm text-[#808080]">
+                            {mark.class.name} {mark.class.section ? `- ${mark.class.section}` : ""}
                           </p>
-                        )}
-                      </div>
-                    ))}
-                </div>
-              )}
-            </div>
-
-            {/* Upcoming Events */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-green-700">Upcoming Events</h2>
-                <button
-                  onClick={() => setActiveTab("events")}
-                  className="text-green-600 hover:text-green-700 text-sm font-medium"
-                >
-                  View All →
-                </button>
-              </div>
-              {upcomingEvents.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No upcoming events</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {upcomingEvents.map((event) => (
-                    <div
-                      key={event.id}
-                      className="bg-gradient-to-br from-green-50 to-white rounded-lg p-4 border border-green-200 hover:shadow-md transition"
-                    >
-                      <h3 className="font-bold text-green-700 mb-2">{event.title}</h3>
-                      <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-                        {event.description}
-                      </p>
-                      {event.eventDate && (
-                        <p className="text-xs text-gray-500 mb-3">
-                          📅 {new Date(event.eventDate).toLocaleDateString()}
-                        </p>
-                      )}
-                      <button
-                        onClick={() => handleRegisterEvent(event.id)}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm font-medium transition"
-                      >
-                        Register Now
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Marks Tab */}
-        {activeTab === "marks" && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-green-700 mb-6">My Marks Report</h2>
-            {marks.length === 0 ? (
-              <p className="text-gray-500 text-center py-12">No marks available yet</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-green-600 text-white">
-                    <tr>
-                      <th className="px-4 py-3 text-left">Subject</th>
-                      <th className="px-4 py-3 text-left">Marks</th>
-                      <th className="px-4 py-3 text-left">Total</th>
-                      <th className="px-4 py-3 text-left">Percentage</th>
-                      <th className="px-4 py-3 text-left">Grade</th>
-                      <th className="px-4 py-3 text-left">Class</th>
-                      <th className="px-4 py-3 text-left">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {marks.map((mark) => (
-                      <tr key={mark.id} className="hover:bg-green-50">
-                        <td className="px-4 py-3 font-medium">{mark.subject}</td>
-                        <td className="px-4 py-3">{mark.marks}</td>
-                        <td className="px-4 py-3">{mark.totalMarks}</td>
-                        <td className="px-4 py-3">
-                          {((mark.marks / mark.totalMarks) * 100).toFixed(1)}%
-                        </td>
-                        <td className="px-4 py-3">
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-green-400">
+                            {mark.marks}/{mark.totalMarks}
+                          </p>
                           <span
                             className={`px-2 py-1 rounded text-xs font-medium ${getGradeColor(
                               mark.grade
@@ -798,178 +617,493 @@ export default function StudentDashboardPage() {
                           >
                             {mark.grade || "N/A"}
                           </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          {mark.class.name} {mark.class.section ? `- ${mark.class.section}` : ""}
-                        </td>
-                        <td className="px-4 py-3">
-                          {new Date(mark.createdAt).toLocaleDateString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            {marks.some((m) => m.suggestions) && (
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h3 className="text-lg font-semibold mb-4 text-green-700">
-                  Teacher Suggestions
-                </h3>
-                <div className="space-y-4">
-                  {marks
-                    .filter((m) => m.suggestions)
-                    .map((mark) => (
-                      <div key={mark.id} className="border-l-4 border-green-500 pl-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <span className="font-medium">{mark.subject}</span>
-                          <span className="text-sm text-gray-500">
-                            {new Date(mark.createdAt).toLocaleDateString()}
-                          </span>
                         </div>
-                        <p className="text-gray-700">{mark.suggestions}</p>
-                      </div>
+                      </motion.div>
                     ))}
-                </div>
+                  </div>
+                )}
               </div>
-            )}
+            </motion.div>
+
+            {/* Recent Attendance */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 md:p-8 border border-[#333333] hover:border-[#404040] transition-all duration-300"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+              <div className="relative">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-bold text-white flex items-center gap-2">✅ Recent Attendance</h2>
+                  <motion.button
+                    onClick={() => setActiveTab("attendance")}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="text-[#808080] hover:text-white text-sm font-medium transition"
+                  >
+                    View All →
+                  </motion.button>
+                </div>
+                {recentAttendance.length === 0 ? (
+                  <p className="text-[#808080] text-center py-8">No attendance records yet</p>
+                ) : (
+                  <div className="space-y-3">
+                    {recentAttendance.map((att, index) => (
+                      <motion.div
+                        key={att.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        whileHover={{ y: -4, scale: 1.01 }}
+                        className="flex items-center justify-between p-4 bg-[#2d2d2d]/50 rounded-lg hover:bg-[#404040]/50 transition border border-[#333333] hover:border-[#404040]"
+                      >
+                        <div>
+                          <p className="font-semibold text-white">
+                            {new Date(att.date).toLocaleDateString()}
+                          </p>
+                          <p className="text-sm text-[#808080]">
+                            Period {att.period} • {att.class.name}
+                          </p>
+                        </div>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                            att.status
+                          )}`}
+                        >
+                          {att.status}
+                        </span>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+
+            {/* Recent News Feed */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 md:p-8 border border-[#333333] hover:border-[#404040] transition-all duration-300"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+              <div className="relative">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-bold text-white flex items-center gap-2">📰 Latest News</h2>
+                  <motion.button
+                    onClick={() => setActiveTab("newsfeed")}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="text-[#808080] hover:text-white text-sm font-medium transition"
+                  >
+                    View All →
+                  </motion.button>
+                </div>
+                {newsFeeds.slice(0, 3).length === 0 ? (
+                  <p className="text-[#808080] text-center py-8">No news available</p>
+                ) : (
+                  <div className="space-y-4">
+                    {newsFeeds.slice(0, 3).map((feed, index) => (
+                      <motion.div
+                        key={feed.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        whileHover={{ y: -4, scale: 1.01 }}
+                        className="bg-[#2d2d2d]/50 rounded-lg p-4 border border-[#333333] hover:bg-[#404040]/50 transition hover:border-[#404040]"
+                      >
+                        <h3 className="font-bold text-white mb-2">{feed.title}</h3>
+                        <p className="text-sm text-[#808080] line-clamp-2">{feed.description}</p>
+                        <p className="text-xs text-[#6b6b6b] mt-2">
+                          {new Date(feed.createdAt).toLocaleDateString()}
+                        </p>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+
+            {/* Pending Homework */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 md:p-8 border border-[#333333] hover:border-[#404040] transition-all duration-300"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+              <div className="relative">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-bold text-white flex items-center gap-2">📚 Pending Homework</h2>
+                  <motion.button
+                    onClick={() => setActiveTab("homework")}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="text-[#808080] hover:text-white text-sm font-medium transition"
+                  >
+                    View All →
+                  </motion.button>
+                </div>
+                {homeworks.filter((h) => !h.hasSubmitted).slice(0, 3).length === 0 ? (
+                  <p className="text-[#808080] text-center py-8">No pending homework</p>
+                ) : (
+                  <div className="space-y-3">
+                    {homeworks
+                      .filter((h) => !h.hasSubmitted)
+                      .slice(0, 3)
+                      .map((homework, index) => (
+                        <motion.div
+                          key={homework.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          whileHover={{ y: -4, scale: 1.01 }}
+                          className="bg-orange-500/20 border border-orange-500/30 rounded-lg p-4 hover:bg-orange-500/30 transition"
+                        >
+                          <h3 className="font-bold text-orange-400 mb-1">{homework.title}</h3>
+                          <p className="text-sm text-[#808080]">
+                            {homework.subject} • {homework.class.name}
+                          </p>
+                          {homework.dueDate && (
+                            <p className="text-xs text-[#6b6b6b] mt-1">
+                              Due: {new Date(homework.dueDate).toLocaleDateString()}
+                            </p>
+                          )}
+                        </motion.div>
+                      ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+
+            {/* Upcoming Events */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 md:p-8 border border-[#333333] hover:border-[#404040] transition-all duration-300"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+              <div className="relative">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-bold text-white flex items-center gap-2">🎉 Upcoming Events</h2>
+                  <motion.button
+                    onClick={() => setActiveTab("events")}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="text-[#808080] hover:text-white text-sm font-medium transition"
+                  >
+                    View All →
+                  </motion.button>
+                </div>
+                {upcomingEvents.length === 0 ? (
+                  <p className="text-[#808080] text-center py-8">No upcoming events</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {upcomingEvents.map((event, index) => (
+                      <motion.div
+                        key={event.id}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.1 }}
+                        whileHover={{ y: -4, scale: 1.02 }}
+                        className="relative overflow-hidden bg-gradient-to-br from-[#2d2d2d] to-[#1a1a1a] rounded-xl p-4 border border-[#333333] hover:border-green-500/50 transition-all duration-300 shadow-lg"
+                      >
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-green-500/20 to-transparent rounded-bl-full"></div>
+                        <div className="relative">
+                          <h3 className="font-bold text-white mb-2">{event.title}</h3>
+                          <p className="text-sm text-[#808080] line-clamp-2 mb-3">
+                            {event.description}
+                          </p>
+                          {event.eventDate && (
+                            <p className="text-xs text-[#6b6b6b] mb-3">
+                              📅 {new Date(event.eventDate).toLocaleDateString()}
+                            </p>
+                          )}
+                          <motion.button
+                            onClick={() => handleRegisterEvent(event.id)}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="w-full bg-gradient-to-r from-green-500/80 to-green-600/80 hover:from-green-600 hover:to-green-500 text-white py-2 rounded-lg text-sm font-semibold transition-all duration-300 border border-green-500/30 hover:border-green-400 shadow-lg"
+                          >
+                            Register Now
+                          </motion.button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
           </div>
+        )}
+
+        {/* Marks Tab */}
+        {activeTab === "marks" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 md:p-8 border border-[#333333] hover:border-[#404040] transition-all duration-300"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+            <div className="relative">
+              <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">📝 My Marks Report</h2>
+              {marks.length === 0 ? (
+                <p className="text-[#808080] text-center py-12">No marks available yet</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead className="bg-[#2d2d2d] border-b border-[#333333]">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-white font-semibold">Subject</th>
+                        <th className="px-4 py-3 text-left text-white font-semibold">Marks</th>
+                        <th className="px-4 py-3 text-left text-white font-semibold">Total</th>
+                        <th className="px-4 py-3 text-left text-white font-semibold">Percentage</th>
+                        <th className="px-4 py-3 text-left text-white font-semibold">Grade</th>
+                        <th className="px-4 py-3 text-left text-white font-semibold">Class</th>
+                        <th className="px-4 py-3 text-left text-white font-semibold">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#333333]">
+                      {marks.map((mark, index) => (
+                        <motion.tr
+                          key={mark.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          whileHover={{ backgroundColor: "#2d2d2d" }}
+                          className="hover:bg-[#2d2d2d]/50 transition"
+                        >
+                          <td className="px-4 py-3 font-medium text-white">{mark.subject}</td>
+                          <td className="px-4 py-3 text-white">{mark.marks}</td>
+                          <td className="px-4 py-3 text-white">{mark.totalMarks}</td>
+                          <td className="px-4 py-3 text-white">
+                            {((mark.marks / mark.totalMarks) * 100).toFixed(1)}%
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`px-2 py-1 rounded text-xs font-medium ${getGradeColor(
+                                mark.grade
+                              )}`}
+                            >
+                              {mark.grade || "N/A"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-[#808080]">
+                            {mark.class.name} {mark.class.section ? `- ${mark.class.section}` : ""}
+                          </td>
+                          <td className="px-4 py-3 text-[#808080]">
+                            {new Date(mark.createdAt).toLocaleDateString()}
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {marks.some((m) => m.suggestions) && (
+                <div className="mt-6 pt-6 border-t border-[#404040]">
+                  <h3 className="text-lg font-semibold mb-4 text-white flex items-center gap-2">
+                    💡 Teacher Suggestions
+                  </h3>
+                  <div className="space-y-4">
+                    {marks
+                      .filter((m) => m.suggestions)
+                      .map((mark, index) => (
+                        <motion.div
+                          key={mark.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          className="border-l-4 border-green-500/50 bg-[#2d2d2d]/50 pl-4 p-3 rounded-r-lg"
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="font-medium text-white">{mark.subject}</span>
+                            <span className="text-sm text-[#808080]">
+                              {new Date(mark.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <p className="text-[#808080]">{mark.suggestions}</p>
+                        </motion.div>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
         )}
 
         {/* Attendance Tab */}
         {activeTab === "attendance" && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-green-700">My Attendance</h2>
-              <div className="bg-green-100 px-4 py-2 rounded-lg">
-                <p className="text-sm text-gray-700">
-                  <span className="font-semibold">{attendanceStats.percentage}%</span> overall
-                </p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 md:p-8 border border-[#333333] hover:border-[#404040] transition-all duration-300"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+            <div className="relative">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">✅ My Attendance</h2>
+                <div className="bg-[#2d2d2d] border border-[#404040] px-4 py-2 rounded-lg">
+                  <p className="text-sm text-white">
+                    <span className="font-semibold">{attendanceStats.percentage}%</span> overall
+                  </p>
+                </div>
               </div>
-            </div>
 
-            {/* Attendance Stats */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="bg-green-50 p-4 rounded-lg text-center">
-                <p className="text-2xl font-bold text-green-700">{attendanceStats.present}</p>
-                <p className="text-sm text-gray-600">Present</p>
+              {/* Attendance Stats */}
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="bg-green-500/20 border border-green-500/30 p-4 rounded-lg text-center"
+                >
+                  <p className="text-2xl font-bold text-green-400">{attendanceStats.present}</p>
+                  <p className="text-sm text-[#808080]">Present</p>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="bg-red-500/20 border border-red-500/30 p-4 rounded-lg text-center"
+                >
+                  <p className="text-2xl font-bold text-red-400">{attendanceStats.absent}</p>
+                  <p className="text-sm text-[#808080]">Absent</p>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="bg-yellow-500/20 border border-yellow-500/30 p-4 rounded-lg text-center"
+                >
+                  <p className="text-2xl font-bold text-yellow-400">{attendanceStats.late}</p>
+                  <p className="text-sm text-[#808080]">Late</p>
+                </motion.div>
               </div>
-              <div className="bg-red-50 p-4 rounded-lg text-center">
-                <p className="text-2xl font-bold text-red-700">{attendanceStats.absent}</p>
-                <p className="text-sm text-gray-600">Absent</p>
-              </div>
-              <div className="bg-yellow-50 p-4 rounded-lg text-center">
-                <p className="text-2xl font-bold text-yellow-700">{attendanceStats.late}</p>
-                <p className="text-sm text-gray-600">Late</p>
-              </div>
-            </div>
 
-            {attendances.length === 0 ? (
-              <p className="text-gray-500 text-center py-12">No attendance records found</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-green-600 text-white">
-                    <tr>
-                      <th className="px-4 py-3 text-left">Date</th>
-                      <th className="px-4 py-3 text-left">Period</th>
-                      <th className="px-4 py-3 text-left">Class</th>
-                      <th className="px-4 py-3 text-left">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {attendances.map((att) => (
-                      <tr key={att.id} className="hover:bg-green-50">
-                        <td className="px-4 py-3">
-                          {new Date(att.date).toLocaleDateString()}
-                        </td>
-                        <td className="px-4 py-3">Period {att.period}</td>
-                        <td className="px-4 py-3">
-                          {att.class.name} {att.class.section ? `- ${att.class.section}` : ""}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(
-                              att.status
-                            )}`}
-                          >
-                            {att.status}
-                          </span>
-                        </td>
+              {attendances.length === 0 ? (
+                <p className="text-[#808080] text-center py-12">No attendance records found</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead className="bg-[#2d2d2d] border-b border-[#333333]">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-white font-semibold">Date</th>
+                        <th className="px-4 py-3 text-left text-white font-semibold">Period</th>
+                        <th className="px-4 py-3 text-left text-white font-semibold">Class</th>
+                        <th className="px-4 py-3 text-left text-white font-semibold">Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+                    </thead>
+                    <tbody className="divide-y divide-[#333333]">
+                      {attendances.map((att, index) => (
+                        <motion.tr
+                          key={att.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          whileHover={{ backgroundColor: "#2d2d2d" }}
+                          className="hover:bg-[#2d2d2d]/50 transition"
+                        >
+                          <td className="px-4 py-3 text-white">
+                            {new Date(att.date).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-3 text-white">Period {att.period}</td>
+                          <td className="px-4 py-3 text-[#808080]">
+                            {att.class.name} {att.class.section ? `- ${att.class.section}` : ""}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(
+                                att.status
+                              )}`}
+                            >
+                              {att.status}
+                            </span>
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </motion.div>
         )}
 
         {/* Events Tab */}
         {activeTab === "events" && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-green-700">Events & Workshops</h2>
+            <motion.h2
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-2xl font-bold text-white flex items-center gap-2"
+            >
+              🎉 Events & Workshops
+            </motion.h2>
             {events.length === 0 ? (
-              <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-                <p className="text-gray-500 text-lg">No events available</p>
-              </div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-12 border border-[#333333] text-center"
+              >
+                <p className="text-[#808080] text-lg">No events available</p>
+              </motion.div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {events.map((event) => (
-                  <div
+                {events.map((event, index) => (
+                  <motion.div
                     key={event.id}
-                    className="bg-white rounded-xl shadow-lg overflow-hidden border border-green-200 hover:shadow-xl transition"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{ y: -4, scale: 1.02 }}
+                    className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-xl shadow-2xl overflow-hidden border border-[#333333] hover:border-green-500/50 transition-all duration-300"
                   >
                     {event.photo && (
                       <img
                         src={event.photo}
                         alt={event.title}
-                        className="w-full h-48 object-cover"
+                        className="w-full h-48 object-cover opacity-80"
                       />
                     )}
-                    <div className="p-6">
-                      <h3 className="text-xl font-bold mb-2 text-green-700">{event.title}</h3>
-                      <p className="text-gray-600 mb-4 line-clamp-3">{event.description}</p>
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-green-500/20 to-transparent rounded-bl-full"></div>
+                    <div className="p-6 relative">
+                      <h3 className="text-xl font-bold mb-2 text-white">{event.title}</h3>
+                      <p className="text-[#808080] mb-4 line-clamp-3">{event.description}</p>
 
                       <div className="space-y-2 mb-4 text-sm">
                         {event.class && (
-                          <p className="text-gray-600">
-                            <span className="font-medium">Class:</span> {event.class.name}
+                          <p className="text-[#808080]">
+                            <span className="font-medium text-white">Class:</span> {event.class.name}
                             {event.class.section ? ` - ${event.class.section}` : ""}
                           </p>
                         )}
                         {event.amount && (
-                          <p className="text-gray-600">
-                            <span className="font-medium">Amount:</span> ₹{event.amount}
+                          <p className="text-[#808080]">
+                            <span className="font-medium text-white">Amount:</span> ₹{event.amount}
                           </p>
                         )}
                         {event.eventDate && (
-                          <p className="text-gray-600">
-                            <span className="font-medium">Date:</span>{" "}
+                          <p className="text-[#808080]">
+                            <span className="font-medium text-white">Date:</span>{" "}
                             {new Date(event.eventDate).toLocaleString()}
                           </p>
                         )}
-                        <p className="text-gray-600">
-                          <span className="font-medium">Registrations:</span>{" "}
+                        <p className="text-[#808080]">
+                          <span className="font-medium text-white">Registrations:</span>{" "}
                           {event._count.registrations}
                         </p>
                       </div>
 
-                      <button
+                      <motion.button
                         onClick={() => handleRegisterEvent(event.id)}
                         disabled={event.isRegistered}
-                        className={`w-full py-2 rounded-lg font-medium transition ${
+                        whileHover={!event.isRegistered ? { scale: 1.02 } : {}}
+                        whileTap={!event.isRegistered ? { scale: 0.98 } : {}}
+                        className={`w-full py-2 rounded-lg font-semibold transition-all duration-300 border ${
                           event.isRegistered
-                            ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                            : "bg-green-600 hover:bg-green-700 text-white"
+                            ? "bg-[#2d2d2d] text-[#808080] cursor-not-allowed border-[#333333]"
+                            : "bg-gradient-to-r from-green-500/80 to-green-600/80 hover:from-green-600 hover:to-green-500 text-white border-green-500/30 hover:border-green-400 shadow-lg"
                         }`}
                       >
                         {event.isRegistered
                           ? `Registered (${event.registrationStatus || "PENDING"})`
                           : "Register Now"}
-                      </button>
+                      </motion.button>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             )}
@@ -978,330 +1112,479 @@ export default function StudentDashboardPage() {
 
         {/* News Feed Tab */}
         {activeTab === "newsfeed" && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-green-700">News Feed</h2>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <Newspaper className="w-8 h-8 text-[#808080]" />
+              <h2 className="text-3xl font-bold text-white">News Feed</h2>
+            </div>
             {newsFeeds.length === 0 ? (
-              <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-                <p className="text-gray-500 text-lg">No news feeds available</p>
-              </div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-12 text-center border border-[#333333]"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+                <div className="relative">
+                  <Newspaper className="w-16 h-16 text-[#6b6b6b] mx-auto mb-4" />
+                  <p className="text-[#808080] text-lg">No news feeds available</p>
+                </div>
+              </motion.div>
             ) : (
               <div className="space-y-6">
-                {newsFeeds.map((feed) => (
-                  <div
+                {newsFeeds.map((feed, index) => (
+                  <motion.div
                     key={feed.id}
-                    className="bg-white rounded-xl shadow-lg p-6 border border-green-200"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{ scale: 1.02, y: -4 }}
+                    className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 border border-[#333333] hover:border-[#404040] transition-all duration-300"
                   >
-                    <div className="flex justify-between items-start mb-4">
-                      <h3 className="text-xl font-bold text-green-700">{feed.title}</h3>
-                      <span className="text-sm text-gray-500">
-                        {new Date(feed.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <p className="text-gray-700 mb-4 whitespace-pre-wrap">{feed.description}</p>
-                    {feed.mediaUrl && (
-                      <div className="mt-4">
-                        {feed.mediaType === "VIDEO" ? (
-                          <video
-                            src={feed.mediaUrl}
-                            controls
-                            className="w-full rounded-lg max-h-96"
-                          />
-                        ) : (
-                          <img
-                            src={feed.mediaUrl}
-                            alt={feed.title}
-                            className="w-full rounded-lg max-h-96 object-cover"
-                          />
-                        )}
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+                    <div className="relative">
+                      <div className="flex justify-between items-start mb-4">
+                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                          <Newspaper className="w-5 h-5 text-[#808080]" />
+                          {feed.title}
+                        </h3>
+                        <span className="text-sm text-[#808080] flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          {new Date(feed.createdAt).toLocaleDateString()}
+                        </span>
                       </div>
-                    )}
-                    <p className="text-sm text-gray-500 mt-4">
-                      Posted by: {feed.createdBy.name}
-                    </p>
-                  </div>
+                      <p className="text-[#b0b0b0] mb-4 whitespace-pre-wrap">{feed.description}</p>
+                      {feed.mediaUrl && (
+                        <div className="mt-4 rounded-lg overflow-hidden border border-[#404040]">
+                          {feed.mediaType === "VIDEO" ? (
+                            <video
+                              src={feed.mediaUrl}
+                              controls
+                              className="w-full rounded-lg max-h-96"
+                            />
+                          ) : (
+                            <img
+                              src={feed.mediaUrl}
+                              alt={feed.title}
+                              className="w-full rounded-lg max-h-96 object-cover"
+                            />
+                          )}
+                        </div>
+                      )}
+                      <p className="text-sm text-[#808080] mt-4 flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        Posted by: {feed.createdBy.name}
+                      </p>
+                    </div>
+                  </motion.div>
                 ))}
               </div>
             )}
-          </div>
+          </motion.div>
         )}
 
         {/* Homework Tab */}
         {activeTab === "homework" && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-green-700">My Homework</h2>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <BookOpen className="w-8 h-8 text-[#808080]" />
+              <h2 className="text-3xl font-bold text-white">My Homework</h2>
+            </div>
             {homeworks.length === 0 ? (
-              <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-                <p className="text-gray-500 text-lg">No homework assigned yet</p>
-              </div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-12 text-center border border-[#333333]"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+                <div className="relative">
+                  <BookOpen className="w-16 h-16 text-[#6b6b6b] mx-auto mb-4" />
+                  <p className="text-[#808080] text-lg">No homework assigned yet</p>
+                </div>
+              </motion.div>
             ) : (
               <div className="space-y-4">
-                {homeworks.map((homework) => (
-                  <div
+                {homeworks.map((homework, index) => (
+                  <motion.div
                     key={homework.id}
-                    className="bg-white rounded-xl shadow-lg p-6 border border-green-200"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{ scale: 1.02, y: -4 }}
+                    className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 border border-[#333333] hover:border-[#404040] transition-all duration-300"
                   >
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-xl font-bold text-green-700">{homework.title}</h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                          Subject: {homework.subject} • Class: {homework.class.name}
-                          {homework.class.section ? ` - ${homework.class.section}` : ""}
-                        </p>
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+                    <div className="relative">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                            <BookOpen className="w-5 h-5 text-[#808080]" />
+                            {homework.title}
+                          </h3>
+                          <p className="text-sm text-[#808080] mt-1 flex items-center gap-2">
+                            <span>Subject: {homework.subject}</span>
+                            <span>•</span>
+                            <span>Class: {homework.class.name}{homework.class.section ? ` - ${homework.class.section}` : ""}</span>
+                          </p>
+                        </div>
+                        {homework.hasSubmitted && (
+                          <motion.span
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="px-3 py-1 bg-green-500/20 text-green-400 border border-green-500/30 rounded-full text-sm font-medium flex items-center gap-1"
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                            Submitted
+                          </motion.span>
+                        )}
                       </div>
-                      {homework.hasSubmitted && (
-                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                          Submitted
-                        </span>
+                      <p className="text-[#b0b0b0] mb-4 whitespace-pre-wrap">{homework.description}</p>
+                      {homework.dueDate && (
+                        <p className="text-sm text-[#808080] mb-4 flex items-center gap-2">
+                          <Calendar className="w-4 h-4" />
+                          Due Date: {new Date(homework.dueDate).toLocaleDateString()}
+                        </p>
+                      )}
+                      {homework.hasSubmitted && homework.submission ? (
+                        <div className="bg-green-500/10 border border-green-500/30 p-4 rounded-lg mb-4">
+                          <p className="font-medium text-green-400 mb-2 flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4" />
+                            Your Submission:
+                          </p>
+                          {homework.submission.content && (
+                            <p className="text-[#b0b0b0] mb-2">{homework.submission.content}</p>
+                          )}
+                          {homework.submission.fileUrl && (
+                            <a
+                              href={homework.submission.fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-green-400 hover:text-green-300 flex items-center gap-1 transition"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              View Submitted File
+                            </a>
+                          )}
+                          <p className="text-xs text-[#808080] mt-2 flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            Submitted on: {new Date(homework.submission.submittedAt).toLocaleString()}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="mt-4 space-y-3">
+                          <textarea
+                            id={`homework-${homework.id}`}
+                            placeholder="Enter your submission..."
+                            className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent placeholder-[#6b6b6b]"
+                            rows={4}
+                          />
+                          <input
+                            type="text"
+                            id={`file-${homework.id}`}
+                            placeholder="File URL (optional)"
+                            className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent placeholder-[#6b6b6b]"
+                          />
+                          <motion.button
+                            onClick={() => {
+                              const content = (
+                                document.getElementById(`homework-${homework.id}`) as HTMLTextAreaElement
+                              )?.value;
+                              const fileUrl = (
+                                document.getElementById(`file-${homework.id}`) as HTMLInputElement
+                              )?.value;
+                              handleSubmitHomework(homework.id, content, fileUrl || undefined);
+                            }}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="w-full bg-gradient-to-r from-[#404040] to-[#6b6b6b] hover:from-[#6b6b6b] hover:to-[#404040] text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2 border border-[#333333] hover:border-[#808080] shadow-lg"
+                          >
+                            <Send className="w-5 h-5" />
+                            Submit Homework
+                          </motion.button>
+                        </div>
                       )}
                     </div>
-                    <p className="text-gray-700 mb-4 whitespace-pre-wrap">{homework.description}</p>
-                    {homework.dueDate && (
-                      <p className="text-sm text-gray-600 mb-4">
-                        Due Date: {new Date(homework.dueDate).toLocaleDateString()}
-                      </p>
-                    )}
-                    {homework.hasSubmitted && homework.submission ? (
-                      <div className="bg-green-50 p-4 rounded-lg mb-4">
-                        <p className="font-medium text-green-700 mb-2">Your Submission:</p>
-                        {homework.submission.content && (
-                          <p className="text-gray-700 mb-2">{homework.submission.content}</p>
-                        )}
-                        {homework.submission.fileUrl && (
-                          <a
-                            href={homework.submission.fileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-green-600 hover:underline"
-                          >
-                            View Submitted File
-                          </a>
-                        )}
-                        <p className="text-xs text-gray-500 mt-2">
-                          Submitted on: {new Date(homework.submission.submittedAt).toLocaleString()}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="mt-4">
-                        <textarea
-                          id={`homework-${homework.id}`}
-                          placeholder="Enter your submission..."
-                          className="w-full border rounded-lg px-3 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-green-400"
-                          rows={4}
-                        />
-                        <input
-                          type="text"
-                          id={`file-${homework.id}`}
-                          placeholder="File URL (optional)"
-                          className="w-full border rounded-lg px-3 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-green-400"
-                        />
-                        <button
-                          onClick={() => {
-                            const content = (
-                              document.getElementById(`homework-${homework.id}`) as HTMLTextAreaElement
-                            )?.value;
-                            const fileUrl = (
-                              document.getElementById(`file-${homework.id}`) as HTMLInputElement
-                            )?.value;
-                            handleSubmitHomework(homework.id, content, fileUrl || undefined);
-                          }}
-                          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition"
-                        >
-                          Submit Homework
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             )}
-          </div>
+          </motion.div>
         )}
 
         {/* Certificates Tab */}
         {activeTab === "certificates" && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-green-700">My Certificates</h2>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <Award className="w-8 h-8 text-[#808080]" />
+              <h2 className="text-3xl font-bold text-white">My Certificates</h2>
+            </div>
             {certificates.length === 0 ? (
-              <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-                <p className="text-gray-500 text-lg">No certificates issued yet</p>
-              </div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-12 text-center border border-[#333333]"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+                <div className="relative">
+                  <Award className="w-16 h-16 text-[#6b6b6b] mx-auto mb-4" />
+                  <p className="text-[#808080] text-lg">No certificates issued yet</p>
+                </div>
+              </motion.div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {certificates.map((cert) => (
-                  <div
+                {certificates.map((cert, index) => (
+                  <motion.div
                     key={cert.id}
-                    className="bg-gradient-to-br from-green-50 to-white rounded-xl shadow-lg p-6 border border-green-200 hover:shadow-xl transition"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{ scale: 1.05, y: -8 }}
+                    className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 border border-[#333333] hover:border-[#404040] transition-all duration-300"
                   >
-                    <div className="text-center mb-4">
-                      <div className="text-4xl mb-2">🏆</div>
-                      <h3 className="text-lg font-bold text-green-700">{cert.title}</h3>
-                      {cert.description && (
-                        <p className="text-sm text-gray-600 mt-2">{cert.description}</p>
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+                    <div className="relative">
+                      <div className="text-center mb-4">
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 border border-yellow-500/30 mb-3">
+                          <Award className="w-8 h-8 text-yellow-400" />
+                        </div>
+                        <h3 className="text-lg font-bold text-white">{cert.title}</h3>
+                        {cert.description && (
+                          <p className="text-sm text-[#808080] mt-2">{cert.description}</p>
+                        )}
+                      </div>
+                      <div className="space-y-2 text-sm text-[#b0b0b0]">
+                        <p className="flex items-center gap-2">
+                          <span className="font-medium text-white">Template:</span> {cert.template.name}
+                        </p>
+                        <p className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-[#808080]" />
+                          <span className="font-medium text-white">Issued:</span>{" "}
+                          {new Date(cert.issuedDate).toLocaleDateString()}
+                        </p>
+                        <p className="flex items-center gap-2">
+                          <User className="w-4 h-4 text-[#808080]" />
+                          <span className="font-medium text-white">Issued by:</span> {cert.issuedBy.name}
+                        </p>
+                      </div>
+                      {cert.certificateUrl && (
+                        <motion.a
+                          href={cert.certificateUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="mt-4 block w-full bg-gradient-to-r from-[#404040] to-[#6b6b6b] hover:from-[#6b6b6b] hover:to-[#404040] text-white text-center py-2.5 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2 border border-[#333333] hover:border-[#808080] shadow-lg"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          View Certificate
+                        </motion.a>
                       )}
                     </div>
-                    <div className="space-y-2 text-sm">
-                      <p>
-                        <span className="font-medium">Template:</span> {cert.template.name}
-                      </p>
-                      <p>
-                        <span className="font-medium">Issued:</span>{" "}
-                        {new Date(cert.issuedDate).toLocaleDateString()}
-                      </p>
-                      <p>
-                        <span className="font-medium">Issued by:</span> {cert.issuedBy.name}
-                      </p>
-                    </div>
-                    {cert.certificateUrl && (
-                      <a
-                        href={cert.certificateUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-4 block w-full bg-green-600 hover:bg-green-700 text-white text-center py-2 rounded-lg font-medium transition"
-                      >
-                        View Certificate
-                      </a>
-                    )}
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             )}
-          </div>
+          </motion.div>
         )}
 
         {/* Payments Tab */}
         {activeTab === "payments" && (
-          <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-green-700">My Payments</h2>
-                <p className="text-gray-500 text-sm">Pay fees securely online</p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 border border-[#333333] space-y-6"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+            <div className="relative">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <CreditCard className="w-8 h-8 text-[#808080]" />
+                  <div>
+                    <h2 className="text-3xl font-bold text-white">My Payments</h2>
+                    <p className="text-[#808080] text-sm">Pay fees securely online</p>
+                  </div>
+                </div>
+                <Link
+                  href="/payments"
+                  className="text-[#808080] hover:text-white text-sm font-medium flex items-center gap-1 transition"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Open full payment page
+                </Link>
               </div>
-              <Link
-                href="/payments"
-                className="text-green-600 hover:text-green-700 text-sm font-medium"
-              >
-                Open full payment page →
-              </Link>
+
+              {fee ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <motion.div
+                      whileHover={{ scale: 1.05, y: -4 }}
+                      className="relative overflow-hidden p-5 rounded-xl bg-gradient-to-br from-green-500/20 to-green-600/20 border border-green-500/30"
+                    >
+                      <p className="text-sm text-[#808080] mb-2">Payable (after discount)</p>
+                      <p className="text-3xl font-bold text-green-400">₹{fee.finalFee}</p>
+                    </motion.div>
+                    <motion.div
+                      whileHover={{ scale: 1.05, y: -4 }}
+                      className="relative overflow-hidden p-5 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30"
+                    >
+                      <p className="text-sm text-[#808080] mb-2">Paid so far</p>
+                      <p className="text-3xl font-bold text-blue-400">₹{fee.amountPaid}</p>
+                    </motion.div>
+                    <motion.div
+                      whileHover={{ scale: 1.05, y: -4 }}
+                      className="relative overflow-hidden p-5 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/20 border border-amber-500/30"
+                    >
+                      <p className="text-sm text-[#808080] mb-2">Remaining</p>
+                      <p className="text-3xl font-bold text-amber-400">₹{fee.remainingFee}</p>
+                    </motion.div>
+                    <motion.div
+                      whileHover={{ scale: 1.05, y: -4 }}
+                      className="relative overflow-hidden p-5 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 border border-purple-500/30"
+                    >
+                      <p className="text-sm text-[#808080] mb-2">Installments allowed</p>
+                      <p className="text-3xl font-bold text-purple-400">{fee.installments}</p>
+                    </motion.div>
+                  </div>
+
+                  <div className="space-y-3 mb-6">
+                    <div className="flex justify-between text-xs text-[#808080]">
+                      <span>Progress</span>
+                      <span>
+                        ₹{fee.amountPaid.toFixed(2)} / ₹{fee.finalFee.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="h-3 w-full bg-[#2d2d2d] rounded-full overflow-hidden border border-[#404040]">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min((fee.amountPaid / fee.finalFee) * 100, 100)}%` }}
+                        transition={{ duration: 1 }}
+                        className="h-3 bg-gradient-to-r from-green-500 to-green-600 rounded-full"
+                      />
+                    </div>
+                  </div>
+
+                  {fee.remainingFee <= 0 ? (
+                    <motion.div
+                      initial={{ scale: 0.9 }}
+                      animate={{ scale: 1 }}
+                      className="flex items-center gap-2 text-green-400 font-semibold p-4 bg-green-500/10 border border-green-500/30 rounded-lg"
+                    >
+                      <CheckCircle2 className="w-5 h-5" />
+                      All fees paid. Thank you!
+                    </motion.div>
+                  ) : (
+                    <div className="max-w-sm">
+                      <PayButton amount={fee.remainingFee} onSuccess={fetchFee} />
+                      <p className="text-xs text-[#808080] mt-2">
+                        Need part-payment? Open the full page to pick installments.
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center text-[#808080] py-8">
+                  Fee details not set. Please contact your school admin.
+                </div>
+              )}
             </div>
-
-            {fee ? (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl bg-green-50 border border-green-100">
-                    <p className="text-sm text-gray-600">Payable (after discount)</p>
-                    <p className="text-3xl font-bold text-green-700 mt-2">₹{fee.finalFee}</p>
-                  </div>
-                  <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
-                    <p className="text-sm text-gray-600">Paid so far</p>
-                    <p className="text-3xl font-bold text-blue-700 mt-2">₹{fee.amountPaid}</p>
-                  </div>
-                  <div className="p-4 rounded-xl bg-amber-50 border border-amber-100">
-                    <p className="text-sm text-gray-600">Remaining</p>
-                    <p className="text-3xl font-bold text-amber-700 mt-2">₹{fee.remainingFee}</p>
-                  </div>
-                  <div className="p-4 rounded-xl bg-purple-50 border border-purple-100">
-                    <p className="text-sm text-gray-600">Installments allowed</p>
-                    <p className="text-3xl font-bold text-purple-700 mt-2">{fee.installments}</p>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between text-xs text-gray-600">
-                    <span>Progress</span>
-                    <span>
-                      ₹{fee.amountPaid.toFixed(2)} / ₹{fee.finalFee.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-2 bg-green-600"
-                      style={{
-                        width: `${Math.min((fee.amountPaid / fee.finalFee) * 100, 100)}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {fee.remainingFee <= 0 ? (
-                  <div className="flex items-center gap-2 text-green-700 font-semibold">
-                    <span>✅</span> All fees paid. Thank you!
-                  </div>
-                ) : (
-                  <div className="max-w-sm">
-                    <PayButton amount={fee.remainingFee} onSuccess={fetchFee} />
-                    <p className="text-xs text-gray-500 mt-2">
-                      Need part-payment? Open the full page to pick installments.
-                    </p>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="text-center text-gray-500 py-8">
-                Fee details not set. Please contact your school admin.
-              </div>
-            )}
-          </div>
+          </motion.div>
         )}
 
         {/* Communication Tab */}
         {activeTab === "communication" && (
-          <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-green-700">Teacher Communication</h2>
-                <p className="text-gray-500 text-sm">
-                  View your appointment requests and jump into chat
-                </p>
-              </div>
-              <Link
-                href="/communication"
-                className="text-green-600 hover:text-green-700 text-sm font-medium"
-              >
-                Open chat →
-              </Link>
-            </div>
-
-            {appointments.length === 0 ? (
-              <div className="text-center text-gray-500 py-8">
-                No appointments yet. Contact your teacher from the chat page.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {appointments.map((appt) => (
-                  <div
-                    key={appt.id}
-                    className="p-4 rounded-xl border border-gray-200 flex items-center justify-between"
-                  >
-                    <div>
-                      <p className="font-semibold text-gray-800">
-                        Appointment #{appt.id.slice(0, 6)}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Requested:{" "}
-                        {appt.requestedAt
-                          ? new Date(appt.requestedAt).toLocaleString()
-                          : "Not set"}
-                      </p>
-                      {appt.note && (
-                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{appt.note}</p>
-                      )}
-                    </div>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        appt.status === "APPROVED"
-                          ? "bg-green-100 text-green-800"
-                          : appt.status === "REJECTED"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
-                    >
-                      {appt.status}
-                    </span>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 border border-[#333333] space-y-6"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+            <div className="relative">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <MessageCircle className="w-8 h-8 text-[#808080]" />
+                  <div>
+                    <h2 className="text-3xl font-bold text-white">Teacher Communication</h2>
+                    <p className="text-[#808080] text-sm">
+                      View your appointment requests and jump into chat
+                    </p>
                   </div>
-                ))}
+                </div>
+                <Link
+                  href="/communication"
+                  className="text-[#808080] hover:text-white text-sm font-medium flex items-center gap-1 transition"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Open chat
+                </Link>
               </div>
-            )}
-          </div>
+
+              {appointments.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-center text-[#808080] py-12"
+                >
+                  <MessageCircle className="w-16 h-16 text-[#6b6b6b] mx-auto mb-4" />
+                  <p>No appointments yet. Contact your teacher from the chat page.</p>
+                </motion.div>
+              ) : (
+                <div className="space-y-3">
+                  {appointments.map((appt, index) => (
+                    <motion.div
+                      key={appt.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      whileHover={{ scale: 1.02, x: 4 }}
+                      className="p-4 rounded-xl border border-[#404040] bg-[#2d2d2d]/50 hover:bg-[#404040]/50 flex items-center justify-between transition"
+                    >
+                      <div className="flex-1">
+                        <p className="font-semibold text-white flex items-center gap-2 mb-1">
+                          <MessageCircle className="w-4 h-4 text-[#808080]" />
+                          Appointment #{appt.id.slice(0, 6)}
+                        </p>
+                        <p className="text-xs text-[#808080] flex items-center gap-1 mb-2">
+                          <Calendar className="w-3 h-3" />
+                          Requested:{" "}
+                          {appt.requestedAt
+                            ? new Date(appt.requestedAt).toLocaleString()
+                            : "Not set"}
+                        </p>
+                        {appt.note && (
+                          <p className="text-sm text-[#b0b0b0] mt-1 line-clamp-2">{appt.note}</p>
+                        )}
+                      </div>
+                      <span
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1 ${
+                          appt.status === "APPROVED"
+                            ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                            : appt.status === "REJECTED"
+                            ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                            : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                        }`}
+                      >
+                        {appt.status === "APPROVED" && <CheckCircle2 className="w-3 h-3" />}
+                        {appt.status === "REJECTED" && <XCircle className="w-3 h-3" />}
+                        {appt.status === "PENDING" && <Clock className="w-3 h-3" />}
+                        {appt.status}
+                      </span>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
         )}
 
         {/* Bus Booking Tab */}
@@ -1318,85 +1601,127 @@ export default function StudentDashboardPage() {
           </div>
         )}
 
+        {/* Timetable Tab */}
+        {activeTab === "timetable" && (
+          <div className="space-y-6">
+            <TimetableView />
+          </div>
+        )}
+
         {/* TC Tab */}
         {activeTab === "tc" && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-green-700">Transfer Certificate</h2>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <FileText className="w-8 h-8 text-[#808080]" />
+              <h2 className="text-3xl font-bold text-white">Transfer Certificate</h2>
+            </div>
             {tc ? (
-              <div className="bg-white rounded-xl shadow-lg p-6 border border-green-200">
-                <div className="space-y-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 border border-[#333333]"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+                <div className="relative space-y-4">
                   <div>
-                    <p className="font-medium text-gray-700">Status:</p>
+                    <p className="font-medium text-[#808080] mb-2 flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      Status:
+                    </p>
                     <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      className={`px-4 py-2 rounded-full text-sm font-medium inline-flex items-center gap-2 ${
                         tc.status === "APPROVED"
-                          ? "bg-green-100 text-green-800"
+                          ? "bg-green-500/20 text-green-400 border border-green-500/30"
                           : tc.status === "REJECTED"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-yellow-100 text-yellow-800"
+                          ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                          : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
                       }`}
                     >
+                      {tc.status === "APPROVED" && <CheckCircle2 className="w-4 h-4" />}
+                      {tc.status === "REJECTED" && <XCircle className="w-4 h-4" />}
+                      {tc.status === "PENDING" && <Clock className="w-4 h-4" />}
                       {tc.status}
                     </span>
                   </div>
                   {tc.reason && (
                     <div>
-                      <p className="font-medium text-gray-700">Reason:</p>
-                      <p className="text-gray-600">{tc.reason}</p>
+                      <p className="font-medium text-white mb-2">Reason:</p>
+                      <p className="text-[#b0b0b0]">{tc.reason}</p>
                     </div>
                   )}
                   {tc.issuedDate && (
                     <div>
-                      <p className="font-medium text-gray-700">Issued Date:</p>
-                      <p className="text-gray-600">
+                      <p className="font-medium text-white mb-2 flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        Issued Date:
+                      </p>
+                      <p className="text-[#b0b0b0]">
                         {new Date(tc.issuedDate).toLocaleDateString()}
                       </p>
                     </div>
                   )}
                   {tc.tcDocumentUrl && (
                     <div>
-                      <a
+                      <motion.a
                         href={tc.tcDocumentUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition inline-block"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="bg-gradient-to-r from-[#404040] to-[#6b6b6b] hover:from-[#6b6b6b] hover:to-[#404040] text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 inline-flex items-center gap-2 border border-[#333333] hover:border-[#808080] shadow-lg"
                       >
+                        <Download className="w-5 h-5" />
                         Download TC Document
-                      </a>
+                      </motion.a>
                     </div>
                   )}
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-[#808080] flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
                     Requested on: {new Date(tc.createdAt).toLocaleDateString()}
                   </p>
                 </div>
-              </div>
+              </motion.div>
             ) : (
-              <div className="bg-white rounded-xl shadow-lg p-6 border border-green-200">
-                <p className="text-gray-600 mb-4">
-                  You haven't applied for a Transfer Certificate yet.
-                </p>
-                <div>
-                  <textarea
-                    id="tc-reason"
-                    placeholder="Enter reason for TC request..."
-                    className="w-full border rounded-lg px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-green-400"
-                    rows={4}
-                  />
-                  <button
-                    onClick={() => {
-                      const reason = (
-                        document.getElementById("tc-reason") as HTMLTextAreaElement
-                      )?.value;
-                      handleApplyTC(reason);
-                    }}
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition"
-                  >
-                    Apply for TC
-                  </button>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 border border-[#333333]"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+                <div className="relative">
+                  <p className="text-[#b0b0b0] mb-6">
+                    You haven't applied for a Transfer Certificate yet.
+                  </p>
+                  <div className="space-y-4">
+                    <textarea
+                      id="tc-reason"
+                      placeholder="Enter reason for TC request..."
+                      className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent placeholder-[#6b6b6b]"
+                      rows={4}
+                    />
+                    <motion.button
+                      onClick={() => {
+                        const reason = (
+                          document.getElementById("tc-reason") as HTMLTextAreaElement
+                        )?.value;
+                        handleApplyTC(reason);
+                      }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="bg-gradient-to-r from-[#404040] to-[#6b6b6b] hover:from-[#6b6b6b] hover:to-[#404040] text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2 border border-[#333333] hover:border-[#808080] shadow-lg"
+                    >
+                      <FileText className="w-5 h-5" />
+                      Apply for TC
+                    </motion.button>
+                  </div>
                 </div>
-              </div>
+              </motion.div>
             )}
-          </div>
+          </motion.div>
         )}
       </div>
     </div>

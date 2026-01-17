@@ -66,12 +66,6 @@ export async function GET(req: Request) {
               },
             },
           },
-          select: {
-            id: true,
-            roomNumber: true,
-            floor: true,
-            amount: true,
-          },
         },
         student: {
           include: {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Users } from "lucide-react";
 import { useSession } from "next-auth/react";
 import PayButton from "@/components/PayButton";
 
@@ -105,17 +105,20 @@ export default function Page() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-green-50">
-        <p className="text-green-700 font-medium">Loading payment details...</p>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#808080] mx-auto mb-4"></div>
+          <p className="text-white font-medium">Loading payment details...</p>
+        </div>
       </div>
     );
   }
 
   if (!session?.user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-green-50">
-        <div className="bg-white p-6 rounded-2xl shadow-lg">
-          <p className="text-red-600 font-semibold">
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-8 border border-[#333333]">
+          <p className="text-red-400 font-semibold">
             Please sign in to view payments.
           </p>
         </div>
@@ -127,9 +130,9 @@ export default function Page() {
 
   if (role === "STUDENT" && !fee) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-green-50">
-        <div className="bg-white p-6 rounded-2xl shadow-lg">
-          <p className="text-red-600 font-semibold">
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-8 border border-[#333333]">
+          <p className="text-red-400 font-semibold">
             Fee details not configured for your profile. Please contact admin.
           </p>
         </div>
@@ -139,9 +142,9 @@ export default function Page() {
 
   if (role !== "STUDENT" && role !== "SCHOOLADMIN" && role !== "SUPERADMIN") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-green-50">
-        <div className="bg-white p-6 rounded-2xl shadow-lg">
-          <p className="text-red-600 font-semibold">
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-8 border border-[#333333]">
+          <p className="text-red-400 font-semibold">
             Payments are available for students and school admins.
           </p>
         </div>
@@ -156,99 +159,109 @@ export default function Page() {
       fee.finalFee > 0 ? Math.min((fee.amountPaid / fee.finalFee) * 100, 100) : 0;
 
     return (
-      <div className="min-h-screen flex items-center justify-center bg-green-50 px-4">
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md bg-white rounded-2xl shadow-xl p-6 space-y-6"
+          className="relative overflow-hidden w-full max-w-md bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-8 border border-[#333333] space-y-6"
         >
-          {/* Header */}
-          <div className="text-center space-y-1">
-            <h2 className="text-2xl font-bold text-green-700">
-              Complete Your Payment
-            </h2>
-            <p className="text-gray-500">
-              Total Fee: <span className="font-semibold">₹{fee.totalFee}</span>
-            </p>
-            <p className="text-gray-500 text-sm">
-              Discount: {fee.discountPercent}% &nbsp; | &nbsp; Payable after discount:{" "}
-              <span className="font-semibold">₹{fee.finalFee}</span>
-            </p>
-            <p className="text-gray-500 text-sm">
-              Paid: <span className="font-semibold">₹{fee.amountPaid}</span> &nbsp; | &nbsp;
-              Remaining: <span className="font-semibold">₹{fee.remainingFee}</span>
-            </p>
-          </div>
-
-          {/* Plan Selector */}
-          <div className="space-y-3">
-            {[1, 3].map((p) => (
-              <motion.button
-                whileTap={{ scale: 0.97 }}
-                key={p}
-                onClick={() => setPlan(p as 1 | 3)}
-                className={`w-full p-4 rounded-xl border flex justify-between items-center transition
-                ${
-                  plan === p
-                    ? "border-green-600 bg-green-100 text-green-700"
-                    : "border-gray-200 hover:border-green-400"
-                }`}
-              >
-                <span className="font-medium">
-                  {p === 1 ? "Pay Full Remaining" : `${p} Installments`}
-                </span>
-                <span className="font-semibold">
-                  ₹{(remainingAmount / p).toFixed(2)}
-                </span>
-              </motion.button>
-            ))}
-          </div>
-
-          {/* Payment Summary */}
-          <div className="bg-green-50 rounded-xl p-4 space-y-2">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Pay Now</span>
-              <span className="font-bold text-green-700">
-                ₹{payable.toFixed(2)}
-              </span>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+          <div className="relative">
+            {/* Header */}
+            <div className="text-center space-y-2">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#2d2d2d] to-[#404040] rounded-xl flex items-center justify-center border border-[#333333] shadow-lg mx-auto mb-4">
+                <CheckCircle className="w-8 h-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-white">
+                Complete Your Payment
+              </h2>
+              <p className="text-[#808080]">
+                Total Fee: <span className="font-semibold text-white">₹{fee.totalFee}</span>
+              </p>
+              <p className="text-[#808080] text-sm">
+                Discount: {fee.discountPercent}% &nbsp; | &nbsp; Payable after discount:{" "}
+                <span className="font-semibold text-white">₹{fee.finalFee}</span>
+              </p>
+              <p className="text-[#808080] text-sm">
+                Paid: <span className="font-semibold text-white">₹{fee.amountPaid}</span> &nbsp; | &nbsp;
+                Remaining: <span className="font-semibold text-white">₹{fee.remainingFee}</span>
+              </p>
             </div>
 
-            {plan !== 1 && (
-              <div className="flex justify-between text-sm text-gray-500">
-                <span>Remaining</span>
-                <span>₹{(remainingAmount - payable).toFixed(2)}</span>
+            {/* Plan Selector */}
+            <div className="space-y-3">
+              {[1, 3].map((p) => (
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  key={p}
+                  onClick={() => setPlan(p as 1 | 3)}
+                  className={`w-full p-4 rounded-xl border flex justify-between items-center transition-all duration-300 ${
+                    plan === p
+                      ? "bg-gradient-to-r from-green-500/20 to-green-600/20 border-green-500/50 text-white shadow-lg"
+                      : "bg-[#2d2d2d] border-[#404040] text-[#808080] hover:border-[#808080] hover:text-white hover:bg-[#404040]"
+                  }`}
+                >
+                  <span className="font-medium">
+                    {p === 1 ? "Pay Full Remaining" : `${p} Installments`}
+                  </span>
+                  <span className="font-semibold">
+                    ₹{(remainingAmount / p).toFixed(2)}
+                  </span>
+                </motion.button>
+              ))}
+            </div>
+
+            {/* Payment Summary */}
+            <div className="bg-[#2d2d2d]/50 border border-[#404040] rounded-xl p-4 space-y-2">
+              <div className="flex justify-between">
+                <span className="text-[#808080]">Pay Now</span>
+                <span className="font-bold text-green-400">
+                  ₹{payable.toFixed(2)}
+                </span>
+              </div>
+
+              {plan !== 1 && (
+                <div className="flex justify-between text-sm text-[#808080]">
+                  <span>Remaining</span>
+                  <span>₹{(remainingAmount - payable).toFixed(2)}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Progress Bar */}
+            {fee.finalFee > 0 && (
+              <div>
+                <div className="flex justify-between text-xs mb-1 text-[#808080]">
+                  <span>Payment Progress</span>
+                  <span>
+                    ₹{fee.amountPaid.toFixed(2)} / ₹{fee.finalFee.toFixed(2)}
+                  </span>
+                </div>
+                <div className="w-full bg-[#2d2d2d] rounded-full h-2 overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progress}%` }}
+                    className="h-2 bg-gradient-to-r from-green-500 to-green-600 rounded-full"
+                  />
+                </div>
               </div>
             )}
+
+            {/* Pay Button */}
+            {remainingAmount <= 0 ? (
+              <motion.div
+                initial={{ scale: 0.95 }}
+                animate={{ scale: 1 }}
+                className="flex items-center justify-center gap-2 text-green-400 bg-green-500/20 border border-green-500/30 rounded-xl p-4"
+              >
+                <CheckCircle />
+                <span className="font-semibold">All fees paid. Thank you!</span>
+              </motion.div>
+            ) : (
+              <PayButton amount={payable} onSuccess={fetchFee} />
+            )}
           </div>
-
-          {/* Progress Bar */}
-          {fee.finalFee > 0 && (
-            <div>
-              <div className="flex justify-between text-xs mb-1 text-gray-500">
-                <span>Payment Progress</span>
-                <span>
-                  ₹{fee.amountPaid.toFixed(2)} / ₹{fee.finalFee.toFixed(2)}
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progress}%` }}
-                  className="h-2 bg-green-600 rounded-full"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Pay Button */}
-          {remainingAmount <= 0 ? (
-            <div className="flex items-center justify-center gap-2 text-green-700">
-              <CheckCircle />
-              <span className="font-semibold">All fees paid. Thank you!</span>
-            </div>
-          ) : (
-            <PayButton amount={payable} onSuccess={fetchFee} />
-          )}
         </motion.div>
       </div>
     );
@@ -256,212 +269,273 @@ export default function Page() {
 
   // Admin view
   return (
-    <div className="min-h-screen bg-green-50 px-4 py-8">
-      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-1 bg-white rounded-2xl shadow p-4 border border-green-100 space-y-3">
-          {stats && (
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="p-3 bg-green-50 rounded-lg border border-green-100">
-                <p className="text-gray-600">Paid</p>
-                <p className="text-lg font-bold text-green-700">{stats.paid}</p>
+    <div className="min-h-screen bg-black p-4 md:p-6">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="md:col-span-1 relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 border border-[#333333] space-y-4"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+          <div className="relative">
+            {stats && (
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="p-4 bg-green-500/20 rounded-lg border border-green-500/30"
+                >
+                  <p className="text-[#808080] text-xs mb-1">Paid</p>
+                  <p className="text-xl font-bold text-green-400">{stats.paid}</p>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="p-4 bg-yellow-500/20 rounded-lg border border-yellow-500/30"
+                >
+                  <p className="text-[#808080] text-xs mb-1">Pending</p>
+                  <p className="text-xl font-bold text-yellow-400">{stats.pending}</p>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="p-4 bg-emerald-500/20 rounded-lg border border-emerald-500/30 col-span-2"
+                >
+                  <p className="text-[#808080] text-xs mb-1">Collected</p>
+                  <p className="text-xl font-bold text-emerald-400">₹{stats.totalCollected}</p>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="p-4 bg-red-500/20 rounded-lg border border-red-500/30 col-span-2"
+                >
+                  <p className="text-[#808080] text-xs mb-1">Due</p>
+                  <p className="text-xl font-bold text-red-400">₹{stats.totalDue}</p>
+                </motion.div>
               </div>
-              <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-100">
-                <p className="text-gray-600">Pending</p>
-                <p className="text-lg font-bold text-yellow-700">{stats.pending}</p>
-              </div>
-              <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-100 col-span-2">
-                <p className="text-gray-600">Collected</p>
-                <p className="text-lg font-bold text-emerald-700">₹{stats.totalCollected}</p>
-              </div>
-              <div className="p-3 bg-red-50 rounded-lg border border-red-100 col-span-2">
-                <p className="text-gray-600">Due</p>
-                <p className="text-lg font-bold text-red-700">₹{stats.totalDue}</p>
-              </div>
-            </div>
-          )}
-          <h2 className="text-lg font-bold text-green-700 mb-3">Students</h2>
-          <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-1">
-            {adminFees.map((feeItem) => (
-              <button
-                key={feeItem.student.id}
-                onClick={() => {
-                  setSelectedFee(feeItem);
-                  setTotalFeeInput(feeItem.totalFee);
-                  setDiscountInput(feeItem.discountPercent);
-                  setInstallmentsInput(feeItem.installments);
-                }}
-                className={`w-full text-left p-3 rounded-xl border transition ${
-                  selectedFee?.student.id === feeItem.student.id
-                    ? "border-green-600 bg-green-50"
-                    : "border-gray-200 hover:border-green-300"
-                }`}
-              >
-                <div className="font-semibold text-green-800">
-                  {feeItem.student.user.name || "Unnamed"}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {feeItem.student.user.email || "No email"}
-                </div>
-                {feeItem.student.class && (
-                  <div className="text-xs text-gray-600 mt-1">
-                    {feeItem.student.class.name}
-                    {feeItem.student.class.section ? ` - ${feeItem.student.class.section}` : ""}
+            )}
+            <h2 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
+              <Users className="w-5 h-5 text-[#808080]" />
+              Students
+            </h2>
+            <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-1">
+              {adminFees.map((feeItem, index) => (
+                <motion.button
+                  key={feeItem.student.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  whileHover={{ scale: 1.02, x: 4 }}
+                  onClick={() => {
+                    setSelectedFee(feeItem);
+                    setTotalFeeInput(feeItem.totalFee);
+                    setDiscountInput(feeItem.discountPercent);
+                    setInstallmentsInput(feeItem.installments);
+                  }}
+                  className={`w-full text-left p-3 rounded-xl border transition-all duration-300 ${
+                    selectedFee?.student.id === feeItem.student.id
+                      ? "bg-gradient-to-r from-green-500/20 to-green-600/20 border-green-500/50 text-white shadow-lg"
+                      : "bg-[#2d2d2d] border-[#404040] text-[#808080] hover:border-[#808080] hover:text-white hover:bg-[#404040]"
+                  }`}
+                >
+                  <div className="font-semibold text-white">
+                    {feeItem.student.user.name || "Unnamed"}
                   </div>
+                  <div className="text-xs text-[#808080]">
+                    {feeItem.student.user.email || "No email"}
+                  </div>
+                  {feeItem.student.class && (
+                    <div className="text-xs text-[#808080] mt-1">
+                      {feeItem.student.class.name}
+                      {feeItem.student.class.section ? ` - ${feeItem.student.class.section}` : ""}
+                    </div>
+                  )}
+                </motion.button>
+              ))}
+              {adminFees.length === 0 && (
+                <p className="text-sm text-[#808080]">No students found.</p>
+              )}
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="md:col-span-2 relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 border border-[#333333]"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+          <div className="relative">
+            {selectedFee ? (
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <p className="text-sm text-[#808080] mb-1">Selected Student</p>
+                    <h3 className="text-2xl font-bold text-white flex items-center gap-2">
+                      <Users className="w-6 h-6 text-[#808080]" />
+                      {selectedFee.student.user.name || "Student"}
+                    </h3>
+                    <p className="text-sm text-[#808080] mt-1">{selectedFee.student.user.email}</p>
+                  </div>
+                </div>
+
+                {selectedFee ? (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        className="p-5 rounded-xl bg-green-500/20 border border-green-500/30"
+                      >
+                        <p className="text-sm text-[#808080] mb-2">Total Fee</p>
+                        <p className="text-3xl font-bold text-green-400">₹{selectedFee.totalFee}</p>
+                      </motion.div>
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        className="p-5 rounded-xl bg-blue-500/20 border border-blue-500/30"
+                      >
+                        <p className="text-sm text-[#808080] mb-2">Discount</p>
+                        <p className="text-3xl font-bold text-blue-400">
+                          {selectedFee.discountPercent}%
+                        </p>
+                      </motion.div>
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        className="p-5 rounded-xl bg-yellow-500/20 border border-yellow-500/30"
+                      >
+                        <p className="text-sm text-[#808080] mb-2">Payable</p>
+                        <p className="text-3xl font-bold text-yellow-400">
+                          ₹{selectedFee.finalFee}
+                        </p>
+                      </motion.div>
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        className="p-5 rounded-xl bg-emerald-500/20 border border-emerald-500/30"
+                      >
+                        <p className="text-sm text-[#808080] mb-2">Paid</p>
+                        <p className="text-3xl font-bold text-emerald-400">
+                          ₹{selectedFee.amountPaid}
+                        </p>
+                      </motion.div>
+                    </div>
+                    <div className="p-5 rounded-xl bg-[#2d2d2d]/50 border border-[#404040]">
+                      <div className="flex justify-between text-sm text-[#808080] mb-3">
+                        <span>Remaining</span>
+                        <span className="font-semibold text-green-400">₹{selectedFee.remainingFee}</span>
+                      </div>
+                      <div className="h-3 bg-[#2d2d2d] rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{
+                            width: `${Math.min(
+                              (selectedFee.amountPaid / selectedFee.finalFee) * 100,
+                              100
+                            ).toFixed(1)}%`,
+                          }}
+                          className="h-3 bg-gradient-to-r from-green-500 to-green-600 rounded-full"
+                        />
+                      </div>
+                      <p className="text-xs text-[#808080] mt-3">
+                        Installments allowed: {selectedFee.installments}
+                      </p>
+                    </div>
+                    <div className="p-5 rounded-xl bg-[#2d2d2d]/50 border border-[#404040] space-y-4">
+                      <h4 className="font-semibold text-white text-sm flex items-center gap-2">
+                        💰 Update Fees
+                      </h4>
+                      <div className="grid grid-cols-3 gap-4 text-sm">
+                        <div className="space-y-2">
+                          <label className="text-[#808080] block">Total Fee</label>
+                          <input
+                            type="number"
+                            value={totalFeeInput}
+                            onChange={(e) => setTotalFeeInput(e.target.value === "" ? "" : Number(e.target.value))}
+                            className="w-full bg-[#1a1a1a] border border-[#404040] text-white rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent hover:border-[#808080] transition placeholder-[#6b6b6b]"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[#808080] block">Discount %</label>
+                          <input
+                            type="number"
+                            value={discountInput}
+                            onChange={(e) =>
+                              setDiscountInput(e.target.value === "" ? "" : Number(e.target.value))
+                            }
+                            className="w-full bg-[#1a1a1a] border border-[#404040] text-white rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent hover:border-[#808080] transition placeholder-[#6b6b6b]"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[#808080] block">Installments</label>
+                          <input
+                            type="number"
+                            value={installmentsInput}
+                            onChange={(e) =>
+                              setInstallmentsInput(e.target.value === "" ? "" : Number(e.target.value))
+                            }
+                            className="w-full bg-[#1a1a1a] border border-[#404040] text-white rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent hover:border-[#808080] transition placeholder-[#6b6b6b]"
+                          />
+                        </div>
+                      </div>
+                      <motion.button
+                        disabled={saving}
+                        whileHover={{ scale: saving ? 1 : 1.02 }}
+                        whileTap={{ scale: saving ? 1 : 0.98 }}
+                        onClick={async () => {
+                          if (!selectedFee) return;
+                          setSaving(true);
+                          try {
+                            const res = await fetch(`/api/fees/student/${selectedFee.student.id}`, {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                totalFee:
+                                  totalFeeInput === "" ? undefined : Number(totalFeeInput),
+                                discountPercent:
+                                  discountInput === "" ? undefined : Number(discountInput),
+                                installments:
+                                  installmentsInput === "" ? undefined : Number(installmentsInput),
+                              }),
+                            });
+                            const data = await res.json();
+                            if (!res.ok) {
+                              alert(data.message || "Failed to update fee");
+                              return;
+                            }
+                            const updatedFee = data.fee as StudentFee;
+                            const merged: FeeWithStudent = { ...updatedFee, student: selectedFee.student };
+                            setSelectedFee(merged);
+                            setAdminFees((prev) =>
+                              prev.map((f) =>
+                                f.student.id === selectedFee.student.id ? merged : f
+                              )
+                            );
+                            fetchAdminSummary();
+                          } finally {
+                            setSaving(false);
+                          }
+                        }}
+                        className="w-full bg-gradient-to-r from-[#404040] to-[#6b6b6b] hover:from-[#6b6b6b] hover:to-[#404040] text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 border border-[#333333] hover:border-[#808080] shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {saving ? (
+                          <>
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white inline-block mr-2"></div>
+                            Saving...
+                          </>
+                        ) : (
+                          "Save changes"
+                        )}
+                      </motion.button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[#808080]">No fee record for this student.</p>
                 )}
-              </button>
-            ))}
-            {adminFees.length === 0 && (
-              <p className="text-sm text-gray-500">No students found.</p>
+              </>
+            ) : (
+              <div className="text-center py-12">
+                <Users size={48} className="mx-auto text-[#808080] mb-4" />
+                <p className="text-[#808080]">Select a student to view payment details.</p>
+              </div>
             )}
           </div>
-        </div>
-
-        <div className="md:col-span-2 bg-white rounded-2xl shadow p-6 border border-green-100">
-          {selectedFee ? (
-            <>
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-sm text-gray-500">Selected Student</p>
-                  <h3 className="text-2xl font-bold text-green-700">
-                    {selectedFee.student.user.name || "Student"}
-                  </h3>
-                  <p className="text-sm text-gray-500">{selectedFee.student.user.email}</p>
-                </div>
-              </div>
-
-              {selectedFee ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 rounded-xl bg-green-50 border border-green-100">
-                      <p className="text-sm text-gray-600">Total Fee</p>
-                      <p className="text-2xl font-bold text-green-700">₹{selectedFee.totalFee}</p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
-                      <p className="text-sm text-gray-600">Discount</p>
-                      <p className="text-2xl font-bold text-blue-700">
-                        {selectedFee.discountPercent}%
-                      </p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-yellow-50 border border-yellow-100">
-                      <p className="text-sm text-gray-600">Payable</p>
-                      <p className="text-2xl font-bold text-yellow-700">
-                        ₹{selectedFee.finalFee}
-                      </p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
-                      <p className="text-sm text-gray-600">Paid</p>
-                      <p className="text-2xl font-bold text-emerald-700">
-                        ₹{selectedFee.amountPaid}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
-                    <div className="flex justify-between text-sm text-gray-600 mb-2">
-                      <span>Remaining</span>
-                      <span className="font-semibold text-green-700">₹{selectedFee.remainingFee}</span>
-                    </div>
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{
-                          width: `${Math.min(
-                            (selectedFee.amountPaid / selectedFee.finalFee) * 100,
-                            100
-                          ).toFixed(1)}%`,
-                        }}
-                        className="h-2 bg-green-600"
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Installments allowed: {selectedFee.installments}
-                    </p>
-                  </div>
-                  <div className="p-4 rounded-xl bg-white border border-gray-200 space-y-3">
-                    <h4 className="font-semibold text-green-700 text-sm">Update Fees</h4>
-                    <div className="grid grid-cols-3 gap-3 text-sm">
-                      <div className="space-y-1">
-                        <label className="text-gray-500">Total Fee</label>
-                        <input
-                          type="number"
-                          value={totalFeeInput}
-                          onChange={(e) => setTotalFeeInput(e.target.value === "" ? "" : Number(e.target.value))}
-                          className="w-full border rounded-lg px-3 py-2"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-gray-500">Discount %</label>
-                        <input
-                          type="number"
-                          value={discountInput}
-                          onChange={(e) =>
-                            setDiscountInput(e.target.value === "" ? "" : Number(e.target.value))
-                          }
-                          className="w-full border rounded-lg px-3 py-2"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-gray-500">Installments</label>
-                        <input
-                          type="number"
-                          value={installmentsInput}
-                          onChange={(e) =>
-                            setInstallmentsInput(e.target.value === "" ? "" : Number(e.target.value))
-                          }
-                          className="w-full border rounded-lg px-3 py-2"
-                        />
-                      </div>
-                    </div>
-                    <button
-                      disabled={saving}
-                      onClick={async () => {
-                        if (!selectedFee) return;
-                        setSaving(true);
-                        try {
-                          const res = await fetch(`/api/fees/student/${selectedFee.student.id}`, {
-                            method: "PATCH",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                              totalFee:
-                                totalFeeInput === "" ? undefined : Number(totalFeeInput),
-                              discountPercent:
-                                discountInput === "" ? undefined : Number(discountInput),
-                              installments:
-                                installmentsInput === "" ? undefined : Number(installmentsInput),
-                            }),
-                          });
-                          const data = await res.json();
-                          if (!res.ok) {
-                            alert(data.message || "Failed to update fee");
-                            return;
-                          }
-                          const updatedFee = data.fee as StudentFee;
-                          const merged: FeeWithStudent = { ...updatedFee, student: selectedFee.student };
-                          setSelectedFee(merged);
-                          setAdminFees((prev) =>
-                            prev.map((f) =>
-                              f.student.id === selectedFee.student.id ? merged : f
-                            )
-                          );
-                          fetchAdminSummary();
-                        } finally {
-                          setSaving(false);
-                        }
-                      }}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 disabled:opacity-60"
-                    >
-                      {saving ? "Saving..." : "Save changes"}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-gray-500">No fee record for this student.</p>
-              )}
-            </>
-          ) : (
-            <p className="text-gray-500">Select a student to view payment details.</p>
-          )}
-        </div>
+        </motion.div>
       </div>
     </div>
+    
   );
 }

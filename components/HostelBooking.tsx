@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { Building2, MapPin, Bed, CheckCircle, IndianRupee } from "lucide-react";
+import { Building2, MapPin, Bed, CheckCircle, IndianRupee, Users, Calendar, AlertCircle } from "lucide-react";
 
 interface Room {
   id: string;
@@ -262,10 +262,10 @@ export default function HostelBooking() {
 
   if (loading || status === "loading") {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-          <p className="mt-4 text-green-700 font-medium">Loading hostels...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#808080] mx-auto mb-4"></div>
+          <p className="text-white">Loading hostels...</p>
         </div>
       </div>
     );
@@ -273,8 +273,13 @@ export default function HostelBooking() {
 
   if (status === "unauthenticated" || session?.user?.role !== "STUDENT") {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-red-600 text-lg font-medium">Access Denied: Only students can book hostels.</p>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-6">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="text-red-400" size={24} />
+            <p className="text-red-400 text-lg font-medium">Access Denied: Only students can book hostels.</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -283,61 +288,102 @@ export default function HostelBooking() {
   const selectedRoomData = selectedHostelData?.rooms.find((r) => r.id === selectedRoom);
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-3xl font-bold text-green-700">Hostel Booking</h1>
+    <div className="min-h-screen bg-black p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-3"
+        >
+          <div className="w-12 h-12 bg-gradient-to-br from-[#2d2d2d] to-[#404040] rounded-xl flex items-center justify-center border border-[#333333] shadow-lg">
+            <Building2 className="w-6 h-6 text-white" />
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold text-white">Hostel Booking</h1>
+        </motion.div>
 
       {myBooking && myBooking.paymentStatus === "PAID" && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl shadow-lg p-6 border-2 border-green-300"
+          className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 md:p-8 border-2 border-green-500/30 hover:border-green-500/50 transition-all duration-300"
         >
-          <div className="flex items-center gap-3 mb-4">
-            <CheckCircle className="text-green-600" size={32} />
-            <h2 className="text-2xl font-bold text-green-700">My Booking</h2>
+          <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 via-transparent to-green-500/10"></div>
+          <div className="relative">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500/20 to-green-600/20 rounded-xl flex items-center justify-center border border-green-500/30">
+                <CheckCircle className="text-green-400" size={32} />
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold text-white">My Booking</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-[#2d2d2d]/50 border border-[#404040] rounded-lg p-4 hover:bg-[#404040]/50 transition">
+                <p className="text-sm text-[#808080] mb-1 flex items-center gap-2">
+                  <Building2 size={14} />
+                  Hostel
+                </p>
+                <p className="text-lg font-bold text-white">{myBooking.room.hostel.name}</p>
+              </div>
+              <div className="bg-[#2d2d2d]/50 border border-[#404040] rounded-lg p-4 hover:bg-[#404040]/50 transition">
+                <p className="text-sm text-[#808080] mb-1 flex items-center gap-2">
+                  <Building2 size={14} />
+                  Room
+                </p>
+                <p className="text-lg font-bold text-white">Room {myBooking.room.roomNumber}</p>
+              </div>
+              <div className="bg-[#2d2d2d]/50 border border-[#404040] rounded-lg p-4 hover:bg-[#404040]/50 transition">
+                <p className="text-sm text-[#808080] mb-1 flex items-center gap-2">
+                  <Bed size={14} />
+                  Cot Number
+                </p>
+                <p className="text-lg font-bold text-white">Cot {myBooking.cotNumber}</p>
+              </div>
+              <div className="bg-[#2d2d2d]/50 border border-[#404040] rounded-lg p-4 hover:bg-[#404040]/50 transition">
+                <p className="text-sm text-[#808080] mb-1 flex items-center gap-2">
+                  <IndianRupee size={14} />
+                  Amount Paid
+                </p>
+                <p className="text-lg font-bold text-green-400">₹{myBooking.amount}</p>
+              </div>
+              <div className="bg-[#2d2d2d]/50 border border-[#404040] rounded-lg p-4 hover:bg-[#404040]/50 transition md:col-span-2">
+                <p className="text-sm text-[#808080] mb-1 flex items-center gap-2">
+                  <MapPin size={14} />
+                  Address
+                </p>
+                <p className="text-lg font-medium text-white">{myBooking.room.hostel.address}</p>
+              </div>
+            </div>
+            {myBooking.createdAt && (
+              <div className="flex items-center gap-2 mt-4 pt-4 border-t border-[#333333] text-sm text-[#808080]">
+                <Calendar size={14} />
+                <span>Booked on: {mounted ? new Date(myBooking.createdAt).toLocaleDateString() : myBooking.createdAt}</span>
+              </div>
+            )}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-600">Hostel</p>
-              <p className="text-lg font-bold text-green-700">{myBooking.room.hostel.name}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Room</p>
-              <p className="text-lg font-bold text-green-700">Room {myBooking.room.roomNumber}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Cot Number</p>
-              <p className="text-lg font-bold text-green-700">Cot {myBooking.cotNumber}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Amount Paid</p>
-              <p className="text-lg font-bold text-green-700">₹{myBooking.amount}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Address</p>
-              <p className="text-lg font-medium">{myBooking.room.hostel.address}</p>
-            </div>
-          </div>
-          {myBooking.createdAt && (
-            <p className="text-sm text-gray-500 mt-4">
-              Booked on: {mounted ? new Date(myBooking.createdAt).toLocaleDateString() : myBooking.createdAt}
-            </p>
-          )}
         </motion.div>
       )}
 
       <div>
-        <h2 className="text-2xl font-bold text-green-700 mb-4">
+        <motion.h2
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3"
+        >
+          <Building2 size={24} className="text-[#808080]" />
           {myBooking && myBooking.paymentStatus === "PAID" ? "Other Available Hostels" : "Available Hostels"}
-        </h2>
+        </motion.h2>
         {hostels.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-            <Building2 size={48} className="mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-500 text-lg">No hostels available</p>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-[#1a1a1a] border border-[#333333] rounded-xl shadow-lg p-12 text-center"
+          >
+            <Building2 size={48} className="mx-auto text-[#808080] mb-4 opacity-50" />
+            <p className="text-[#808080] text-lg">No hostels available</p>
+          </motion.div>
         ) : (
           <div className="space-y-6">
-            {hostels.map((hostel) => {
+            {hostels.map((hostel, index) => {
               const isMyHostel = myBooking?.room.hostel.id === hostel.id && myBooking?.paymentStatus === "PAID";
               const hasBooking = myBooking && myBooking.paymentStatus === "PAID";
 
@@ -346,66 +392,79 @@ export default function HostelBooking() {
                   key={hostel.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`bg-white rounded-xl shadow-lg p-6 border-2 ${
+                  transition={{ delay: index * 0.1 }}
+                  whileHover={{ y: -4, scale: 1.01 }}
+                  className={`relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] to-[#2d2d2d] rounded-2xl shadow-lg p-6 md:p-8 border-2 ${
                     selectedHostel === hostel.id
-                      ? "border-green-500 shadow-xl"
-                      : "border-green-200 hover:shadow-xl"
+                      ? "border-green-500/50 shadow-xl"
+                      : "border-[#333333] hover:border-[#404040] hover:shadow-xl transition-all duration-300"
                   } ${hasBooking && !isMyHostel ? "opacity-60" : ""}`}
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="text-2xl font-bold text-green-700">{hostel.name}</h3>
-                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <MapPin size={14} />
-                          <span>{hostel.address}</span>
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#404040]/20 to-transparent rounded-bl-full"></div>
+                  <div className="relative">
+                    <div className="flex items-start justify-between mb-6">
+                      <div>
+                        <h3 className="text-2xl font-bold text-white mb-3">{hostel.name}</h3>
+                        <div className="flex items-center gap-4 text-sm text-[#808080]">
+                          <div className="flex items-center gap-2">
+                            <MapPin size={14} />
+                            <span>{hostel.address}</span>
+                          </div>
+                          <span className="inline-flex items-center px-3 py-1 bg-green-500/20 text-green-400 border border-green-500/30 rounded-full text-xs font-semibold">
+                            {hostel.gender}
+                          </span>
                         </div>
-                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
-                          {hostel.gender}
-                        </span>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                    {hostel.rooms.map((room) => (
-                      <div
-                        key={room.id}
-                        className={`border-2 rounded-lg p-4 cursor-pointer transition ${
-                          selectedRoom === room.id
-                            ? "border-green-500 bg-green-50"
-                            : "border-gray-200 hover:border-green-300"
-                        } ${room.availableCotsCount === 0 ? "opacity-50" : ""}`}
-                        onClick={() => {
-                          if (room.availableCotsCount > 0 && !hasBooking) {
-                            setSelectedHostel(hostel.id);
-                            setSelectedRoom(room.id);
-                            setSelectedCot(null);
-                          }
-                        }}
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <p className="font-semibold text-green-700">Room {room.roomNumber}</p>
-                            <p className="text-xs text-gray-600">Floor {room.floor}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                      {hostel.rooms.map((room, roomIndex) => (
+                        <motion.div
+                          key={room.id}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: roomIndex * 0.05 }}
+                          whileHover={{ y: -4, scale: 1.02 }}
+                          className={`border-2 rounded-xl p-4 cursor-pointer transition-all duration-300 ${
+                            selectedRoom === room.id
+                              ? "border-green-500/50 bg-[#2d2d2d] shadow-lg"
+                              : "border-[#404040] hover:border-green-500/30 hover:bg-[#2d2d2d]/50"
+                          } ${room.availableCotsCount === 0 ? "opacity-50 cursor-not-allowed" : ""}`}
+                          onClick={() => {
+                            if (room.availableCotsCount > 0 && !hasBooking) {
+                              setSelectedHostel(hostel.id);
+                              setSelectedRoom(room.id);
+                              setSelectedCot(null);
+                            }
+                          }}
+                        >
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <p className="font-semibold text-white">Room {room.roomNumber}</p>
+                              <p className="text-xs text-[#808080]">Floor {room.floor}</p>
+                            </div>
+                            <span className="font-bold text-green-400 flex items-center gap-1">
+                              <IndianRupee size={14} />
+                              {room.amount}
+                            </span>
                           </div>
-                          <span className="font-bold text-green-700">₹{room.amount}</span>
-                        </div>
-                        <div className="mt-2">
-                          <p className="text-xs text-gray-600 mb-1">
-                            {room.availableCotsCount} / {room.cotCount} cots available
-                          </p>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className="bg-green-600 h-2 rounded-full"
-                              style={{
-                                width: `${(room.availableCotsCount / room.cotCount) * 100}%`,
-                              }}
-                            ></div>
+                          <div className="mt-3">
+                            <p className="text-xs text-[#808080] mb-2 flex items-center gap-2">
+                              <Bed size={12} />
+                              {room.availableCotsCount} / {room.cotCount} cots available
+                            </p>
+                            <div className="w-full bg-[#2d2d2d] rounded-full h-2 overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${(room.availableCotsCount / room.cotCount) * 100}%` }}
+                                transition={{ duration: 0.5 }}
+                                className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full"
+                              ></motion.div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    ))}
+                        </motion.div>
+                      ))}
+                    </div>
                   </div>
                 </motion.div>
               );
@@ -418,99 +477,135 @@ export default function HostelBooking() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl shadow-lg p-6 border border-green-200 space-y-6"
+          className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 md:p-8 border border-[#333333] hover:border-[#404040] transition-all duration-300 space-y-6"
         >
-          <h2 className="text-2xl font-bold text-green-700">
-            Book Cot - {selectedHostelData?.name} - Room {selectedRoomData.roomNumber}
-          </h2>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+          <div className="relative">
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+              <Bed size={24} />
+              Book Cot - {selectedHostelData?.name} - Room {selectedRoomData.roomNumber}
+            </h2>
 
-          <div>
-            <p className="text-sm text-gray-600 mb-4 font-medium">Select a cot (available cots are shown in green):</p>
-            <div className="grid grid-cols-8 gap-2">
-              {Array.from({ length: selectedRoomData.cotCount }, (_, i) => i + 1).map((cotNum) => {
-                const isBooked = !selectedRoomData.availableCots.includes(cotNum);
-                const isSelected = selectedCot === cotNum;
+            <div>
+              <p className="text-sm text-[#808080] mb-4 font-medium">Select a cot (available cots are shown in green):</p>
+              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">
+                {Array.from({ length: selectedRoomData.cotCount }, (_, i) => i + 1).map((cotNum) => {
+                  const isBooked = !selectedRoomData.availableCots.includes(cotNum);
+                  const isSelected = selectedCot === cotNum;
 
-                return (
-                  <button
-                    key={cotNum}
-                    onClick={() => !isBooked && setSelectedCot(cotNum)}
-                    disabled={isBooked}
-                    className={`p-3 rounded-lg font-medium transition flex items-center justify-center gap-1 ${
-                      isBooked
-                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                        : isSelected
-                        ? "bg-green-600 text-white ring-2 ring-green-400"
-                        : "bg-green-100 text-green-700 hover:bg-green-200"
-                    }`}
-                  >
-                    <Bed size={16} />
-                    {cotNum}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="flex gap-4 mt-4">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-green-100 border border-green-300 rounded"></div>
-                <span className="text-sm text-gray-600">Available</span>
+                  return (
+                    <motion.button
+                      key={cotNum}
+                      onClick={() => !isBooked && setSelectedCot(cotNum)}
+                      disabled={isBooked}
+                      whileHover={!isBooked ? { scale: 1.1 } : {}}
+                      whileTap={!isBooked ? { scale: 0.95 } : {}}
+                      className={`p-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-1 border ${
+                        isBooked
+                          ? "bg-[#2d2d2d] text-[#6b6b6b] cursor-not-allowed border-[#404040]"
+                          : isSelected
+                          ? "bg-green-500 text-white ring-2 ring-green-400 border-green-500 shadow-lg"
+                          : "bg-[#2d2d2d] text-white hover:bg-green-500/20 hover:border-green-500/50 border-[#404040]"
+                      }`}
+                    >
+                      <Bed size={16} />
+                      {cotNum}
+                    </motion.button>
+                  );
+                })}
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-gray-200 border border-gray-300 rounded"></div>
-                <span className="text-sm text-gray-600">Booked</span>
-              </div>
-            </div>
-          </div>
-
-          {selectedCot && selectedRoomData && (
-            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-              <h3 className="font-semibold text-gray-700 mb-3">Booking Summary:</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Hostel:</span>
-                  <span className="font-medium">{selectedHostelData?.name}</span>
+              <div className="flex gap-4 mt-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-green-500/20 border border-green-500/50 rounded"></div>
+                  <span className="text-sm text-[#808080]">Available</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Room:</span>
-                  <span className="font-medium">Room {selectedRoomData.roomNumber} (Floor {selectedRoomData.floor})</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Cot:</span>
-                  <span className="font-medium">Cot {selectedCot}</span>
-                </div>
-                <div className="border-t border-green-300 pt-2 mt-2 flex justify-between font-bold text-green-700">
-                  <span>Total Amount:</span>
-                  <span>₹{selectedRoomData.amount}</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-[#2d2d2d] border border-[#404040] rounded"></div>
+                  <span className="text-sm text-[#808080]">Booked</span>
                 </div>
               </div>
             </div>
-          )}
 
-          <div className="flex gap-4">
-            <button
-              onClick={handleBookCot}
-              disabled={!selectedCot || bookingLoading || !razorpayLoaded}
-              className={`flex-1 px-6 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 ${
-                selectedCot && !bookingLoading && razorpayLoaded
-                  ? "bg-green-600 hover:bg-green-700 text-white"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
-            >
-              {bookingLoading ? "Processing..." : razorpayLoaded ? `Pay ₹${selectedRoomData?.amount || 0}` : "Loading Payment..."}
-            </button>
-            <button
-              onClick={() => {
-                setSelectedHostel(null);
-                setSelectedRoom(null);
-                setSelectedCot(null);
-              }}
-              className="px-6 py-3 rounded-lg font-medium bg-gray-200 hover:bg-gray-300 text-gray-700 transition"
-            >
-              Cancel
-            </button>
+            {selectedCot && selectedRoomData && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-[#2d2d2d]/50 rounded-xl p-4 border border-[#404040]"
+              >
+                <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
+                  <CheckCircle size={18} className="text-green-400" />
+                  Booking Summary:
+                </h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between text-[#808080]">
+                    <span>Hostel:</span>
+                    <span className="font-medium text-white">{selectedHostelData?.name}</span>
+                  </div>
+                  <div className="flex justify-between text-[#808080]">
+                    <span>Room:</span>
+                    <span className="font-medium text-white">Room {selectedRoomData.roomNumber} (Floor {selectedRoomData.floor})</span>
+                  </div>
+                  <div className="flex justify-between text-[#808080]">
+                    <span>Cot:</span>
+                    <span className="font-medium text-white">Cot {selectedCot}</span>
+                  </div>
+                  <div className="border-t border-[#404040] pt-2 mt-2 flex justify-between font-bold text-green-400">
+                    <span className="flex items-center gap-2">
+                      <IndianRupee size={16} />
+                      Total Amount:
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <IndianRupee size={16} />
+                      {selectedRoomData.amount}
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            <div className="flex gap-4 pt-2">
+              <motion.button
+                onClick={handleBookCot}
+                disabled={!selectedCot || bookingLoading || !razorpayLoaded}
+                whileHover={selectedCot && !bookingLoading && razorpayLoaded ? { scale: 1.02 } : {}}
+                whileTap={selectedCot && !bookingLoading && razorpayLoaded ? { scale: 0.98 } : {}}
+                className={`flex-1 px-6 py-3.5 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
+                  selectedCot && !bookingLoading && razorpayLoaded
+                    ? "bg-gradient-to-r from-[#404040] to-[#6b6b6b] hover:from-[#6b6b6b] hover:to-[#404040] text-white border border-[#333333] hover:border-[#808080] shadow-lg"
+                    : "bg-[#2d2d2d] text-[#6b6b6b] cursor-not-allowed border border-[#404040]"
+                }`}
+              >
+                {bookingLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <span>Processing...</span>
+                  </>
+                ) : razorpayLoaded ? (
+                  <>
+                    <IndianRupee size={18} />
+                    <span>Pay ₹{selectedRoomData?.amount || 0}</span>
+                  </>
+                ) : (
+                  "Loading Payment..."
+                )}
+              </motion.button>
+              <motion.button
+                onClick={() => {
+                  setSelectedHostel(null);
+                  setSelectedRoom(null);
+                  setSelectedCot(null);
+                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="px-6 py-3.5 rounded-lg font-semibold bg-[#2d2d2d] hover:bg-[#404040] text-white transition-all duration-300 border border-[#333333] hover:border-[#808080]"
+              >
+                Cancel
+              </motion.button>
+            </div>
           </div>
         </motion.div>
       )}
+      </div>
     </div>
   );
 }

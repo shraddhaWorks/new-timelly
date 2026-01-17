@@ -12,6 +12,7 @@ import {
   BookOpen,
   Newspaper,
   MessageSquare,
+  GraduationCap,
 } from "lucide-react"
 
 import RequireRole from "./RequireRole"
@@ -47,16 +48,26 @@ export default function TeachersPage() {
   const [active, setActive] = useState(actions[0])
 
   return (
-    <div className="flex min-h-screen bg-green-50 m-0 p-0">
+    <div className="flex min-h-screen bg-black m-0 p-0">
       {/* SIDEBAR */}
-      <aside className="w-72 bg-white border-r border-green-200 shadow-lg">
-        <div className="p-6 border-b border-green-200">
-          <h1 className="text-2xl font-bold text-green-700">
-            🎓 Teacher Panel
-          </h1>
+      <aside className="w-64 md:w-72 bg-[#1a1a1a] border-r border-[#333333] shadow-2xl flex-shrink-0">
+        <div className="p-6 border-b border-[#333333]">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-[#404040] rounded-lg flex items-center justify-center">
+              <GraduationCap className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold text-white">
+                Teacher Portal
+              </h1>
+              <p className="text-xs md:text-sm text-[#808080]">
+                Dashboard
+              </p>
+            </div>
+          </div>
         </div>
 
-        <nav className="p-4 space-y-2">
+        <nav className="p-3 md:p-4 space-y-2 overflow-y-auto max-h-[calc(100vh-120px)]">
           {actions.map((item) => {
             const Icon = item.icon
             const isActive = active.id === item.id
@@ -64,19 +75,19 @@ export default function TeachersPage() {
             return (
               <motion.button
                 key={item.id}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+                whileHover={{ scale: 1.02, x: 4 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setActive(item)}
-                className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left transition
+                className={`w-full flex items-center gap-3 md:gap-4 px-3 md:px-4 py-2.5 md:py-3 rounded-lg text-left transition
                   ${
                     isActive
-                      ? "bg-green-600 text-white shadow-md"
-                      : "text-green-700 hover:bg-green-100"
+                      ? "bg-[#404040] text-white shadow-lg border-l-4 border-[#808080]"
+                      : "text-[#808080] hover:bg-[#2d2d2d] hover:text-white"
                   }
                 `}
               >
-                <Icon size={20} />
-                <span className="font-medium">{item.label}</span>
+                <Icon size={18} className="flex-shrink-0" />
+                <span className="font-medium text-sm md:text-base truncate">{item.label}</span>
               </motion.button>
             )
           })}
@@ -84,7 +95,7 @@ export default function TeachersPage() {
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 overflow-hidden m-0 p-0">
+      <main className="flex-1 overflow-hidden bg-black m-0 p-0">
         <AnimatePresence mode="wait">
           <motion.div
             key={active.id}
@@ -92,11 +103,10 @@ export default function TeachersPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.35 }}
-            className="bg-white h-full w-full overflow-hidden m-0 p-0 rounded-none shadow-none"
+            className="bg-black h-full w-full overflow-auto p-4 md:p-6"
           >
-
             {/* CONTENT AREA */}
-            <div className="h-full w-full m-0 p-0">
+            <div className="h-full w-full">
               {renderContent(active.id)}
             </div>
           </motion.div>
@@ -232,9 +242,12 @@ function Leaves() {
 function ComingSoon() {
   return (
     <div className="h-full w-full flex items-center justify-center">
-      <p className="text-gray-500">
-        🚧 Feature under development
-      </p>
+      <div className="text-center">
+        <div className="w-20 h-20 bg-[#2d2d2d] rounded-full flex items-center justify-center mx-auto mb-4">
+          <GraduationCap className="w-10 h-10 text-[#808080]" />
+        </div>
+        <p className="text-[#808080] text-lg">Feature under development</p>
+      </div>
     </div>
   )
 }

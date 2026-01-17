@@ -149,14 +149,14 @@ export default function ClassesPage() {
   if (!session) return <p className="p-6 text-red-600">Not authenticated</p>;
 
   return (
-    <div className="min-h-screen bg-green-50">
+    <div className="min-h-screen bg-black p-4 md:p-6">
       {/* Navbar */}
-      <nav className="bg-green-600 text-white p-4 flex justify-between items-center shadow-md">
-        <h1 className="text-xl font-bold">Manage Classes</h1>
-        <div className="flex gap-4 items-center">
+      <nav className="bg-[#1a1a1a] border border-[#333333] text-white p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-lg rounded-lg mb-6">
+        <h1 className="text-xl md:text-2xl font-bold">Manage Classes</h1>
+        <div className="flex gap-3 items-center">
           <a
             href="/students/assign"
-            className="bg-white text-green-600 px-4 py-2 rounded hover:bg-green-100 transition"
+            className="bg-[#2d2d2d] hover:bg-[#404040] text-white px-4 py-2 rounded-lg transition border border-[#333333]"
           >
             Assign Students
           </a>
@@ -165,20 +165,20 @@ export default function ClassesPage() {
               handleCancel();
               setShowForm(!showForm);
             }}
-            className="bg-white text-green-600 px-4 py-2 rounded hover:bg-green-100 transition"
+            className="bg-[#404040] hover:bg-[#6b6b6b] text-white px-4 py-2 rounded-lg transition border border-[#333333]"
           >
             {showForm ? "Cancel" : "Add Class"}
           </button>
         </div>
       </nav>
 
-      <div className="p-6 max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {message && (
           <div
-            className={`p-4 mb-4 rounded ${
+            className={`p-4 mb-4 rounded-lg border ${
               message.includes("successfully")
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
+                ? "bg-[#2d2d2d] text-white border-[#404040]"
+                : "bg-red-500/10 text-red-400 border-red-500/30"
             }`}
           >
             {message}
@@ -187,14 +187,14 @@ export default function ClassesPage() {
 
         {/* Form */}
         {showForm && (
-          <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-            <h2 className="text-2xl font-bold mb-4 text-green-700">
+          <div className="bg-[#1a1a1a] border border-[#333333] p-6 rounded-lg shadow-lg mb-6">
+            <h2 className="text-2xl font-bold mb-4 text-white">
               {editingClass ? "Edit Class" : "Create New Class"}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Class Name <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-[#808080] mb-1">
+                  Class Name <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -202,12 +202,12 @@ export default function ClassesPage() {
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="e.g., Class 1, Grade 5"
                   required
-                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+                  className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent placeholder-[#6b6b6b]"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[#808080] mb-1">
                   Section (Optional)
                 </label>
                 <input
@@ -217,12 +217,12 @@ export default function ClassesPage() {
                     setForm({ ...form, section: e.target.value })
                   }
                   placeholder="e.g., A, B, C"
-                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+                  className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent placeholder-[#6b6b6b]"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[#808080] mb-1">
                   Assign Teacher (Optional)
                 </label>
                 <select
@@ -230,11 +230,11 @@ export default function ClassesPage() {
                   onChange={(e) =>
                     setForm({ ...form, teacherId: e.target.value })
                   }
-                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+                  className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent"
                 >
-                  <option value="">Select a teacher</option>
+                  <option value="" className="bg-[#2d2d2d]">Select a teacher</option>
                   {teachers.map((teacher) => (
-                    <option key={teacher.id} value={teacher.id}>
+                    <option key={teacher.id} value={teacher.id} className="bg-[#2d2d2d]">
                       {teacher.name} ({teacher.email})
                     </option>
                   ))}
@@ -245,7 +245,7 @@ export default function ClassesPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition disabled:opacity-50"
+                  className="bg-[#404040] hover:bg-[#6b6b6b] text-white px-6 py-2 rounded-lg font-medium transition disabled:opacity-50 border border-[#333333]"
                 >
                   {loading
                     ? "Saving..."
@@ -256,7 +256,7 @@ export default function ClassesPage() {
                 <button
                   type="button"
                   onClick={handleCancel}
-                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-lg font-medium transition"
+                  className="bg-[#2d2d2d] hover:bg-[#404040] text-white px-6 py-2 rounded-lg font-medium transition border border-[#333333]"
                 >
                   Cancel
                 </button>
@@ -266,64 +266,64 @@ export default function ClassesPage() {
         )}
 
         {/* Classes List */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="p-4 bg-green-600 text-white">
+        <div className="bg-[#1a1a1a] border border-[#333333] rounded-lg shadow-lg overflow-hidden">
+          <div className="p-4 bg-[#2d2d2d] border-b border-[#333333] text-white">
             <h2 className="text-xl font-bold">Classes ({classes.length})</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-green-50">
+              <thead className="bg-[#2d2d2d]">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-white border-b border-[#333333]">
                     Class Name
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-white border-b border-[#333333]">
                     Section
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-white border-b border-[#333333]">
                     Teacher
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-white border-b border-[#333333]">
                     Students
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-white border-b border-[#333333]">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-[#333333]">
                 {classes.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={5} className="px-4 py-8 text-center text-[#808080]">
                       No classes found. Create your first class!
                     </td>
                   </tr>
                 ) : (
                   classes.map((classItem) => (
-                    <tr key={classItem.id} className="hover:bg-green-50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                    <tr key={classItem.id} className="hover:bg-[#2d2d2d] transition">
+                      <td className="px-4 py-3 text-sm font-medium text-white">
                         {classItem.name}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
+                      <td className="px-4 py-3 text-sm text-[#808080]">
                         {classItem.section || "-"}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
+                      <td className="px-4 py-3 text-sm text-[#808080]">
                         {classItem.teacher?.name || "Not assigned"}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
+                      <td className="px-4 py-3 text-sm text-[#808080]">
                         {classItem._count.students}
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleEdit(classItem)}
-                            className="text-blue-600 hover:text-blue-800 font-medium"
+                            className="text-blue-400 hover:text-blue-300 font-medium transition"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleDelete(classItem.id)}
-                            className="text-red-600 hover:text-red-800 font-medium"
+                            className="text-red-400 hover:text-red-300 font-medium transition"
                           >
                             Delete
                           </button>

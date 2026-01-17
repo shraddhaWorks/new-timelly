@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { Bus, MapPin, Clock, Phone, Users, CheckCircle, IndianRupee } from "lucide-react";
+import { Bus, MapPin, Clock, Phone, Users, CheckCircle, IndianRupee, AlertCircle, TrendingUp } from "lucide-react";
 
 interface BusRoute {
   id: string;
@@ -64,12 +64,10 @@ export default function BusBooking() {
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // Ensure component is mounted (client-side only)
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Load Razorpay script (client-side only)
   useEffect(() => {
     if (!mounted) return;
     
@@ -124,7 +122,6 @@ export default function BusBooking() {
       const res = await fetch("/api/bus/list");
       const data = await res.json();
       if (res.ok && data.buses) {
-        // Find if student has any booking
         for (const bus of data.buses) {
           if (bus.bookings && Array.isArray(bus.bookings)) {
             const myBook = bus.bookings.find(
@@ -177,7 +174,6 @@ export default function BusBooking() {
 
     setBookingLoading(true);
     try {
-      // Step 1: Create booking and get Razorpay order
       const res = await fetch("/api/bus/booking", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -197,7 +193,6 @@ export default function BusBooking() {
 
       const { booking, razorpayOrder } = data;
 
-      // Step 2: Open Razorpay payment gateway
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
         amount: razorpayOrder.amount,
@@ -206,7 +201,6 @@ export default function BusBooking() {
         name: "Bus Booking",
         description: `Bus ${selectedBusData?.busNumber} - Seat ${selectedSeat} - ${selectedRouteData.location}`,
         handler: async (response: any) => {
-          // Step 3: Verify payment
           try {
             const verifyRes = await fetch("/api/bus/booking/verify", {
               method: "POST",
@@ -242,7 +236,7 @@ export default function BusBooking() {
           email: session?.user?.email || "",
         },
         theme: {
-          color: "#16a34a",
+          color: "#404040",
         },
         modal: {
           ondismiss: () => {
@@ -261,17 +255,16 @@ export default function BusBooking() {
     }
   };
 
-  // Show loading state until mounted and session is loaded
   if (!mounted) {
-    return null; // Don't render anything until mounted to prevent hydration errors
+    return null;
   }
 
   if (loading || status === "loading") {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-full bg-black min-h-screen">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-          <p className="mt-4 text-green-700 font-medium">Loading buses...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#808080]"></div>
+          <p className="mt-4 text-white font-medium">Loading buses...</p>
         </div>
       </div>
     );
@@ -279,8 +272,8 @@ export default function BusBooking() {
 
   if (status === "unauthenticated" || session?.user?.role !== "STUDENT") {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-red-600 text-lg font-medium">Access Denied: Only students can book buses.</p>
+      <div className="flex items-center justify-center h-full bg-black min-h-screen">
+        <p className="text-red-400 text-lg font-medium">Access Denied: Only students can book buses.</p>
       </div>
     );
   }
@@ -289,320 +282,441 @@ export default function BusBooking() {
   const selectedRouteData = selectedBusData?.routes.find((r) => r.id === selectedRoute);
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-3xl font-bold text-green-700">Bus Booking</h1>
-
-      {/* My Booking */}
-      {myBooking && myBooking.paymentStatus === "PAID" && (
+    <div className="min-h-screen bg-black p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl shadow-lg p-6 border-2 border-green-300"
+          className="mb-6"
         >
-          <div className="flex items-center gap-3 mb-4">
-            <CheckCircle className="text-green-600" size={32} />
-            <h2 className="text-2xl font-bold text-green-700">My Booking</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-600">Bus Number</p>
-              <p className="text-lg font-bold text-green-700">{myBooking.bus.busNumber}</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-[#2d2d2d] to-[#404040] rounded-xl flex items-center justify-center border border-[#333333] shadow-lg">
+              <Bus className="w-6 h-6 text-white" />
             </div>
-            <div>
-              <p className="text-sm text-gray-600">Seat Number</p>
-              <p className="text-lg font-bold text-green-700">Seat {myBooking.seatNumber}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Location</p>
-              <p className="text-lg font-medium">{myBooking.route?.location || "N/A"}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Amount Paid</p>
-              <p className="text-lg font-bold text-green-700">₹{myBooking.amount}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Time</p>
-              <p className="text-lg font-medium">{myBooking.bus.time}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Driver</p>
-              <p className="text-lg font-medium">{myBooking.bus.driverName}</p>
-            </div>
-          </div>
-          {myBooking.createdAt && (
-            <p className="text-sm text-gray-500 mt-4">
-              Booked on: {mounted ? new Date(myBooking.createdAt).toLocaleDateString() : myBooking.createdAt}
-            </p>
-          )}
+            Bus Booking
+          </h1>
+          <p className="text-[#808080] text-sm md:text-base">Book your seat and pay securely</p>
         </motion.div>
-      )}
 
-      {/* Available Buses */}
-      <div>
-        <h2 className="text-2xl font-bold text-green-700 mb-4">
-          {myBooking && myBooking.paymentStatus === "PAID" ? "Other Available Buses" : "Available Buses"}
-        </h2>
-        {buses.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-            <Bus size={48} className="mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-500 text-lg">No buses available</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {buses.map((bus) => {
-              const isMyBus = myBooking?.bus.id === bus.id && myBooking?.paymentStatus === "PAID";
-              const hasBooking = myBooking && myBooking.paymentStatus === "PAID";
-
-              return (
-                <motion.div
-                  key={bus.id}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className={`bg-white rounded-xl shadow-lg p-6 border-2 transition ${
-                    selectedBus === bus.id
-                      ? "border-green-500 shadow-xl"
-                      : "border-green-200 hover:shadow-xl"
-                  } ${hasBooking && !isMyBus ? "opacity-60" : ""}`}
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-green-100 p-3 rounded-lg">
-                        <Bus className="text-green-600" size={24} />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-green-700">{bus.busNumber}</h3>
-                        <p className="text-sm text-gray-600">Driver: {bus.driverName}</p>
-                      </div>
-                    </div>
+        {/* My Booking */}
+        <AnimatePresence>
+          {myBooking && myBooking.paymentStatus === "PAID" && (
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 md:p-8 border border-[#333333] hover:border-[#404040] transition-all duration-300"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+              <div className="relative">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-16 h-16 bg-gradient-to-br from-green-500/20 to-green-600/20 rounded-xl flex items-center justify-center border border-green-500/30 shadow-lg">
+                    <CheckCircle className="text-green-400" size={32} />
                   </div>
-
-                  <div className="space-y-3 mb-4">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone size={16} className="text-gray-500" />
-                      <span className="text-gray-700">{bus.driverNumber}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Clock size={16} className="text-gray-500" />
-                      <span className="text-gray-700">{bus.time}</span>
-                    </div>
+                  <div>
+                    <h2 className="text-2xl md:text-3xl font-bold text-white">My Booking</h2>
+                    <p className="text-[#808080] text-sm">Confirmed and paid</p>
                   </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="bg-[#2d2d2d]/50 border border-[#404040] rounded-lg p-4 hover:bg-[#404040]/50 transition">
+                    <p className="text-sm text-[#808080] mb-1 flex items-center gap-2">
+                      <Bus size={14} />
+                      Bus Number
+                    </p>
+                    <p className="text-lg font-bold text-white">{myBooking.bus.busNumber}</p>
+                  </div>
+                  <div className="bg-[#2d2d2d]/50 border border-[#404040] rounded-lg p-4 hover:bg-[#404040]/50 transition">
+                    <p className="text-sm text-[#808080] mb-1 flex items-center gap-2">
+                      <Users size={14} />
+                      Seat Number
+                    </p>
+                    <p className="text-lg font-bold text-white">Seat {myBooking.seatNumber}</p>
+                  </div>
+                  <div className="bg-[#2d2d2d]/50 border border-[#404040] rounded-lg p-4 hover:bg-[#404040]/50 transition">
+                    <p className="text-sm text-[#808080] mb-1 flex items-center gap-2">
+                      <MapPin size={14} />
+                      Location
+                    </p>
+                    <p className="text-lg font-medium text-white">{myBooking.route?.location || "N/A"}</p>
+                  </div>
+                  <div className="bg-[#2d2d2d]/50 border border-[#404040] rounded-lg p-4 hover:bg-[#404040]/50 transition">
+                    <p className="text-sm text-[#808080] mb-1 flex items-center gap-2">
+                      <IndianRupee size={14} />
+                      Amount Paid
+                    </p>
+                    <p className="text-lg font-bold text-green-400">₹{myBooking.amount}</p>
+                  </div>
+                  <div className="bg-[#2d2d2d]/50 border border-[#404040] rounded-lg p-4 hover:bg-[#404040]/50 transition">
+                    <p className="text-sm text-[#808080] mb-1 flex items-center gap-2">
+                      <Clock size={14} />
+                      Time
+                    </p>
+                    <p className="text-lg font-medium text-white">{myBooking.bus.time}</p>
+                  </div>
+                  <div className="bg-[#2d2d2d]/50 border border-[#404040] rounded-lg p-4 hover:bg-[#404040]/50 transition">
+                    <p className="text-sm text-[#808080] mb-1 flex items-center gap-2">
+                      <Phone size={14} />
+                      Driver
+                    </p>
+                    <p className="text-lg font-medium text-white">{myBooking.bus.driverName}</p>
+                  </div>
+                </div>
+                {myBooking.createdAt && (
+                  <p className="text-sm text-[#6b6b6b] mt-6 flex items-center gap-2">
+                    <Clock size={14} />
+                    Booked on: {mounted ? new Date(myBooking.createdAt).toLocaleDateString() : myBooking.createdAt}
+                  </p>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-                  {/* Routes */}
-                  <div className="mb-4 pb-4 border-b border-gray-200">
-                    <p className="text-sm font-medium text-gray-700 mb-2">Routes & Pricing:</p>
-                    <div className="space-y-2">
-                      {bus.routes && bus.routes.length > 0 ? bus.routes.map((route) => (
-                        <div key={route.id} className="flex justify-between items-center p-2 bg-green-50 rounded-lg">
-                          <div className="flex items-center gap-2">
-                            <MapPin size={14} className="text-green-600" />
-                            <span className="text-sm text-gray-700">{route.location}</span>
+        {/* Available Buses */}
+        <div>
+          <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+            <TrendingUp className="w-6 h-6 text-[#808080]" />
+            {myBooking && myBooking.paymentStatus === "PAID" ? "Other Available Buses" : "Available Buses"}
+          </h2>
+          {buses.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-[#1a1a1a] border border-[#333333] rounded-2xl shadow-lg p-12 text-center"
+            >
+              <Bus size={48} className="mx-auto text-[#808080] mb-4 opacity-50" />
+              <p className="text-[#808080] text-lg">No buses available</p>
+            </motion.div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {buses.map((bus, index) => {
+                const isMyBus = myBooking?.bus.id === bus.id && myBooking?.paymentStatus === "PAID";
+                const hasBooking = myBooking && myBooking.paymentStatus === "PAID";
+
+                return (
+                  <motion.div
+                    key={bus.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{ y: -8, scale: 1.02 }}
+                    className={`relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] to-[#2d2d2d] rounded-xl shadow-lg p-6 border-2 transition-all duration-300 ${
+                      selectedBus === bus.id
+                        ? "border-[#808080] shadow-2xl ring-2 ring-[#808080]/20"
+                        : "border-[#333333] hover:border-[#404040] hover:shadow-xl"
+                    } ${hasBooking && !isMyBus ? "opacity-50" : ""}`}
+                  >
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#404040]/20 to-transparent rounded-bl-full"></div>
+                    <div className="relative">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-gradient-to-br from-[#404040] to-[#2d2d2d] p-3 rounded-lg border border-[#333333] shadow-lg">
+                            <Bus className="text-white" size={24} />
                           </div>
-                          <span className="text-sm font-semibold text-green-700">₹{route.amount}</span>
+                          <div>
+                            <h3 className="text-xl font-bold text-white">{bus.busNumber}</h3>
+                            <p className="text-sm text-[#808080]">Driver: {bus.driverName}</p>
+                          </div>
                         </div>
+                      </div>
+
+                      <div className="space-y-3 mb-4">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Phone size={16} className="text-[#808080]" />
+                          <span className="text-[#808080]">{bus.driverNumber}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Clock size={16} className="text-[#808080]" />
+                          <span className="text-[#808080]">{bus.time}</span>
+                        </div>
+                      </div>
+
+                      {/* Routes */}
+                      <div className="mb-4 pb-4 border-b border-[#333333]">
+                        <p className="text-sm font-medium text-[#808080] mb-3 flex items-center gap-2">
+                          <MapPin size={14} />
+                          Routes & Pricing:
+                        </p>
+                        <div className="space-y-2">
+                          {bus.routes && bus.routes.length > 0 ? bus.routes.map((route) => (
+                            <motion.div
+                              key={route.id}
+                              whileHover={{ x: 4 }}
+                              className="flex justify-between items-center p-3 bg-[#2d2d2d] border border-[#404040] rounded-lg hover:bg-[#404040] transition"
+                            >
+                              <div className="flex items-center gap-2">
+                                <MapPin size={14} className="text-[#808080]" />
+                                <span className="text-sm text-white">{route.location}</span>
+                              </div>
+                              <span className="text-sm font-semibold text-green-400 flex items-center gap-1">
+                                <IndianRupee size={14} />
+                                {route.amount}
+                              </span>
+                            </motion.div>
+                          )) : (
+                            <p className="text-xs text-[#6b6b6b]">No routes configured</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="border-t border-[#333333] pt-4 mb-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm text-[#808080]">Available Seats</span>
+                          <span className="text-sm font-medium text-white">
+                            {bus.availableSeatsCount} / {bus.totalSeats}
+                          </span>
+                        </div>
+                        <div className="w-full bg-[#2d2d2d] rounded-full h-2 overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(bus.availableSeatsCount / bus.totalSeats) * 100}%` }}
+                            transition={{ duration: 0.5 }}
+                            className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full"
+                          ></motion.div>
+                        </div>
+                      </div>
+
+                      {!hasBooking && bus.availableSeatsCount > 0 && (
+                        <motion.button
+                          onClick={() => setSelectedBus(bus.id)}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className={`w-full py-3 rounded-lg font-semibold transition-all duration-300 ${
+                            selectedBus === bus.id
+                              ? "bg-gradient-to-r from-[#404040] to-[#6b6b6b] text-white shadow-lg border border-[#808080]"
+                              : "bg-gradient-to-r from-[#404040] to-[#2d2d2d] hover:from-[#6b6b6b] hover:to-[#404040] text-white border border-[#333333] hover:border-[#808080]"
+                          }`}
+                        >
+                          {selectedBus === bus.id ? "✓ Selected" : "Select This Bus"}
+                        </motion.button>
+                      )}
+
+                      {hasBooking && !isMyBus && (
+                        <p className="text-sm text-center text-[#808080] py-2">
+                          You already have a booking
+                        </p>
+                      )}
+
+                      {isMyBus && (
+                        <p className="text-sm text-center text-green-400 font-medium py-2 flex items-center justify-center gap-2">
+                          <CheckCircle size={16} />
+                          This is your booked bus
+                        </p>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Route and Seat Selection */}
+        <AnimatePresence>
+          {selectedBusData && (!myBooking || myBooking.paymentStatus !== "PAID") && selectedBusData.availableSeatsCount > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 md:p-8 border border-[#333333] space-y-6 hover:border-[#404040] transition-all duration-300"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
+              <div className="relative">
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-2 flex items-center gap-3">
+                  <Bus className="w-7 h-7 text-[#808080]" />
+                  Book Seat - {selectedBusData.busNumber}
+                </h2>
+
+                {/* Route Selection */}
+                {!selectedRoute && (
+                  <div>
+                    <p className="text-sm text-[#808080] mb-4 font-medium flex items-center gap-2">
+                      <MapPin size={16} />
+                      Select a Route (Location):
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {selectedBusData.routes && selectedBusData.routes.length > 0 ? selectedBusData.routes.map((route, index) => (
+                        <motion.button
+                          key={route.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          whileHover={{ scale: 1.05, x: 4 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setSelectedRoute(route.id)}
+                          className="p-4 border-2 border-[#333333] rounded-lg hover:border-[#808080] bg-[#2d2d2d] hover:bg-[#404040] transition-all duration-300 text-left group"
+                        >
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                              <MapPin size={18} className="text-[#808080] group-hover:text-white transition" />
+                              <span className="font-medium text-white">{route.location}</span>
+                            </div>
+                            <span className="font-bold text-green-400 text-lg flex items-center gap-1">
+                              <IndianRupee size={18} />
+                              {route.amount}
+                            </span>
+                          </div>
+                        </motion.button>
                       )) : (
-                        <p className="text-xs text-gray-500">No routes configured</p>
+                        <p className="text-[#808080]">No routes available for this bus</p>
                       )}
                     </div>
                   </div>
+                )}
 
-                  <div className="border-t border-gray-200 pt-4 mb-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm text-gray-600">Available Seats</span>
-                      <span className="text-sm font-medium text-green-700">
-                        {bus.availableSeatsCount} / {bus.totalSeats}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-green-600 h-2 rounded-full"
-                        style={{
-                          width: `${(bus.availableSeatsCount / bus.totalSeats) * 100}%`,
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  {!hasBooking && bus.availableSeatsCount > 0 && (
-                    <button
-                      onClick={() => setSelectedBus(bus.id)}
-                      className={`w-full py-2 rounded-lg font-medium transition ${
-                        selectedBus === bus.id
-                          ? "bg-green-700 text-white"
-                          : "bg-green-600 hover:bg-green-700 text-white"
-                      }`}
+                {/* Seat Selection */}
+                {selectedRoute && (
+                  <>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex items-center justify-between p-4 bg-[#2d2d2d] border border-[#404040] rounded-lg hover:border-[#808080] transition"
                     >
-                      {selectedBus === bus.id ? "Selected" : "Select This Bus"}
-                    </button>
-                  )}
-
-                  {hasBooking && !isMyBus && (
-                    <p className="text-sm text-center text-gray-500 py-2">
-                      You already have a booking
-                    </p>
-                  )}
-
-                  {isMyBus && (
-                    <p className="text-sm text-center text-green-600 font-medium py-2">
-                      ✓ This is your booked bus
-                    </p>
-                  )}
-                </motion.div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Route and Seat Selection */}
-      {selectedBusData && (!myBooking || myBooking.paymentStatus !== "PAID") && selectedBusData.availableSeatsCount > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl shadow-lg p-6 border border-green-200 space-y-6"
-        >
-          <h2 className="text-2xl font-bold text-green-700">
-            Book Seat - {selectedBusData.busNumber}
-          </h2>
-
-          {/* Route Selection */}
-          {!selectedRoute && (
-            <div>
-              <p className="text-sm text-gray-600 mb-4 font-medium">Select a Route (Location):</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {selectedBusData.routes && selectedBusData.routes.length > 0 ? selectedBusData.routes.map((route) => (
-                  <button
-                    key={route.id}
-                    onClick={() => setSelectedRoute(route.id)}
-                    className="p-4 border-2 border-green-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition text-left"
-                  >
-                    <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
-                        <MapPin size={18} className="text-green-600" />
-                        <span className="font-medium text-gray-700">{route.location}</span>
+                        <MapPin size={18} className="text-[#808080]" />
+                        <span className="font-medium text-white">{selectedRouteData?.location}</span>
                       </div>
-                      <span className="font-bold text-green-700 text-lg">₹{route.amount}</span>
+                      <div className="flex items-center gap-2">
+                        <IndianRupee size={18} className="text-green-400" />
+                        <span className="font-bold text-green-400 text-lg">₹{selectedRouteData?.amount}</span>
+                      </div>
+                      <button
+                        onClick={() => setSelectedRoute(null)}
+                        className="text-sm text-[#808080] hover:text-white transition"
+                      >
+                        Change
+                      </button>
+                    </motion.div>
+
+                    <div>
+                      <p className="text-sm text-[#808080] mb-4 font-medium">
+                        Select a seat (available seats are shown in green):
+                      </p>
+                      <div className="grid grid-cols-10 gap-2">
+                        {Array.from({ length: selectedBusData.totalSeats }, (_, i) => i + 1).map(
+                          (seatNum, index) => {
+                            const isBooked = !selectedBusData.availableSeats.includes(seatNum);
+                            const isSelected = selectedSeat === seatNum;
+
+                            return (
+                              <motion.button
+                                key={seatNum}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: index * 0.01 }}
+                                whileHover={!isBooked ? { scale: 1.1, y: -2 } : {}}
+                                whileTap={!isBooked ? { scale: 0.9 } : {}}
+                                onClick={() => !isBooked && setSelectedSeat(seatNum)}
+                                disabled={isBooked}
+                                className={`p-3 rounded-lg font-medium transition-all duration-200 ${
+                                  isBooked
+                                    ? "bg-[#2d2d2d] text-[#6b6b6b] cursor-not-allowed border border-[#333333]"
+                                    : isSelected
+                                    ? "bg-gradient-to-br from-green-500 to-green-600 text-white ring-2 ring-green-400 shadow-lg scale-110"
+                                    : "bg-[#2d2d2d] text-white hover:bg-[#404040] border border-[#333333] hover:border-[#808080]"
+                                }`}
+                              >
+                                {seatNum}
+                              </motion.button>
+                            );
+                          }
+                        )}
+                      </div>
+                      <div className="flex gap-4 mt-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-gradient-to-br from-green-500 to-green-600 border border-green-400 rounded"></div>
+                          <span className="text-sm text-[#808080]">Available</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-[#2d2d2d] border border-[#333333] rounded"></div>
+                          <span className="text-sm text-[#808080]">Booked</span>
+                        </div>
+                      </div>
                     </div>
-                  </button>
-                )) : (
-                  <p className="text-gray-500">No routes available for this bus</p>
+
+                    {/* Payment Summary */}
+                    {selectedSeat && selectedRouteData && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-gradient-to-br from-[#2d2d2d] to-[#1a1a1a] border border-[#404040] rounded-lg p-5 hover:border-[#808080] transition"
+                      >
+                        <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+                          <TrendingUp size={18} />
+                          Booking Summary:
+                        </h3>
+                        <div className="space-y-3 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-[#808080]">Bus:</span>
+                            <span className="font-medium text-white">{selectedBusData.busNumber}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-[#808080]">Route:</span>
+                            <span className="font-medium text-white">{selectedRouteData.location}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-[#808080]">Seat:</span>
+                            <span className="font-medium text-white">Seat {selectedSeat}</span>
+                          </div>
+                          <div className="border-t border-[#404040] pt-3 mt-3 flex justify-between font-bold text-green-400 text-lg">
+                            <span>Total Amount:</span>
+                            <span className="flex items-center gap-1">
+                              <IndianRupee size={18} />
+                              {selectedRouteData.amount}
+                            </span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    <div className="flex gap-4 pt-2">
+                      <motion.button
+                        onClick={handleBookSeat}
+                        disabled={!selectedSeat || bookingLoading || !razorpayLoaded}
+                        whileHover={!bookingLoading && razorpayLoaded ? { scale: 1.05 } : {}}
+                        whileTap={!bookingLoading && razorpayLoaded ? { scale: 0.95 } : {}}
+                        className={`flex-1 px-6 py-3.5 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
+                          selectedSeat && !bookingLoading && razorpayLoaded
+                            ? "bg-gradient-to-r from-[#404040] to-[#6b6b6b] hover:from-[#6b6b6b] hover:to-[#404040] text-white border border-[#808080] shadow-lg"
+                            : "bg-[#2d2d2d] text-[#6b6b6b] cursor-not-allowed border border-[#333333]"
+                        }`}
+                      >
+                        {bookingLoading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                            <span>Processing...</span>
+                          </>
+                        ) : razorpayLoaded ? (
+                          <>
+                            <IndianRupee size={20} />
+                            <span>Pay ₹{selectedRouteData?.amount || 0}</span>
+                          </>
+                        ) : (
+                          "Loading Payment..."
+                        )}
+                      </motion.button>
+                      <motion.button
+                        onClick={() => {
+                          setSelectedBus(null);
+                          setSelectedRoute(null);
+                          setSelectedSeat(null);
+                        }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="px-6 py-3.5 rounded-lg font-semibold bg-[#2d2d2d] hover:bg-[#404040] text-white border border-[#333333] hover:border-[#808080] transition-all duration-300"
+                      >
+                        Cancel
+                      </motion.button>
+                    </div>
+                  </>
                 )}
               </div>
-            </div>
+            </motion.div>
           )}
-
-          {/* Seat Selection */}
-          {selectedRoute && (
-            <>
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <MapPin size={18} className="text-green-600" />
-                  <span className="font-medium text-gray-700">{selectedRouteData?.location}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <IndianRupee size={18} className="text-green-600" />
-                  <span className="font-bold text-green-700 text-lg">₹{selectedRouteData?.amount}</span>
-                </div>
-                <button
-                  onClick={() => setSelectedRoute(null)}
-                  className="text-sm text-gray-500 hover:text-gray-700"
-                >
-                  Change
-                </button>
-              </div>
-
-              <div>
-                <p className="text-sm text-gray-600 mb-4 font-medium">
-                  Select a seat (available seats are shown in green):
-                </p>
-                <div className="grid grid-cols-10 gap-2">
-                  {Array.from({ length: selectedBusData.totalSeats }, (_, i) => i + 1).map(
-                    (seatNum) => {
-                      const isBooked = !selectedBusData.availableSeats.includes(seatNum);
-                      const isSelected = selectedSeat === seatNum;
-
-                      return (
-                        <button
-                          key={seatNum}
-                          onClick={() => !isBooked && setSelectedSeat(seatNum)}
-                          disabled={isBooked}
-                          className={`p-3 rounded-lg font-medium transition ${
-                            isBooked
-                              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                              : isSelected
-                              ? "bg-green-600 text-white ring-2 ring-green-400"
-                              : "bg-green-100 text-green-700 hover:bg-green-200"
-                          }`}
-                        >
-                          {seatNum}
-                        </button>
-                      );
-                    }
-                  )}
-                </div>
-                <div className="flex gap-4 mt-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-green-100 border border-green-300 rounded"></div>
-                    <span className="text-sm text-gray-600">Available</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-gray-200 border border-gray-300 rounded"></div>
-                    <span className="text-sm text-gray-600">Booked</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment Summary */}
-              {selectedSeat && selectedRouteData && (
-                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                  <h3 className="font-semibold text-gray-700 mb-3">Booking Summary:</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Bus:</span>
-                      <span className="font-medium">{selectedBusData.busNumber}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Route:</span>
-                      <span className="font-medium">{selectedRouteData.location}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Seat:</span>
-                      <span className="font-medium">Seat {selectedSeat}</span>
-                    </div>
-                    <div className="border-t border-green-300 pt-2 mt-2 flex justify-between font-bold text-green-700">
-                      <span>Total Amount:</span>
-                      <span>₹{selectedRouteData.amount}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex gap-4">
-                <button
-                  onClick={handleBookSeat}
-                  disabled={!selectedSeat || bookingLoading || !razorpayLoaded}
-                  className={`flex-1 px-6 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 ${
-                    selectedSeat && !bookingLoading && razorpayLoaded
-                      ? "bg-green-600 hover:bg-green-700 text-white"
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  }`}
-                >
-                  {bookingLoading ? "Processing..." : razorpayLoaded ? `Pay ₹${selectedRouteData?.amount || 0}` : "Loading Payment..."}
-                </button>
-                <button
-                  onClick={() => {
-                    setSelectedBus(null);
-                    setSelectedRoute(null);
-                    setSelectedSeat(null);
-                  }}
-                  className="px-6 py-3 rounded-lg font-medium bg-gray-200 hover:bg-gray-300 text-gray-700 transition"
-                >
-                  Cancel
-                </button>
-              </div>
-            </>
-          )}
-        </motion.div>
-      )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
