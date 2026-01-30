@@ -106,6 +106,17 @@ interface Appointment {
   note?: string | null;
   requestedAt?: string;
 }
+interface LibraryBook {
+  id: string;
+  bookName: string;
+  bookNumber?: string | null;
+  issueDate: string;
+  expectedDate: string;
+  returnDate?: string | null;
+  overdueDays: number;
+  fineAmount: number;
+  status: "ISSUED" | "RETURNED" | "OVERDUE";
+}
 
 export default function StudentDashboardPage() {
   const { data: session, status } = useSession();
@@ -119,7 +130,8 @@ export default function StudentDashboardPage() {
   const [fee, setFee] = useState<StudentFee | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "marks" | "attendance" | "events" | "newsfeed" | "homework" | "certificates" | "tc" | "payments" | "communication" | "bus" | "hostel" | "timetable">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "marks" | "attendance" | "events" | "newsfeed" | "homework" | "certificates" | "tc" | "payments" | "communication" | "bus" | "hostel" | "timetable" | "library">("overview");
+  const [libraryBooks, setLibraryBooks] = useState<LibraryBook[]>([]);
 
   useEffect(() => {
     if (session && session.user.role === "STUDENT") {
@@ -140,6 +152,7 @@ export default function StudentDashboardPage() {
         fetchTC(),
         fetchFee(),
         fetchAppointments(),
+        fetchLibraryBooks(),
       ]);
     } catch (err) {
       console.error("Error fetching data:", err);
@@ -312,6 +325,21 @@ export default function StudentDashboardPage() {
     }
   };
 
+
+  const fetchLibraryBooks = async () => {
+    try {
+      const res = await fetch("/api/library/my-books");
+      const data = await res.json();
+      console.log("Library books data:", data);
+      if (res.ok) {
+        setLibraryBooks(data || []);
+      }
+    } catch (err) {
+      console.error("Error fetching library books:", err);
+    }
+  };
+
+
   const calculateAttendanceStats = () => {
     const present = attendances.filter((a) => a.status === "PRESENT").length;
     const absent = attendances.filter((a) => a.status === "ABSENT").length;
@@ -324,7 +352,7 @@ export default function StudentDashboardPage() {
 
   const calculateMarksStats = () => {
     if (marks.length === 0) return { average: 0, totalSubjects: 0, highest: 0 };
-    
+
     const totalPercentage = marks.reduce((sum, mark) => {
       return sum + (mark.marks / mark.totalMarks) * 100;
     }, 0);
@@ -455,17 +483,17 @@ export default function StudentDashboardPage() {
             { id: "bus", label: "Bus Booking", icon: Bus },
             { id: "hostel", label: "Hostel Booking", icon: Building2 },
             { id: "timetable", label: "Timetable", icon: Calendar },
+            { id: "library", label: "Library", icon: BookOpen },
           ].map((tab) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex-shrink-0 px-3 md:px-4 py-2 md:py-3 rounded-lg font-medium transition-all whitespace-nowrap flex items-center gap-1.5 md:gap-2 ${
-                  activeTab === tab.id
+                className={`flex-shrink-0 px-3 md:px-4 py-2 md:py-3 rounded-lg font-medium transition-all whitespace-nowrap flex items-center gap-1.5 md:gap-2 ${activeTab === tab.id
                     ? "bg-[#404040] text-white shadow-md"
                     : "text-[#808080] hover:bg-[#2d2d2d] hover:text-white"
-                }`}
+                  }`}
               >
                 <Icon size={18} className="flex-shrink-0" />
                 <span className="hidden sm:inline">{tab.label}</span>
@@ -1105,11 +1133,10 @@ export default function StudentDashboardPage() {
                         disabled={event.isRegistered}
                         whileHover={!event.isRegistered ? { scale: 1.02 } : {}}
                         whileTap={!event.isRegistered ? { scale: 0.98 } : {}}
-                        className={`w-full py-2 rounded-lg font-semibold transition-all duration-300 border ${
-                          event.isRegistered
+                        className={`w-full py-2 rounded-lg font-semibold transition-all duration-300 border ${event.isRegistered
                             ? "bg-[#2d2d2d] text-[#808080] cursor-not-allowed border-[#333333]"
                             : "bg-gradient-to-r from-green-500/80 to-green-600/80 hover:from-green-600 hover:to-green-500 text-white border-green-500/30 hover:border-green-400 shadow-lg"
-                        }`}
+                          }`}
                       >
                         {event.isRegistered
                           ? `Registered (${event.registrationStatus || "PENDING"})`
@@ -1567,13 +1594,12 @@ export default function StudentDashboardPage() {
                       Status:
                     </p>
                     <span
-                      className={`px-4 py-2 rounded-full text-sm font-medium inline-flex items-center gap-2 ${
-                        tc.status === "APPROVED"
+                      className={`px-4 py-2 rounded-full text-sm font-medium inline-flex items-center gap-2 ${tc.status === "APPROVED"
                           ? "bg-green-500/20 text-green-400 border border-green-500/30"
                           : tc.status === "REJECTED"
-                          ? "bg-red-500/20 text-red-400 border border-red-500/30"
-                          : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
-                      }`}
+                            ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                            : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                        }`}
                     >
                       {tc.status === "APPROVED" && <CheckCircle2 className="w-4 h-4" />}
                       {tc.status === "REJECTED" && <XCircle className="w-4 h-4" />}
@@ -1657,6 +1683,64 @@ export default function StudentDashboardPage() {
             )}
           </motion.div>
         )}
+        {activeTab === "library" && (
+  <div className="space-y-4">
+    <h2 className="text-xl font-bold text-white flex items-center gap-2">
+      <BookOpen /> My Library Books
+    </h2>
+
+    {libraryBooks.length === 0 ? (
+      <p className="text-gray-400">No books issued yet.</p>
+    ) : (
+      libraryBooks.map((b) => (
+        <div
+          key={b.id}
+          className="bg-[#1a1a1a] border border-[#333] rounded p-4 space-y-1"
+        >
+          {/* Book / Subject */}
+          <p className="text-white font-semibold">
+            📘 {b.bookName}
+          </p>
+
+          {/* Dates */}
+          <p className="text-sm text-gray-400">
+            Issued: {new Date(b.issueDate).toLocaleDateString()} | Expected:{" "}
+            {new Date(b.expectedDate).toLocaleDateString()}
+          </p>
+
+          {/* Returned */}
+          {b.returnDate && (
+            <p className="text-sm text-green-400">
+              Returned: {new Date(b.returnDate).toLocaleDateString()}
+            </p>
+          )}
+
+          {/* Status */}
+          <p
+            className={`text-sm font-bold ${
+              b.status === "OVERDUE"
+                ? "text-red-400"
+                : b.status === "RETURNED"
+                ? "text-green-400"
+                : "text-yellow-400"
+            }`}
+          >
+            Status: {b.status}
+          </p>
+
+          {/* Overdue & Fine (IMPORTANT FIX) */}
+          {b.overdueDays > 0 && (
+            <p className="text-sm text-red-400">
+              ⏰ Overdue: {b.overdueDays} days | 💰 Fine: ₹{b.fineAmount}
+            </p>
+          )}
+        </div>
+      ))
+    )}
+  </div>
+)}
+
+
       </div>
     </div>
   );

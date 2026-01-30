@@ -28,6 +28,9 @@ import NewsFeedPage from "./NewsFeed"
 import EventsPage from "./Events"
 import CommunicationPage from "@/app/communication/page"
 import TeacherLeavesPage from "./teacherleave"
+import LibraryIssueComponent from "./LibraryIssue"
+
+
 
 /* ---------------- SIDEBAR ACTIONS ---------------- */
 
@@ -42,6 +45,7 @@ const actions = [
   { id: "newsfeed", label: "News Feed", icon: Newspaper },
   { id: "communication", label: "Communication", icon: MessageSquare },
   { id: "leaves", label: "Leaves Management", icon: Calendar },
+  { id: "library-issue", label: "Library Issue", icon: BookOpen  },
 ]
 
 /* ---------------- MAIN PAGE ---------------- */
@@ -176,7 +180,8 @@ function renderContent(section: string) {
 
     case "leaves":
       return <Leaves />
-
+    case "library-issue":
+  return <LibraryIssue />
     default:
       return <ComingSoon />
   }
@@ -263,6 +268,14 @@ function Leaves() {
     </RequireRole>
   )
 }
+function LibraryIssue() {
+  return (
+    <RequireRole allowedRoles={["TEACHER"]}>
+      <LibraryIssueComponent />
+    </RequireRole>
+  )
+}
+
 
 /* ---------------- FALLBACK ---------------- */
 
