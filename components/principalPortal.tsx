@@ -17,26 +17,40 @@ import {
   X,
 } from "lucide-react"
 import RequireRole from "./RequireRole"
+import ClassesPage from "./Classes"
+import AddStudentPage from "./addStudents"
+import TeacherSignupPage from "./teachers"
 import SchoolPage from "./school"
+import TCPage from "./tc"
 import Page from "@/app/payments/page"
 import NewsFeedPage from "./NewsFeed"
 import EventsPage from "./Events"
-import PrincipalSignupPageComponent from "./principalSignup"
-
+import AdminLeavesPage from "./adminleave"
+import BusManagement from "./BusManagement"
+import HostelManagement from "./HostelManagement"
+import TimetableManagement from "./TimetableManagement"
+import RoomAllocationManagement from "./RoomAllocationManagement"
+import HodSignupPageComponent from "./hodSignup"
 /* ---------------- SIDEBAR ACTIONS ---------------- */
 
 const actions = [
-  
-  { id: "school", label: "School Details", icon: Building2 },
-  { id: "payments", label: "Payments & Fees", icon: CreditCard },
+  { id: "classes", label: "Classes", icon: School },
+  { id: "students", label: "Students", icon: Users },
+  { id: "teachers", label: "Teachers", icon: GraduationCap },
+  { id: "tc", label: "TC Requests", icon: FileCheck },
   { id: "newsfeed", label: "Newsfeed", icon: Newspaper },
   { id: "events", label: "Events", icon: Megaphone },
-  { id: "principal", label: "Principal create", icon: Calendar },
+  { id: "leave", label: "Leave Applications", icon: Calendar },
+  { id: "bus", label: "Bus Management", icon: Bus },
+  { id: "hostel", label: "Hostel Management", icon: Building2 },
+  { id: "timetable", label: "Timetable Management", icon: Calendar },
+  { id: "room-allocation", label: "Room Allocation", icon: Building2 },
+  { id: "hod", label: "HOD Management", icon: Users },
 ]
 
 /* ---------------- MAIN PAGE ---------------- */
 
-export default function PrincipalPage() {
+export default function PrincipalPortalPage() {
   const [active, setActive] = useState(actions[0])
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -73,10 +87,10 @@ export default function PrincipalPage() {
             <div>
               <h1 className="text-xl md:text-2xl font-bold text-white">
                 School Admin
-          </h1>
+              </h1>
               <p className="text-xs md:text-sm text-[#808080]">
                 Dashboard
-          </p>
+              </p>
             </div>
           </div>
         </div>
@@ -96,10 +110,9 @@ export default function PrincipalPage() {
                   setSidebarOpen(false) // Close sidebar on mobile when item is clicked
                 }}
                 className={`w-full flex items-center gap-3 md:gap-4 px-3 md:px-4 py-2.5 md:py-3 rounded-lg transition text-left
-                  ${
-                    isActive
-                      ? "bg-[#404040] text-white shadow-lg border-l-4 border-[#808080]"
-                      : "text-[#808080] hover:bg-[#2d2d2d] hover:text-white"
+                  ${isActive
+                    ? "bg-[#404040] text-white shadow-lg border-l-4 border-[#808080]"
+                    : "text-[#808080] hover:bg-[#2d2d2d] hover:text-white"
                   }
                 `}
               >
@@ -137,56 +150,72 @@ export default function PrincipalPage() {
 
 function renderContent(section: string) {
   switch (section) {
-    
-    case "school":
-      return <SchoolDetails />
-    
-    case "payments":
-      return <Payments />
+    case "classes":
+      return <Classes />
+    case "students":
+      return <Students />
+    case "teachers":
+      return <Teachers />
+    case "tc":
+      return <TCRequests />
     case "newsfeed":
       return <NewsFeed />
     case "events":
-      return <Events />  
-    case "principal":
-      return <PrincipalSignupPage />
+      return <Events />
+    case "leave":
+      return <LeaveApplications />
+    case "bus":
+      return <BusManagementSection />
+    case "hostel":
+      return <HostelManagementSection />
+    case "timetable":
+      return <TimetableManagementSection />
+    case "room-allocation":
+      return <RoomAllocationManagementSection />
+    case "hod":
+      return <HodSignupPageWrapper />
     default:
       return <ComingSoon />
   }
 }
 
+/* ---------------- PAGE WRAPPERS ---------------- */
 
-
-
-
-
-
-function SchoolDetails() {
+function Classes() {
   return (
-    <RequireRole allowedRoles={["SCHOOLADMIN"]}>
-      <SchoolPage />
+    <RequireRole allowedRoles={["PRINCIPAL"]}>
+      <ClassesPage />
     </RequireRole>
   )
 }
 
-function PrincipalSignupPage() {
+function Students() {
   return (
-    <RequireRole allowedRoles={["SCHOOLADMIN"]}>
-      <PrincipalSignupPageComponent />
+    <RequireRole allowedRoles={["PRINCIPAL"]}>
+      <AddStudentPage />
     </RequireRole>
   )
 }
 
-function Payments() {
+function Teachers() {
   return (
-    <RequireRole allowedRoles={["SCHOOLADMIN"]}>
-      <Page />
+    <RequireRole allowedRoles={["PRINCIPAL"]}>
+      <TeacherSignupPage />
+    </RequireRole>
+  )
+}
+
+function TCRequests() {
+  return (
+    <RequireRole allowedRoles={["PRINCIPAL"]}>
+      <TCPage />
     </RequireRole>
   )
 }
 
 function NewsFeed() {
   return (
-    <RequireRole allowedRoles={["SCHOOLADMIN"]}>
+    <RequireRole allowedRoles={["PRINCIPAL"]}>
       <NewsFeedPage />
     </RequireRole>
   )
@@ -194,14 +223,59 @@ function NewsFeed() {
 
 function Events() {
   return (
-    <RequireRole allowedRoles={["SCHOOLADMIN"]}>
+    <RequireRole allowedRoles={["PRINCIPAL"]}>
       <EventsPage />
     </RequireRole>
   )
 }
 
+function LeaveApplications() {
+  return (
+    <RequireRole allowedRoles={["PRINCIPAL"]}>
+      <AdminLeavesPage />
+    </RequireRole>
+  )
+}
 
+function BusManagementSection() {
+  return (
+    <RequireRole allowedRoles={["PRINCIPAL"]}>
+      <BusManagement />
+    </RequireRole>
+  )
+}
 
+function HostelManagementSection() {
+  return (
+    <RequireRole allowedRoles={["PRINCIPAL"]}>
+      <HostelManagement />
+    </RequireRole>
+  )
+}
+
+function TimetableManagementSection() {
+  return (
+    <RequireRole allowedRoles={["PRINCIPAL"]}>
+      <TimetableManagement />
+    </RequireRole>
+  )
+}
+
+function RoomAllocationManagementSection() {
+  return (
+    <RequireRole allowedRoles={["PRINCIPAL"]}>
+      <RoomAllocationManagement />
+    </RequireRole>
+  )
+}
+
+function HodSignupPageWrapper() {
+  return (
+    <RequireRole allowedRoles={["PRINCIPAL"]}>
+      <HodSignupPageComponent />
+    </RequireRole>
+  )
+}
 
 /* ---------------- FALLBACK ---------------- */
 

@@ -1,72 +1,46 @@
 "use client";
 
 import { useState } from "react";
-import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { LogIn, Mail, Lock, Eye, EyeOff, Shield, School, GraduationCap, User } from "lucide-react";
+import { UserPlus, User, Mail, Lock, Eye, EyeOff, Shield } from "lucide-react";
 
-export default function LoginPage() {
+type Role = "HOD";
+
+export default function HodSignupPage() {
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState<Role>("HOD");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setLoading(true);
+    setError("");
 
-    const result = await signIn("credentials", {
-      redirect: false,
-      email,
-      password,
+    const res = await fetch("/api/hod/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password, role }),
     });
 
-    if (result?.error) {
-      setError("Invalid email or password");
-      setLoading(false);
-      return;
-    }
-
-    const session = await getSession();
-
-    if (!session?.user) {
-      setError("Something went wrong");
-      setLoading(false);
-      return;
-    }
-
-    switch (session.user.role) {
-      case "SUPERADMIN":
-        router.push("/admin/super");
-        break;
-      case "SCHOOLADMIN":
-        router.push("/schoolAdmin");
-        break;
-      case "PRINCIPAL":
-        router.push("/principal");
-        break;
-      case "HOD":
-        router.push("/hod");
-        break;
-      case "TEACHER":
-        router.push("/teachersPortal");
-        break;
-      case "STUDENT":
-        router.push("/student");
-        break;
-      default:
-        router.push("/unauthorized");
-    }
-
+    const data = await res.json();
     setLoading(false);
+
+    if (!res.ok) {
+      setError(data.message || "Signup failed");
+      return;
+    }
+
+    router.push("/admin/login");
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-black relative overflow-hidden">
+    <div className="flex items-center justify-center min-h-screen bg-black relative overflow-hidden p-4">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{
@@ -76,7 +50,7 @@ export default function LoginPage() {
       </div>
 
       <motion.form
-        onSubmit={handleLogin}
+        onSubmit={handleSignup}
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -85,12 +59,12 @@ export default function LoginPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-[#2d2d2d] rounded-full mb-4">
-            <LogIn className="w-8 h-8 text-white" />
+            <UserPlus className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-3xl font-bold text-white mb-2">
-            Welcome Back
+            Create Account
           </h2>
-          <p className="text-[#808080] text-sm">Sign in to your account</p>
+          <p className="text-[#808080] text-sm">Register as Principal</p>
         </div>
 
         {error && (
@@ -102,6 +76,22 @@ export default function LoginPage() {
             {error}
           </motion.div>
         )}
+
+        {/* Name Input */}
+        <div className="mb-4 relative">
+          <label className="block text-white text-sm font-medium mb-2">
+            <User className="inline w-4 h-4 mr-2" />
+            Full Name
+          </label>
+          <input
+            type="text"
+            placeholder="Enter your full name"
+            className="w-full bg-[#2d2d2d] border border-[#404040] text-white p-3 pl-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent transition placeholder-[#6b6b6b]"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+        </div>
 
         {/* Email Input */}
         <div className="mb-4 relative">
@@ -120,7 +110,7 @@ export default function LoginPage() {
         </div>
 
         {/* Password Input */}
-        <div className="mb-6 relative">
+        <div className="mb-4 relative">
           <label className="block text-white text-sm font-medium mb-2">
             <Lock className="inline w-4 h-4 mr-2" />
             Password
@@ -144,6 +134,21 @@ export default function LoginPage() {
           </div>
         </div>
 
+        {/* Role Select */}
+        <div className="mb-6 relative">
+          <label className="block text-white text-sm font-medium mb-2">
+            <Shield className="inline w-4 h-4 mr-2" />
+            Role
+          </label>
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value as Role)}
+            className="w-full bg-[#2d2d2d] border border-[#404040] text-white p-3 pl-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent transition"
+          >
+            <option value="HOD" className="bg-[#2d2d2d]">HOD</option>
+          </select>
+        </div>
+
         {/* Submit Button */}
         <motion.button
           type="submit"
@@ -155,38 +160,15 @@ export default function LoginPage() {
           {loading ? (
             <>
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-              <span>Logging in...</span>
+              <span>Signing up...</span>
             </>
           ) : (
             <>
-              <LogIn size={20} />
-              <span>Login</span>
+              <UserPlus size={20} />
+              <span>Sign Up</span>
             </>
           )}
         </motion.button>
-
-        {/* Role Icons */}
-        <div className="mt-6 pt-6 border-t border-[#333333]">
-          <p className="text-center text-[#6b6b6b] text-xs mb-3">Supported Roles</p>
-          <div className="flex justify-center gap-4">
-            <div className="flex flex-col items-center gap-1">
-              <Shield className="w-5 h-5 text-[#808080]" />
-              <span className="text-[#6b6b6b] text-xs">Admin</span>
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              <School className="w-5 h-5 text-[#808080]" />
-              <span className="text-[#6b6b6b] text-xs">School</span>
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              <GraduationCap className="w-5 h-5 text-[#808080]" />
-              <span className="text-[#6b6b6b] text-xs">Teacher</span>
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              <User className="w-5 h-5 text-[#808080]" />
-              <span className="text-[#6b6b6b] text-xs">Student</span>
-            </div>
-          </div>
-        </div>
       </motion.form>
     </div>
   );

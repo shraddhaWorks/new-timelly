@@ -97,7 +97,7 @@ export default function TeacherSignupPage() {
       <p className="p-6 text-red-400">Not authenticated</p>
     </div>
   );
-  if (session.user.role !== "SCHOOLADMIN")
+  if (session.user.role !== "PRINCIPAL" && session.user.role !== "HOD")
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <p className="p-6 text-red-400">Forbidden: School Admins only</p>

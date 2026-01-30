@@ -17,6 +17,8 @@ datasource db {
 enum Role {
   SUPERADMIN
   SCHOOLADMIN
+  PRINCIPAL
+  HOD
   TEACHER
   STUDENT
 }

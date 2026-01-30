@@ -3,7 +3,7 @@ import RequireRole from "@/components/RequireRole";
 
 export default function NewsFeedPages() {
   return (
-    <RequireRole allowedRoles={["TEACHER" , "SCHOOLADMIN"]}>
+    <RequireRole allowedRoles={["TEACHER" , "SCHOOLADMIN","PRINCIPAL","HOD"]}>
           <NewsFeedPage />
     </RequireRole>
   );

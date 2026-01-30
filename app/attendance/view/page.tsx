@@ -3,7 +3,7 @@ import RequireRole from "@/components/RequireRole";
 
 export default function ViewAttendancePages() {
   return (
-    <RequireRole allowedRoles={["TEACHER"]}>
+    <RequireRole allowedRoles={["TEACHER","HOD"]}>
           <ViewAttendancePage />
     </RequireRole>
   );

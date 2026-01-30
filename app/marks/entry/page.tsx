@@ -3,7 +3,7 @@ import RequireRole from "@/components/RequireRole";
 
 export default function MarksEntryPages() {
   return (
-    <RequireRole allowedRoles={["TEACHER"]}>
+    <RequireRole allowedRoles={["TEACHER","HOD"]}>
           <MarksEntryPage />
     </RequireRole>
   );

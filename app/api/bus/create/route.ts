@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     }
 
     // Only SCHOOLADMIN can create buses
-    if (session.user.role !== "SCHOOLADMIN") {
+    if (session.user.role !== "PRINCIPAL" && session.user.role !== "SCHOOLADMIN") { 
       return NextResponse.json(
         { message: "Only school admins can create buses" },
         { status: 403 }

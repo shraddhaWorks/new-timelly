@@ -3,7 +3,7 @@ import RequireRole from "@/components/RequireRole";
 
 export default function AdminLeavesPages() {
   return (
-    <RequireRole allowedRoles={["SCHOOLADMIN"]}>
+    <RequireRole allowedRoles={["PRINCIPAL","HOD"]}>
           <AdminLeavesPage />
     </RequireRole>
   );

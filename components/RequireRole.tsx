@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 // Allowed roles from your schema
-type UserRoles = "SUPERADMIN" | "SCHOOLADMIN" | "TEACHER" | "STUDENT";
+type UserRoles = "SUPERADMIN" | "SCHOOLADMIN" | "TEACHER" | "STUDENT" | "PRINCIPAL" | "HOD";
 
 interface RequireRoleProps {
   children: ReactNode;

@@ -12,7 +12,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    if (session.user.role !== "SCHOOLADMIN") {
+    if (session.user.role !== "PRINCIPAL" && session.user.role !== "SCHOOLADMIN") {
       return NextResponse.json(
         { message: "Only school admins can create hostels" },
         { status: 403 }
