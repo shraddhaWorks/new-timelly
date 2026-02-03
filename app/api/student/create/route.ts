@@ -41,7 +41,6 @@ export async function POST(req: Request) {
 
     const {
       name,
-      email,
       fatherName,
       aadhaarNo,
       phoneNo,
@@ -50,6 +49,7 @@ export async function POST(req: Request) {
       address,
       totalFee,
       discountPercent,
+      rollNo,
     } = await req.json();
 
     // Validate all required fields
@@ -75,34 +75,58 @@ export async function POST(req: Request) {
       );
     }
 
-    // DOB as default password YYYYMMDD
     const dobDate = new Date(dob);
     const password = dobDate.toISOString().split("T")[0].replace(/-/g, "");
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Use transaction with timeout (10 seconds) and isolation level
     const student = await prisma.$transaction(
       async (tx) => {
+        const year = new Date().getFullYear();
+        let settings = await tx.schoolSettings.findUnique({ where: { schoolId } });
+        if (!settings) {
+          settings = await tx.schoolSettings.create({
+            data: { schoolId, admissionPrefix: "ADM", rollNoPrefix: "", admissionCounter: 0 },
+          });
+        }
+        const nextNum = settings.admissionCounter + 1;
+        const admissionNumber =
+          `${settings.admissionPrefix}/${year}/${String(nextNum).padStart(3, "0")}`;
+        await tx.schoolSettings.update({
+          where: { schoolId },
+          data: { admissionCounter: nextNum },
+        });
+
+        const rollNoPrefix = settings.rollNoPrefix || "";
+        const finalRollNo =
+          typeof rollNo === "string" && rollNo.trim()
+            ? rollNo.trim()
+            : rollNoPrefix
+              ? `${rollNoPrefix}${nextNum}`
+              : String(nextNum);
+
         const user = await tx.user.create({
           data: {
             name,
-            email,
+            // Student email format: <admissionNumber>@<admissionPrefix>.in (no slashes in local-part)
+            email: `${admissionNumber.replaceAll("/", "")}@${String(settings.admissionPrefix).toLowerCase()}.in`,
             password: hashedPassword,
             role: Role.STUDENT,
             schoolId,
           },
         });
 
-        const student = await tx.student.create({
+        const studentRecord = await tx.student.create({
           data: {
             userId: user.id,
             schoolId,
+            admissionNumber,
             classId: classId ?? null,
             dob: dobDate,
             address,
             fatherName,
             aadhaarNo,
             phoneNo,
+            rollNo: finalRollNo,
           },
           include: {
             user: { select: { id: true, name: true, email: true } },
@@ -111,10 +135,9 @@ export async function POST(req: Request) {
         });
 
         const finalFee = totalFee * (1 - safeDiscount / 100);
-
         await tx.studentFee.create({
           data: {
-            studentId: student.id,
+            studentId: studentRecord.id,
             totalFee,
             discountPercent: safeDiscount,
             finalFee,
@@ -124,7 +147,7 @@ export async function POST(req: Request) {
           },
         });
 
-        return student;
+        return studentRecord;
       },
       {
         maxWait: 10000, // Maximum time to wait for a transaction slot (10 seconds)
@@ -136,23 +159,25 @@ export async function POST(req: Request) {
       { message: "Student created under your school", student },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Student creation error:", error);
     
+    const err = error as { code?: string; message?: string; meta?: { target?: string[] } };
     // Handle transaction timeout errors
-    if (error?.code === "P1008" || error?.message?.includes("transaction") || error?.message?.includes("timeout")) {
+    if (err?.code === "P1008" || err?.message?.includes("transaction") || err?.message?.includes("timeout")) {
       return NextResponse.json(
         { message: "Transaction timeout. Please try again." },
         { status: 408 }
       );
     }
-    
+
     // Handle Prisma unique constraint violations
-    if (error?.code === "P2002") {
-      const field = error?.meta?.target?.[0];
-      if (field === "email") {
+    if (err?.code === "P2002") {
+      const target = err?.meta?.target;
+      const field = Array.isArray(target) ? target[0] : undefined;
+      if (field === "email" || field === "admissionNumber") {
         return NextResponse.json(
-          { message: "Email already exists" },
+          { message: "Admission number already exists" },
           { status: 400 }
         );
       }
@@ -163,9 +188,9 @@ export async function POST(req: Request) {
         );
       }
     }
-    
+
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: err?.message ?? "Internal server error" },
       { status: 500 }
     );
   }

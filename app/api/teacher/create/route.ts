@@ -22,7 +22,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { name, email, password, mobile } = await req.json();
+    const { name, email, password, mobile, allowedFeatures } = await req.json();
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -32,6 +32,10 @@ export async function POST(req: Request) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const features =
+      Array.isArray(allowedFeatures) && allowedFeatures.every((f: unknown) => typeof f === "string")
+        ? allowedFeatures
+        : [];
 
     const teacher = await prisma.user.create({
       data: {
@@ -41,6 +45,7 @@ export async function POST(req: Request) {
         role: Role.TEACHER,
         schoolId,
         mobile: mobile || null,
+        allowedFeatures: features,
       },
       select: {
         id: true,

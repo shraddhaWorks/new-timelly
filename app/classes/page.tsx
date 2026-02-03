@@ -3,7 +3,7 @@ import RequireRole from "@/components/RequireRole";
 
 export default function ClassesPages() {
   return (
-    <RequireRole allowedRoles={[ "PRINCIPAL"]}>
+    <RequireRole allowedRoles={["SCHOOLADMIN"]}>
           <ClassesPage />
     </RequireRole>
   );

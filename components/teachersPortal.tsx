@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   ClipboardList,
@@ -18,6 +18,7 @@ import {
 } from "lucide-react"
 
 import RequireRole from "./RequireRole"
+import { useAllowedFeatures } from "@/lib/usePermissions"
 import MarksEntryPage from "./MarksEntry"
 import ViewMarksPage from "./MarksView"
 import MarkAttendancePage from "./AtendMark"
@@ -28,11 +29,8 @@ import NewsFeedPage from "./NewsFeed"
 import EventsPage from "./Events"
 import CommunicationPage from "@/app/communication/page"
 import TeacherLeavesPage from "./teacherleave"
-import LibraryIssueComponent from "./LibraryIssue"
-
-
-
-/* ---------------- SIDEBAR ACTIONS ---------------- */
+import TeacherStudentLeaves from "./TeacherStudentLeaves"
+import { Users } from "lucide-react"
 
 const actions = [
   { id: "marks-entry", label: "Marks Entry", icon: ClipboardList },
@@ -44,15 +42,26 @@ const actions = [
   { id: "homework", label: "Homeworks", icon: BookOpen },
   { id: "newsfeed", label: "News Feed", icon: Newspaper },
   { id: "communication", label: "Communication", icon: MessageSquare },
-  { id: "leaves", label: "Leaves Management", icon: Calendar },
-  { id: "library-issue", label: "Library Issue", icon: BookOpen  },
+  { id: "leaves", label: "My Leaves", icon: Calendar },
+  { id: "student-leaves", label: "Student Leave Approval", icon: Users },
 ]
 
 /* ---------------- MAIN PAGE ---------------- */
 
 export default function TeachersPage() {
+  const allowedFeatures = useAllowedFeatures()
+  const visibleActions = useMemo(
+    () => actions.filter((a) => allowedFeatures.includes(a.id as (typeof allowedFeatures)[number])),
+    [allowedFeatures]
+  )
   const [active, setActive] = useState(actions[0])
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  useEffect(() => {
+    if (visibleActions.length && !visibleActions.some((a) => a.id === active.id)) {
+      setActive(visibleActions[0])
+    }
+  }, [visibleActions, active.id])
 
   return (
     <div className="flex min-h-screen bg-black m-0 p-0">
@@ -96,7 +105,7 @@ export default function TeachersPage() {
         </div>
 
         <nav className="p-3 md:p-4 space-y-2 overflow-y-auto max-h-[calc(100vh-120px)]">
-          {actions.map((item) => {
+          {visibleActions.map((item) => {
             const Icon = item.icon
             const isActive = active.id === item.id
 
@@ -180,8 +189,9 @@ function renderContent(section: string) {
 
     case "leaves":
       return <Leaves />
-    case "library-issue":
-  return <LibraryIssue />
+    case "student-leaves":
+      return <StudentLeavesApproval />
+    
     default:
       return <ComingSoon />
   }
@@ -268,13 +278,16 @@ function Leaves() {
     </RequireRole>
   )
 }
-function LibraryIssue() {
+
+function StudentLeavesApproval() {
   return (
-    <RequireRole allowedRoles={["TEACHER"]}>
-      <LibraryIssueComponent />
+    <RequireRole allowedRoles={["TEACHER", "SCHOOLADMIN"]}>
+      <TeacherStudentLeaves />
     </RequireRole>
   )
 }
+
+
 
 
 /* ---------------- FALLBACK ---------------- */

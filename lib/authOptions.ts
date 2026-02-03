@@ -24,8 +24,16 @@ export const authOptions: NextAuthOptions = {
         try {
           const user = await prisma.user.findUnique({
             where: { email: credentials.email },
-            include: {
-              student: true,
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              password: true,
+              role: true,
+              schoolId: true,
+              mobile: true,
+              allowedFeatures: true,
+              student: { select: { id: true, schoolId: true } },
               assignedClasses: true,
               school: true,
             },
@@ -61,9 +69,14 @@ export const authOptions: NextAuthOptions = {
             schoolId: user.schoolId,
             mobile: user.mobile,
             studentId: user.student?.id ?? null,
+            allowedFeatures: user.allowedFeatures ?? [],
           };
-        } catch (error) {
-          console.error("Auth error:", error);
+        } catch (error: unknown) {
+          const err = error as { code?: string };
+          console.error("Auth error:", err);
+          if (err?.code === "P2022") {
+            console.error("Auth: DB schema may be out of sync. Run: npx prisma db push");
+          }
           return null;
         }
       },
@@ -83,26 +96,34 @@ export const authOptions: NextAuthOptions = {
       token.schoolId = user.schoolId;
       token.mobile = user.mobile;
       token.studentId = user.studentId;
+      token.allowedFeatures = user.allowedFeatures ?? [];
     }
 
-    // 🔥 IMPORTANT: keep schoolId always in sync
-    if (token.id && !token.schoolId) {
+    // Keep schoolId and allowedFeatures in sync (single query)
+    if (token.id) {
       const dbUser = await prisma.user.findUnique({
         where: { id: token.id as string },
         select: {
           schoolId: true,
+          allowedFeatures: true,
           student: { select: { schoolId: true } },
           adminSchools: { select: { id: true } },
           teacherSchools: { select: { id: true } },
         },
       });
-
-      token.schoolId =
-        dbUser?.schoolId ??
-        dbUser?.student?.schoolId ??
-        dbUser?.adminSchools?.[0]?.id ??
-        dbUser?.teacherSchools?.[0]?.id ??
-        null;
+      if (dbUser) {
+        if (!token.schoolId) {
+          token.schoolId =
+            dbUser.schoolId ??
+            dbUser.student?.schoolId ??
+            dbUser.adminSchools?.[0]?.id ??
+            dbUser.teacherSchools?.[0]?.id ??
+            null;
+        }
+        if (dbUser.allowedFeatures?.length !== undefined) {
+          token.allowedFeatures = dbUser.allowedFeatures;
+        }
+      }
     }
 
     return token;
@@ -112,10 +133,11 @@ export const authOptions: NextAuthOptions = {
     session.user = {
       ...session.user,
       id: token.id as string,
-      role: token.role as "SUPERADMIN" | "SCHOOLADMIN" | "TEACHER" | "STUDENT" | "PRINCIPAL" | "HOD",
+      role: token.role as "SUPERADMIN" | "SCHOOLADMIN" | "TEACHER" | "STUDENT",
       schoolId: token.schoolId as string | null,
       mobile: token.mobile as string | null,
       studentId: token.studentId as string | null,
+      allowedFeatures: (token.allowedFeatures as string[]) ?? [],
     };
 
     return session;

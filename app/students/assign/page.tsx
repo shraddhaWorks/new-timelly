@@ -3,7 +3,7 @@ import AssignStudentsPage from "@/components/studentsassign";
 
 export default function TeachersPortalPage() {
   return (
-    <RequireRole allowedRoles={["PRINCIPAL","HOD"]}>
+    <RequireRole allowedRoles={["SCHOOLADMIN"]}>
           <AssignStudentsPage />
     </RequireRole>
   );

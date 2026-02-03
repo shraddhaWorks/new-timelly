@@ -1,5 +1,5 @@
 import NextAuth, { DefaultSession, DefaultUser } from "next-auth";
-import { Role } from "@prisma/client";
+import { Role } from "@/app/generated/prisma";
 
 declare module "next-auth" {
   interface User extends DefaultUser {
@@ -8,6 +8,7 @@ declare module "next-auth" {
     schoolId?: string | null;
     mobile?: string | null;
     studentId?: string | null;
+    allowedFeatures?: string[];
   }
 
   interface Session {
@@ -17,6 +18,7 @@ declare module "next-auth" {
       schoolId?: string | null;
       mobile?: string | null;
       studentId?: string | null;
+      allowedFeatures?: string[];
     } & DefaultSession["user"];
   }
 }
@@ -28,5 +30,6 @@ declare module "next-auth/jwt" {
     schoolId?: string | null;
     mobile?: string | null;
     studentId?: string | null;
+    allowedFeatures?: string[];
   }
 }

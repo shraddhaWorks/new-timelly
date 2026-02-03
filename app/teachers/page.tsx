@@ -3,7 +3,7 @@ import TeacherSignupPage from "@/components/teachers";
 
 export default function TeachersPortalPage() {
   return (
-    <RequireRole allowedRoles={["PRINCIPAL","HOD"]}>
+    <RequireRole allowedRoles={["SCHOOLADMIN"]}>
           <TeacherSignupPage />
     </RequireRole>
   );

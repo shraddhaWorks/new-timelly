@@ -46,12 +46,6 @@ export default function LoginPage() {
       case "SCHOOLADMIN":
         router.push("/schoolAdmin");
         break;
-      case "PRINCIPAL":
-        router.push("/principal");
-        break;
-      case "HOD":
-        router.push("/hod");
-        break;
       case "TEACHER":
         router.push("/teachersPortal");
         break;

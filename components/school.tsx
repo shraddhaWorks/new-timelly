@@ -3,18 +3,22 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Building2, MapPin, Save, Edit, CheckCircle, AlertCircle, Mail } from "lucide-react";
+import { Building2, MapPin, Save, Edit, CheckCircle, Mail, Hash, FileText } from "lucide-react";
 
 export default function SchoolPage() {
     const { data: session, status } = useSession();
 
     const [showForm, setShowForm] = useState(false);
     const [school, setSchool] = useState<any>(null);
+    const [settings, setSettings] = useState<{ admissionPrefix: string; rollNoPrefix: string } | null>(null);
+    const [settingsMsg, setSettingsMsg] = useState("");
 
     const [name, setName] = useState("");
     const [address, setAddress] = useState("");
     const [location, setLocation] = useState("");
     const [msg, setMsg] = useState("");
+    const [admissionPrefix, setAdmissionPrefix] = useState("ADM");
+    const [rollNoPrefix, setRollNoPrefix] = useState("");
 
     useEffect(() => {
         if (!session) return;
@@ -29,8 +33,18 @@ export default function SchoolPage() {
                 setLocation(data.school.location);
             }
         }
+        async function fetchSettings() {
+            const res = await fetch("/api/school/settings");
+            const data = await res.json();
+            if (data.settings) {
+                setSettings(data.settings);
+                setAdmissionPrefix(data.settings.admissionPrefix ?? "ADM");
+                setRollNoPrefix(data.settings.rollNoPrefix ?? "");
+            }
+        }
 
         fetchSchool();
+        fetchSettings();
     }, [session]);
 
     if (status === "loading") return (
@@ -177,6 +191,54 @@ export default function SchoolPage() {
                                     <Edit size={18} />
                                     Edit School Details
                                 </motion.button>
+
+                                {/* Admission & Roll Number Prefixes */}
+                                <div className="mt-8 pt-6 border-t border-[#404040]">
+                                    <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                                        <FileText size={18} />
+                                        Admission & Roll Number Prefixes
+                                    </h3>
+                                    {settingsMsg && (
+                                        <p className={`text-sm mb-3 ${settingsMsg.includes("success") ? "text-green-400" : "text-red-400"}`}>{settingsMsg}</p>
+                                    )}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="bg-[#2d2d2d]/50 border border-[#404040] rounded-lg p-4">
+                                            <p className="text-sm text-[#808080] mb-2 flex items-center gap-2"><Hash size={14} /> Admission prefix</p>
+                                            <input
+                                                value={admissionPrefix}
+                                                onChange={(e) => setAdmissionPrefix(e.target.value)}
+                                                className="w-full bg-[#1a1a1a] border border-[#404040] text-white px-3 py-2 rounded-lg"
+                                                placeholder="e.g. ADM"
+                                            />
+                                        </div>
+                                        <div className="bg-[#2d2d2d]/50 border border-[#404040] rounded-lg p-4">
+                                            <p className="text-sm text-[#808080] mb-2 flex items-center gap-2"><Hash size={14} /> Roll number prefix</p>
+                                            <input
+                                                value={rollNoPrefix}
+                                                onChange={(e) => setRollNoPrefix(e.target.value)}
+                                                className="w-full bg-[#1a1a1a] border border-[#404040] text-white px-3 py-2 rounded-lg"
+                                                placeholder="e.g. R"
+                                            />
+                                        </div>
+                                    </div>
+                                    <motion.button
+                                        type="button"
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        onClick={async () => {
+                                            const res = await fetch("/api/school/settings", {
+                                                method: "PUT",
+                                                headers: { "Content-Type": "application/json" },
+                                                body: JSON.stringify({ admissionPrefix, rollNoPrefix }),
+                                            });
+                                            const data = await res.json();
+                                            setSettingsMsg(res.ok ? "Settings saved successfully." : (data.message || "Failed to save"));
+                                        }}
+                                        className="mt-3 px-4 py-2 rounded-lg bg-[#404040] hover:bg-[#6b6b6b] text-white text-sm font-medium"
+                                    >
+                                        Save prefixes
+                                    </motion.button>
+                                </div>
                             </div>
                         </motion.div>
                     )}

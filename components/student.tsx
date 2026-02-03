@@ -130,8 +130,10 @@ export default function StudentDashboardPage() {
   const [fee, setFee] = useState<StudentFee | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "marks" | "attendance" | "events" | "newsfeed" | "homework" | "certificates" | "tc" | "payments" | "communication" | "bus" | "hostel" | "timetable" | "library">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "marks" | "attendance" | "events" | "newsfeed" | "homework" | "certificates" | "tc" | "payments" | "communication" | "bus" | "hostel" | "timetable" | "leave" | "library">("overview");
   const [libraryBooks, setLibraryBooks] = useState<LibraryBook[]>([]);
+  const [studentLeaves, setStudentLeaves] = useState<{ id: string; leaveType: string; fromDate: string; toDate: string; status: string; reason: string }[]>([]);
+  const [leaveForm, setLeaveForm] = useState({ leaveType: "CASUAL", reason: "", fromDate: "", toDate: "" });
 
   useEffect(() => {
     if (session && session.user.role === "STUDENT") {
@@ -153,6 +155,7 @@ export default function StudentDashboardPage() {
         fetchFee(),
         fetchAppointments(),
         fetchLibraryBooks(),
+        fetchStudentLeaves(),
       ]);
     } catch (err) {
       console.error("Error fetching data:", err);
@@ -339,6 +342,15 @@ export default function StudentDashboardPage() {
     }
   };
 
+  const fetchStudentLeaves = async () => {
+    try {
+      const res = await fetch("/api/student-leaves/my");
+      const data = await res.json();
+      if (res.ok && Array.isArray(data)) setStudentLeaves(data);
+    } catch (err) {
+      console.error("Error fetching student leaves:", err);
+    }
+  };
 
   const calculateAttendanceStats = () => {
     const present = attendances.filter((a) => a.status === "PRESENT").length;
@@ -483,6 +495,7 @@ export default function StudentDashboardPage() {
             { id: "bus", label: "Bus Booking", icon: Bus },
             { id: "hostel", label: "Hostel Booking", icon: Building2 },
             { id: "timetable", label: "Timetable", icon: Calendar },
+            { id: "leave", label: "Leave", icon: Calendar },
             { id: "library", label: "Library", icon: BookOpen },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -1682,6 +1695,113 @@ export default function StudentDashboardPage() {
               </motion.div>
             )}
           </motion.div>
+        )}
+        {activeTab === "leave" && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <Calendar /> Leave
+            </h2>
+            <div className="bg-[#1a1a1a] border border-[#333] rounded-xl p-6 space-y-4">
+              <h3 className="text-lg font-semibold text-white">Apply for Leave</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-[#808080] mb-2">Type</label>
+                  <select
+                    value={leaveForm.leaveType}
+                    onChange={(e) => setLeaveForm((f) => ({ ...f, leaveType: e.target.value }))}
+                    className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-3 py-2"
+                  >
+                    <option value="CASUAL">Casual</option>
+                    <option value="SICK">Sick</option>
+                    <option value="PAID">Paid</option>
+                    <option value="UNPAID">Unpaid</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-[#808080] mb-2">From Date</label>
+                  <input
+                    type="date"
+                    value={leaveForm.fromDate}
+                    onChange={(e) => setLeaveForm((f) => ({ ...f, fromDate: e.target.value }))}
+                    className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-3 py-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-[#808080] mb-2">To Date</label>
+                  <input
+                    type="date"
+                    value={leaveForm.toDate}
+                    onChange={(e) => setLeaveForm((f) => ({ ...f, toDate: e.target.value }))}
+                    className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-3 py-2"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-[#808080] mb-2">Reason</label>
+                <textarea
+                  value={leaveForm.reason}
+                  onChange={(e) => setLeaveForm((f) => ({ ...f, reason: e.target.value }))}
+                  placeholder="Reason for leave..."
+                  rows={3}
+                  className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-3 py-2"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  const res = await fetch("/api/student-leaves/apply", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(leaveForm),
+                  });
+                  const data = await res.json();
+                  if (res.ok) {
+                    setLeaveForm({ leaveType: "CASUAL", reason: "", fromDate: "", toDate: "" });
+                    fetchStudentLeaves();
+                  } else {
+                    alert(data.message || "Failed to apply");
+                  }
+                }}
+                className="px-4 py-2 rounded-lg bg-[#404040] hover:bg-[#6b6b6b] text-white font-medium flex items-center gap-2"
+              >
+                <Send size={18} /> Apply
+              </button>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-3">My Leave Requests</h3>
+              {studentLeaves.length === 0 ? (
+                <p className="text-[#808080]">No leave requests yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {studentLeaves.map((l) => (
+                    <div
+                      key={l.id}
+                      className="bg-[#1a1a1a] border border-[#333] rounded-lg p-4 flex flex-wrap items-center justify-between gap-2"
+                    >
+                      <div>
+                        <span className="text-white font-medium">{l.leaveType}</span>
+                        <span className="text-[#808080] text-sm ml-2">
+                          {new Date(l.fromDate).toLocaleDateString()} – {new Date(l.toDate).toLocaleDateString()}
+                        </span>
+                        <p className="text-[#808080] text-sm mt-1">{l.reason}</p>
+                      </div>
+                      <span
+                        className={`text-sm font-semibold ${
+                          l.status === "APPROVED"
+                            ? "text-green-400"
+                            : l.status === "REJECTED"
+                              ? "text-red-400"
+                              : "text-yellow-400"
+                        }`}
+                      >
+                        {l.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         )}
         {activeTab === "library" && (
   <div className="space-y-4">

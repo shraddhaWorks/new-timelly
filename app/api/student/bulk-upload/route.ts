@@ -59,12 +59,21 @@ export async function POST(req: Request) {
     /* ================= SINGLE TRANSACTION ================= */
 
     await prisma.$transaction(async (tx) => {
+      const year = new Date().getFullYear();
+      let settings = await tx.schoolSettings.findUnique({ where: { schoolId } });
+      if (!settings) {
+        settings = await tx.schoolSettings.create({
+          data: { schoolId, admissionPrefix: "ADM", rollNoPrefix: "", admissionCounter: 0 },
+        });
+      }
+
+      let admissionCounter: number = settings.admissionCounter;
+
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
 
         try {
           const name = String(row.name || "").trim();
-          const email = row.email ? String(row.email).trim() : null;
           const fatherName = String(row.fatherName || "").trim();
           const phoneNo = String(row.phoneNo).replace(/\.0$/, "").trim();
           const aadhaarNo = String(row.aadhaarNo).replace(/\.0$/, "").trim();
@@ -89,6 +98,18 @@ export async function POST(req: Request) {
             throw new Error("Invalid DOB");
           }
 
+          admissionCounter += 1;
+          const nextNum = admissionCounter;
+          const admissionNumber =
+            `${settings.admissionPrefix}/${year}/${String(nextNum).padStart(3, "0")}`;
+          await tx.schoolSettings.update({
+            where: { schoolId },
+            data: { admissionCounter: nextNum },
+          });
+
+          const rollNoPrefix = settings.rollNoPrefix || "";
+          const rollNo = rollNoPrefix ? `${rollNoPrefix}${nextNum}` : String(nextNum);
+
           const password = dobDate
             .toISOString()
             .split("T")[0]
@@ -99,7 +120,8 @@ export async function POST(req: Request) {
           const user = await tx.user.create({
             data: {
               name,
-              email,
+              // Student email format: <admissionNumber>@<admissionPrefix>.in (no slashes in local-part)
+              email: `${admissionNumber.replaceAll("/", "")}@${String(settings.admissionPrefix).toLowerCase()}.in`,
               password: hashedPassword,
               role: Role.STUDENT,
               schoolId,
@@ -110,6 +132,8 @@ export async function POST(req: Request) {
             data: {
               userId: user.id,
               schoolId,
+              admissionNumber,
+              rollNo,
               dob: dobDate,
               address,
               fatherName,

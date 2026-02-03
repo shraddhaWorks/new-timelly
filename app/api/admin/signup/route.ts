@@ -1,40 +1,51 @@
 import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
+import { Role } from "@/app/generated/prisma";
+
+const VALID_ROLES: Role[] = [
+  Role.SUPERADMIN,
+  Role.SCHOOLADMIN,
+  Role.TEACHER,
+  Role.STUDENT,
+];
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, password, role } = body;
+    const { name, email, password, role: roleInput } = body;
 
-    if (!name || !email || !password || !role) {
+    if (!name || !email || !password || !roleInput) {
       return NextResponse.json(
-        { message: "Missing parameters" },
+        { message: "Missing parameters: name, email, password and role are required" },
         { status: 400 }
       );
     }
 
-    // 🔹 Check existing user
+    const role = VALID_ROLES.includes(roleInput) ? roleInput : Role.SCHOOLADMIN;
+
+    // Check existing user (explicit select to avoid any missing column in legacy DBs)
     const existing = await prisma.user.findUnique({
-      where: { email },
+      where: { email: String(email).trim().toLowerCase() },
+      select: { id: true },
     });
 
     if (existing) {
       return NextResponse.json(
-        { message: "User already exists" },
+        { message: "User already exists with this email" },
         { status: 400 }
       );
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 🔹 Create user
     const user = await prisma.user.create({
       data: {
-        name,
-        email,
+        name: String(name).trim(),
+        email: String(email).trim().toLowerCase(),
         password: hashedPassword,
         role,
+        allowedFeatures: [],
       },
       select: {
         id: true,
@@ -45,24 +56,30 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ user }, { status: 201 });
+  } catch (error: unknown) {
+    const err = error as { code?: string; meta?: { target?: string[] }; message?: string };
+    console.error("Signup error:", err);
 
-  } catch (error: any) {
-    console.error("Signup error:", error);
-    
-    // Handle Prisma unique constraint errors
-    if (error?.code === "P2002") {
-      const field = error?.meta?.target?.[0] || "field";
+    if (err?.code === "P2002") {
+      const field = err?.meta?.target?.[0] || "email";
       return NextResponse.json(
         { message: `${field} already exists` },
         { status: 400 }
       );
     }
-    
-    // Return the actual error message for debugging
+    if (err?.code === "P2022") {
+      return NextResponse.json(
+        {
+          message:
+            "Database schema is out of sync. Run: npx prisma db push",
+        },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
-      { 
-        message: error?.message || "Internal server error in signup route",
-        error: process.env.NODE_ENV === "development" ? error?.stack : undefined
+      {
+        message: err?.message || "Internal server error in signup route",
       },
       { status: 500 }
     );

@@ -5,33 +5,54 @@ import { motion, AnimatePresence } from "framer-motion"
 import {
   School,
   Users,
-  GraduationCap,
   Building2,
-  FileCheck,
   CreditCard,
   Newspaper,
   Megaphone,
-  Calendar,
-  Bus,
   Menu,
   X,
+  Search,
+  FileText,
+  CalendarCheck,
+  FileCheck,
+  Bus,
+  Calendar,
 } from "lucide-react"
+
 import RequireRole from "./RequireRole"
+
+// PAGES
 import SchoolPage from "./school"
-import Page from "@/app/payments/page"
+import TeacherSignupPage from "./teachers"
+import StudentLookupTab from "./schoolAdmin/StudentLookupTab"
+import CircularsTab from "./schoolAdmin/CircularsTab"
+import AdminLeaveTab from "./adminleave"
+import PaymentsPage from "@/app/payments/page"
 import NewsFeedPage from "./NewsFeed"
 import EventsPage from "./Events"
-import PrincipalSignupPageComponent from "./principalSignup"
+import ClassesPage from "./Classes"
+import AddStudentPage from "./addStudents"
+import TCPage from "./tc"
+import BusManagement from "./BusManagement"
+import HostelManagement from "./HostelManagement"
+import TimetableManagement from "./TimetableManagement"
+import RoomAllocationManagement from "./RoomAllocationManagement"
 
-/* ---------------- SIDEBAR ACTIONS ---------------- */
+/* ---------------- ACTIONS ---------------- */
 
 const actions = [
-  
   { id: "school", label: "School Details", icon: Building2 },
+  { id: "teachers", label: "Teachers", icon: Users },
+  { id: "students", label: "Students", icon: Users },
+  { id: "classes", label: "Classes", icon: School },
+  { id: "studentLookup", label: "Student Lookup", icon: Search },
   { id: "payments", label: "Payments & Fees", icon: CreditCard },
   { id: "newsfeed", label: "Newsfeed", icon: Newspaper },
   { id: "events", label: "Events", icon: Megaphone },
-  { id: "principal", label: "Principal create", icon: Calendar },
+  { id: "circulars", label: "Circulars", icon: FileText },
+  { id: "leaveMgmt", label: "Leave Management", icon: CalendarCheck },
+  { id: "tc", label: "TC Requests", icon: FileCheck },
+  
 ]
 
 /* ---------------- MAIN PAGE ---------------- */
@@ -42,15 +63,14 @@ export default function PrincipalPage() {
 
   return (
     <div className="flex min-h-screen bg-black">
-      {/* Mobile Menu Button */}
+      {/* Mobile Menu */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-[#1a1a1a] border border-[#333333] rounded-lg text-white hover:bg-[#2d2d2d] transition"
+        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-[#1a1a1a] border border-[#333333] rounded-lg text-white"
       >
-        {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+        {sidebarOpen ? <X /> : <Menu />}
       </button>
 
-      {/* Overlay for mobile */}
       {sidebarOpen && (
         <div
           className="md:hidden fixed inset-0 bg-black/50 z-40"
@@ -59,29 +79,17 @@ export default function PrincipalPage() {
       )}
 
       {/* SIDEBAR */}
-      <aside className={`
-        fixed md:static inset-y-0 left-0 z-40
-        w-64 md:w-72 bg-[#1a1a1a] border-r border-[#333333] shadow-2xl flex-shrink-0
-        transform transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-      `}>
-        <div className="p-6 border-b border-[#333333]">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-[#404040] rounded-lg flex items-center justify-center">
-              <School className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl md:text-2xl font-bold text-white">
-                School Admin
-          </h1>
-              <p className="text-xs md:text-sm text-[#808080]">
-                Dashboard
-          </p>
-            </div>
-          </div>
+      <aside
+        className={`fixed md:static inset-y-0 left-0 z-40 w-64 md:w-72 glass-strong border-r border-white/10 transition-transform ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        }`}
+      >
+        <div className="p-6 border-b border-white/10">
+          <h1 className="text-2xl font-bold text-white">School Admin</h1>
+          <p className="text-sm text-gray-400">Dashboard</p>
         </div>
 
-        <nav className="p-3 md:p-4 space-y-2 overflow-y-auto max-h-[calc(100vh-120px)]">
+        <nav className="p-4 space-y-2">
           {actions.map((item) => {
             const Icon = item.icon
             const isActive = active.id === item.id
@@ -89,43 +97,36 @@ export default function PrincipalPage() {
             return (
               <motion.button
                 key={item.id}
-                whileHover={{ scale: 1.02, x: 4 }}
-                whileTap={{ scale: 0.98 }}
                 onClick={() => {
                   setActive(item)
-                  setSidebarOpen(false) // Close sidebar on mobile when item is clicked
+                  setSidebarOpen(false)
                 }}
-                className={`w-full flex items-center gap-3 md:gap-4 px-3 md:px-4 py-2.5 md:py-3 rounded-lg transition text-left
-                  ${
-                    isActive
-                      ? "bg-[#404040] text-white shadow-lg border-l-4 border-[#808080]"
-                      : "text-[#808080] hover:bg-[#2d2d2d] hover:text-white"
-                  }
-                `}
+                whileHover={{ scale: 1.02, x: 4 }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left ${
+                  isActive
+                    ? "bg-white/15 text-white"
+                    : "text-white/70 hover:bg-white/10"
+                }`}
               >
-                <Icon size={18} className="flex-shrink-0" />
-                <span className="font-medium text-sm md:text-base truncate">{item.label}</span>
+                <Icon size={18} />
+                {item.label}
               </motion.button>
             )
           })}
         </nav>
       </aside>
 
-      {/* MAIN CONTENT */}
-      <main className="flex-1 overflow-hidden bg-black p-0 m-0 pt-16 md:pt-0">
+      {/* CONTENT */}
+      <main className="flex-1 pt-16 md:pt-0">
         <AnimatePresence mode="wait">
           <motion.div
             key={active.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.35 }}
-            className="bg-black h-full w-full overflow-auto p-4 md:p-6"
+            className="p-6"
           >
-            {/* CONTENT AREA */}
-            <div className="h-full w-full">
-              {renderContent(active.id)}
-            </div>
+            {renderContent(active.id)}
           </motion.div>
         </AnimatePresence>
       </main>
@@ -133,87 +134,63 @@ export default function PrincipalPage() {
   )
 }
 
-/* ---------------- CONTENT RENDERER ---------------- */
+/* ---------------- CONTENT SWITCH ---------------- */
 
 function renderContent(section: string) {
   switch (section) {
-    
     case "school":
       return <SchoolDetails />
-    
+    case "teachers":
+      return <Teachers />
+    case "students":
+      return <Students />
+    case "classes":
+      return <Classes />
+    case "studentLookup":
+      return <StudentLookup />
     case "payments":
       return <Payments />
     case "newsfeed":
       return <NewsFeed />
     case "events":
-      return <Events />  
-    case "principal":
-      return <PrincipalSignupPage />
+      return <Events />
+    case "circulars":
+      return <Circulars />
+    case "leaveMgmt":
+      return <LeaveMgmt />
+    case "tc":
+      return <TCRequests />
+   
     default:
       return <ComingSoon />
   }
 }
 
+/* ---------------- SECTIONS (ONLY SCHOOLADMIN) ---------------- */
 
+const Wrapper = ({ children }: { children: React.ReactNode }) => (
+  <RequireRole allowedRoles={["SCHOOLADMIN"]}>{children}</RequireRole>
+)
 
-
-
-
-
-function SchoolDetails() {
-  return (
-    <RequireRole allowedRoles={["SCHOOLADMIN"]}>
-      <SchoolPage />
-    </RequireRole>
-  )
-}
-
-function PrincipalSignupPage() {
-  return (
-    <RequireRole allowedRoles={["SCHOOLADMIN"]}>
-      <PrincipalSignupPageComponent />
-    </RequireRole>
-  )
-}
-
-function Payments() {
-  return (
-    <RequireRole allowedRoles={["SCHOOLADMIN"]}>
-      <Page />
-    </RequireRole>
-  )
-}
-
-function NewsFeed() {
-  return (
-    <RequireRole allowedRoles={["SCHOOLADMIN"]}>
-      <NewsFeedPage />
-    </RequireRole>
-  )
-}
-
-function Events() {
-  return (
-    <RequireRole allowedRoles={["SCHOOLADMIN"]}>
-      <EventsPage />
-    </RequireRole>
-  )
-}
-
-
+const SchoolDetails = () => <Wrapper><SchoolPage /></Wrapper>
+const Teachers = () => <Wrapper><TeacherSignupPage /></Wrapper>
+const Students = () => <Wrapper><AddStudentPage /></Wrapper>
+const Classes = () => <Wrapper><ClassesPage /></Wrapper>
+const StudentLookup = () => <Wrapper><StudentLookupTab /></Wrapper>
+const Circulars = () => <Wrapper><CircularsTab /></Wrapper>
+const LeaveMgmt = () => <Wrapper><AdminLeaveTab /></Wrapper>
+const Payments = () => <Wrapper><PaymentsPage /></Wrapper>
+const NewsFeed = () => <Wrapper><NewsFeedPage /></Wrapper>
+const Events = () => <Wrapper><EventsPage /></Wrapper>
+const TCRequests = () => <Wrapper><TCPage /></Wrapper>
 
 
 /* ---------------- FALLBACK ---------------- */
 
 function ComingSoon() {
   return (
-    <div className="h-full w-full flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-20 h-20 bg-[#2d2d2d] rounded-full flex items-center justify-center mx-auto mb-4">
-          <School className="w-10 h-10 text-[#808080]" />
-        </div>
-        <p className="text-[#808080] text-lg">Feature under development</p>
-      </div>
+    <div className="h-full flex items-center justify-center text-gray-400">
+      Feature under development
     </div>
   )
 }

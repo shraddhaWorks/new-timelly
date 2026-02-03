@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
 import { redis } from "@/lib/redis";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -35,16 +35,21 @@ export async function GET() {
         { status: 400 }
       );
     }
-   const cachedKey = `students:${schoolId}`;
-    const cachedStudents = await redis.get(cachedKey);
-    if (cachedStudents) {
-      console.log("✅ Students served from Redis");
-      return NextResponse.json({ students: cachedStudents }, { status: 200 });
-    }
+
+    const { searchParams } = new URL(req.url);
+    const rollNo = searchParams.get("rollNo")?.trim();
+    const admissionNumber = searchParams.get("admissionNumber")?.trim();
+
+    const where: {
+      schoolId: string;
+      rollNo?: string | { contains: string; mode: "insensitive" };
+      admissionNumber?: string | { contains: string; mode: "insensitive" };
+    } = { schoolId };
+    if (rollNo) where.rollNo = { contains: rollNo, mode: "insensitive" };
+    if (admissionNumber) where.admissionNumber = { contains: admissionNumber, mode: "insensitive" };
+
     const students = await prisma.student.findMany({
-      where: {
-        schoolId: schoolId,
-      },
+      where,
       include: {
         user: {
           select: { id: true, name: true, email: true },
@@ -53,16 +58,19 @@ export async function GET() {
           select: { id: true, name: true, section: true },
         },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: { createdAt: "desc" },
     });
-   await redis.set(cachedKey,students,{ex:60 * 5}); // Cache for 5 minutes
+
+    if (!rollNo && !admissionNumber) {
+      const cachedKey = `students:${schoolId}`;
+      await redis.set(cachedKey, students, { ex: 60 * 5 });
+    }
+
     return NextResponse.json({ students }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("List students error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
     );
   }

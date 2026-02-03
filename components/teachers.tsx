@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
-import { Users, Plus, Mail, Phone, User as UserIcon } from "lucide-react";
+import { Users, Plus, Mail, Phone, User as UserIcon, Shield } from "lucide-react";
+import { FEATURES, FEATURE_IDS, getDefaultFeaturesForRole, type FeatureId } from "@/lib/features";
 
 interface Teacher {
   id: string;
@@ -26,6 +27,9 @@ export default function TeacherSignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [allowedFeatures, setAllowedFeatures] = useState<FeatureId[]>(() =>
+    getDefaultFeaturesForRole("TEACHER")
+  );
 
   useEffect(() => {
     if (session) {
@@ -62,7 +66,7 @@ export default function TeacherSignupPage() {
       const res = await fetch("/api/teacher/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, allowedFeatures }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -71,6 +75,7 @@ export default function TeacherSignupPage() {
       }
       setMessage("Teacher created successfully");
       setForm({ name: "", email: "", password: "", mobile: "" });
+      setAllowedFeatures(getDefaultFeaturesForRole("TEACHER"));
       setShowForm(false);
       fetchTeachers(); // Refresh the list
     } catch (err) {
@@ -79,6 +84,15 @@ export default function TeacherSignupPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleFeature = (id: FeatureId) => {
+    setAllowedFeatures((prev) =>
+      prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
+    );
+  };
+  const selectAllFeatures = () => {
+    setAllowedFeatures((prev) => (prev.length === FEATURE_IDS.length ? [] : [...FEATURE_IDS]));
   };
 
   if (status === "loading" || fetching) {
@@ -97,7 +111,7 @@ export default function TeacherSignupPage() {
       <p className="p-6 text-red-400">Not authenticated</p>
     </div>
   );
-  if (session.user.role !== "PRINCIPAL" && session.user.role !== "HOD")
+  if (session.user.role !== "SCHOOLADMIN")
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <p className="p-6 text-red-400">Forbidden: School Admins only</p>
@@ -133,124 +147,178 @@ export default function TeacherSignupPage() {
           </motion.button>
         </motion.div>
 
-      {/* Create Teacher Form */}
+      {/* Create Teacher Form with Access Control */}
       {showForm && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl shadow-2xl p-6 md:p-8 border border-[#333333] hover:border-[#404040] transition-all duration-300"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10"></div>
-          <div className="relative">
-            <h2 className="text-2xl font-semibold text-white mb-6 flex items-center gap-3">
-              <Plus size={24} />
-              Add New Teacher
-            </h2>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#404040]/10 via-transparent to-[#404040]/10" />
+          <div className="relative grid grid-cols-1 lg:grid-cols-[1fr,340px] gap-8">
+            {/* Left: User Information */}
+            <div>
+              <h2 className="text-2xl font-semibold text-white mb-6 flex items-center gap-3">
+                <Plus size={24} />
+                Add New Teacher
+              </h2>
 
-            {message && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`p-3 mb-4 rounded-lg border flex items-center gap-2 ${
-                  message.includes("success")
-                    ? "bg-[#2d2d2d] text-white border-[#404040]"
-                    : "bg-red-500/10 text-red-400 border-red-500/30"
-                }`}
-              >
-                {message.includes("success") ? "✓" : "⚠"}
-                {message}
-              </motion.div>
-            )}
+              {message && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`p-3 mb-4 rounded-lg border flex items-center gap-2 ${
+                    message.includes("success")
+                      ? "bg-[#2d2d2d] text-white border-[#404040]"
+                      : "bg-red-500/10 text-red-400 border-red-500/30"
+                  }`}
+                >
+                  {message.includes("success") ? "✓" : "⚠"}
+                  {message}
+                </motion.div>
+              )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-[#808080] mb-2 flex items-center gap-2">
-                  <UserIcon size={16} />
-                  Name <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={form.name}
-                  onChange={handleChange}
-                  required
-                  className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent hover:border-[#808080] transition placeholder-[#6b6b6b]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[#808080] mb-2 flex items-center gap-2">
-                  <Mail size={16} />
-                  Email <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent hover:border-[#808080] transition placeholder-[#6b6b6b]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[#808080] mb-2 flex items-center gap-2">
-                  <UserIcon size={16} />
-                  Password <span className="text-red-400">*</span>
-                </label>
-                <div className="relative">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                  <label className="block text-sm font-medium text-[#808080] mb-2 flex items-center gap-2">
+                    <UserIcon size={16} />
+                    Name <span className="text-red-400">*</span>
+                  </label>
                   <input
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    value={form.password}
+                    type="text"
+                    name="name"
+                    value={form.name}
                     onChange={handleChange}
                     required
-                    className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-4 py-2.5 pr-12 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent hover:border-[#808080] transition placeholder-[#6b6b6b]"
+                    className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent hover:border-[#808080] transition placeholder-[#6b6b6b]"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-2.5 text-sm text-[#808080] hover:text-white transition"
-                  >
-                    {showPassword ? "Hide" : "Show"}
-                  </button>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-[#808080] mb-2 flex items-center gap-2">
-                  <Phone size={16} />
-                  Mobile (optional)
-                </label>
+                <div>
+                  <label className="block text-sm font-medium text-[#808080] mb-2 flex items-center gap-2">
+                    <Mail size={16} />
+                    Email <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    required
+                    className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent hover:border-[#808080] transition placeholder-[#6b6b6b]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#808080] mb-2 flex items-center gap-2">
+                    <UserIcon size={16} />
+                    Password <span className="text-red-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={form.password}
+                      onChange={handleChange}
+                      required
+                      className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-4 py-2.5 pr-12 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent hover:border-[#808080] transition placeholder-[#6b6b6b]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-2.5 text-sm text-[#808080] hover:text-white transition"
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#808080] mb-2 flex items-center gap-2">
+                    <Phone size={16} />
+                    Mobile (optional)
+                  </label>
+                  <input
+                    type="text"
+                    name="mobile"
+                    value={form.mobile}
+                    onChange={handleChange}
+                    className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent hover:border-[#808080] transition placeholder-[#6b6b6b]"
+                  />
+                </div>
+
+                <motion.button
+                  type="submit"
+                  disabled={loading}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white py-3.5 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 border border-emerald-500/30 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus size={18} />
+                      <span>Create Teacher</span>
+                    </>
+                  )}
+                </motion.button>
+              </form>
+            </div>
+
+            {/* Right: Access Control */}
+            <div className="bg-[#1a1a1a] border border-[#333333] rounded-xl p-5 h-fit max-h-[calc(100vh-200px)] flex flex-col">
+              <div className="flex items-center gap-2 mb-4">
+                <Shield className="w-5 h-5 text-emerald-400" />
+                <h3 className="text-lg font-semibold text-white">Access Control</h3>
+                <span className="ml-auto text-sm text-[#808080]">
+                  {allowedFeatures.length} Active
+                </span>
+              </div>
+              <label className="flex items-center gap-2 mb-3 cursor-pointer text-[#808080] hover:text-white transition">
                 <input
-                  type="text"
-                  name="mobile"
-                  value={form.mobile}
-                  onChange={handleChange}
-                  className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent hover:border-[#808080] transition placeholder-[#6b6b6b]"
+                  type="checkbox"
+                  checked={allowedFeatures.length === FEATURE_IDS.length}
+                  onChange={selectAllFeatures}
+                  className="rounded border-[#404040] bg-[#2d2d2d] text-emerald-500 focus:ring-emerald-500"
                 />
+                <span className="text-sm font-medium">Select All</span>
+              </label>
+              <div className="overflow-y-auto space-y-3 pr-1 flex-1 min-h-0">
+                {FEATURES.map((feature) => {
+                  const isOn = allowedFeatures.includes(feature.id);
+                  return (
+                    <div
+                      key={feature.id}
+                      className="flex items-center justify-between gap-3 py-2 border-b border-[#333333] last:border-0"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-white truncate">{feature.label}</p>
+                        <p className="text-xs text-[#808080] truncate">{feature.description}</p>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={isOn}
+                        onClick={() => toggleFeature(feature.id)}
+                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-[#1a1a1a] ${
+                          isOn ? "bg-emerald-500" : "bg-[#404040]"
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition ${
+                            isOn ? "translate-x-5" : "translate-x-0.5"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
-
-              <motion.button
-                type="submit"
-                disabled={loading}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full bg-gradient-to-r from-[#404040] to-[#6b6b6b] hover:from-[#6b6b6b] hover:to-[#404040] text-white py-3.5 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 border border-[#333333] hover:border-[#808080] shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    <span>Saving...</span>
-                  </>
-                ) : (
-                  <>
-                    <Plus size={18} />
-                    <span>Create Teacher</span>
-                  </>
-                )}
-              </motion.button>
-            </form>
+            </div>
           </div>
         </motion.div>
       )}

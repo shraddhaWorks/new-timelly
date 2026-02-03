@@ -3,7 +3,7 @@ import TCPage from "@/components/tc";
 
 export default function TCpages() {
   return (
-    <RequireRole allowedRoles={["PRINCIPAL"]}>
+    <RequireRole allowedRoles={["SCHOOLADMIN"]}>
           <TCPage />
     </RequireRole>
   );

@@ -3,7 +3,7 @@ import RequireRole from "@/components/RequireRole";
 
 export default function AddStudnetpages() {
   return (
-    <RequireRole allowedRoles={["PRINCIPAL","HOD"]}>
+    <RequireRole allowedRoles={["SCHOOLADMIN"]}>
           <AddStudentPage />
     </RequireRole>
   );
