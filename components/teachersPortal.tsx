@@ -31,6 +31,8 @@ import CommunicationPage from "@/app/communication/page"
 import TeacherLeavesPage from "./teacherleave"
 import TeacherStudentLeaves from "./TeacherStudentLeaves"
 import { Users } from "lucide-react"
+import NotificationsBell from "./NotificationsBell"
+import ProfileChip from "./ProfileChip"
 
 const actions = [
   { id: "marks-entry", label: "Marks Entry", icon: ClipboardList },
@@ -88,7 +90,7 @@ export default function TeachersPage() {
         transform transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
-        <div className="p-6 border-b border-[#333333]">
+        <div className="p-6 border-b border-[#333333] flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-[#404040] rounded-lg flex items-center justify-center">
               <GraduationCap className="w-6 h-6 text-white" />
@@ -101,6 +103,10 @@ export default function TeachersPage() {
                 Dashboard
               </p>
             </div>
+          </div>
+          <div className="hidden md:flex items-center gap-2">
+            <NotificationsBell />
+            <ProfileChip />
           </div>
         </div>
 

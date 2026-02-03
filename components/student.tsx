@@ -10,6 +10,8 @@ import BusBooking from "./BusBooking";
 import HostelBooking from "./HostelBooking";
 import TimetableView from "./TimetableView";
 import CommunicationPage from "@/app/communication/page";
+import NotificationsBell from "./NotificationsBell";
+import ProfileChip from "./ProfileChip";
 
 interface Mark {
   id: string;
@@ -471,8 +473,14 @@ export default function StudentDashboardPage() {
               </h1>
               <p className="text-[#808080] mt-1 text-sm md:text-base">Your academic dashboard</p>
             </div>
-            <div className="bg-[#2d2d2d] border border-[#404040] px-4 py-2 rounded-lg">
-              <p className="text-sm text-white font-medium">Student Portal</p>
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2">
+                <NotificationsBell />
+              </div>
+              <div className="bg-[#2d2d2d] border border-[#404040] px-3 py-2 rounded-lg flex items-center gap-2">
+                <p className="text-sm text-white font-medium hidden md:block">Student Portal</p>
+                <ProfileChip />
+              </div>
             </div>
           </div>
         </div>

@@ -20,6 +20,8 @@ import {
 } from "lucide-react"
 
 import RequireRole from "./RequireRole"
+import NotificationsBell from "./NotificationsBell"
+import ProfileChip from "./ProfileChip"
 
 // PAGES
 import SchoolPage from "./school"
@@ -33,10 +35,7 @@ import EventsPage from "./Events"
 import ClassesPage from "./Classes"
 import AddStudentPage from "./addStudents"
 import TCPage from "./tc"
-import BusManagement from "./BusManagement"
-import HostelManagement from "./HostelManagement"
-import TimetableManagement from "./TimetableManagement"
-import RoomAllocationManagement from "./RoomAllocationManagement"
+
 
 /* ---------------- ACTIONS ---------------- */
 
@@ -84,9 +83,15 @@ export default function PrincipalPage() {
           sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
-        <div className="p-6 border-b border-white/10">
-          <h1 className="text-2xl font-bold text-white">School Admin</h1>
-          <p className="text-sm text-gray-400">Dashboard</p>
+        <div className="p-6 border-b border-white/10 flex items-center justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-white">School Admin</h1>
+            <p className="text-sm text-gray-400">Dashboard</p>
+          </div>
+          <div className="hidden md:flex items-center gap-2">
+            <NotificationsBell />
+            <ProfileChip />
+          </div>
         </div>
 
         <nav className="p-4 space-y-2">
