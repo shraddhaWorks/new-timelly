@@ -22,7 +22,7 @@ export default function SchoolAdminDashboard() {
       case "classes":
         return <SchoolAdminClassesTab/>;
       case "student-details":
-        return;
+        return ;
       case "teachers":
         return;
       case "teacher-leaves":

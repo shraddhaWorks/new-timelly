@@ -12,7 +12,11 @@ export default function ScreenPage() {
     useEffect(() => {
         async function redirectByRole() {
             const session = await getSession();
-            if (!session?.user) return;
+            if (!session?.user) {
+                // Not logged in -> send to login
+                router.replace("/");
+                return;
+            }
 
             const roleRoutes: Record<string, string> = {
                 SUPERADMIN: ROUTES.SUPERADMIN,

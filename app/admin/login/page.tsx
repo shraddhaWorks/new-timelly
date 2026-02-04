@@ -1,12 +1,37 @@
 "use client";
 
-import { useState } from "react";
-import { signIn, getSession } from "next-auth/react";
+import { useState, useEffect } from "react";
+import { getSession, signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { ROUTES } from "@/app/frontend/constants/routes";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      // If already logged in, send directly to role-specific dashboard
+      const role = session?.user?.role;
+      switch (role) {
+        case "SUPERADMIN":
+          router.replace(ROUTES.SUPERADMIN);
+          break;
+        case "SCHOOLADMIN":
+          router.replace(ROUTES.SCHOOLADMIN);
+          break;
+        case "TEACHER":
+          router.replace(ROUTES.TEACHER);
+          break;
+        case "STUDENT":
+          router.replace(ROUTES.PARENT);
+          break;
+        default:
+          router.replace(ROUTES.UNAUTHORIZED);
+      }
+    }
+  }, [status, router]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,19 +61,19 @@ export default function LoginPage() {
 
     switch (role) {
       case "SUPERADMIN":
-        router.replace("/frontend/pages/superadmin");
+        router.replace(ROUTES.SUPERADMIN);
         break;
       case "SCHOOLADMIN":
-        router.replace("/frontend/pages/schooladmin");
+        router.replace(ROUTES.SCHOOLADMIN);
         break;
       case "TEACHER":
-        router.replace("/frontend/pages/teacher");
+        router.replace(ROUTES.TEACHER);
         break;
       case "STUDENT":
-        router.replace("/frontend/pages/parent");
+        router.replace(ROUTES.PARENT);
         break;
       default:
-        router.replace("/unauthorized");
+        router.replace(ROUTES.UNAUTHORIZED);
     }
 
     setLoading(false);
