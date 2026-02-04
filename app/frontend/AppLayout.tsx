@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { SidebarItem } from "./types/sidebar";
 import AppSidebar from "./components/common/Sidebar";
-import AppHeader from "./components/common/PageHeader";
+import AppHeader from "./components/common/AppHeader";
 
 
 type Props = {

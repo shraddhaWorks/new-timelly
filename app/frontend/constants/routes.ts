@@ -5,5 +5,4 @@ export const ROUTES = {
     SCHOOLADMIN: '/frontend/pages/schooladmin',
     TEACHER: '/frontend/pages/teacher',
     PARENT: '/frontend/pages/parent',   
-
 };

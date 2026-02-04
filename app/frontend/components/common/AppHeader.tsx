@@ -32,8 +32,6 @@ export default function AppHeader({
   bg-transparent
   border-b border-white/10
 ">
-
-
         {/* LEFT */}
         <div className="flex items-center gap-3">
           {onMenuClick && (
