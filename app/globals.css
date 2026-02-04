@@ -26,7 +26,7 @@ body {
     radial-gradient(800px circle at 50% 80%, #00ffcc33, transparent 50%),
     linear-gradient(135deg, #0b0616 0%, #140b2d 40%, #1b0f2e 60%, #0b0616 100%);
   color: #ffffff !important;
-  font-family:inter ;
+  font-family: var(--font-inter), sans-serif;
 }
 
 /* Ensure all text elements are white/light */

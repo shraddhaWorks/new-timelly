@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/context/AuthContext";
-import Script from "next/script";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,20 +25,22 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`
+          ${inter.variable}
+          ${geistSans.variable}
+          ${geistMono.variable}
+          antialiased
+        `}
         suppressHydrationWarning
       >
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
 }
-
