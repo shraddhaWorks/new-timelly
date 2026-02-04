@@ -36,8 +36,6 @@ export default function LoginPage() {
       setLoading(false);
       return;
     }
-
-    // 🔥 Always go to SCREEN
     router.replace(ROUTES.SCREEN);
   };
 
