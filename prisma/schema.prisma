@@ -64,17 +64,17 @@ model User {
   password String? // hashed
 
   role            Role
-  allowedFeatures String[] @default([]) // granular access: e.g. ["marks-entry", "attendance-mark"]
+  allowedFeatures String[]       @default([]) // granular access: e.g. ["marks-entry", "attendance-mark"]
   //library
-  libraryIssues LibraryIssue[]
+  libraryIssues   LibraryIssue[]
   // Tenant (School)
-  schoolId      String?
-  school        School?        @relation(fields: [schoolId], references: [id])
+  schoolId        String?
+  school          School?        @relation(fields: [schoolId], references: [id])
 
   // Teacher-specific fields
   mobile          String? // teacher mobile
   photoUrl        String?
-  language        String? @default("English")
+  language        String?      @default("English")
   teacherId       String? // e.g. TCH001
   subject         String? // e.g. Mathematics
   leaveAprrover   Boolean      @default(false)
@@ -89,7 +89,7 @@ model User {
 
   // News Feed
   newsFeedsCreated NewsFeed[] @relation("NewsFeedCreator")
-  circularsIssued Circular[]
+  circularsIssued  Circular[]
 
   // Communication
   teacherAppointments Appointment[] @relation("TeacherAppointments")
@@ -100,11 +100,11 @@ model User {
   certificatesIssued          Certificate[]         @relation("CertificateIssuer")
 
   // Transfer Certificate
-  tcRequests     TransferCertificate[] @relation("TCRequester")
-  tcApprovals    TransferCertificate[] @relation("TCApprover")
+  tcRequests            TransferCertificate[] @relation("TCRequester")
+  tcApprovals           TransferCertificate[] @relation("TCApprover")
   // Leave Requests
-  leavesApplied  LeaveRequest[]        @relation("TeacherLeaves")
-  leavesApproved LeaveRequest[]        @relation("ApprovedLeaves")
+  leavesApplied         LeaveRequest[]        @relation("TeacherLeaves")
+  leavesApproved        LeaveRequest[]        @relation("ApprovedLeaves")
   // Student leave requests (teacher approves)
   studentLeavesApproved StudentLeaveRequest[] @relation("StudentLeaveApprover")
 
@@ -146,16 +146,16 @@ model Notification {
 }
 
 model TeacherAuditRecord {
-  id            String               @id @default(cuid())
-  teacherId     String
-  teacher       User                 @relation("TeacherAuditTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
-  createdById   String
-  createdBy     User                 @relation("TeacherAuditCreator", fields: [createdById], references: [id], onDelete: Cascade)
-  category      TeacherAuditCategory
+  id             String               @id @default(cuid())
+  teacherId      String
+  teacher        User                 @relation("TeacherAuditTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  createdById    String
+  createdBy      User                 @relation("TeacherAuditCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  category       TeacherAuditCategory
   customCategory String?
-  description   String               @db.Text
-  scoreImpact   Int                  // can be + or -
-  createdAt     DateTime             @default(now())
+  description    String               @db.Text
+  scoreImpact    Int // can be + or -
+  createdAt      DateTime             @default(now())
 
   @@index([teacherId])
   @@index([createdById])
@@ -232,34 +232,36 @@ model School {
 }
 
 model SchoolSettings {
-  id        String  @id @default(cuid())
-  schoolId  String  @unique
-  school    School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  admissionPrefix String @default("ADM")   // e.g. ADM -> ADM/2026/001
-  rollNoPrefix     String @default("")     // optional prefix for roll numbers
-  admissionCounter Int    @default(0)      // last used number for admission
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String   @id @default(cuid())
+  schoolId         String   @unique
+  school           School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  admissionPrefix  String   @default("ADM") // e.g. ADM -> ADM/2026/001
+  rollNoPrefix     String   @default("") // optional prefix for roll numbers
+  admissionCounter Int      @default(0) // last used number for admission
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
   @@index([schoolId])
 }
 
 model Circular {
   id              String   @id @default(cuid())
-  referenceNumber String   // e.g. CIR/2026/004
+  referenceNumber String // e.g. CIR/2026/004
   date            DateTime @db.Date
   subject         String
   content         String   @db.Text
-  attachments     String[] @default([])   // URLs or keys
-  issuedById     String
+  attachments     String[] @default([]) // URLs or keys
+  issuedById      String
   issuedBy        User     @relation(fields: [issuedById], references: [id], onDelete: Cascade)
   schoolId        String
   school          School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   importanceLevel String   @default("Medium") // High, Medium, Low
-  recipients      String[] @default([])  // All, Teachers, Parents, Students, Staff, or classId for specific class
-  classId         String?  // optional: target specific class
+  recipients      String[] @default([]) // All, Teachers, Parents, Students, Staff, or classId for specific class
+  classId         String? // optional: target specific class
   publishStatus   String   @default("DRAFT") // PUBLISHED, DRAFT
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
   @@index([schoolId])
   @@index([publishStatus])
   @@index([date])
@@ -281,6 +283,7 @@ model StudentLeaveRequest {
   remarks    String?     @db.Text
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
+
   @@index([studentId])
   @@index([schoolId])
   @@index([status])
@@ -333,13 +336,13 @@ model ExamTerm {
 }
 
 model ExamSchedule {
-  id         String   @id @default(cuid())
-  termId     String
-  term       ExamTerm @relation(fields: [termId], references: [id], onDelete: Cascade)
-  subject    String
-  examDate   DateTime @db.Date
-  startTime  String   // "09:00 AM"
-  durationMin Int     // minutes
+  id          String   @id @default(cuid())
+  termId      String
+  term        ExamTerm @relation(fields: [termId], references: [id], onDelete: Cascade)
+  subject     String
+  examDate    DateTime @db.Date
+  startTime   String // "09:00 AM"
+  durationMin Int // minutes
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -349,12 +352,12 @@ model ExamSchedule {
 }
 
 model SyllabusTracking {
-  id          String   @id @default(cuid())
-  termId      String
-  term        ExamTerm @relation(fields: [termId], references: [id], onDelete: Cascade)
-  subject     String
-  completedPercent Int @default(0) // 0-100
-  notes       String?  @db.Text
+  id               String   @id @default(cuid())
+  termId           String
+  term             ExamTerm @relation(fields: [termId], references: [id], onDelete: Cascade)
+  subject          String
+  completedPercent Int      @default(0) // 0-100
+  notes            String?  @db.Text
 
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
@@ -379,9 +382,9 @@ model Student {
   class   Class?  @relation(fields: [classId], references: [id])
 
   // Student Details - admissionNumber is unique and used as login (User.email)
-  admissionNumber String  @unique
+  admissionNumber String   @unique
   fatherName      String
-  aadhaarNo       String  @unique
+  aadhaarNo       String   @unique
   phoneNo         String
   rollNo          String? // modifiable by admin
   dob             DateTime
@@ -513,12 +516,16 @@ model Mark {
 // =====================
 
 model Event {
-  id          String    @id @default(cuid())
-  title       String
-  description String    @db.Text
-  amount      Float?
-  photo       String? // URL or file path
-  eventDate   DateTime?
+  id             String    @id @default(cuid())
+  title          String
+  description    String    @db.Text
+  type           String
+  level          String
+  location       String
+  mode           String
+  additionalInfo String?   @db.Text
+  photo          String? // URL or file path
+  eventDate      DateTime?
 
   // Relations
   classId String?
@@ -568,9 +575,8 @@ model NewsFeed {
   id          String  @id @default(cuid())
   title       String
   description String  @db.Text
-  mediaUrl    String? // Photo or video URL
-  mediaType   String? // "PHOTO", "VIDEO", null
-
+  photo       String? // URL or file path
+  likes       Int      @default(0)
   // Relations
   schoolId String
   school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
@@ -594,6 +600,8 @@ model Homework {
   title       String
   description String    @db.Text
   subject     String
+  assignedDate DateTime?
+  file        String? 
   dueDate     DateTime?
 
   // Relations
@@ -1144,9 +1152,9 @@ model LibraryIssue {
   expectedDate DateTime
   returnDate   DateTime?
 
-  finePerDay   Float     @default(0)   // 👈 NEW
-  fineAmount   Float     @default(0)
-  overdueDays  Int        @default(0)   // 👈 NEW
+  finePerDay  Float @default(0) // 👈 NEW
+  fineAmount  Float @default(0)
+  overdueDays Int   @default(0) // 👈 NEW
 
   status String @default("ISSUED")
   // ISSUED | RETURNED | OVERDUE

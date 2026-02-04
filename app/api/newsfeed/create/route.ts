@@ -33,8 +33,8 @@ export async function POST(req: Request) {
       data: {
         title,
         description,
-        mediaUrl: mediaUrl || null,
-        mediaType: mediaType || null,
+        photo: mediaUrl || null,
+        likes: 0,
         schoolId,
         createdById: session.user.id,
       },

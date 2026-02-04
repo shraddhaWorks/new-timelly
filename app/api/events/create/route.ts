@@ -11,11 +11,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const { title, description, amount, photo, eventDate, classId } = await req.json();
+    const { title, description, type, level,location,mode,additionalInfo,photo, eventDate, classId , } = await req.json();
 
-    if (!title || !description) {
+    if (!title || !description || !type || !level || !location || !mode || !additionalInfo) {
       return NextResponse.json(
-        { message: "Title and description are required" },
+        { message: "Title, description, type, level, location, mode and additionalInfo are required" },
         { status: 400 }
       );
     }
@@ -51,7 +51,11 @@ export async function POST(req: Request) {
       data: {
         title,
         description,
-        amount: amount ? parseFloat(amount) : null,
+        level,
+        type,
+        location,
+        mode,
+        additionalInfo,
         photo: photo || null,
         eventDate: eventDate ? new Date(eventDate) : null,
         classId: classId || null,

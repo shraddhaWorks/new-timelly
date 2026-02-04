@@ -89,7 +89,6 @@ export async function POST(req: Request) {
       data: {
         eventId: eventId,
         studentId: studentId,
-        paymentStatus: "PENDING", // Payment integration will be added later
       },
       include: {
         event: {
@@ -97,7 +96,12 @@ export async function POST(req: Request) {
             id: true,
             title: true,
             description: true,
-            amount: true,
+            level: true,
+            type: true,
+            location: true,
+            mode: true,
+            additionalInfo: true,
+            photo: true,
             eventDate: true,
           },
         },

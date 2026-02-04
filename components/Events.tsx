@@ -7,7 +7,11 @@ interface Event {
   id: string;
   title: string;
   description: string;
-  amount: number | null;
+  type: string;
+  level: string;
+  location: string;
+  mode: string;
+  additionalInfo: string;
   photo: string | null;
   eventDate: string | null;
   class: { id: string; name: string; section: string | null } | null;
@@ -31,7 +35,11 @@ export default function EventsPage() {
   const [form, setForm] = useState({
     title: "",
     description: "",
-    amount: "",
+    type: "",
+    level: "",
+    location: "",
+    mode: "",
+    additionalInfo: "",
     photo: "",
     eventDate: "",
     classId: "",
@@ -86,8 +94,8 @@ export default function EventsPage() {
 
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title || !form.description) {
-      setMessage("Title and description are required");
+    if (!form.title || !form.description || !form.type || !form.level || !form.location || !form.mode || !form.additionalInfo) {
+      setMessage("Title, description, type, level, location, mode and additionalInfo are required");
       return;
     }
 
@@ -101,7 +109,11 @@ export default function EventsPage() {
         body: JSON.stringify({
           title: form.title,
           description: form.description,
-          amount: form.amount ? parseFloat(form.amount) : null,
+          type: form.type,
+          level: form.level,
+          location: form.location,
+          mode: form.mode,
+          additionalInfo: form.additionalInfo,
           photo: form.photo || null,
           eventDate: form.eventDate || null,
           classId: form.classId || null,
@@ -119,7 +131,11 @@ export default function EventsPage() {
       setForm({
         title: "",
         description: "",
-        amount: "",
+        type: "",
+        level: "",
+        location: "",
+        mode: "",
+        additionalInfo: "",
         photo: "",
         eventDate: "",
         classId: "",
@@ -226,29 +242,75 @@ export default function EventsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#808080] mb-1">
-                    Amount (Optional)
+                    Type <span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
-                    value={form.amount}
-                    onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                    placeholder="0.00"
+                    type="text"
+                    value={form.type}
+                    onChange={(e) => setForm({ ...form, type: e.target.value })}
+                    required
+                    placeholder="e.g., Workshop"
                     className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent placeholder-[#6b6b6b]"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-[#808080] mb-1">
-                    Event Date (Optional)
+                    Level <span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="datetime-local"
-                    value={form.eventDate}
-                    onChange={(e) => setForm({ ...form, eventDate: e.target.value })}
+                    type="text"
+                    value={form.level}
+                    onChange={(e) => setForm({ ...form, level: e.target.value })}
+                    required
+                    placeholder="e.g., Beginner"
                     className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent placeholder-[#6b6b6b]"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#808080] mb-1">
+                    Location <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={form.location}
+                    onChange={(e) => setForm({ ...form, location: e.target.value })}
+                    required
+                    placeholder="e.g., School Hall"
+                    className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent placeholder-[#6b6b6b]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#808080] mb-1">
+                    Mode <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={form.mode}
+                    onChange={(e) => setForm({ ...form, mode: e.target.value })}
+                    required
+                    placeholder="e.g., Online"
+                    className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent placeholder-[#6b6b6b]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#808080] mb-1">
+                  Additional Info <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={form.additionalInfo}
+                  onChange={(e) => setForm({ ...form, additionalInfo: e.target.value })}
+                  required
+                  rows={3}
+                  placeholder="Additional information about the event"
+                  className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent placeholder-[#6b6b6b]"
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -320,11 +382,21 @@ export default function EventsPage() {
                         {event.class.section ? `- ${event.class.section}` : ""}
                       </p>
                     )}
-                    {event.amount && (
-                      <p>
-                        <span className="font-medium">Amount:</span> ₹{event.amount}
-                      </p>
-                    )}
+                    <p>
+                      <span className="font-medium">Type:</span> {event.type}
+                    </p>
+                    <p>
+                      <span className="font-medium">Level:</span> {event.level}
+                    </p>
+                    <p>
+                      <span className="font-medium">Location:</span> {event.location}
+                    </p>
+                    <p>
+                      <span className="font-medium">Mode:</span> {event.mode}
+                    </p>
+                    <p>
+                      <span className="font-medium">Additional Info:</span> {event.additionalInfo}
+                    </p>
                     {event.eventDate && (
                       <p>
                         <span className="font-medium">Date:</span>{" "}

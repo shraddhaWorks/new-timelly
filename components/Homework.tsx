@@ -36,6 +36,8 @@ export default function HomeworkPage() {
     subject: "",
     classId: "",
     dueDate: "",
+    assignedDate: "",
+    file: "",
   });
   const [message, setMessage] = useState("");
 
@@ -90,6 +92,8 @@ export default function HomeworkPage() {
           subject: form.subject,
           classId: form.classId,
           dueDate: form.dueDate || null,
+          assignedDate: form.assignedDate || null,
+          file: form.file || null,
         }),
       });
 
@@ -101,7 +105,7 @@ export default function HomeworkPage() {
       }
 
       setMessage("Homework created successfully!");
-      setForm({ title: "", description: "", subject: "", classId: "", dueDate: "" });
+      setForm({ title: "", description: "", subject: "", classId: "", dueDate: "", assignedDate: "", file: "" });
       setShowForm(false);
       fetchHomeworks();
     } catch (err) {
@@ -115,7 +119,7 @@ export default function HomeworkPage() {
   const handleCancel = () => {
     setShowForm(false);
     setEditingHomework(null);
-    setForm({ title: "", description: "", subject: "", classId: "", dueDate: "" });
+    setForm({ title: "", description: "", subject: "", classId: "", dueDate: "", assignedDate: "", file: "" });
     setMessage("");
   };
 
@@ -261,6 +265,19 @@ export default function HomeworkPage() {
                   <div>
                     <label className="block text-sm font-medium text-[#808080] mb-2 flex items-center gap-2">
                       <Calendar size={16} />
+                      Assigned Date (Optional)
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={form.assignedDate}
+                      onChange={(e) => setForm({ ...form, assignedDate: e.target.value })}
+                      className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent hover:border-[#808080] transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#808080] mb-2 flex items-center gap-2">
+                      <Calendar size={16} />
                       Due Date (Optional)
                     </label>
                     <input
@@ -270,6 +287,20 @@ export default function HomeworkPage() {
                       className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent hover:border-[#808080] transition"
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#808080] mb-2 flex items-center gap-2">
+                    <FileText size={16} />
+                    File URL (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={form.file}
+                    onChange={(e) => setForm({ ...form, file: e.target.value })}
+                    placeholder="https://example.com/file.pdf"
+                    className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent hover:border-[#808080] transition placeholder-[#6b6b6b]"
+                  />
                 </div>
 
                 <div>
