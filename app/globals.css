@@ -25,44 +25,19 @@ body {
     radial-gradient(1000px circle at 80% 30%, #ff7a1855, transparent 45%),
     radial-gradient(800px circle at 50% 80%, #00ffcc33, transparent 50%),
     linear-gradient(135deg, #0b0616 0%, #140b2d 40%, #1b0f2e 60%, #0b0616 100%);
-  color: #ffffff !important;
-  font-family: var(--font-inter), sans-serif;
+  color: #ffffff;
+  font-family: Inter, sans-serif;
 }
 
-/* Ensure all text elements are white/light */
-p, h1, h2, h3, h4, h5, h6, span, div, label, td, th {
-  color: #ffffff !important;
-}
-
-/* Links and buttons */
-a, button {
-  color: #ffffff !important;
-}
-
-/* Input fields with dark theme */
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="number"],
-input[type="tel"],
-input[type="date"],
-input[type="time"],
-input[type="search"],
-input[type="url"],
-textarea,
-select {
-  background-color: var(--grey-medium) !important;
-  color: #ffffff !important;
-  border-color: var(--border-grey) !important;
-}
 
 input::placeholder,
 textarea::placeholder {
-  color: var(--grey-lighter) !important;
+  color: var(--grey-lighter);
 }
 
 /* Responsive breakpoints */
 @media (max-width: 640px) {
+
   /* Mobile styles */
   body {
     font-size: 14px;
@@ -70,6 +45,7 @@ textarea::placeholder {
 }
 
 @media (min-width: 641px) and (max-width: 1024px) {
+
   /* Tablet styles */
   body {
     font-size: 15px;
@@ -77,6 +53,7 @@ textarea::placeholder {
 }
 
 @media (min-width: 1025px) {
+
   /* Desktop styles */
   body {
     font-size: 16px;
@@ -107,8 +84,8 @@ textarea::placeholder {
 }
 
 .glass-input {
-  background: rgba(45, 45, 45, 0.6) !important;
+  background: rgba(45, 45, 45, 0.6);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
