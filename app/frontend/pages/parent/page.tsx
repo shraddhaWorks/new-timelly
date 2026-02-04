@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import AppLayout from "../../AppLayout";
 import { PARENT_MENU_ITEMS } from "../../constants/sidebar";
+import RequiredRoles from "../../auth/RequiredRoles";
 
 const PARENT_TAB_TITLES: Record<string, string> = {
   dashboard: "Dashboard",
@@ -19,11 +20,13 @@ export default function ParentDashboard() {
   const title = PARENT_TAB_TITLES[tab] ?? tab.toUpperCase();
 
   return (
+  <RequiredRoles allowedRoles={['STUDENT']}> 
     <AppLayout
       title={title}
       menuItems={PARENT_MENU_ITEMS}
       profile={{ name: "Parent", subtitle: "Student Parent" }}
       children={<div>{/* TODO: render tab content here based on `tab` */}</div>}
     />
+  </RequiredRoles>
   );
 }

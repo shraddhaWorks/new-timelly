@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import AppLayout from "../../AppLayout";
 import { SidebarItem } from "../../types/sidebar";
+import RequiredRoles from "../../auth/RequiredRoles";
 
 const TEACHER_TAB_TITLES: Record<string, string> = {
   dashboard: "Dashboard",
@@ -23,14 +24,18 @@ export default function TeacherDashboard() {
   const title = TEACHER_TAB_TITLES[tab] ?? tab.toUpperCase();
 
   return (
-    <AppLayout
-      title={title}
-      menuItems={TEACHER_MENU_ITEMS}
-      profile={{
-        name: session?.user?.name ?? "Teacher",
-        subtitle: "Teacher",
-      }}
-      children={<div>{/* TODO: render tab content here based on `tab` */}</div>}
-    />
+    <RequiredRoles allowedRoles={["TEACHER"]}>
+      <AppLayout
+        title={title}
+        menuItems={TEACHER_MENU_ITEMS}
+        profile={{
+          name: session?.user?.name ?? "Teacher",
+          subtitle: "Teacher",
+        }}
+        children={
+          <div>{/* TODO: render tab content here based on `tab` */}</div>
+        }
+      />
+    </RequiredRoles>
   );
 }
