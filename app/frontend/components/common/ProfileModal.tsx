@@ -1,6 +1,7 @@
 "use client";
 
 import { X, Mail, Phone, MapPin, User } from "lucide-react";
+import { AVATAR_URL } from "../../constants/images";
 
 export default function ProfileModal({
   onClose,
@@ -8,7 +9,12 @@ export default function ProfileModal({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div
+      className="
+    fixed inset-0 z-50 md:hidden
+    bg-black/50 backdrop-blur-sm
+  "
+    >
       <div className="w-full max-w-md rounded-2xl bg-neutral-900/90 border border-white/10 p-6 relative">
 
         <button
@@ -21,7 +27,7 @@ export default function ProfileModal({
         {/* Header */}
         <div className="flex gap-4 items-center mb-6">
           <img
-            src="https://th.bing.com/th/id/OIP.DEJkHVGN8dM_kyeZA8t3fgHaHa?w=191&h=191&c=7&r=0&o=7&dpr=1.5&pid=1.7&rm=3"
+            src={`${AVATAR_URL}`}
             className="h-16 w-16 rounded-xl"
           />
 
