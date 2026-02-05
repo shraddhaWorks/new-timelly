@@ -11,6 +11,7 @@ import SchoolAdminClassesTab from "../../components/schooladmin/Classes";
 import SchoolAdminDashboard from "../../components/schooladmin/Dashboard";
 import SchoolTeacherLeavesTab from "../../components/schooladmin/TeacherLeaves";
 import SchoolCercularsTab from "../../components/schooladmin/circulars";
+import NewsFeed from "../../components/schooladmin/Newsfeed";
 
 function SchoolAdminContent() {
   const tab = useSearchParams().get("tab") ?? "dashboard";
@@ -35,8 +36,8 @@ function SchoolAdminContent() {
         return;
       case "workshops":
         return;
-      case "Newsfeed":
-        return;
+      case "newsfeed":
+        return <NewsFeed/>;
       case "certificates":
         return;
       case "exams":
