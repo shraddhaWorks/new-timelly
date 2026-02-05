@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, ComponentType } from "react";
-import { Search, LucideProps } from "lucide-react";
+import { LucideProps, Eye, EyeOff } from "lucide-react";
 import clsx from "clsx";
+import { PRIMARY_COLOR, HOVER_COLOR } from "../../constants/colors";
 
 interface SearchInputProps {
   value?: string;
@@ -15,8 +16,9 @@ interface SearchInputProps {
   disabled?: boolean;
   className?: string;
   type?: string;
-
+  label?: string;
   iconClassName?: string;
+  error?: string;
 }
 
 export default function SearchInput({
@@ -27,48 +29,94 @@ export default function SearchInput({
   showSearchIcon = true,
   disabled = false,
   className,
+  label,
   type = "text",
   iconClassName = "text-gray-400",
+  error,
 }: SearchInputProps) {
+
   const [mounted, setMounted] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const Icon = icon ?? (showSearchIcon ? Search : null);
+  const Icon = icon ?? null;
+  const shouldShowIcon = mounted && Icon && showSearchIcon;
+
+  const inputType =
+    type === "password" ? (showPassword ? "text" : "password") : type;
 
   return (
-    <div className={clsx("relative w-full", className)}>
-      {/* ICON */}
-      {mounted && Icon && (
-        <Icon
-          size={18}
-          className={clsx(
-            "absolute left-4 top-1/2 -translate-y-1/2",
-            "z-10 pointer-events-none", 
-            iconClassName
-          )}
-        />
+    <div className={clsx("w-full", className)}>
+
+      {label && (
+        <label className="block text-xs sm:text-sm mb-1 text-white/70">
+          {label}
+        </label>
       )}
 
-      <input
-        type={type}
-        value={value}
-        disabled={disabled}
-        placeholder={placeholder}
-        onChange={(e) => onChange?.(e.target.value)}
-        className={clsx(
-          "relative z-0", // optional, but explicit
-          "w-full h-9 rounded-xl",
-          "bg-white/10 backdrop-blur-xl",
-          "border border-white/10",
-          "text-white placeholder-white/40 text-sm",
-          "outline-none transition-all",
-          mounted && Icon ? "pl-11 pr-4" : "px-4",
-          "focus:border-lime-400/50"
+      <div className="relative w-full">
+
+        {shouldShowIcon && (
+          <Icon
+            size={18}
+            className={clsx(
+              "absolute left-4 top-1/2 -translate-y-1/2",
+              "z-10 pointer-events-none",
+              iconClassName
+            )}
+          />
         )}
-      />
+
+        <input
+          type={inputType}
+          value={value}
+          disabled={disabled}
+          placeholder={placeholder}
+          onChange={(e) => onChange?.(e.target.value)}
+          aria-invalid={!!error}
+          className={clsx(
+            "w-full rounded-xl",
+            "pl-11 pr-4 py-2.5 sm:py-3",
+            "bg-black/20 border border-white/10",
+            "text-gray-200 text-sm sm:text-base",
+            "placeholder-white/40",
+            "focus:outline-none focus:ring-0",
+            "hover:border-[var(--hover-color)]",
+            "focus:border-[var(--primary-color)]",
+            disabled && "opacity-60 cursor-not-allowed"
+          )}
+          style={{
+            backgroundColor: "rgba(255, 255, 255, 0.05)",
+            ["--primary-color" as any]: PRIMARY_COLOR,
+            ["--hover-color" as any]: HOVER_COLOR
+          }}
+        />
+
+        {type === "password" && (
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 inset-y-0 flex items-center text-white/70 hover:text-white"
+            tabIndex={-1}
+          >
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        )}
+
+      </div>
+
+      {error && (
+        <p
+          className="text-sm mt-1 !text-red-500"
+          style={{ color: "#ef4444" }}
+        >
+          {error}
+        </p>
+      )}
+
     </div>
   );
 }

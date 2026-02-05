@@ -22,24 +22,24 @@ export async function POST(req: Request) {
     }
 
     // 🔹 Check if admin already has a school
-    const existingSchool = await prisma.school.findFirst({
-      where: {
-        admins: {
-          some: { id: session.user.id },
-        },
-      },
-    });
+    // const existingSchool = await prisma.school.findFirst({
+    //   where: {
+    //     admins: {
+    //       some: { id: session.user.id },
+    //     },
+    //   },
+    // });
 
-    if (existingSchool) {
-      return NextResponse.json(
-        {
-          message:
-            "You already created a school. You can only update it, not create a new one.",
-          school: existingSchool,
-        },
-        { status: 400 }
-      );
-    }
+    // if (existingSchool) {
+    //   return NextResponse.json(
+    //     {
+    //       message:
+    //         "You already created a school. You can only update it, not create a new one.",
+    //       school: existingSchool,
+    //     },
+    //     { status: 400 }
+    //   );
+    // }
 
     // 🔹 Create school
     const school = await prisma.school.create({
