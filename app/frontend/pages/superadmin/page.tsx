@@ -37,6 +37,7 @@ export default function SuperAdminDashboard() {
   <RequiredRoles allowedRoles={['SUPERADMIN']}> 
     <AppLayout
       title={title}
+      activeTab={tab}
       menuItems={SUPERADMIN_SIDEBAR_ITEMS}
       profile={{ name: "Super Admin" }}
       children={renderComponent()}

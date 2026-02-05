@@ -11,12 +11,26 @@ export default function ProfileModal({
   return (
     <div
       className="
-    fixed inset-0 z-50 md:hidden
-    bg-black/50 backdrop-blur-sm
-  "
+        fixed inset-0 z-50 md:hidden
+        bg-black/50 backdrop-blur-sm
+        flex items-end justify-center
+      "
+      onClick={onClose}
     >
-      <div className="w-full max-w-md rounded-2xl bg-neutral-900/90 border border-white/10 p-6 relative">
-
+      {/* Stop click bubbling */}
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="
+          w-full max-w-md
+          rounded-t-3xl
+          bg-neutral-900/90
+          border border-white/10
+          p-6
+          relative
+          animate-slideUp
+        "
+      >
+        {/* Close */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4"
@@ -27,8 +41,8 @@ export default function ProfileModal({
         {/* Header */}
         <div className="flex gap-4 items-center mb-6">
           <img
-            src={`${AVATAR_URL}`}
-            className="h-16 w-16 rounded-xl"
+            src={AVATAR_URL}
+            className="h-16 w-16 rounded-xl border border-white/10"
           />
 
           <div>
@@ -39,14 +53,16 @@ export default function ProfileModal({
               Mathematics Teacher
             </p>
 
-            <span className="inline-block mt-1 px-3 py-0.5 text-xs rounded-full
-              bg-lime-500/20 text-lime-400">
+            <span className="
+              inline-block mt-1 px-3 py-0.5 text-xs rounded-full
+              bg-lime-500/20 text-lime-400
+            ">
               ACTIVE
             </span>
           </div>
         </div>
 
-        {/* Fields */}
+        {/* Info */}
         <div className="space-y-4">
           <Info icon={<Mail />} label="Email" value="priya.sharma@timelly.school.com" />
           <Info icon={<Phone />} label="Phone" value="+91 98765 12345" />
@@ -54,8 +70,12 @@ export default function ProfileModal({
           <Info icon={<MapPin />} label="Address" value="456, Teachers Colony, New Delhi - 110017" />
         </div>
 
-        <button className="mt-6 w-full py-3 rounded-xl bg-lime-500/20
-          text-lime-400 font-medium">
+        <button
+          className="
+            mt-6 w-full py-3 rounded-xl
+            bg-lime-500/20 text-lime-400 font-medium
+          "
+        >
           Edit Profile
         </button>
       </div>
@@ -73,7 +93,7 @@ function Info({
   value: string;
 }) {
   return (
-    <div className="flex gap-3 items-center bg-lime/5 p-3 rounded-xl">
+    <div className="flex gap-3 items-center bg-white/5 p-3 rounded-xl">
       <div className="text-lime-400">{icon}</div>
       <div>
         <p className="text-xs text-gray-400">{label}</p>

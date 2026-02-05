@@ -11,9 +11,9 @@ export default function LoginPage() {
   const { data: session, status } = useSession();
 
   useEffect(() => {
-    if (status === "authenticated") {
-      // If already logged in, send directly to role-specific dashboard
-      const role = session?.user?.role;
+    // Only redirect if authenticated AND session has loaded
+    if (status === "authenticated" && session?.user) {
+      const role = session.user.role;
       switch (role) {
         case "SUPERADMIN":
           router.replace(ROUTES.SUPERADMIN);
@@ -31,7 +31,7 @@ export default function LoginPage() {
           router.replace(ROUTES.UNAUTHORIZED);
       }
     }
-  }, [status, router]);
+  }, [status, session]); // ✅ REMOVED 'router' - it creates new instance every render
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -56,26 +56,8 @@ export default function LoginPage() {
       return;
     }
 
-    const session = await getSession();
-    const role = session?.user?.role;
-
-    switch (role) {
-      case "SUPERADMIN":
-        router.replace(ROUTES.SUPERADMIN);
-        break;
-      case "SCHOOLADMIN":
-        router.replace(ROUTES.SCHOOLADMIN);
-        break;
-      case "TEACHER":
-        router.replace(ROUTES.TEACHER);
-        break;
-      case "STUDENT":
-        router.replace(ROUTES.PARENT);
-        break;
-      default:
-        router.replace(ROUTES.UNAUTHORIZED);
-    }
-
+    // ✅ Don't call getSession() here - let useEffect handle redirect
+    // The useEffect above will trigger when session updates
     setLoading(false);
   };
 
