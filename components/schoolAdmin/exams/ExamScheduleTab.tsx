@@ -71,7 +71,7 @@ export default function ExamScheduleTab({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h3
           className="text-sm font-semibold uppercase tracking-wider"
           style={{ color: EXAM_TEXT_MAIN }}
@@ -81,7 +81,7 @@ export default function ExamScheduleTab({
         <button
           type="button"
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-black transition"
+          className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium text-black transition min-h-[44px] touch-manipulation w-full sm:w-auto"
           style={{
             backgroundColor: EXAM_ACCENT,
             boxShadow: `0 0 12px ${EXAM_ACCENT_GLOW}`,
@@ -93,7 +93,7 @@ export default function ExamScheduleTab({
       </div>
 
       {!schedules.length ? (
-        <div className="py-12 text-center" style={{ color: EXAM_TEXT_SECONDARY }}>
+        <div className="py-8 sm:py-12 text-center text-sm" style={{ color: EXAM_TEXT_SECONDARY }}>
           No exam schedule added yet. Click &quot;Add Subject&quot; to add one.
         </div>
       ) : (
@@ -106,15 +106,15 @@ export default function ExamScheduleTab({
             return (
               <div
                 key={s.id}
-                className="flex items-center gap-4 p-4 rounded-xl border border-white/10"
+                className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl border border-white/10 min-h-[44px]"
                 style={{
                   background: EXAM_CARD_BG_ALT,
                   backdropFilter: "blur(12px)",
                 }}
               >
-                <div className="flex-shrink-0 w-14 text-center">
+                <div className="flex-shrink-0 w-12 sm:w-14 text-center">
                   <div
-                    className="text-2xl font-bold leading-none"
+                    className="text-xl sm:text-2xl font-bold leading-none"
                     style={{ color: EXAM_TEXT_MAIN }}
                   >
                     {day}
@@ -128,13 +128,13 @@ export default function ExamScheduleTab({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div
-                    className="font-medium"
+                    className="font-medium text-sm sm:text-base"
                     style={{ color: EXAM_TEXT_MAIN }}
                   >
                     {s.subject}
                   </div>
                   <div
-                    className="flex items-center gap-1.5 text-sm mt-0.5"
+                    className="flex items-center gap-1.5 text-xs sm:text-sm mt-0.5"
                     style={{ color: EXAM_TEXT_SECONDARY }}
                   >
                     <Clock size={14} />
@@ -153,24 +153,24 @@ export default function ExamScheduleTab({
 
       {showAddModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 overflow-y-auto"
           style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
         >
           <div
-            className="w-full max-w-md rounded-2xl p-6 border border-white/10 shadow-xl"
+            className="w-full max-w-md rounded-t-2xl sm:rounded-2xl p-4 sm:p-6 border border-white/10 shadow-xl mt-auto sm:mt-0 max-h-[90vh] overflow-y-auto"
             style={{
               background: EXAM_CARD_BG_ALT,
               backdropFilter: "blur(16px)",
             }}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold" style={{ color: EXAM_TEXT_MAIN }}>
+              <h3 className="text-base sm:text-lg font-semibold" style={{ color: EXAM_TEXT_MAIN }}>
                 Add Subject to Schedule
               </h3>
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className="p-2 rounded-lg hover:bg-white/10 transition"
+                className="p-2.5 rounded-lg hover:bg-white/10 transition min-h-[44px] min-w-[44px] touch-manipulation flex items-center justify-center"
                 style={{ color: EXAM_TEXT_SECONDARY }}
               >
                 <X size={18} />
@@ -187,11 +187,11 @@ export default function ExamScheduleTab({
                   onChange={(e) => setSubject(e.target.value)}
                   placeholder="e.g. Mathematics"
                   required
-                  className="w-full px-3 py-2 rounded-lg border border-white/20 placeholder:opacity-70"
+                  className="w-full px-3 py-3 rounded-lg border border-white/20 placeholder:opacity-70 min-h-[44px] touch-manipulation text-base"
                   style={{ background: EXAM_INPUT_BG, color: EXAM_TEXT_MAIN }}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm mb-1" style={{ color: EXAM_TEXT_SECONDARY }}>
                     Date
@@ -201,7 +201,7 @@ export default function ExamScheduleTab({
                     value={examDate}
                     onChange={(e) => setExamDate(e.target.value)}
                     required
-                    className="w-full px-3 py-2 rounded-lg border border-white/20 placeholder:opacity-70"
+                    className="w-full px-3 py-3 rounded-lg border border-white/20 placeholder:opacity-70 min-h-[44px] touch-manipulation text-base"
                     style={{ background: EXAM_INPUT_BG, color: EXAM_TEXT_MAIN }}
                   />
                 </div>
@@ -214,7 +214,7 @@ export default function ExamScheduleTab({
                     value={startTime}
                     onChange={(e) => setStartTime(e.target.value)}
                     required
-                    className="w-full px-3 py-2 rounded-lg border border-white/20 placeholder:opacity-70"
+                    className="w-full px-3 py-3 rounded-lg border border-white/20 placeholder:opacity-70 min-h-[44px] touch-manipulation text-base"
                     style={{ background: EXAM_INPUT_BG, color: EXAM_TEXT_MAIN }}
                   />
                 </div>
@@ -228,15 +228,15 @@ export default function ExamScheduleTab({
                   value={durationMin}
                   onChange={(e) => setDurationMin(Number(e.target.value) || 0)}
                   min={1}
-                  className="w-full px-3 py-2 rounded-lg border border-white/20 placeholder:opacity-70"
+                  className="w-full px-3 py-3 rounded-lg border border-white/20 placeholder:opacity-70 min-h-[44px] touch-manipulation text-base"
                   style={{ background: EXAM_INPUT_BG, color: EXAM_TEXT_MAIN }}
                 />
               </div>
-              <div className="flex gap-3 pt-2">
+              <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="flex-1 px-4 py-2.5 rounded-lg font-medium border border-white/20 transition"
+                  className="flex-1 px-4 py-3 rounded-lg font-medium border border-white/20 transition min-h-[44px] touch-manipulation"
                   style={{ color: EXAM_TEXT_MAIN }}
                 >
                   Cancel
@@ -244,7 +244,7 @@ export default function ExamScheduleTab({
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 px-4 py-2.5 rounded-lg font-medium text-black disabled:opacity-50 transition"
+                  className="flex-1 px-4 py-3 rounded-lg font-medium text-black disabled:opacity-50 transition min-h-[44px] touch-manipulation"
                   style={{ backgroundColor: EXAM_ACCENT }}
                 >
                   {saving ? "Saving…" : "Add"}

@@ -204,7 +204,7 @@ export default function AddSchool() {
     <>
       <form
         onSubmit={handleSignup}
-        className="w-full max-w-6xl mx-auto rounded-2xl p-4 sm:p-6 lg:p-8 shadow-sm border border-gray-500/20"
+        className="w-full max-w-6xl mx-auto rounded-2xl p-4 sm:p-6 lg:p-8 shadow-sm border border-white/10 overflow-x-hidden"
         style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
       >
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">

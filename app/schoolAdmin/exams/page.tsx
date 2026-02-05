@@ -15,7 +15,6 @@ import type { ExamTermDetail } from "@/hooks/useExamTerms";
 import {
   EXAM_ACCENT,
   EXAM_TEXT_SECONDARY,
-  EXAM_GRADIENT_FULL,
   EXAM_TEXT_MAIN,
 } from "@/app/frontend/constants/colors";
 
@@ -83,49 +82,48 @@ export function ExamsPageInner() {
     : null;
 
   return (
-    <div
-      className="min-h-screen p-4 md:p-6"
-      style={{ background: EXAM_GRADIENT_FULL, minHeight: "100vh" }}
-    >
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen p-3 sm:p-4 md:p-6 pb-8">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+          className="flex flex-col gap-4"
         >
-          <div className="flex items-center gap-3">
-            <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center border border-white/10"
-              style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)" }}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center border border-white/10 flex-shrink-0"
+                style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)" }}
+              >
+                <BookOpen className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: EXAM_TEXT_MAIN }} />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate" style={{ color: EXAM_TEXT_MAIN }}>
+                  Exams & Syllabus
+                </h1>
+                <p className="text-xs sm:text-sm" style={{ color: EXAM_TEXT_SECONDARY }}>
+                  Manage examination schedules and syllabus tracking
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center justify-center gap-2 px-4 py-3 sm:py-2.5 rounded-xl font-medium transition hover:opacity-90 w-full sm:w-auto min-h-[44px] touch-manipulation"
+              style={{
+                backgroundColor: EXAM_ACCENT,
+                color: "#0b0616",
+                boxShadow: `0 0 12px ${EXAM_ACCENT}40`,
+              }}
             >
-              <BookOpen className="w-6 h-6" style={{ color: EXAM_TEXT_MAIN }} />
-            </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold" style={{ color: EXAM_TEXT_MAIN }}>
-                Exams & Syllabus
-              </h1>
-              <p className="text-sm" style={{ color: EXAM_TEXT_SECONDARY }}>
-                Manage examination schedules and syllabus tracking
-              </p>
-            </div>
+              <Plus size={18} /> Add Exam Term
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition hover:opacity-90"
-            style={{
-              backgroundColor: EXAM_ACCENT,
-              color: "#0b0616",
-              boxShadow: `0 0 12px ${EXAM_ACCENT}40`,
-            }}
-          >
-            <Plus size={18} /> Add Exam Term
-          </button>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Left: Exam terms list */}
-          <div className="lg:col-span-1 space-y-4">
+          <div className="lg:col-span-1 space-y-3 sm:space-y-4 order-2 lg:order-1">
             {error && (
               <p className="text-red-400 text-sm">{error}</p>
             )}
@@ -181,40 +179,40 @@ export function ExamsPageInner() {
             )}
           </div>
 
-          {/* Right: Term detail + tabs */}
-          <div className="lg:col-span-2">
+          {/* Right: Term detail + tabs - show first on mobile so user sees selection prompt */}
+          <div className="lg:col-span-2 order-1 lg:order-2">
             {termDetail ? (
-              <GlassCard variant="card" className="p-6">
-                <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
-                  <div>
-                    <h2 className="text-xl font-bold" style={{ color: EXAM_TEXT_MAIN }}>{termDetail.name}</h2>
+              <GlassCard variant="card" className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-start sm:justify-between gap-3 mb-4">
+                  <div className="min-w-0">
+                    <h2 className="text-lg sm:text-xl font-bold break-words" style={{ color: EXAM_TEXT_MAIN }}>{termDetail.name}</h2>
                     {termDetail.description && (
-                      <p className="text-sm mt-1" style={{ color: EXAM_TEXT_SECONDARY }}>{termDetail.description}</p>
+                      <p className="text-xs sm:text-sm mt-1" style={{ color: EXAM_TEXT_SECONDARY }}>{termDetail.description}</p>
                     )}
                   </div>
                   {startsInDays !== null && (
-                    <div className="text-right">
-                      <span className="text-sm" style={{ color: EXAM_TEXT_SECONDARY }}>
+                    <div className="text-left sm:text-right flex-shrink-0">
+                      <span className="text-xs sm:text-sm" style={{ color: EXAM_TEXT_SECONDARY }}>
                         Starts in
                       </span>
                       <div
-                        className="text-2xl font-bold"
+                        className="text-xl sm:text-2xl font-bold"
                         style={{ color: EXAM_ACCENT }}
                       >
                         {startsInDays}
                       </div>
-                      <span className="text-sm" style={{ color: EXAM_TEXT_SECONDARY }}>
+                      <span className="text-xs sm:text-sm" style={{ color: EXAM_TEXT_SECONDARY }}>
                         days
                       </span>
                     </div>
                   )}
                 </div>
 
-                <div className="flex gap-4 border-b mb-4" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+                <div className="flex gap-2 sm:gap-4 border-b mb-4 -mx-1 overflow-x-auto no-scrollbar" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
                   <button
                     type="button"
                     onClick={() => setTab("schedule")}
-                    className={`pb-2 px-1 text-sm font-medium transition-colors ${
+                    className={`pb-2 px-2 sm:px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap min-h-[44px] touch-manipulation flex items-end ${
                       tab === "schedule" ? "border-b-2" : ""
                     }`}
                     style={
@@ -228,7 +226,7 @@ export function ExamsPageInner() {
                   <button
                     type="button"
                     onClick={() => setTab("syllabus")}
-                    className={`pb-2 px-1 text-sm font-medium transition-colors hover:text-white ${
+                    className={`pb-2 px-2 sm:px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap min-h-[44px] touch-manipulation flex items-end hover:text-white ${
                       tab === "syllabus" ? "border-b-2" : ""
                     }`}
                     style={
@@ -273,9 +271,9 @@ export function ExamsPageInner() {
                 </AnimatePresence>
               </GlassCard>
             ) : (
-              <GlassCard variant="card" className="p-12 text-center" style={{ color: EXAM_TEXT_SECONDARY }}>
-                <Calendar className="w-12 h-12 mx-auto mb-3 opacity-60" style={{ color: EXAM_TEXT_MAIN }} />
-                Select an exam term to view schedule and syllabus tracking
+              <GlassCard variant="card" className="p-6 sm:p-12 text-center" style={{ color: EXAM_TEXT_SECONDARY }}>
+                <Calendar className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 opacity-60" style={{ color: EXAM_TEXT_MAIN }} />
+                <p className="text-sm sm:text-base">Select an exam term below to view schedule and syllabus tracking</p>
               </GlassCard>
             )}
           </div>

@@ -13,9 +13,12 @@ type Props = {
   profile: {
     name: string;
     subtitle?: string;
+    image?: string | null;
   };
   activeTab: string;
   children?: React.ReactNode;
+  /** When true, header hides search and notification (e.g. for Super Admin) */
+  hideSearchAndNotifications?: boolean;
 };
 
 export default function AppLayout({
@@ -24,22 +27,23 @@ export default function AppLayout({
   profile,
   activeTab,
   children,
+  hideSearchAndNotifications = false,
 }: Props) {
   const [showMore, setShowMore] = useState(false);
 
   return (
     <div className="flex h-screen overflow-hidden">
 
-      {/* DESKTOP SIDEBAR */}
+      {/* DESKTOP SIDEBAR - profile from layout (sidebar + header show same) */}
       <aside className="hidden md:block">
         <AppSidebar menuItems={menuItems} profile={profile} />
       </aside>
 
       {/* MAIN */}
       <div className="flex-1 flex flex-col pb-16 md:pb-0">
-        <AppHeader title={title} />
+        <AppHeader title={title} profile={profile} hideSearchAndNotifications={hideSearchAndNotifications} />
 
-        <main className="flex-1 overflow-y-auto no-scrollbar p-4 md:p-6">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar p-3 sm:p-4 md:p-6 min-h-0">
           {children}
         </main>
       </div>

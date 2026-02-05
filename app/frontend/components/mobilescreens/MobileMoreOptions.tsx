@@ -25,10 +25,10 @@ export default function MobileMoreOptions({
   }, []);
 
   const tabItems = items.filter(item => item.tab);
- const logoutItem = items.find(item => item.action === "logout");
+  const logoutItem = items.find(item => item.action === "logout");
 
-  const moreItems = tabItems.slice(4);
-  const displayItems = moreItems.length > 0 ? moreItems : tabItems;
+  // Only show items NOT already in the bottom bar (first 4 tabs)
+  const moreOnlyItems = tabItems.slice(4);
 
   const handleItemClick = async (item: SidebarItem) => {
     if (item.action === "logout") {
@@ -69,9 +69,9 @@ export default function MobileMoreOptions({
         </button>
       </div>
 
-      {/* GRID */}
+      {/* GRID - only items not already shown in bottom nav */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        {displayItems.map(item => {
+        {moreOnlyItems.map(item => {
           const Icon = item.icon;
           const isSettings = item.tab === "settings";
 

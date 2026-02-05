@@ -43,16 +43,13 @@ export async function PUT(req: Request) {
     const body = await req.json();
 
     const data: {
-      email?: string;
       mobile?: string | null;
       language?: string | null;
       photoUrl?: string | null;
       name?: string | null;
     } = {};
+    // Email is constant and not updated from settings.
 
-    if (typeof body.email === "string" && body.email.trim()) {
-      data.email = body.email.trim().toLowerCase();
-    }
     if (typeof body.mobile === "string" || body.mobile === null) {
       data.mobile = body.mobile;
     }

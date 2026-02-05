@@ -28,22 +28,50 @@ export default function NewsFeedPage() {
     mediaType: "",
   });
   const [message, setMessage] = useState("");
+  const [fetchError, setFetchError] = useState("");
 
   useEffect(() => {
     if (session) {
       fetchNewsFeeds();
+    } else {
+      setNewsFeeds([]);
+      setFetchError("");
     }
   }, [session]);
 
   const fetchNewsFeeds = async () => {
+    setLoading(true);
+    setFetchError("");
     try {
-      const res = await fetch("/api/newsfeed/list");
+      const res = await fetch("/api/newsfeed/list", { credentials: "same-origin" });
       const data = await res.json();
-      if (res.ok && data.newsFeeds) {
-        setNewsFeeds(data.newsFeeds);
+      if (res.ok) {
+        const list = Array.isArray(data.newsFeeds) ? data.newsFeeds : [];
+        setNewsFeeds(
+          list.map((f: Record<string, unknown>) => {
+            const createdBy = f.createdBy as { id?: string; name?: string | null; email?: string | null } | undefined;
+            const createdAt = f.createdAt;
+            return {
+              id: String(f.id ?? ""),
+              title: String(f.title ?? ""),
+              description: String(f.description ?? ""),
+              mediaUrl: (typeof f.photo === "string" ? f.photo : typeof f.mediaUrl === "string" ? f.mediaUrl : null),
+              mediaType: (typeof f.mediaType === "string" ? f.mediaType : f.photo ? "PHOTO" : null),
+              createdAt: typeof createdAt === "string" ? createdAt : (createdAt as Date)?.toISOString?.() ?? new Date().toISOString(),
+              createdBy: createdBy ? { id: String(createdBy.id ?? ""), name: createdBy.name ?? null, email: createdBy.email ?? null } : { id: "", name: null, email: null },
+            };
+          })
+        );
+      } else {
+        setNewsFeeds([]);
+        setFetchError(data.message || "Failed to load news feed");
       }
     } catch (err) {
       console.error("Error fetching news feeds:", err);
+      setNewsFeeds([]);
+      setFetchError(err instanceof Error ? err.message : "Failed to load news feed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -70,7 +98,7 @@ export default function NewsFeedPage() {
           title: form.title,
           description: form.description,
           mediaUrl: form.mediaUrl || null,
-          mediaType: form.mediaType || null,
+          photo: form.mediaUrl || null,
         }),
       });
 
@@ -150,6 +178,15 @@ export default function NewsFeedPage() {
     </div>
   );
 
+  if (loading && newsFeeds.length === 0) return (
+    <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+        <p className="text-white">Loading news feed…</p>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-black p-4 md:p-6">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -191,18 +228,18 @@ export default function NewsFeedPage() {
           </motion.button>
         </motion.div>
 
-        {message && (
+        {(message || fetchError) && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className={`p-4 rounded-lg border flex items-center gap-3 ${
-              message.includes("successfully")
+              message.includes("successfully") && !fetchError
                 ? "bg-[#2d2d2d] text-white border-[#404040]"
                 : "bg-red-500/10 text-red-400 border-red-500/30"
             }`}
           >
             <AlertCircle size={20} />
-            {message}
+            {fetchError || message}
           </motion.div>
         )}
 
@@ -359,7 +396,7 @@ export default function NewsFeedPage() {
                       <div className="flex items-center gap-4 text-sm text-[#808080] pt-4 border-t border-[#333333]">
                         <div className="flex items-center gap-2">
                           <User size={14} />
-                          <span>Created by: <span className="text-white font-medium">{feed.createdBy.name}</span></span>
+                          <span>Created by: <span className="text-white font-medium">{feed.createdBy?.name ?? "—"}</span></span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Calendar size={14} />
@@ -367,7 +404,7 @@ export default function NewsFeedPage() {
                         </div>
                       </div>
                     </div>
-                    {session.user.role === "SCHOOLADMIN" && (
+                    {session?.user?.role === "SCHOOLADMIN" && (
                       <div className="flex gap-2 ml-4">
                         <motion.button
                           onClick={() => handleEdit(feed)}

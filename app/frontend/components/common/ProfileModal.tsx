@@ -4,17 +4,27 @@ import { X, Mail, User, Settings, LogOut } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { AVATAR_URL } from "../../constants/images";
 
+type ProfileModalProfile = {
+  name: string;
+  email?: string;
+  image?: string | null;
+  role?: string;
+};
+
 export default function ProfileModal({
   onClose,
   onOpenSettings,
+  profile: profileProp,
 }: {
   onClose: () => void;
   onOpenSettings?: () => void;
+  profile?: ProfileModalProfile;
 }) {
   const { data: session } = useSession();
-  const name = session?.user?.name ?? "User";
-  const email = session?.user?.email ?? "";
-  const role = session?.user?.role ?? "";
+  const name = profileProp?.name ?? session?.user?.name ?? "User";
+  const email = profileProp?.email ?? session?.user?.email ?? "";
+  const role = profileProp?.role ?? session?.user?.role ?? "";
+  const imageUrl = profileProp?.image ?? session?.user?.image ?? AVATAR_URL;
 
   const handleLogout = async () => {
     onClose();
@@ -56,9 +66,9 @@ export default function ProfileModal({
 
         <div className="flex gap-4 items-center mb-6">
           <img
-            src={session?.user?.image ?? AVATAR_URL}
+            src={imageUrl}
             alt=""
-            className="h-16 w-16 rounded-xl border border-white/10"
+            className="h-16 w-16 rounded-xl border border-white/10 object-cover"
           />
           <div>
             <h2 className="text-white text-lg font-semibold">{name}</h2>

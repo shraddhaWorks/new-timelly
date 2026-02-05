@@ -7,7 +7,6 @@ import {
   EXAM_ACCENT,
   EXAM_TEXT_MAIN,
   EXAM_TEXT_SECONDARY,
-  EXAM_GRADIENT_FULL,
   EXAM_PROGRESS_GREEN,
   EXAM_PROGRESS_YELLOW,
   EXAM_PROGRESS_EMPTY,
@@ -80,23 +79,17 @@ export default function SyllabusTrackingTab({
   };
 
   return (
-    <div
-      className="min-h-[400px] rounded-2xl p-6 -m-6 md:-mx-6 md:-mb-6 border border-white/5"
-      style={{
-        background: EXAM_GRADIENT_FULL,
-        backdropFilter: "blur(8px)",
-      }}
-    >
-      <div className="space-y-8">
+    <div className="min-h-[300px] sm:min-h-[400px] rounded-2xl p-4 sm:p-6 -m-4 sm:-m-6 md:-mx-6 md:-mb-6 border border-white/5 bg-white/[0.04] backdrop-blur-[8px]">
+      <div className="space-y-6 sm:space-y-8">
         <div>
-          <div className="flex gap-2 mb-4">
+          <div className="flex flex-col sm:flex-row gap-2 mb-4">
             <input
               type="text"
               value={newSubjectName}
               onChange={(e) => setNewSubjectName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addSubject()}
               placeholder="Add new subject..."
-              className="flex-1 max-w-xs rounded-lg px-3 py-2 text-sm border border-white/15 placeholder:opacity-70"
+              className="flex-1 w-full sm:max-w-xs rounded-lg px-3 py-3 sm:py-2 text-sm border border-white/15 placeholder:opacity-70 min-h-[44px] touch-manipulation text-base"
               style={{
                 background: EXAM_INPUT_BG,
                 color: EXAM_TEXT_MAIN,
@@ -106,7 +99,7 @@ export default function SyllabusTrackingTab({
               type="button"
               onClick={addSubject}
               disabled={addingNewSubject || !newSubjectName.trim()}
-              className="px-3 py-2 rounded-lg font-medium disabled:opacity-50 flex items-center gap-1 transition hover:opacity-90"
+              className="px-4 py-3 sm:py-2 rounded-lg font-medium disabled:opacity-50 flex items-center justify-center gap-1 transition hover:opacity-90 min-h-[44px] touch-manipulation w-full sm:w-auto"
               style={{
                 backgroundColor: EXAM_ACCENT,
                 color: "#1A1A1A",
@@ -132,15 +125,15 @@ export default function SyllabusTrackingTab({
 
           return (
             <div key={s.id} className="space-y-3">
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3 min-w-0">
                 <h3
-                  className="font-semibold"
+                  className="font-semibold text-sm sm:text-base break-words"
                   style={{ color: EXAM_TEXT_MAIN }}
                 >
                   {s.subject}
                 </h3>
                 <span
-                  className="text-sm px-2 py-0.5 rounded"
+                  className="text-xs sm:text-sm px-2 py-0.5 rounded w-fit"
                   style={{
                     color: EXAM_TEXT_SECONDARY,
                     background: "rgba(255,255,255,0.08)",
@@ -148,9 +141,9 @@ export default function SyllabusTrackingTab({
                 >
                   {unitCount} Units
                 </span>
-                <div className="flex-1 flex items-center gap-2 min-w-[120px]">
+                <div className="flex-1 flex items-center gap-2 min-w-0 w-full sm:max-w-[200px]">
                   <div
-                    className="flex-1 h-2 rounded-full overflow-hidden max-w-[200px]"
+                    className="flex-1 h-2 rounded-full overflow-hidden min-w-0"
                     style={{ background: EXAM_PROGRESS_EMPTY }}
                   >
                     <div
@@ -162,7 +155,7 @@ export default function SyllabusTrackingTab({
                     />
                   </div>
                   <span
-                    className="text-sm tabular-nums"
+                    className="text-xs sm:text-sm tabular-nums shrink-0"
                     style={{ color: EXAM_TEXT_MAIN }}
                   >
                     {s.completedPercent}%
@@ -174,21 +167,21 @@ export default function SyllabusTrackingTab({
                 {(s.units ?? []).map((u) => (
                   <li
                     key={u.id}
-                    className="flex items-center gap-4 p-3 rounded-xl border border-white/10"
+                    className="flex flex-col xs:flex-row xs:items-center gap-2 xs:gap-4 p-3 rounded-xl border border-white/10 min-h-[44px]"
                     style={{
                       background: EXAM_CARD_TRANSPARENT,
                       backdropFilter: "blur(6px)",
                     }}
                   >
                     <span
-                      className="flex-1 font-medium"
+                      className="flex-1 font-medium text-sm sm:text-base break-words min-w-0"
                       style={{ color: EXAM_TEXT_MAIN }}
                     >
                       {u.unitName}
                     </span>
-                    <div className="w-28 flex items-center gap-2">
+                    <div className="w-full sm:w-28 flex items-center gap-2 shrink-0">
                       <div
-                        className="flex-1 h-2 rounded-full overflow-hidden"
+                        className="flex-1 h-2 rounded-full overflow-hidden min-w-0"
                         style={{ background: EXAM_PROGRESS_EMPTY }}
                       >
                         <div
@@ -200,7 +193,7 @@ export default function SyllabusTrackingTab({
                         />
                       </div>
                       <span
-                        className="text-xs tabular-nums w-8"
+                        className="text-xs tabular-nums w-8 shrink-0"
                         style={{ color: EXAM_TEXT_SECONDARY }}
                       >
                         {u.completedPercent}%
@@ -211,14 +204,14 @@ export default function SyllabusTrackingTab({
               </ul>
 
               {isAdding ? (
-                <div className="flex gap-2 mt-2">
+                <div className="flex flex-col sm:flex-row gap-2 mt-2">
                   <input
                     type="text"
                     value={newUnitName}
                     onChange={(e) => setNewUnitName(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && addUnit(s.subject)}
                     placeholder="Add new unit/topic..."
-                    className="flex-1 rounded-lg px-3 py-2 text-sm border border-white/15 placeholder:opacity-70"
+                    className="flex-1 rounded-lg px-3 py-3 text-sm border border-white/15 placeholder:opacity-70 min-h-[44px] touch-manipulation text-base"
                     style={{
                       background: EXAM_INPUT_BG,
                       color: EXAM_TEXT_MAIN,
@@ -228,7 +221,7 @@ export default function SyllabusTrackingTab({
                   <button
                     type="button"
                     onClick={() => addUnit(s.subject)}
-                    className="p-2.5 rounded-full transition hover:opacity-90"
+                    className="p-3 sm:p-2.5 rounded-full sm:rounded-lg transition hover:opacity-90 min-h-[44px] min-w-[44px] touch-manipulation flex items-center justify-center"
                     style={{ backgroundColor: EXAM_ACCENT, color: "#1A1A1A" }}
                   >
                     <Plus size={18} />
@@ -241,7 +234,7 @@ export default function SyllabusTrackingTab({
                     setAddingSubject(s.subject);
                     setNewUnitName("");
                   }}
-                  className="mt-2 text-sm flex items-center gap-1 transition hover:opacity-90"
+                  className="mt-2 text-sm flex items-center gap-1 transition hover:opacity-90 min-h-[44px] touch-manipulation py-2"
                   style={{ color: EXAM_TEXT_SECONDARY }}
                 >
                   <Plus size={14} /> Add new unit/topic...

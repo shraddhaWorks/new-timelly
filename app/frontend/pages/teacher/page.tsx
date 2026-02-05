@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import AppLayout from "../../AppLayout";
@@ -22,6 +22,34 @@ function TeacherDashboardContent() {
   const { data: session } = useSession();
   const tab = useSearchParams().get("tab") ?? "dashboard";
   const title = TEACHER_TAB_TITLES[tab] ?? tab.toUpperCase();
+  const [profile, setProfile] = useState<{ name: string; subtitle?: string; image?: string | null }>({
+    name: session?.user?.name ?? "Teacher",
+    subtitle: "Teacher",
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/user/me");
+        const data = await res.json();
+        if (cancelled || !res.ok) return;
+        const u = data.user;
+        if (u) {
+          setProfile({
+            name: u.name ?? "Teacher",
+            subtitle: "Teacher",
+            image: u.photoUrl ?? null,
+          });
+        }
+      } catch {
+        // keep session-based default
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user?.name]);
 
   return (
     <RequiredRoles allowedRoles={["TEACHER"]}>
@@ -29,10 +57,7 @@ function TeacherDashboardContent() {
         activeTab={tab}
         title={title}
         menuItems={TEACHER_MENU_ITEMS}
-        profile={{
-          name: session?.user?.name ?? "Teacher",
-          subtitle: "Teacher",
-        }}
+        profile={profile}
         children={
           <div>{/* TODO: render tab content here based on `tab` */}</div>
         }

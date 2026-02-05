@@ -22,17 +22,18 @@ export default function RequireRole({ children, allowedRoles }: RequireRoleProps
 
     const role = session?.user?.role as UserRoles | undefined;
 
-    // If user is not logged in -> send to login
-    if (status === "unauthenticated" || !role) {
+    // If user is not logged in -> send to login (home shows login form)
+    if (status === "unauthenticated" || !session?.user) {
       router.replace("/");
       return;
     }
 
-    // If role doesn't match -> unauthorized
-    if (!allowedRoles.includes(role)) {
+    // Only redirect to unauthorized when role is set and not in allowed list
+    // (avoids redirect when role is temporarily undefined during hydration)
+    if (role != null && role !== "" && !allowedRoles.includes(role)) {
       router.replace("/unauthorized");
     }
-  }, [session?.user?.role, status, router, allowedRoles]);
+  }, [session?.user?.role, session?.user, status, router, allowedRoles]);
 
   if (status === "loading") {
     return <AuthLoadingFallback />;

@@ -26,7 +26,7 @@ export default function ExamTermCard({ term, isSelected, onClick }: ExamTermCard
   return (
     <GlassCard
       variant="default"
-      className={`p-5 cursor-pointer transition-all border-l-4 ${
+      className={`p-4 sm:p-5 cursor-pointer transition-all border-l-4 min-h-[44px] touch-manipulation active:bg-white/5 ${
         isSelected ? "ring-1" : "border-l-transparent hover:bg-white/5"
       }`}
       style={

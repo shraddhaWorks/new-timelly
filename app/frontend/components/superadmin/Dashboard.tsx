@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import PageHeader from "../common/PageHeader";
 import StatCard from "@/components/statCard";
 import { Users, School, GraduationCap } from "lucide-react";
+import { formatNumber as fmtNum } from "../../utils/format";
 
 export interface SuperadminDashboardData {
   stats: { totalSchools: number; totalStudents: number; totalTeachers: number };
@@ -72,67 +73,48 @@ export default function Dashboard() {
   const schools = data?.schools ?? [];
   const feeTransactions = data?.feeTransactions ?? [];
 
-  const formatNumber = (n: number) => n.toLocaleString();
-
   return (
-    <main className="flex-1 overflow-y-auto px-3 sm:px-4">
-      <div className="py-4 sm:p-6 bg-transparent min-h-screen space-y-6">
-        <PageHeader
-          title="Superadmin Dashboard"
-          subtitle="Manage everything from here"
-          rightSlot={
-            <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2 sm:gap-3">
-              <input
-                type="text"
-                placeholder="Search..."
-                className="w-full sm:w-56 bg-[#2d2d2d] text-white px-3 py-2 rounded-lg focus:outline-none"
-              />
-              <button className="w-full sm:w-auto bg-[#404040] text-white px-4 py-2 rounded-lg">
-                Add Admin
-              </button>
-            </div>
-          }
-        />
-
-        <div className="flex flex-col lg:flex-row gap-[10px]">
-          <div className="flex flex-col gap-[10px] w-full lg:w-1/2">
+    <main className="flex-1 overflow-y-auto px-3 sm:px-4 md:px-6 flex flex-col items-center">
+      <div className="w-full max-w-6xl py-4 sm:py-6 md:p-6 min-h-screen space-y-4 sm:space-y-6 text-center">
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 justify-items-center">
+          <div className="flex flex-col gap-4 sm:gap-5 w-full max-w-md lg:max-w-none">
             <StatCard
               title="Total Schools"
-              value={formatNumber(stats.totalSchools)}
-              icon={<School size={24} />}
+              value={fmtNum(stats.totalSchools)}
+              icon={<School size={22} className="sm:w-6 sm:h-6" />}
               footer="Active institutions"
             />
             <StatCard
               title="Total Students"
-              value={formatNumber(stats.totalStudents)}
-              icon={<Users size={24} />}
+              value={fmtNum(stats.totalStudents)}
+              icon={<Users size={22} className="sm:w-6 sm:h-6" />}
               footer="Across all schools"
-              className="bg-white/5 backdrop-blur-xl rounded-2xl p-4 md:p-5 shadow-lg hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:-translate-y-1 transition-all duration-300 border border-white/10 group"
             />
             <StatCard
               title="Total Teachers"
-              value={formatNumber(stats.totalTeachers)}
-              icon={<GraduationCap size={24} />}
+              value={fmtNum(stats.totalTeachers)}
+              icon={<GraduationCap size={22} className="sm:w-6 sm:h-6" />}
               footer="Across all schools"
             />
             <StatCard title="Schools" className="w-full">
               <div className="border border-white/10 rounded-xl overflow-hidden w-full">
-                <div className="grid grid-cols-3 px-4 py-3 text-sm font-semibold text-white/80 gap-2">
-                  <div>Sl. No</div>
-                  <div>School</div>
-                  <div>Students</div>
+                <div className="grid grid-cols-3 gap-2 px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold text-white/80 text-center">
+                  <span>Sl. No</span>
+                  <span className="text-left">School</span>
+                  <span>Students</span>
                 </div>
                 {schools.length === 0 ? (
-                  <div className="px-4 py-6 text-sm text-white/60">No schools yet</div>
+                  <div className="px-4 py-6 text-sm text-white/60 text-center">No schools yet</div>
                 ) : (
                   schools.slice(0, 8).map((s, i) => (
-                    <div key={s.id} className="grid grid-cols-3 items-center px-4 py-3 border-t border-white/10 text-sm gap-2">
-                      <div className="text-white">{i + 1}</div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-white/20 flex-shrink-0" />
+                    <div key={s.id} className="grid grid-cols-3 gap-2 items-center px-3 sm:px-4 py-3 border-t border-white/10 text-xs sm:text-sm">
+                      <span className="text-white text-center">{i + 1}</span>
+                      <div className="flex items-center gap-2 min-w-0 text-left">
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/20 flex-shrink-0" />
                         <span className="text-white font-medium truncate">{s.name}</span>
                       </div>
-                      <div className="text-white/80">{formatNumber(s.studentCount)}</div>
+                      <span className="text-white/80 text-center">{fmtNum(s.studentCount)}</span>
                     </div>
                   ))
                 )}
@@ -140,23 +122,23 @@ export default function Dashboard() {
             </StatCard>
           </div>
 
-          <StatCard title="Fee Transactions" className="w-full lg:w-1/2">
+          <StatCard title="Fee Transactions" className="w-full max-w-md lg:max-w-none">
             <div className="rounded-xl border border-white/10 overflow-hidden bg-white/5">
-              <div className="grid grid-cols-4 px-4 py-3 text-sm font-semibold text-white/80 gap-2">
-                <div>Sl. No</div>
-                <div>School</div>
-                <div>Amount</div>
-                <div>Date</div>
+              <div className="grid grid-cols-4 gap-2 px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold text-white/80 text-center">
+                <span>Sl. No</span>
+                <span className="text-left">School</span>
+                <span>Amount</span>
+                <span>Date</span>
               </div>
               {feeTransactions.length === 0 ? (
-                <div className="px-4 py-6 text-sm text-white/60">No transactions yet</div>
+                <div className="px-4 py-6 text-sm text-white/60 text-center">No transactions yet</div>
               ) : (
                 feeTransactions.slice(0, 10).map((t) => (
-                  <div key={t.id} className="grid grid-cols-4 items-center px-4 py-3 border-t border-white/10 text-sm gap-2">
-                    <div className="text-white">{t.slNo}</div>
-                    <div className="text-white truncate">{t.schoolName}</div>
-                    <div className="text-white">₹{t.amount.toLocaleString()}</div>
-                    <div className="text-white/70 text-xs">{new Date(t.createdAt).toLocaleDateString()}</div>
+                  <div key={t.id} className="grid grid-cols-4 gap-2 items-center px-3 sm:px-4 py-3 border-t border-white/10 text-xs sm:text-sm">
+                    <span className="text-white text-center">{t.slNo}</span>
+                    <span className="text-white truncate text-left">{t.schoolName}</span>
+                    <span className="text-white text-center">₹{t.amount.toLocaleString()}</span>
+                    <span className="text-white/70 text-center">{new Date(t.createdAt).toLocaleDateString()}</span>
                   </div>
                 ))
               )}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import PageHeader from "../common/PageHeader";
 import { Search } from "lucide-react";
+import { formatAmount as fmtAmount } from "../../utils/format";
 
 export interface SchoolRow {
   slNo: number;
@@ -49,43 +50,17 @@ export default function Schools() {
 
   useEffect(() => {
     fetchSchools();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSearch = () => {
     fetchSchools();
   };
 
-  const formatAmount = (n: number) =>
-    n >= 1e5 ? `₹${(n / 1e5).toFixed(1)}L` : `₹${n.toLocaleString()}`;
-
   return (
-    <main className="flex-1 overflow-y-auto px-3 sm:px-4">
-      <div className="py-4 sm:p-6 min-h-screen space-y-6">
-        <PageHeader
-          title="Schools"
-          subtitle="Manage all schools"
-          rightSlot={
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Search by School"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="w-full sm:w-56 bg-[#2d2d2d] text-white px-3 py-2 rounded-lg focus:outline-none border border-white/10"
-                />
-                <button
-                  type="button"
-                  onClick={handleSearch}
-                  className="bg-[#404040] text-white px-4 py-2 rounded-lg flex items-center gap-2"
-                >
-                  <Search size={18} /> Search
-                </button>
-              </div>
-            </div>
-          }
-        />
+    <main className="flex-1 overflow-y-auto px-3 sm:px-4 md:px-6 flex flex-col md:items-center">
+      <div className="w-full max-w-6xl py-4 sm:py-6 min-h-screen space-y-4 sm:space-y-6 md:text-center">
+      
 
         {error && (
           <div className="text-red-400 text-sm py-2">{error}</div>
@@ -96,103 +71,83 @@ export default function Schools() {
             <div className="animate-spin rounded-full h-10 w-10 border-2 border-white/30 border-t-white" />
           </div>
         ) : (
-          <div className="rounded-xl border border-white/10 overflow-hidden bg-white/5">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px]">
-                <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="text-left px-4 py-3 text-sm font-semibold text-white/80 w-12">
-                      <input type="checkbox" readOnly className="rounded" />
-                    </th>
-                    <th className="text-left px-4 py-3 text-sm font-semibold text-white/80 w-14">
-                      Admin Id
-                    </th>
-                    <th className="text-left px-4 py-3 text-sm font-semibold text-white/80">
-                      School Name
-                    </th>
-                    <th className="text-left px-4 py-3 text-sm font-semibold text-white/80">
-                      Admin Name
-                    </th>
-                    <th className="text-left px-4 py-3 text-sm font-semibold text-white/80">
-                      Contact
-                    </th>
-                    <th className="text-left px-4 py-3 text-sm font-semibold text-white/80">
-                      Admin Role
-                    </th>
-                    <th className="text-left px-4 py-3 text-sm font-semibold text-white/80">
-                      Email
-                    </th>
-                    <th className="text-left px-4 py-3 text-sm font-semibold text-white/80">
-                      Total Students
-                    </th>
-                    <th className="text-left px-4 py-3 text-sm font-semibold text-white/80">
-                      Turnover (Amount)
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {schools.length === 0 ? (
-                    <tr>
-                      <td colSpan={9} className="px-4 py-8 text-center text-white/60">
-                        No schools found
-                      </td>
+          <>
+            {/* Desktop/tablet: table - center aligned */}
+            <div className="hidden md:block rounded-xl border border-white/10 overflow-hidden bg-white/5 w-full">
+              <div className="overflow-x-auto no-scrollbar">
+                <table className="w-full min-w-[800px]">
+                  <thead>
+                    <tr className="border-b border-white/10">
+                      <th className="text-center px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold text-white/80 w-10">#</th>
+                      <th className="text-left px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold text-white/80">School Name</th>
+                      <th className="text-center px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold text-white/80">Admin Name</th>
+                      <th className="text-center px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold text-white/80">Contact</th>
+                      <th className="text-center px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold text-white/80">Email</th>
+                      <th className="text-center px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold text-white/80">Students</th>
+                      <th className="text-center px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold text-white/80">Turnover</th>
                     </tr>
-                  ) : (
-                    schools.map((s) => (
-                      <tr
-                        key={s.id}
-                        className="border-b border-white/10 hover:bg-white/5 transition"
-                      >
-                        <td className="px-4 py-3">
-                          <input type="checkbox" className="rounded" />
-                        </td>
-                        <td className="px-4 py-3 text-white text-sm">
-                          {String(s.slNo).padStart(2, "0")}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-white/20 flex-shrink-0" />
-                            <span className="text-white font-medium">{s.name}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-white/90 text-sm">
-                          {s.admin?.name ?? "—"}
-                        </td>
-                        <td className="px-4 py-3 text-white/90 text-sm">
-                          {s.admin?.mobile ?? "—"}
-                        </td>
-                        <td className="px-4 py-3 text-white/90 text-sm">
-                          {s.admin?.role ?? "—"}
-                        </td>
-                        <td className="px-4 py-3 text-white/90 text-sm truncate max-w-[180px]">
-                          {s.admin?.email ?? "—"}
-                        </td>
-                        <td className="px-4 py-3 text-white text-sm">
-                          {s.studentCount.toLocaleString()}
-                        </td>
-                        <td className="px-4 py-3 text-white font-medium text-sm">
-                          {formatAmount(s.turnover)}
+                  </thead>
+                  <tbody>
+                    {schools.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-8 text-center text-white/60 text-sm">
+                          No schools found
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-            {schools.length > 0 && (
-              <div className="px-4 py-3 border-t border-white/10 flex items-center justify-between text-sm text-white/60">
-                <span>Page 1 of {Math.max(1, Math.ceil(schools.length / 10))}</span>
-                <div className="flex gap-2">
-                  <button type="button" className="px-3 py-1 rounded bg-white/10 disabled:opacity-50" disabled>
-                    Previous
-                  </button>
-                  <button type="button" className="px-3 py-1 rounded bg-white/10 disabled:opacity-50" disabled>
-                    Next
-                  </button>
-                </div>
+                    ) : (
+                      schools.map((s) => (
+                        <tr key={s.id} className="border-b border-white/10 hover:bg-white/5 transition">
+                          <td className="px-3 sm:px-4 py-3 text-white text-xs sm:text-sm text-center">{String(s.slNo).padStart(2, "0")}</td>
+                          <td className="px-3 sm:px-4 py-3 text-left">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="w-9 h-9 rounded-full bg-white/20 flex-shrink-0" />
+                              <span className="text-white font-medium truncate">{s.name}</span>
+                            </div>
+                          </td>
+                          <td className="px-3 sm:px-4 py-3 text-white/90 text-xs sm:text-sm text-center">{s.admin?.name ?? "—"}</td>
+                          <td className="px-3 sm:px-4 py-3 text-white/90 text-xs sm:text-sm text-center">{s.admin?.mobile ?? "—"}</td>
+                          <td className="px-3 sm:px-4 py-3 text-white/90 text-xs sm:text-sm text-center truncate max-w-[140px] mx-auto">{s.admin?.email ?? "—"}</td>
+                          <td className="px-3 sm:px-4 py-3 text-white text-xs sm:text-sm text-center">{s.studentCount.toLocaleString()}</td>
+                          <td className="px-3 sm:px-4 py-3 text-white font-medium text-xs sm:text-sm text-center">{fmtAmount(s.turnover, true)}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
-            )}
-          </div>
+              {schools.length > 0 && (
+                <div className="px-4 py-3 border-t border-white/10 flex items-center justify-center gap-4 text-xs sm:text-sm text-white/60">
+                  <span>Page 1 of {Math.max(1, Math.ceil(schools.length / 10))}</span>
+                  <div className="flex gap-2">
+                    <button type="button" className="px-3 py-1.5 rounded bg-white/10 disabled:opacity-50" disabled>Previous</button>
+                    <button type="button" className="px-3 py-1.5 rounded bg-white/10 disabled:opacity-50" disabled>Next</button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile: cards - same layout as Transactions (left/right, no center) */}
+            <div className="md:hidden space-y-3 w-full">
+              {schools.length === 0 ? (
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-8 text-white/60 text-sm">
+                  No schools found
+                </div>
+              ) : (
+                schools.map((s) => (
+                  <div key={s.id} className="rounded-xl border border-white/10 bg-white/5 p-4 flex justify-between items-center gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-white font-medium truncate">{s.name}</p>
+                      <p className="text-white/70 text-xs truncate">{s.admin?.name ?? "—"} · {s.admin?.email ?? "—"}</p>
+                      <p className="text-white/80 text-xs mt-1">Students: {s.studentCount.toLocaleString()}</p>
+                    </div>
+                    <div className="flex-shrink-0 text-right">
+                      <p className="text-white font-semibold text-sm">{fmtAmount(s.turnover, true)}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
         )}
       </div>
     </main>

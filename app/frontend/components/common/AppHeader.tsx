@@ -10,18 +10,28 @@ import NotificationPanel from "./NotificationPanel";
 import ProfileModal from "./ProfileModal";
 import { AVATAR_URL } from "../../constants/images";
 
+export type HeaderProfile = {
+  name: string;
+  subtitle?: string;
+  image?: string | null;
+};
+
 interface AppHeaderProps {
   title: string;
+  profile?: HeaderProfile;
+  /** When true, do not show search and notification icons (e.g. Super Admin) */
+  hideSearchAndNotifications?: boolean;
 }
 
-export default function AppHeader({ title }: AppHeaderProps) {
+export default function AppHeader({ title, profile, hideSearchAndNotifications = false }: AppHeaderProps) {
   const router = useRouter();
   const [showProfile, setShowProfile] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
 
   const { data: session } = useSession();
-  const displayName = session?.user?.name ?? "User";
+  const displayName = (profile?.name && profile.name.trim()) ? profile.name : (session?.user?.name ?? "User");
+  const avatarUrl = (profile?.image != null && profile.image !== "") ? profile.image : (session?.user?.image ?? AVATAR_URL);
 
   return (
     <>
@@ -39,26 +49,31 @@ export default function AppHeader({ title }: AppHeaderProps) {
           {/* RIGHT */}
           <div className="flex items-center gap-2 md:gap-4">
 
-            {/* SEARCH */}
-            <div className="hidden md:block">
-              <SearchInput showSearchIcon />
-            </div>
+            {/* SEARCH - hidden for Super Admin */}
+            {!hideSearchAndNotifications && (
+              <>
+                <div className="hidden md:block">
+                  <SearchInput showSearchIcon />
+                </div>
+                <button
+                  className="md:hidden p-2 rounded-lg hover:bg-white/10"
+                  onClick={() => setShowSearch(true)}
+                >
+                  <Search className="text-white" />
+                </button>
+              </>
+            )}
 
-            <button
-              className="md:hidden p-2 rounded-lg hover:bg-white/10"
-              onClick={() => setShowSearch(true)}
-            >
-              <Search className="text-white" />
-            </button>
-
-            {/* NOTIFICATIONS */}
-            <button
-              onClick={() => setShowNotifications(true)}
-              className="relative p-2 rounded-lg hover:bg-white/10"
-            >
-              <Bell className="text-white" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-lime-400 rounded-full" />
-            </button>
+            {/* NOTIFICATIONS - hidden for Super Admin */}
+            {!hideSearchAndNotifications && (
+              <button
+                onClick={() => setShowNotifications(true)}
+                className="relative p-2 rounded-lg hover:bg-white/10"
+              >
+                <Bell className="text-white" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-lime-400 rounded-full" />
+              </button>
+            )}
 
             {/* SETTINGS */}
             <button
@@ -70,14 +85,16 @@ export default function AppHeader({ title }: AppHeaderProps) {
               <Settings className="text-white" />
             </button>
 
-            {/* PROFILE */}
+            {/* PROFILE - always show */}
             <button
               onClick={() => setShowProfile(true)}
-              className="p-1 rounded-xl bg-white/5 hover:bg-white/10"
+              className="p-1 rounded-xl bg-white/5 hover:bg-white/10 flex-shrink-0"
+              title="My profile"
             >
               <img
-                src={AVATAR_URL}
-                className="w-9 h-9 rounded-lg border border-white/10"
+                src={avatarUrl}
+                alt=""
+                className="w-9 h-9 rounded-lg border border-white/10 object-cover"
               />
             </button>
           </div>
@@ -91,6 +108,7 @@ export default function AppHeader({ title }: AppHeaderProps) {
 
       {showProfile && (
         <ProfileModal
+          profile={profile ? { name: profile.name, image: profile.image, role: profile.subtitle } : undefined}
           onClose={() => setShowProfile(false)}
           onOpenSettings={() => {
             setShowProfile(false);
@@ -99,8 +117,8 @@ export default function AppHeader({ title }: AppHeaderProps) {
         />
       )}
 
-      {/* MOBILE SEARCH PLACEHOLDER */}
-      {showSearch && (
+      {/* MOBILE SEARCH PLACEHOLDER - only when search is shown */}
+      {!hideSearchAndNotifications && showSearch && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-start p-4 md:hidden">
           <div className="w-full bg-neutral-900 rounded-xl p-4">
             <SearchInput/>

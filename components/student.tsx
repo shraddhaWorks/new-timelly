@@ -236,11 +236,14 @@ export default function StudentDashboardPage() {
     try {
       const res = await fetch("/api/newsfeed/list");
       const data = await res.json();
-      if (res.ok && data.newsFeeds) {
+      if (res.ok && Array.isArray(data.newsFeeds)) {
         setNewsFeeds(data.newsFeeds);
+      } else {
+        setNewsFeeds([]);
       }
     } catch (err) {
       console.error("Error fetching news feeds:", err);
+      setNewsFeeds([]);
     }
   };
 
@@ -1237,7 +1240,7 @@ export default function StudentDashboardPage() {
                       )}
                       <p className="text-sm text-[#808080] mt-4 flex items-center gap-2">
                         <User className="w-4 h-4" />
-                        Posted by: {feed.createdBy.name}
+                        Posted by: {feed.createdBy?.name ?? "—"}
                       </p>
                     </div>
                   </motion.div>

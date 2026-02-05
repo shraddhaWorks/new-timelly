@@ -1,54 +1,65 @@
-import { Heart } from 'lucide-react';
+"use client";
+
+import { Heart } from "lucide-react";
+import { formatRelativeTime } from "../../../utils/format";
+import type { NewsFeedItem } from "../../../hooks/useNewsFeeds";
 
 interface PostCardProps {
-  author: string;
-  time: string;
-  title: string;
-  content: string;
-  likes: number;
-  image: string;
+  post: NewsFeedItem;
+  onLike: (id: string) => void;
 }
 
-export default function PostCard({ author, time, title, content, likes, image }: PostCardProps) {
+export default function PostCard({ post, onLike }: PostCardProps) {
+  const authorName = post.createdBy?.name ?? "School";
+  const timeStr = formatRelativeTime(post.createdAt);
+
   return (
-    <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl md:rounded-3xl overflow-hidden">
-      {/* Author Header */}
-      <div className="p-3 md:p-4 flex justify-between items-center">
-        <div className="flex items-center gap-2 md:gap-3">
-          <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gray-600 overflow-hidden">
-            <img src="/api/placeholder/40/40" alt="Author" className="object-cover w-full h-full" />
+    <article className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl md:rounded-3xl overflow-hidden">
+      {/* Header: avatar + name + time, Published pill */}
+      <div className="p-3 sm:p-4 flex justify-between items-start gap-2">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/20 flex-shrink-0 overflow-hidden ring-2 ring-white/10">
+            <div className="w-full h-full flex items-center justify-center text-white/90 text-sm font-semibold">
+              {authorName[0]?.toUpperCase() ?? "?"}
+            </div>
           </div>
-          <div>
-            <p className="font-semibold text-xs md:text-sm leading-tight">{author}</p>
-            <p className="text-[10px] md:text-xs text-gray-400">{time}</p>
+          <div className="min-w-0">
+            <p className="font-semibold text-sm sm:text-base leading-tight truncate text-white">{authorName}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{timeStr}</p>
           </div>
         </div>
-        <span className="bg-[#82922c]/30 text-[#d4ff00] text-[10px] md:text-xs px-2 md:px-3 py-1 rounded-full border border-[#d4ff00]/20 font-medium">
+        <span className="bg-[#82922c]/30 text-[#d4ff00] text-[10px] sm:text-xs px-2 sm:px-3 py-1 rounded-full border border-[#d4ff00]/20 font-medium shrink-0">
           Published
         </span>
       </div>
 
-      {/* Main Image - Responsive Height */}
-      <div className="w-full h-56 sm:h-72 md:h-80 lg:h-96 overflow-hidden">
-        <img 
-          src={image} 
-          alt="Post content" 
-          className="w-full h-full object-cover"
-        />
-      </div>
-
-      {/* Content Area - Matches your screenshot's darker purple tint */}
-      <div className="p-5 md:p-6 bg-[#2d1b2d]/80 backdrop-blur-xl">
-        <div className="flex items-center gap-2 text-gray-300 mb-3 md:mb-4 cursor-pointer">
-          <Heart className="w-4 h-4 md:w-5 md:h-5 hover:fill-red-500 hover:text-red-500 transition" />
-          <span className="text-xs md:text-sm font-medium">{likes}</span>
+      {post.photo && (
+        <div className="w-full aspect-video sm:h-64 md:h-80 max-h-80 overflow-hidden bg-black/20">
+          <img
+            src={post.photo}
+            alt=""
+            className="w-full h-full object-cover"
+          />
         </div>
-        
-        <h4 className="text-lg md:text-xl font-bold mb-2">{title}</h4>
-        <p className="text-gray-200 text-xs md:text-sm leading-relaxed">
-          {content}
+      )}
+
+      <div className="p-4 sm:p-5 md:p-6 bg-[#2d1b2d]/90 backdrop-blur-xl">
+        <button
+          type="button"
+          onClick={() => onLike(post.id)}
+          className="flex items-center gap-2 text-gray-300 mb-3 sm:mb-4 cursor-pointer hover:text-red-400 transition touch-manipulation"
+        >
+          <Heart
+            className={`w-4 h-4 sm:w-5 sm:h-5 transition ${post.likedByMe ? "fill-red-500 text-red-500" : ""}`}
+          />
+          <span className="text-xs sm:text-sm font-medium">{post.likes}</span>
+        </button>
+
+        <h4 className="text-base sm:text-lg font-bold mb-2 text-white leading-tight">{post.title}</h4>
+        <p className="text-gray-200 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
+          {post.description}
         </p>
       </div>
-    </div>
+    </article>
   );
 }

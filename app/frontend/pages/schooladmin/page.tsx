@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import AppLayout from "../../AppLayout";
 import { SCHOOLADMIN_MENU_ITEMS, SCHOOLADMIN_TAB_TITLES } from "../../constants/sidebar";
@@ -12,10 +12,40 @@ import SchoolAdminDashboard from "../../components/schooladmin/Dashboard";
 import SchoolTeacherLeavesTab from "../../components/schooladmin/TeacherLeaves";
 import SchoolCercularsTab from "../../components/schooladmin/circulars";
 import NewsFeed from "../../components/schooladmin/Newsfeed";
+import { ExamsPageInner } from "@/app/schoolAdmin/exams/page";
 
 function SchoolAdminContent() {
   const tab = useSearchParams().get("tab") ?? "dashboard";
   const title = SCHOOLADMIN_TAB_TITLES[tab] ?? tab.toUpperCase();
+  const [profile, setProfile] = useState<{ name: string; subtitle?: string; image?: string | null }>({
+    name: "School Admin",
+    subtitle: "School Admin",
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/user/me");
+        const data = await res.json();
+        if (cancelled || !res.ok) return;
+        const u = data.user;
+        if (u) {
+          setProfile({
+            name: u.name ?? "School Admin",
+            subtitle: "School Admin",
+            image: u.photoUrl ?? null,
+          });
+        }
+      } catch {
+        // keep default profile
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const renderComponent = () => {
     switch (tab) {
       case "dashboard":
@@ -41,7 +71,7 @@ function SchoolAdminContent() {
       case "certificates":
         return;
       case "exams":
-        return;
+        return <ExamsPageInner />;
       case "analysis":
         return;
       case "fees":
@@ -61,7 +91,7 @@ function SchoolAdminContent() {
         activeTab={tab}
         title={title}
         menuItems={SCHOOLADMIN_MENU_ITEMS}
-        profile={{ name: "School Admin" }}
+        profile={profile}
         children={renderComponent()}
       />
     </RequiredRoles>

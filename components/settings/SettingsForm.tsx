@@ -1,7 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import GlassCard from "@/components/ui/GlassCard";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { User, Lock, Camera, X } from "lucide-react";
+import {
+  SETTINGS_BG_GRADIENT,
+  SETTINGS_CARD_BG,
+  SETTINGS_INPUT_BG,
+  SETTINGS_TEXT_MAIN,
+  SETTINGS_TEXT_MUTED,
+} from "@/app/frontend/constants/colors";
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (e) => reject(e);
+  });
+}
+
+function getClipboardImageAsBase64(clipboardData: DataTransfer | null): Promise<string | null> {
+  if (!clipboardData?.items?.length) return Promise.resolve(null);
+  const item = Array.from(clipboardData.items).find((i) => i.type.startsWith("image/"));
+  if (!item) return Promise.resolve(null);
+  const file = item.getAsFile();
+  if (!file) return Promise.resolve(null);
+  return fileToBase64(file);
+}
 
 type UserMe = {
   id: string;
@@ -12,6 +37,9 @@ type UserMe = {
   photoUrl: string | null;
   role: string;
 };
+
+const inputClass =
+  "w-full rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 border border-white/10";
 
 export default function SettingsForm() {
   const [user, setUser] = useState<UserMe | null>(null);
@@ -30,6 +58,7 @@ export default function SettingsForm() {
     newPassword: "",
     confirmPassword: "",
   });
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -61,7 +90,12 @@ export default function SettingsForm() {
       const res = await fetch("/api/user/me", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profile),
+        body: JSON.stringify({
+          name: profile.name,
+          mobile: profile.mobile,
+          language: profile.language,
+          photoUrl: profile.photoUrl || null,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -100,67 +134,185 @@ export default function SettingsForm() {
     }
   };
 
+  const handleAvatarFile = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file?.type.startsWith("image/")) return;
+    try {
+      const b64 = await fileToBase64(file);
+      setProfile((p) => ({ ...p, photoUrl: b64 }));
+    } catch {
+      alert("Failed to read image");
+    }
+    e.target.value = "";
+  }, []);
+
+  const handleAvatarPaste = useCallback(async (e: React.ClipboardEvent) => {
+    const b64 = await getClipboardImageAsBase64(e.clipboardData);
+    if (b64) {
+      e.preventDefault();
+      setProfile((p) => ({ ...p, photoUrl: b64 }));
+    }
+  }, []);
+
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
+      <div
+        className="min-h-screen flex items-center justify-center p-4"
+        style={{ background: SETTINGS_BG_GRADIENT }}
+      >
         <div className="animate-spin rounded-full h-10 w-10 border-2 border-white/30 border-t-white" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black p-4 md:p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <GlassCard variant="strong" className="p-4 md:p-6 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full overflow-hidden glass border border-white/10 flex items-center justify-center">
-            {profile.photoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={profile.photoUrl} alt={profile.name || "User"} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-white/70 text-lg">
-                {profile.name?.[0]?.toUpperCase() ?? "U"}
-              </span>
-            )}
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-white">Settings</h1>
-            <p className="text-sm text-white/60">
-              Manage your account preferences
-            </p>
-          </div>
-        </GlassCard>
+    <div
+      className="min-h-screen p-4 sm:p-6 md:p-8"
+      style={{ background: SETTINGS_BG_GRADIENT }}
+      onPaste={handleAvatarPaste}
+    >
+      <div className="max-w-2xl mx-auto space-y-6">
+        {/* Header card - Settings title + tagline */}
+        <div
+          className="rounded-2xl p-4 sm:p-6 border border-white/10 backdrop-blur-xl"
+          style={{ backgroundColor: SETTINGS_CARD_BG }}
+        >
+          <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: SETTINGS_TEXT_MAIN }}>
+            Settings
+          </h1>
+          <p className="text-sm sm:text-base mt-1" style={{ color: SETTINGS_TEXT_MUTED }}>
+            Manage your account preferences
+          </p>
+        </div>
 
-        <GlassCard variant="card" className="p-4 md:p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-white">Account Settings</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Account Settings */}
+        <div
+          className="rounded-2xl p-4 sm:p-6 border border-white/10 backdrop-blur-xl"
+          style={{ backgroundColor: SETTINGS_CARD_BG }}
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+              <User size={18} className="text-white/90" />
+            </div>
+            <h2 className="text-lg font-semibold" style={{ color: SETTINGS_TEXT_MAIN }}>
+              Account Settings
+            </h2>
+          </div>
+          <p className="text-sm mb-4" style={{ color: SETTINGS_TEXT_MUTED }}>
+            Update your account information
+          </p>
+
+          {/* Avatar: preview + upload from computer / paste screenshot */}
+          <div className="mb-4">
+            <label className="block text-sm mb-2" style={{ color: SETTINGS_TEXT_MUTED }}>
+              Profile Photo
+            </label>
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="relative group">
+                <div
+                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-2 border-white/20 flex items-center justify-center"
+                  style={{ backgroundColor: SETTINGS_INPUT_BG }}
+                >
+                  {profile.photoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={profile.photoUrl}
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xl font-semibold" style={{ color: SETTINGS_TEXT_MUTED }}>
+                      {profile.name?.[0]?.toUpperCase() ?? "?"}
+                    </span>
+                  )}
+                </div>
+                <label
+                  htmlFor="avatar-file-input"
+                  className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                >
+                  <Camera size={20} className="text-white" />
+                </label>
+                <input
+                  id="avatar-file-input"
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarFile}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label
+                  htmlFor="avatar-file-input"
+                  className="text-sm px-3 py-2 rounded-xl border border-white/20 cursor-pointer hover:bg-white/10 transition inline-block w-fit"
+                  style={{ color: SETTINGS_TEXT_MAIN }}
+                >
+                  Choose from device
+                </label>
+                <span className="text-xs" style={{ color: SETTINGS_TEXT_MUTED }}>
+                  Or paste a screenshot (Ctrl+V)
+                </span>
+                {profile.photoUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setProfile((p) => ({ ...p, photoUrl: "" }))}
+                    className="text-xs flex items-center gap-1 text-red-300 hover:text-red-200"
+                  >
+                    <X size={12} /> Remove photo
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-white/70 mb-1">Name</label>
+              <label className="block text-sm mb-1.5" style={{ color: SETTINGS_TEXT_MUTED }}>
+                Name
+              </label>
               <input
-                className="w-full glass-input rounded-lg px-3 py-2 text-white"
+                className={inputClass}
+                style={{ backgroundColor: SETTINGS_INPUT_BG }}
                 value={profile.name}
                 onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))}
               />
             </div>
             <div>
-              <label className="block text-sm text-white/70 mb-1">Email Address</label>
+              <label className="block text-sm mb-1.5" style={{ color: SETTINGS_TEXT_MUTED }}>
+                Email Address
+              </label>
               <input
-                className="w-full glass-input rounded-lg px-3 py-2 text-white"
+                type="email"
+                readOnly
+                className={inputClass + " cursor-not-allowed opacity-90"}
+                style={{ backgroundColor: SETTINGS_INPUT_BG }}
                 value={profile.email}
-                onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))}
+                aria-label="Email (read-only)"
               />
+              <p className="text-xs mt-1" style={{ color: SETTINGS_TEXT_MUTED }}>
+                Email cannot be changed
+              </p>
             </div>
             <div>
-              <label className="block text-sm text-white/70 mb-1">Phone Number</label>
+              <label className="block text-sm mb-1.5" style={{ color: SETTINGS_TEXT_MUTED }}>
+                Phone Number
+              </label>
               <input
-                className="w-full glass-input rounded-lg px-3 py-2 text-white"
+                type="tel"
+                className={inputClass}
+                style={{ backgroundColor: SETTINGS_INPUT_BG }}
                 value={profile.mobile}
                 onChange={(e) => setProfile((p) => ({ ...p, mobile: e.target.value }))}
+                placeholder="+91 98765 43210"
               />
             </div>
             <div>
-              <label className="block text-sm text-white/70 mb-1">Language</label>
+              <label className="block text-sm mb-1.5" style={{ color: SETTINGS_TEXT_MUTED }}>
+                Language
+              </label>
               <select
-                className="w-full glass-input rounded-lg px-3 py-2 text-white"
+                className={inputClass}
+                style={{ backgroundColor: SETTINGS_INPUT_BG }}
                 value={profile.language}
                 onChange={(e) => setProfile((p) => ({ ...p, language: e.target.value }))}
               >
@@ -168,34 +320,42 @@ export default function SettingsForm() {
                 <option value="Hindi">Hindi</option>
               </select>
             </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm text-white/70 mb-1">Profile Photo URL</label>
-              <input
-                className="w-full glass-input rounded-lg px-3 py-2 text-white"
-                value={profile.photoUrl}
-                onChange={(e) => setProfile((p) => ({ ...p, photoUrl: e.target.value }))}
-                placeholder="Paste image URL..."
-              />
-            </div>
           </div>
           <button
             type="button"
             onClick={saveProfile}
             disabled={savingProfile}
-            className="mt-4 bg-white/20 text-white border border-white/30 rounded-lg px-4 py-2 font-medium disabled:opacity-50"
+            className="mt-4 px-5 py-2.5 rounded-xl font-medium text-white border border-white/20 bg-white/10 hover:bg-white/15 disabled:opacity-50 transition"
           >
             {savingProfile ? "Saving..." : "Save Changes"}
           </button>
-        </GlassCard>
+        </div>
 
-        <GlassCard variant="card" className="p-4 md:p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-white">Password &amp; Security</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Password & Security */}
+        <div
+          className="rounded-2xl p-4 sm:p-6 border border-white/10 backdrop-blur-xl"
+          style={{ backgroundColor: SETTINGS_CARD_BG }}
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+              <Lock size={18} className="text-white/90" />
+            </div>
+            <h2 className="text-lg font-semibold" style={{ color: SETTINGS_TEXT_MAIN }}>
+              Password & Security
+            </h2>
+          </div>
+          <p className="text-sm mb-4" style={{ color: SETTINGS_TEXT_MUTED }}>
+            Change your password
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm text-white/70 mb-1">Current Password</label>
+              <label className="block text-sm mb-1.5" style={{ color: SETTINGS_TEXT_MUTED }}>
+                Current Password
+              </label>
               <input
                 type="password"
-                className="w-full glass-input rounded-lg px-3 py-2 text-white"
+                className={inputClass}
+                style={{ backgroundColor: SETTINGS_INPUT_BG }}
                 value={passwords.currentPassword}
                 onChange={(e) =>
                   setPasswords((p) => ({ ...p, currentPassword: e.target.value }))
@@ -203,10 +363,13 @@ export default function SettingsForm() {
               />
             </div>
             <div>
-              <label className="block text-sm text-white/70 mb-1">New Password</label>
+              <label className="block text-sm mb-1.5" style={{ color: SETTINGS_TEXT_MUTED }}>
+                New Password
+              </label>
               <input
                 type="password"
-                className="w-full glass-input rounded-lg px-3 py-2 text-white"
+                className={inputClass}
+                style={{ backgroundColor: SETTINGS_INPUT_BG }}
                 value={passwords.newPassword}
                 onChange={(e) =>
                   setPasswords((p) => ({ ...p, newPassword: e.target.value }))
@@ -214,10 +377,13 @@ export default function SettingsForm() {
               />
             </div>
             <div>
-              <label className="block text-sm text-white/70 mb-1">Confirm Password</label>
+              <label className="block text-sm mb-1.5" style={{ color: SETTINGS_TEXT_MUTED }}>
+                Confirm Password
+              </label>
               <input
                 type="password"
-                className="w-full glass-input rounded-lg px-3 py-2 text-white"
+                className={inputClass}
+                style={{ backgroundColor: SETTINGS_INPUT_BG }}
                 value={passwords.confirmPassword}
                 onChange={(e) =>
                   setPasswords((p) => ({ ...p, confirmPassword: e.target.value }))
@@ -229,13 +395,12 @@ export default function SettingsForm() {
             type="button"
             onClick={savePassword}
             disabled={savingPassword}
-            className="mt-4 bg-white/20 text-white border border-white/30 rounded-lg px-4 py-2 font-medium disabled:opacity-50"
+            className="mt-4 px-5 py-2.5 rounded-xl font-medium text-white border border-white/20 bg-white/10 hover:bg-white/15 disabled:opacity-50 transition"
           >
-            {savingPassword ? "Updating..." : "Save Changes"}
+            {savingPassword ? "Updating..." : "Update Password"}
           </button>
-        </GlassCard>
+        </div>
       </div>
     </div>
   );
 }
-

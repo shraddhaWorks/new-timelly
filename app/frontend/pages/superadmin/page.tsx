@@ -1,7 +1,8 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import AppLayout from "../../AppLayout";
 import { SUPERADMIN_SIDEBAR_ITEMS } from "../../constants/sidebar";
 import Dashboard from "../../components/superadmin/Dashboard";
@@ -20,6 +21,53 @@ const SUPERADMIN_TAB_TITLES: Record<string, string> = {
 function SuperAdminContent() {
   const tab = useSearchParams().get("tab") ?? "dashboard";
   const title = SUPERADMIN_TAB_TITLES[tab] ?? tab.toUpperCase();
+  const { data: session, status } = useSession();
+  const [profile, setProfile] = useState<{ name: string; subtitle?: string; image?: string | null }>({
+    name: "Super Admin",
+    subtitle: "Super Admin",
+    image: null,
+  });
+
+  const fetchProfile = useCallback(async () => {
+    try {
+      const res = await fetch("/api/user/me");
+      const data = await res.json();
+      if (!res.ok) return;
+      const u = data.user;
+      if (u) {
+        setProfile({
+          name: u.name ?? "Super Admin",
+          subtitle: "Super Admin",
+          image: u.photoUrl ?? null,
+        });
+      }
+    } catch {
+      // keep session fallback
+    }
+  }, []);
+
+  // 1) When authenticated: show session first (so sidebar/header render), then fetch API for DB name/photo
+  useEffect(() => {
+    if (status !== "authenticated" || !session?.user) return;
+    setProfile((prev) => ({
+      name: session.user?.name ?? prev.name,
+      subtitle: "Super Admin",
+      image: session.user?.image ?? prev.image ?? null,
+    }));
+    let cancelled = false;
+    fetchProfile().then(() => { if (cancelled) return; });
+    return () => { cancelled = true; };
+  }, [status, session?.user?.name, session?.user?.image, fetchProfile]);
+
+  // 2) Refetch when user returns from settings (window focus) so profile updates after save
+  useEffect(() => {
+    const onFocus = () => {
+      if (status === "authenticated") fetchProfile();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [status, fetchProfile]);
+
   const renderComponent = () => {
     switch (tab) {
       case "dashboard":
@@ -41,7 +89,8 @@ function SuperAdminContent() {
         title={title}
         activeTab={tab}
         menuItems={SUPERADMIN_SIDEBAR_ITEMS}
-        profile={{ name: "Super Admin" }}
+        profile={profile}
+        hideSearchAndNotifications
         children={renderComponent()}
       />
     </RequiredRoles>

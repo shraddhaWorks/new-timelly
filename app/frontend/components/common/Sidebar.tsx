@@ -13,6 +13,7 @@ type Props = {
   profile?: {
     name: string;
     subtitle?: string;
+    image?: string | null;
   };
 };
 
@@ -21,8 +22,9 @@ export default function AppSidebar({ menuItems, profile }: Props) {
   const { data: session } = useSession();
   const activeTab = useSearchParams().get("tab") ?? "dashboard";
 
-  const displayName = session?.user?.name ?? profile?.name ?? "User";
-  const subtitle = session?.user?.role ?? profile?.subtitle;
+  const displayName = (profile?.name && profile.name.trim()) ? profile.name : (session?.user?.name ?? "User");
+  const subtitle = profile?.subtitle ?? session?.user?.role ?? "";
+  const avatarUrl = (profile?.image != null && profile.image !== "") ? profile.image : (session?.user?.image ?? AVATAR_URL);
 
   const handleClick = async (item: SidebarItem) => {
     if (item.action === "logout") {
@@ -52,8 +54,9 @@ export default function AppSidebar({ menuItems, profile }: Props) {
         <div className="bg-white/5 rounded-xl p-3 border border-white/10">
           <div className="flex items-center gap-3">
             <img
-              src={session?.user?.image ?? AVATAR_URL}
-              className="w-10 h-10 rounded-xl border border-white/20"
+              src={avatarUrl}
+              alt=""
+              className="w-10 h-10 rounded-xl border border-white/20 object-cover"
             />
             <div>
               <p className="text-sm font-semibold text-white truncate">
