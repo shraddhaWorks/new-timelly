@@ -7,6 +7,7 @@ import Dashboard from "../../components/superadmin/Dashboard";
 import AddSchool from "../../components/superadmin/AddSchool";
 import Schools from "../../components/superadmin/Schools";
 import Transactions from "../../components/superadmin/Transactions";
+import RequiredRoles from "../../auth/RequiredRoles";
 
 const SUPERADMIN_TAB_TITLES: Record<string, string> = {
   dashboard: "Dashboard",
@@ -33,11 +34,15 @@ export default function SuperAdminDashboard() {
   }}
 
   return (
+  <RequiredRoles allowedRoles={['SUPERADMIN']}> 
     <AppLayout
       title={title}
+      activeTab={tab}
       menuItems={SUPERADMIN_SIDEBAR_ITEMS}
       profile={{ name: "Super Admin" }}
       children={renderComponent()}
     />
+  </RequiredRoles> 
   );
 }
+

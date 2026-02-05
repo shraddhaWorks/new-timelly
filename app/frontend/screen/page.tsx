@@ -1,29 +1,43 @@
 "use client";
 
 import { useEffect } from "react";
-import { getSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { ROUTES } from "../constants/routes";
 
 export default function ScreenPage() {
-  const router = useRouter();
+    const router = useRouter();
+    const { data: session, status } = useSession();
 
-  useEffect(() => {
-    async function redirectByRole() {
-      const session = await getSession();
-      if (!session?.user) return;
+    // ✅ Single effect - only one source of redirect logic
+    useEffect(() => {
+        // Wait for session to load
+        if (status === "loading") {
+            return;
+        }
 
-      const roleRoutes: Record<string, string> = {
-        SUPERADMIN: "/frontend/pages/superadmin",
-        SCHOOLADMIN: "/frontend/pages/schooladmin",
-        TEACHER: "/frontend/pages/teacher",
-        STUDENT: "/frontend/pages/parent",
-      };
+        // Not logged in -> send to login
+        if (status === "unauthenticated") {
+            router.replace("/");
+            return;
+        }
 
-      router.replace(roleRoutes[session.user.role] || "/unauthorized");
+        // Logged in -> redirect by role
+        if (status === "authenticated" && session?.user) {
+            const roleRoutes: Record<string, string> = {
+                SUPERADMIN: ROUTES.SUPERADMIN,
+                SCHOOLADMIN: ROUTES.SCHOOLADMIN,
+                STUDENT: ROUTES.PARENT,
+                TEACHER: ROUTES.TEACHER,
+            };
+
+            router.replace(roleRoutes[session.user.role] || "/unauthorized");
+        }
+    }, [status, session]);
+
+    if (status === "loading") {
+        return null;
     }
 
-    redirectByRole();
-  }, []);
-
-  return null;
+    return null;
 }

@@ -1,97 +1,33 @@
 "use client";
 
-import { Bell, Menu } from "lucide-react";
-import { useState } from "react";
-import SectionHeader from "./SectionHeader";
-import SearchInput from "./SearchInput";
-import { PRIMARY_COLOR } from "../../constants/colors";
-import NotificationPanel from "./NotificationPanel";
-import ProfileModal from "./ProfileModal";
+import { ReactNode } from "react";
+import { motion } from "framer-motion";
 
-
-interface AppHeaderProps {
+interface PageHeaderProps {
   title: string;
-  onMenuClick?: () => void;
+  subtitle?: string;
+  rightSlot?: ReactNode; // for buttons, filters, etc
+  className?: string; // optional custom classes
 }
 
-const AVATAR_URL =
-  "https://th.bing.com/th/id/OIP.DEJkHVGN8dM_kyeZA8t3fgHaHa?w=191&h=191&c=7&r=0&o=7&dpr=1.5&pid=1.7&rm=3";
-
-export default function AppHeader({
+export default function PageHeader({
   title,
-  onMenuClick,
-}: AppHeaderProps) {
-  const [showProfile, setShowProfile] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-
+  subtitle,
+  rightSlot,
+  className = "",
+}: PageHeaderProps) {
   return (
-    <>
-      <header className="
-  px-4 md:px-6 h-16
-  flex items-center justify-between
-  bg-transparent
-  border-b border-white/10
-">
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`rounded-3xl p-6 mb-8 bg-gradient-to-r from-[#2b1c47] via-[#3a235a] to-[#4a5c2f] flex flex-col md:flex-row md:items-center md:justify-between gap-4 ${className}`}
+    >
+      <div>
+        <h1 className="text-3xl font-bold text-white">{title}</h1>
+        {subtitle && <p className="text-white/60">{subtitle}</p>}
+      </div>
 
-
-        {/* LEFT */}
-        <div className="flex items-center gap-3">
-          {onMenuClick && (
-            <button
-              className="md:hidden"
-              onClick={onMenuClick}
-            >
-              <Menu className="text-white" />
-            </button>
-          )}
-          <div className="flex flex-col">
-            <SectionHeader title={title} />
-            <p className="text-sm text-gray-300 m-1">Welcome</p>
-          </div>
-        </div>
-
-        {/* RIGHT */}
-        <div className="flex items-center gap-4">
-          {/* Notifications */}
-          <SearchInput showSearchIcon={true} />
-
-          <button
-            onClick={() => setShowNotifications(true)}
-            className="relative"
-          >
-            <Bell className="text-white" />
-            <span className="absolute -top-1 -right-1 h-2 w-2
-              rounded-full" style={style.notificatioDot} />
-          </button>
-
-          {/* Avatar */}
-          <img
-            src={AVATAR_URL}
-            onClick={() => setShowProfile(true)}
-            className="h-9 w-9 rounded-full cursor-pointer
-              border border-white/20 object-cover"
-          />
-        </div>
-      </header>
-
-      {/* Notification Panel */}
-      {showNotifications && (
-        <NotificationPanel
-          onClose={() => setShowNotifications(false)}
-        />
-      )}
-
-      {/* Profile Modal */}
-      {showProfile && (
-        <ProfileModal onClose={() => setShowProfile(false)} />
-      )}
-    </>
+      {rightSlot && <div>{rightSlot}</div>}
+    </motion.div>
   );
-}
-
-
-const style = {
-  notificatioDot: {
-    backgroundColor: `${PRIMARY_COLOR}`
-  }
 }

@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { SidebarItem } from "./types/sidebar";
 import AppSidebar from "./components/common/Sidebar";
-import AppHeader from "./components/common/PageHeader";
-
+import AppHeader from "./components/common/AppHeader";
+;
+import MobileMoreOptions from "./components/mobilescreens/MobileMoreOptions";
+import BottomNavBar from "./components/mobilescreens/BottomNavbar";
 
 type Props = {
   title: string;
@@ -13,6 +15,7 @@ type Props = {
     name: string;
     subtitle?: string;
   };
+  activeTab: string;
   children?: React.ReactNode;
 };
 
@@ -20,37 +23,40 @@ export default function AppLayout({
   title,
   menuItems,
   profile,
+  activeTab,
   children,
 }: Props) {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [showMore, setShowMore] = useState(false);
 
   return (
     <div className="flex h-screen overflow-hidden">
 
+      {/* DESKTOP SIDEBAR */}
       <aside className="hidden md:block">
         <AppSidebar menuItems={menuItems} profile={profile} />
       </aside>
 
-      <div className="flex-1 flex flex-col">
-        <AppHeader
-          title={title}
-          onMenuClick={() => setMobileOpen(true)}
-        />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+      {/* MAIN */}
+      <div className="flex-1 flex flex-col pb-16 md:pb-0">
+        <AppHeader title={title} />
+
+        <main className="flex-1 overflow-y-auto no-scrollbar p-4 md:p-6">
           {children}
         </main>
       </div>
 
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 md:hidden">
-          <div className="w-64 h-full">
-            <AppSidebar
-              menuItems={menuItems}
-              profile={profile}
-              onClose={() => setMobileOpen(false)}
-            />
-          </div>
-        </div>
+      {/* MOBILE BOTTOM NAV */}
+      <BottomNavBar
+        menuItems={menuItems}
+        onMoreClick={() => setShowMore(true)}
+      />
+
+      {/* MORE OPTIONS SHEET */}
+      {showMore && (
+        <MobileMoreOptions
+          items={menuItems}
+          onClose={() => setShowMore(false)}
+        />
       )}
     </div>
   );

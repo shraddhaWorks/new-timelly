@@ -1,70 +1,72 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { SidebarItem } from "../../types/sidebar";
 import BrandLogo from "./TimellyLogo";
-
-const ACTIVE_COLOR = "#43b771";
+import { PRIMARY_COLOR } from "../../constants/colors";
+import { AVATAR_URL } from "../../constants/images";
 
 type Props = {
   menuItems: SidebarItem[];
-  profile: {
+  profile?: {
     name: string;
     subtitle?: string;
   };
-  onClose?: () => void;
 };
 
-export default function AppSidebar({
-  menuItems,
-  profile,
-  onClose,
-}: Props) {
+export default function AppSidebar({ menuItems, profile }: Props) {
   const router = useRouter();
-  const activeTab =
-    useSearchParams().get("tab") ?? "dashboard";
+  const { data: session } = useSession();
+  const activeTab = useSearchParams().get("tab") ?? "dashboard";
+
+  const displayName = session?.user?.name ?? profile?.name ?? "User";
+  const subtitle = session?.user?.role ?? profile?.subtitle;
 
   const handleClick = async (item: SidebarItem) => {
     if (item.action === "logout") {
       await signOut({ callbackUrl: "/" });
       return;
     }
-
-    if (item.href) {
-      router.push(item.href);
-      onClose?.();
-    }
+    if (item.href) router.push(item.href);
   };
 
   return (
-    <aside className="w-64 h-full flex flex-col border-r border-white/10">
-
-      {/* LOGO */}
-      <div className="h-14 flex items-center px-4">
+    <aside
+      className="
+        hidden md:flex
+        w-64 h-full flex-col
+        bg-white/10 backdrop-blur-2xl
+        border-r border-white/10
+        shadow-[8px_0_32px_rgba(0,0,0,0.35)]
+      "
+    >
+      {/* Logo */}
+      <div className="h-20 flex items-center px-4 border-b border-white/10">
         <BrandLogo isbrandLogoWhite />
       </div>
 
-      {/* PROFILE */}
-      <div className="px-4 py-4 flex gap-3">
-        <div className="w-10 h-10 rounded-full bg-[#43b771] text-white flex items-center justify-center font-semibold">
-          {profile.name[0]}
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-white">
-            {profile.name}
-          </p>
-          {profile.subtitle && (
-            <p className="text-xs text-lime-400">
-              {profile.subtitle}
-            </p>
-          )}
+      {/* Profile */}
+      <div className="px-4 py-4 border-b border-white/10">
+        <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+          <div className="flex items-center gap-3">
+            <img
+              src={session?.user?.image ?? AVATAR_URL}
+              className="w-10 h-10 rounded-xl border border-white/20"
+            />
+            <div>
+              <p className="text-sm font-semibold text-white truncate">
+                {displayName}
+              </p>
+              <p className="text-xs text-white/60 truncate">{subtitle}</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* MENU */}
-      <div className="flex-1 px-3 overflow-y-auto">
+      {/* Menu */}
+      <div className="flex-1 px-4 py-4 space-y-3 overflow-y-auto no-scrollbar">
         {menuItems.map(item => {
           const isActive = item.tab === activeTab;
           const Icon = item.icon;
@@ -74,20 +76,18 @@ export default function AppSidebar({
               key={item.label}
               whileHover={{ x: 4 }}
               onClick={() => handleClick(item)}
-              className={`w-full mb-2 flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition
+              className={`
+                w-full flex items-center gap-4 px-5 py-3 rounded-xl
+                transition
                 ${
                   isActive
-                    ? "text-[#43b771] bg-[#43b771]/10"
-                    : "text-white/60 hover:text-white hover:bg-white/5"
-                }`}
+                    ? "bg-lime-400/10 text-lime-400 border border-lime-400/20"
+                    : "text-white/60 hover:bg-white/5 hover:text-white"
+                }
+              `}
             >
               <Icon
-                className="text-lg"
-                style={{
-                  color: isActive
-                    ? ACTIVE_COLOR
-                    : "#9ca3af",
-                }}
+                style={{ color: isActive ? PRIMARY_COLOR : "#9ca3af" }}
               />
               {item.label}
             </motion.button>
