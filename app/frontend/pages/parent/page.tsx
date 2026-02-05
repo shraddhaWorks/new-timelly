@@ -1,33 +1,24 @@
-"use client";
-
-import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+import ParentDashboardClient from "../../components/parent/ParentDashboardClient";
+import RequiredRoles from "../../auth/RequiredRoles";
 import AppLayout from "../../AppLayout";
 import { PARENT_MENU_ITEMS } from "../../constants/sidebar";
-import RequiredRoles from "../../auth/RequiredRoles";
 
-const PARENT_TAB_TITLES: Record<string, string> = {
-  dashboard: "Dashboard",
-  homework: "Homework",
-  attendance: "Attendance",
-  marks: "Marks",
-  chat: "Chat",
-  fees: "Fees",
-  certificates: "Certificates",
-};
-
-export default function ParentDashboard() {
-  const tab = useSearchParams().get("tab") ?? "dashboard";
-  const title = PARENT_TAB_TITLES[tab] ?? tab.toUpperCase();
-
+export default function ParentDashboardPage() {
   return (
   <RequiredRoles allowedRoles={['STUDENT']}> 
-    <AppLayout
-      title={title}
-      activeTab={tab}
-      menuItems={PARENT_MENU_ITEMS}
-      profile={{ name: "Parent", subtitle: "Student Parent" }}
-      children={<div>{/* TODO: render tab content here based on `tab` */}</div>}
-    />
+  
+    <Suspense fallback={<div>Loading...</div>}>
+      <ParentDashboardClient />
+    </Suspense>
   </RequiredRoles>
   );
 }
+
+  // {/* <AppLayout
+  //     title={title}
+  //     activeTab={tab}
+  //     menuItems={PARENT_MENU_ITEMS}
+  //     profile={{ name: "Parent", subtitle: "Student Parent" }}
+  //     children={<div>{/* TODO: render tab content here based on `tab` */}</div>}
+  //   /> */}

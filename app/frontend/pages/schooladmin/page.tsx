@@ -7,8 +7,11 @@ import RequiredRoles from "../../auth/RequiredRoles";
 import SchoolAdminStudentsTab from "../../components/schooladmin/Students";
 import SchoolAdminAddUserTab from "../../components/schooladmin/AddUser";
 import SchoolAdminClassesTab from "../../components/schooladmin/Classes";
+import SchoolAdminDashboard from "../../components/schooladmin/Dashboard";
+import SchoolTeacherLeavesTab from "../../components/schooladmin/TeacherLeaves";
+import SchoolCercularsTab from "../../components/schooladmin/circulars";
 
-export default function SchoolAdminDashboard() {
+export default function SchoolAdmin() {
   const tab = useSearchParams().get("tab") ?? "dashboard";
   const title = SCHOOLADMIN_TAB_TITLES[tab] ?? tab.toUpperCase();
   const renderComponent = () => {
@@ -26,7 +29,7 @@ export default function SchoolAdminDashboard() {
       case "teachers":
         return;
       case "teacher-leaves":
-        return;
+        return <SchoolTeacherLeavesTab/>;
       case "teacher-audit":
         return;
       case "workshops":
@@ -44,7 +47,7 @@ export default function SchoolAdminDashboard() {
       case "settings":
         return;
       case "circulars":
-        return;
+        return <SchoolCercularsTab/>;
       default:
         return <div>Not found</div>;
     }
