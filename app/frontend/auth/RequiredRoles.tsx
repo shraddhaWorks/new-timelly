@@ -30,7 +30,7 @@ export default function RequireRole({ children, allowedRoles }: RequireRoleProps
 
     // Only redirect to unauthorized when role is set and not in allowed list
     // (avoids redirect when role is temporarily undefined during hydration)
-    if (role != null && role !== "" && !allowedRoles.includes(role)) {
+    if (role != null && !allowedRoles.includes(role)) {
       router.replace("/unauthorized");
     }
   }, [session?.user?.role, session?.user, status, router, allowedRoles]);
