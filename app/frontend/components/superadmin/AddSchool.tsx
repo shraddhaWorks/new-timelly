@@ -225,7 +225,7 @@ export default function AddSchool() {
         style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
       >
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-          <h1 className="text-xl sm:text-2xl font-semibold text-black">
+          <h1 className="text-xl sm:text-2xl font-semibold text-white">
             Add New School
           </h1>
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
