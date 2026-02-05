@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import AppLayout from "../../AppLayout";
-import { SidebarItem } from "../../types/sidebar";
+import { TEACHER_MENU_ITEMS } from "../../constants/sidebar";
 import RequiredRoles from "../../auth/RequiredRoles";
 
 const TEACHER_TAB_TITLES: Record<string, string> = {
@@ -12,11 +12,10 @@ const TEACHER_TAB_TITLES: Record<string, string> = {
   marks: "Marks",
   homework: "Homework",
   classes: "Classes",
+  leaves: "Leave Request",
+  circulars: "Circulars",
+  settings: "Settings",
 };
-
-const TEACHER_MENU_ITEMS: SidebarItem[] = [
-  // TODO: Add teacher menu items
-];
 
 export default function TeacherDashboard() {
   const { data: session } = useSession();
@@ -26,6 +25,7 @@ export default function TeacherDashboard() {
   return (
     <RequiredRoles allowedRoles={["TEACHER"]}>
       <AppLayout
+        activeTab={tab}
         title={title}
         menuItems={TEACHER_MENU_ITEMS}
         profile={{

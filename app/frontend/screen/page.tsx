@@ -1,19 +1,29 @@
 "use client";
 
 import { useEffect } from "react";
-import { getSession, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "../constants/routes";
 
 export default function ScreenPage() {
     const router = useRouter();
-    const { status } = useSession();
+    const { data: session, status } = useSession();
 
+    // ✅ Single effect - only one source of redirect logic
     useEffect(() => {
-        async function redirectByRole() {
-            const session = await getSession();
-            if (!session?.user) return;
+        // Wait for session to load
+        if (status === "loading") {
+            return;
+        }
 
+        // Not logged in -> send to login
+        if (status === "unauthenticated") {
+            router.replace("/");
+            return;
+        }
+
+        // Logged in -> redirect by role
+        if (status === "authenticated" && session?.user) {
             const roleRoutes: Record<string, string> = {
                 SUPERADMIN: ROUTES.SUPERADMIN,
                 SCHOOLADMIN: ROUTES.SCHOOLADMIN,
@@ -23,15 +33,7 @@ export default function ScreenPage() {
 
             router.replace(roleRoutes[session.user.role] || "/unauthorized");
         }
-
-        redirectByRole();
-    }, []);
-
-    useEffect(() => {
-        if (status === "unauthenticated") {
-            router.replace("/");
-        }
-    }, [status, router]);
+    }, [status, session]);
 
     if (status === "loading") {
         return null;

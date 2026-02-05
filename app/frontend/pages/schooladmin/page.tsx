@@ -17,7 +17,7 @@ export default function SchoolAdmin() {
   const renderComponent = () => {
     switch (tab) {
       case "dashboard":
-        return <SchoolAdminDashboard/>;
+        return <div><h2>School Admin Dashboard</h2></div>;
       case "students":
         return <SchoolAdminStudentsTab/>;
       case "add-user":
@@ -25,7 +25,7 @@ export default function SchoolAdmin() {
       case "classes":
         return <SchoolAdminClassesTab/>;
       case "student-details":
-        return;
+        return ;
       case "teachers":
         return;
       case "teacher-leaves":
@@ -56,6 +56,7 @@ export default function SchoolAdmin() {
   return (
   <RequiredRoles allowedRoles={['SCHOOLADMIN']}> 
     <AppLayout
+      activeTab={tab}
       title={title}
       menuItems={SCHOOLADMIN_MENU_ITEMS}
       profile={{ name: "School Admin" }}

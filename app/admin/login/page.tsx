@@ -1,12 +1,37 @@
 "use client";
 
-import { useState } from "react";
-import { signIn, getSession } from "next-auth/react";
+import { useState, useEffect } from "react";
+import { getSession, signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { ROUTES } from "@/app/frontend/constants/routes";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    // Only redirect if authenticated AND session has loaded
+    if (status === "authenticated" && session?.user) {
+      const role = session.user.role;
+      switch (role) {
+        case "SUPERADMIN":
+          router.replace(ROUTES.SUPERADMIN);
+          break;
+        case "SCHOOLADMIN":
+          router.replace(ROUTES.SCHOOLADMIN);
+          break;
+        case "TEACHER":
+          router.replace(ROUTES.TEACHER);
+          break;
+        case "STUDENT":
+          router.replace(ROUTES.PARENT);
+          break;
+        default:
+          router.replace(ROUTES.UNAUTHORIZED);
+      }
+    }
+  }, [status, session]); // ✅ REMOVED 'router' - it creates new instance every render
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,26 +56,8 @@ export default function LoginPage() {
       return;
     }
 
-    const session = await getSession();
-    const role = session?.user?.role;
-
-    switch (role) {
-      case "SUPERADMIN":
-        router.replace("/frontend/pages/superadmin");
-        break;
-      case "SCHOOLADMIN":
-        router.replace("/frontend/pages/schooladmin");
-        break;
-      case "TEACHER":
-        router.replace("/frontend/pages/teacher");
-        break;
-      case "STUDENT":
-        router.replace("/frontend/pages/parent");
-        break;
-      default:
-        router.replace("/unauthorized");
-    }
-
+    // ✅ Don't call getSession() here - let useEffect handle redirect
+    // The useEffect above will trigger when session updates
     setLoading(false);
   };
 
