@@ -12,6 +12,7 @@ import SchoolAdminDashboard from "../../components/schooladmin/Dashboard";
 import SchoolTeacherLeavesTab from "../../components/schooladmin/TeacherLeaves";
 import SchoolCercularsTab from "../../components/schooladmin/circulars";
 import NewsFeed from "../../components/schooladmin/Newsfeed";
+import TeacherAuditTab from "../../components/schooladmin/TeacherAudit";
 import { ExamsPageInner } from "@/app/schoolAdmin/exams/page";
 
 function SchoolAdminContent() {
@@ -63,7 +64,7 @@ function SchoolAdminContent() {
       case "teacher-leaves":
         return <SchoolTeacherLeavesTab/>;
       case "teacher-audit":
-        return;
+        return <TeacherAuditTab />;
       case "workshops":
         return;
       case "newsfeed":
