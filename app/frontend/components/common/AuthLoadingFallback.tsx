@@ -4,10 +4,13 @@ import { useEffect } from "react";
 
 export default function AuthLoadingFallback() {
   useEffect(() => {
-    // Ensure body doesn't have overflow hidden that might hide global background
-    document.body.style.overflow = "auto";
+    // Preserve previous overflow value and restore on unmount to avoid
+    // unintentionally overriding page-level styles (login page, etc.)
+    const prev = document.body.style.overflow;
+    // Only adjust if currently hidden (common when modals are open)
+    if (prev === "hidden") document.body.style.overflow = "auto";
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = prev || "";
     };
   }, []);
 

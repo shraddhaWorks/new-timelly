@@ -19,6 +19,8 @@ interface SearchInputProps {
   label?: string;
   iconClassName?: string;
   error?: string;
+
+  variant?: "default" | "glass"; // 👈 NEW (non-breaking)
 }
 
 export default function SearchInput({
@@ -33,8 +35,8 @@ export default function SearchInput({
   type = "text",
   iconClassName = "text-gray-400",
   error,
+  variant = "default", // 👈 default safe
 }: SearchInputProps) {
-
   const [mounted, setMounted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -48,9 +50,10 @@ export default function SearchInput({
   const inputType =
     type === "password" ? (showPassword ? "text" : "password") : type;
 
+  const isGlass = variant === "glass";
+
   return (
     <div className={clsx("w-full", className)}>
-
       {label && (
         <label className="block text-xs sm:text-sm mb-1 text-white/70">
           {label}
@@ -65,7 +68,7 @@ export default function SearchInput({
             className={clsx(
               "absolute left-4 top-1/2 -translate-y-1/2",
               "z-10 pointer-events-none",
-              iconClassName
+              isGlass ? "text-white/60" : iconClassName
             )}
           />
         )}
@@ -80,19 +83,34 @@ export default function SearchInput({
           className={clsx(
             "w-full rounded-xl",
             "pl-11 pr-4 py-2.5 sm:py-3",
-            "bg-black/20 border border-white/10",
             "text-gray-200 text-sm sm:text-base",
             "placeholder-white/40",
             "focus:outline-none focus:ring-0",
-            "hover:border-[var(--hover-color)]",
-            "focus:border-[var(--primary-color)]",
-            disabled && "opacity-60 cursor-not-allowed"
+            disabled && "opacity-60 cursor-not-allowed",
+
+            // 👇 CONDITIONAL STYLING
+            isGlass
+              ? [
+                  "bg-black/30",
+                  "border border-white/20",
+                  "focus:border-lime-400/60",
+                ]
+              : [
+                  "bg-black/20",
+                  "border border-white/10",
+                  "hover:border-[var(--hover-color)]",
+                  "focus:border-[var(--primary-color)]",
+                ]
           )}
-          style={{
-            backgroundColor: "rgba(255, 255, 255, 0.05)",
-            ["--primary-color" as any]: PRIMARY_COLOR,
-            ["--hover-color" as any]: HOVER_COLOR
-          }}
+          style={
+            !isGlass
+              ? {
+                  backgroundColor: "rgba(255, 255, 255, 0.05)",
+                  ["--primary-color" as any]: PRIMARY_COLOR,
+                  ["--hover-color" as any]: HOVER_COLOR,
+                }
+              : undefined
+          }
         />
 
         {type === "password" && (
@@ -105,18 +123,13 @@ export default function SearchInput({
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         )}
-
       </div>
 
       {error && (
-        <p
-          className="text-sm mt-1 !text-red-500"
-          style={{ color: "#ef4444" }}
-        >
+        <p className="text-sm mt-1 text-red-500">
           {error}
         </p>
       )}
-
     </div>
   );
 }
