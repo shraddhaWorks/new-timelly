@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Search, Settings } from "lucide-react";
+import { Bell, Search, SearchAlert, SearchIcon, Settings } from "lucide-react";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import SectionHeader from "./SectionHeader";
@@ -39,14 +39,14 @@ export default function AppHeader({ title }: AppHeaderProps) {
 
             {/* SEARCH */}
             <div className="hidden md:block">
-              <SearchInput showSearchIcon />
+              <SearchInput showSearchIcon icon={Search}/>
             </div>
 
             <button
               className="md:hidden p-2 rounded-lg hover:bg-white/10"
               onClick={() => setShowSearch(true)}
             >
-              <Search className="text-white" />
+              <Search className="text-white"/>
             </button>
 
             {/* NOTIFICATIONS */}
@@ -93,7 +93,7 @@ export default function AppHeader({ title }: AppHeaderProps) {
       {showSearch && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-start p-4 md:hidden">
           <div className="w-full bg-neutral-900 rounded-xl p-4">
-            <SearchInput/>
+            <SearchInput icon={Search} showSearchIcon/>
             <button
               onClick={() => setShowSearch(false)}
               className="mt-3 text-sm text-white/60"

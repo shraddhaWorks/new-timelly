@@ -43,7 +43,7 @@ export default function AppSidebar({ menuItems, profile }: Props) {
       "
     >
       {/* Logo */}
-      <div className="h-20 flex items-center px-4 border-b border-white/10">
+      <div className="h-21 flex items-center px-4 border-b border-white/10">
         <BrandLogo isbrandLogoWhite />
       </div>
 
