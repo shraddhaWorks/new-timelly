@@ -1,4 +1,3 @@
-
 "use client";
 
 import { ReactNode } from "react";
@@ -6,11 +5,12 @@ import { motion } from "framer-motion";
 
 interface StatCardProps {
   title?: string;
-  value?: string | number;
+  value?: string | number | ReactNode;
   icon?: ReactNode;
   footer?: ReactNode;
   className?: string;
   children?: ReactNode;
+  iconVariant?: "boxed" | "plain"; // ✅ NEW
 }
 
 export default function StatCard({
@@ -20,6 +20,7 @@ export default function StatCard({
   footer,
   className = "",
   children,
+  iconVariant = "boxed", // ✅ default
 }: StatCardProps) {
   return (
     <motion.div
@@ -36,7 +37,6 @@ export default function StatCard({
         ${className}
       `}
     >
-      {/* Header */}
       {(title || value || icon) && (
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -51,17 +51,21 @@ export default function StatCard({
           </div>
 
           {icon && (
-            <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-white">
-              {icon}
-            </div>
+            iconVariant === "boxed" ? (
+              <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-white">
+                {icon}
+              </div>
+            ) : (
+              <div className="text-white/30">
+                {icon}
+              </div>
+            )
           )}
         </div>
       )}
 
-      {/* Custom Content */}
       {children}
 
-      {/* Footer */}
       {footer && (
         <div className="mt-4 text-sm text-white/60">
           {footer}

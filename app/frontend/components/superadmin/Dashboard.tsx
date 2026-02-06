@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import PageHeader from "../common/PageHeader";
-import StatCard from "@/components/statCard";
+
 import { Users, School, GraduationCap } from "lucide-react";
+import StatCard from "../common/statCard";
 import { formatNumber as fmtNum } from "../../utils/format";
 
 export interface SuperadminDashboardData {
@@ -74,11 +75,15 @@ export default function Dashboard() {
   const feeTransactions = data?.feeTransactions ?? [];
 
   return (
-    <main className="flex-1 overflow-y-auto px-3 sm:px-4 md:px-6 flex flex-col items-center">
-      <div className="w-full max-w-6xl py-4 sm:py-6 md:p-6 min-h-screen space-y-4 sm:space-y-6 text-center">
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 justify-items-center">
-          <div className="flex flex-col gap-4 sm:gap-5 w-full max-w-md lg:max-w-none">
+    <main className="flex-1 overflow-y-auto px-3 sm:px-4">
+      <div className="py-4 sm:p-6 bg-transparent min-h-screen space-y-6">
+        <PageHeader
+          title="Superadmin Dashboard"
+          subtitle="Manage everything from here"
+        />
+
+        <div className="flex flex-col lg:flex-row gap-[10px]">
+          <div className="flex flex-col gap-[10px] w-full lg:w-1/2">
             <StatCard
               title="Total Schools"
               value={fmtNum(stats.totalSchools)}

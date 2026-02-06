@@ -408,7 +408,7 @@ export default function CircularsTab() {
                   onChange={(e) =>
                     setForm({ ...form, classId: e.target.value })
                   }
-                  className="w-full px-4 py-3 rounded-xl text-white bg-white/5 border border-white/10 backdrop-blur-sm min-h-[44px] touch-manipulation text-base"
+                  className="w-full px-4 py-3 rounded-xl text-white bg-white/5 border border-white/10 backdrop-blur-sm  touch-manipulation text-base"
                 >
                   <option value="">All classes</option>
                   {classes.map((c) => (
