@@ -19,7 +19,10 @@ export async function GET(
       include: {
         class: { select: { id: true, name: true, section: true } },
         schedules: { orderBy: { examDate: "asc" } },
-        syllabus: { orderBy: { subject: "asc" } },
+        syllabus: {
+          orderBy: { subject: "asc" },
+          include: { units: { orderBy: { order: "asc" } } },
+        },
       },
     });
     return NextResponse.json({ term }, { status: 200 });
