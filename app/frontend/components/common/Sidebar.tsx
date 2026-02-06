@@ -45,7 +45,7 @@ export default function AppSidebar({ menuItems, profile }: Props) {
       "
     >
       {/* Logo */}
-      <div className="h-20 flex items-center px-4 border-b border-white/10">
+      <div className="h-21 flex items-center px-4 border-b border-white/10">
         <BrandLogo isbrandLogoWhite />
       </div>
 
@@ -58,11 +58,11 @@ export default function AppSidebar({ menuItems, profile }: Props) {
               alt=""
               className="w-10 h-10 rounded-xl border border-white/20 object-cover"
             />
-            <div>
-              <p className="text-sm font-semibold text-white truncate">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-white break-words line-clamp-2">
                 {displayName}
               </p>
-              <p className="text-xs text-white/60 truncate">{subtitle}</p>
+              <p className="text-xs text-white/60 break-words line-clamp-2">{subtitle}</p>
             </div>
           </div>
         </div>
@@ -81,7 +81,7 @@ export default function AppSidebar({ menuItems, profile }: Props) {
               onClick={() => handleClick(item)}
               className={`
                 w-full flex items-center gap-4 px-5 py-3 rounded-xl
-                transition
+                transition min-w-0
                 ${
                   isActive
                     ? "bg-lime-400/10 text-lime-400 border border-lime-400/20"
@@ -90,9 +90,11 @@ export default function AppSidebar({ menuItems, profile }: Props) {
               `}
             >
               <Icon
+                size={20}
+                className="flex-shrink-0"
                 style={{ color: isActive ? PRIMARY_COLOR : "#9ca3af" }}
               />
-              {item.label}
+              <span className="truncate text-sm">{item.label}</span>
             </motion.button>
           );
         })}

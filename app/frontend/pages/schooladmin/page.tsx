@@ -6,14 +6,13 @@ import AppLayout from "../../AppLayout";
 import { SCHOOLADMIN_MENU_ITEMS, SCHOOLADMIN_TAB_TITLES } from "../../constants/sidebar";
 import RequiredRoles from "../../auth/RequiredRoles";
 import SchoolAdminStudentsTab from "../../components/schooladmin/Students";
-import SchoolAdminAddUserTab from "../../components/schooladmin/AddUser";
 import SchoolAdminClassesTab from "../../components/schooladmin/Classes";
-import SchoolAdminDashboard from "../../components/schooladmin/Dashboard";
 import SchoolTeacherLeavesTab from "../../components/schooladmin/TeacherLeaves";
 // import SchoolCercularsTab from "../../components/schooladmin/circulars";
 import NewsFeed from "../../components/schooladmin/Newsfeed";
 import TeacherAuditTab from "../../components/schooladmin/TeacherAudit";
 import { ExamsPageInner } from "@/app/schoolAdmin/exams/page";
+import AddUser from "../../components/schooladmin/AddUser";
 import SchoolAdminTeacherTab from "../../components/schooladmin/teacherTab";
 import SchoolAdminCircularsTab from "../../components/schooladmin/circularTab";
 
@@ -56,7 +55,7 @@ function SchoolAdminContent() {
       case "students":
         return <SchoolAdminStudentsTab/>;
       case "add-user":
-        return <SchoolAdminAddUserTab/>;
+        return <AddUser/>
       case "classes":
         return <SchoolAdminClassesTab/>;
       case "student-details":
