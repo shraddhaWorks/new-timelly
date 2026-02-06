@@ -19,6 +19,7 @@ import {
   Landmark,
   Globe
 } from "lucide-react";
+import PageHeader from "../common/PageHeader";
 
 
 type FormErrors = {
@@ -61,52 +62,35 @@ export default function AddSchool() {
   const [error, setError] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
   const hasFieldErrors = Object.values(errors).some(Boolean);
-
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoBase64, setLogoBase64] = useState<string | null>(null);
-
-  const handleFileSelect = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setLogoFile(file);
-
-      const base64 = await fileToBase64(file);
-      setLogoBase64(base64);
-    }
-  };
 
   /* ---------------- Input Handler ---------------- */
 
   const handleChange =
     (field: keyof SchoolFormState) =>
-    (value: string) => {
+      (value: string) => {
 
-      /* Phone → only digits + 10 limit */
-      if (field === "phone") {
-        const digitsOnly = value.replace(/\D/g, "").slice(0, 10);
-        setForm((prev) => ({ ...prev, phone: digitsOnly }));
-        setErrors((prev) => ({ ...prev, phone: "" }));
-        return;
-      }
+        /* Phone → only digits + 10 limit */
+        if (field === "phone") {
+          const digitsOnly = value.replace(/\D/g, "").slice(0, 10);
+          setForm((prev) => ({ ...prev, phone: digitsOnly }));
+          setErrors((prev) => ({ ...prev, phone: "" }));
+          return;
+        }
 
-      /* Pincode → digits only */
-      if (field === "pincode") {
-        const digitsOnly = value.replace(/\D/g, "");
-        setForm((prev) => ({ ...prev, pincode: digitsOnly }));
-        setErrors((prev) => ({ ...prev, pincode: "" }));
-        return;
-      }
+        /* Pincode → digits only */
+        if (field === "pincode") {
+          const digitsOnly = value.replace(/\D/g, "");
+          setForm((prev) => ({ ...prev, pincode: digitsOnly }));
+          setErrors((prev) => ({ ...prev, pincode: "" }));
+          return;
+        }
 
-      setForm((prev) => ({ ...prev, [field]: value }));
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    };
+        setForm((prev) => ({ ...prev, [field]: value }));
+        setErrors((prev) => ({ ...prev, [field]: "" }));
+      };
 
   /* ---------------- Validation ---------------- */
 
@@ -200,13 +184,21 @@ export default function AddSchool() {
 
   /* ---------------- UI ---------------- */
 
-  return (
-    <>
-      <form
-        onSubmit={handleSignup}
-        className="w-full max-w-6xl mx-auto rounded-2xl p-4 sm:p-6 lg:p-8 shadow-sm border border-white/10 overflow-x-hidden"
-        style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
-      >
+return (
+  <>
+  <main className="flex-1 overflow-y-auto px-3 sm:px-4">
+    <div className="py-4 sm:p-6 bg-transparent min-h-screen">
+      <div className="w-full space-y-6">
+        <PageHeader
+          title="Add New School"
+          subtitle="Create a new school and onboard its admin here"
+          className="w-full mb-0"
+        />
+        <form
+          onSubmit={handleSignup}
+          className="w-full rounded-2xl p-4 sm:p-6 lg:p-8 shadow-sm border border-gray-500/20"
+          style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
+        >
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
           <h1 className="text-xl sm:text-2xl font-semibold text-white">
             Add New School
@@ -224,7 +216,7 @@ export default function AddSchool() {
               type="submit"
               disabled={loading || error !== "" || hasFieldErrors}
               style={{ backgroundColor: PRIMARY_COLOR }}
-              className="w-full sm:w-auto text-white px-6 py-2 rounded-lg font-medium hover:opacity-90 disabled:opacity-60 cursor-pointer"
+              className="w-full sm:w-auto text-black px-6 py-2 rounded-lg font-medium hover:opacity-90 disabled:opacity-60 cursor-pointer"
             >
               {loading ? "Saving..." : "Save"}
             </button>
@@ -332,16 +324,19 @@ export default function AddSchool() {
             />
           </div>
         </FormSection>
-      </form>
+          </form>
 
-      <SuccessPopups
-        open={showSuccess}
-        title="School Created and Onboarded Successfully!"
-        onClose={() => {
-          setShowSuccess(false);
-          handleReset();
-        }}
-      />
+          <SuccessPopups
+            open={showSuccess}
+            title="School Created and Onboarded Successfully!"
+            onClose={() => {
+              setShowSuccess(false);
+              handleReset();
+            }}
+          />
+        </div>
+      </div>
+      </main>
     </>
   );
 }
