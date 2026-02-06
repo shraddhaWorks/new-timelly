@@ -36,12 +36,12 @@ export default function PageHeader({
       `}
     >
       <div className={center ? "flex flex-col items-center text-center" : ""}>
-        <h1 className="text-3xl font-bold text-white">
+        <h1 className="text-[24px] font-bold text-white">
           {title}
         </h1>
 
         {subtitle && (
-          <p className="text-white/60 mt-1">
+          <p className="text-[14px] text-white/60 mt-1">
             {subtitle}
           </p>
         )}
