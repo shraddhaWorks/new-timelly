@@ -82,7 +82,9 @@ export default function SearchInput({
           aria-invalid={!!error}
           className={clsx(
             "w-full rounded-xl",
-            "pl-11 pr-4 py-2.5 sm:py-3",
+            shouldShowIcon ? "pl-11" : "pl-4",
+            "pr-4 py-2.5 sm:py-3",
+            "bg-black/20 border border-white/10",
             "text-gray-200 text-sm sm:text-base",
             "placeholder-white/40",
             "focus:outline-none focus:ring-0",
