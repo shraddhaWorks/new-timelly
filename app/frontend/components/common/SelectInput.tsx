@@ -44,7 +44,7 @@ export default function SelectInput({
           aria-invalid={!!error}
           className={clsx(
             "w-full rounded-xl appearance-none cursor-pointer",
-            "pl-4 pr-4 py-2.5 sm:py-3",
+            "pl-4 pr-10 py-2.5 sm:py-3",
             "bg-black/20 border border-white/10",
             "text-gray-200 text-sm sm:text-base",
             "focus:outline-none focus:ring-0",
@@ -69,6 +69,24 @@ export default function SelectInput({
             </option>
           ))}
         </select>
+        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white/70">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 20 20"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <path
+              d="M5 7.5L10 12.5L15 7.5"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
       </div>
 
       {error && (
