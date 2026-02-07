@@ -67,12 +67,16 @@ export async function PUT(req: NextRequest, { params }: { params: Params }) {
     const { name, email, role, designation, password, allowedFeatures } =
       await req.json();
 
+    console.log(`[PUT] /api/user/${id} called by ${session.user?.id} (role=${session.user?.role})`);
+    console.log("Payload:", { name, email, role, designation, allowedFeatures });
+
     // Check if user exists and belongs to same school
     const user = await prisma.user.findUnique({
       where: { id },
     });
 
     if (!user) {
+      console.warn(`User not found for id=${id}`);
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 

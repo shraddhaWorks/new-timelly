@@ -3,9 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { AlertCircle, CheckCircle, Loader, User, Mail, Briefcase, Lock } from "lucide-react";
+import { AlertCircle, CheckCircle, Loader, User, Mail, Briefcase, Lock, Shield, User2 } from "lucide-react";
+import InputField from "./InputField";
 import AllowedFeatureToggle from "./AllowedFeatureToggle";
 import RoleSelector from "./RoleSelector";
+import { Permission } from "@/app/frontend/enums/permissions";
+import Spinner from "../../common/Spinner";
 
 interface UserFormData {
   name: string;
@@ -23,18 +26,18 @@ interface UserFormProps {
   initialData?: UserFormData & { id?: string };
 }
 
-const AVAILABLE_FEATURES = [
-  { key: "dashboard", label: "Dashboard" },
-  { key: "classes", label: "Classes" },
-  { key: "students", label: "Students" },
-  { key: "add-user", label: "Add User" },
-  { key: "student-details", label: "Student Details" },
-  { key: "teachers", label: "Teachers" },
-  { key: "teacher-leaves", label: "Teacher Leaves" },
-  { key: "teacher-audit", label: "Teacher Audit" },
-  { key: "marks", label: "Marks" },
-  { key: "attendance", label: "Attendance" },
-  { key: "communication", label: "Communication" },
+const AVAILABLE_FEATURES_FOR_TEACHERS = [
+  { key: Permission.DASHBOARD, label: "Dashboard" },
+  { key: Permission.CLASSES, label: "Classes" },
+  { key: Permission.HOMEWORK, label: "Homework" },
+  { key: Permission.MARKS, label: "Marks" },
+  { key: Permission.ATTENDANCE, label: "Attendance" },
+  { key: Permission.EXAMS, label: "Exams & Syllabus" },
+  { key: Permission.WORKSHOPS, label: "Workshops & Events" },
+  { key: Permission.NEWSFEED, label: "Newsfeed" },
+  { key: Permission.CHAT, label: "Parent Chat" },
+  { key: Permission.TEACHER_LEAVES, label: "Leave" },
+  { key: Permission.SETTINGS, label: "Settings" },
 ];
 
 export default function UserForm({ mode = "create", initialData }: UserFormProps) {
@@ -197,7 +200,8 @@ export default function UserForm({ mode = "create", initialData }: UserFormProps
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-96">
-        <Loader className="animate-spin text-lime-400" size={40} />
+        {/* <Loader className="animate-spin text-lime-400" size={40} /> */}
+        <Spinner />
       </div>
     );
   }
@@ -234,146 +238,77 @@ export default function UserForm({ mode = "create", initialData }: UserFormProps
 
           {/* Form Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Full Name */}
-            <div>
-              <label className="block text-xs font-medium text-white/70 mb-1.5">
-                Full Name *
-              </label>
-              <div className="relative">
-                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-white/40">
-                  <User className="w-4 h-4" />
-                </span>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => handleChange("name", e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-white/10 border border-white/15
-                    text-white placeholder:text-white/40 outline-none text-sm
-                    focus:bg-white/15 focus:border-lime-400/50 transition"
-                  placeholder="Enter full name"
-                />
-              </div>
-            </div>
+            <InputField
+              label="Full Name"
+              value={formData.name}
+              onChange={(v) => handleChange("name", v)}
+              placeholder="Enter full name"
+              icon={<User className="w-4 h-4" />}
+              required
+            />
 
-            {/* Username */}
-            <div>
-              <label className="block text-xs font-medium text-white/70 mb-1.5">
-                Username *
-              </label>
-              <div className="relative">
-                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-white/40">
-                  <User className="w-4 h-4" />
-                </span>
-                <input
-                  type="text"
-                  value={formData.username}
-                  onChange={(e) => handleChange("username", e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-white/10 border border-white/15
-                    text-white placeholder:text-white/40 outline-none text-sm
-                    focus:bg-white/15 focus:border-lime-400/50 transition"
-                  placeholder="Enter username"
-                />
-              </div>
-            </div>
+            <InputField
+              label="Designation"
+              value={formData.designation || ""}
+              onChange={(v) => handleChange("designation", v)}
+              placeholder="e.g. Senior Teacher"
+              icon={<Briefcase className="w-4 h-4" />}
+            />
 
-            {/* Designation */}
-            <div>
-              <label className="block text-xs font-medium text-white/70 mb-1.5">
-                Designation
-              </label>
-              <div className="relative">
-                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-white/40">
-                  <Briefcase className="w-4 h-4" />
-                </span>
-                <input
-                  type="text"
-                  value={formData.designation || ""}
-                  onChange={(e) => handleChange("designation", e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-white/10 border border-white/15
-                    text-white placeholder:text-white/40 outline-none text-sm
-                    focus:bg-white/15 focus:border-lime-400/50 transition"
-                  placeholder="e.g. Senior Teacher"
-                />
-              </div>
-            </div>
+            <InputField
+              label="Email Address"
+              value={formData.email}
+              onChange={(v) => handleChange("email", v)}
+              placeholder="user@timelly.school"
+              icon={<Mail className="w-4 h-4" />}
+              required
+            />
+               <InputField
+              label="Username"
+              value={formData.username}
+              onChange={(v) => handleChange("username", v)}
+              placeholder="Enter username"
+              icon={<User className="w-4 h-4" />}
+              required
+            />
 
-            {/* Email */}
-            <div>
-              <label className="block text-xs font-medium text-white/70 mb-1.5">
-                Email Address *
-              </label>
-              <div className="relative">
-                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-white/40">
-                  <Mail className="w-4 h-4" />
-                </span>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleChange("email", e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-white/10 border border-white/15
-                    text-white placeholder:text-white/40 outline-none text-sm
-                    focus:bg-white/15 focus:border-lime-400/50 transition"
-                  placeholder="user@timelly.school"
-                />
-              </div>
-            </div>
+            <InputField
+              label={`Password ${mode === "create" ? "" : "(Leave blank to keep unchanged)"}`}
+              value={formData.password || ""}
+              onChange={(v) => handleChange("password", v)}
+              placeholder="Enter password"
+              icon={<Lock className="w-4 h-4" />}
+              type="password"
+              required={mode === "create"}
+            />
 
-            {/* Password */}
-            <div>
-              <label className="block text-xs font-medium text-white/70 mb-1.5">
-                Password {mode === "create" ? "*" : "(Leave blank to keep unchanged)"}
-              </label>
-              <div className="relative">
-                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-white/40">
-                  <Lock className="w-4 h-4" />
-                </span>
-                <input
-                  type="password"
-                  value={formData.password || ""}
-                  onChange={(e) => handleChange("password", e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-white/10 border border-white/15
-                    text-white placeholder:text-white/40 outline-none text-sm
-                    focus:bg-white/15 focus:border-lime-400/50 transition"
-                  placeholder="Enter password"
-                />
-              </div>
-            </div>
-
-            {/* Confirm Password */}
             {formData.password && (
-              <div>
-                <label className="block text-xs font-medium text-white/70 mb-1.5">
-                  Confirm Password *
-                </label>
-                <div className="relative">
-                  <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-white/40">
-                    <Lock className="w-4 h-4" />
-                  </span>
-                  <input
-                    type="password"
-                    value={formData.confirmPassword || ""}
-                    onChange={(e) => handleChange("confirmPassword", e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-white/10 border border-white/15
-                      text-white placeholder:text-white/40 outline-none text-sm
-                      focus:bg-white/15 focus:border-lime-400/50 transition"
-                    placeholder="Confirm password"
-                  />
-                </div>
-              </div>
+              <InputField
+                label="Confirm Password"
+                value={formData.confirmPassword || ""}
+                onChange={(v) => handleChange("confirmPassword", v)}
+                placeholder="Confirm password"
+                icon={<Lock className="w-4 h-4" />}
+                type="password"
+                required
+              />
             )}
           </div>
         </div>
 
         {/* Right: Access Control Toggles (1/3 width) */}
-        <div className="col-span-1 bg-black/20 bg-gradient-to-b from-white/10/5 to-white/0 border border-white/10 rounded-2xl p-5 flex flex-col gap-4">
+        <div className="col-span-1 bg-black/20 bg-gradient-to-b from-white/10/5
+         to-white/0 rounded-2xl p-5 flex flex-col gap-4 
+          bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 h-full">
           <div className="flex items-center justify-between gap-2">
             <div>
-              <h3 className="text-sm font-semibold text-white">Access Control</h3>
+              <h3 className="text-lg font-bold text-gray-100 flex items-center gap-2"><Shield className="lucide lucide-shield w-5 h-5 text-lime-400" /> Access Control</h3>
               <p className="text-[11px] text-white/50">
                 Choose which modules this user can access.
               </p>
             </div>
-            <span className="px-3 py-1 rounded-full bg-lime-400/15 text-[11px] font-medium text-lime-300">
+            <span className="text-[11px] font-medium text-lime-300 px-3 py-1 bg-lime-400/10 text-lime-400
+             text-xs font-bold rounded-full border border-lime-400/20">
               {formData.allowedFeatures.length} Active
             </span>
           </div>
@@ -381,22 +316,22 @@ export default function UserForm({ mode = "create", initialData }: UserFormProps
           {/* Select All */}
           <AllowedFeatureToggle
             label="Select All"
-            checked={formData.allowedFeatures.length === AVAILABLE_FEATURES.length}
+            checked={formData.allowedFeatures.length === AVAILABLE_FEATURES_FOR_TEACHERS.length}
             onChange={() => {
-              const allSelected = formData.allowedFeatures.length === AVAILABLE_FEATURES.length;
+              const allSelected = formData.allowedFeatures.length === AVAILABLE_FEATURES_FOR_TEACHERS.length;
               setFormData((prev) => ({
                 ...prev,
                 allowedFeatures: allSelected
                   ? []
-                  : AVAILABLE_FEATURES.map((f) => f.key),
+                  : AVAILABLE_FEATURES_FOR_TEACHERS.map((f) => f.key),
               }));
             }}
           />
 
-          <div className="h-px bg-white/10" />
+          <div className="lg:col-span-1" />
 
-          <div className="space-y-3 overflow-y-auto pr-1 max-h-[320px] no-scrollbar">
-            {AVAILABLE_FEATURES.map((feature) => (
+          <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 no-scrollbar">
+            {AVAILABLE_FEATURES_FOR_TEACHERS.map((feature) => (
               <AllowedFeatureToggle
                 key={feature.key}
                 label={feature.label}
@@ -435,22 +370,22 @@ export default function UserForm({ mode = "create", initialData }: UserFormProps
       )}
 
       {/* Submit Buttons */}
-      <div className="flex gap-3 pt-4">
+      <div className="flex justify-end pt-4 gap-3">
         <motion.button
           type="submit"
           disabled={submitting}
           whileHover={{ x: 4 }}
-          className="flex-1 px-6 py-3 rounded-xl bg-lime-400 text-black font-semibold
-            hover:bg-lime-300 disabled:opacity-50 disabled:cursor-not-allowed
-            transition flex items-center justify-center gap-2"
+          className="px-6 py-3 bg-lime-400 hover:bg-lime-500 text-black font-bold rounded-xl 
+          shadow-lg shadow-lime-400/20 transition-all flex items-center gap-2"
         >
           {submitting ? (
             <>
-              <Loader size={18} className="animate-spin" />
+              <Spinner />
               Saving...
             </>
           ) : (
-            `${userId ? "Update" : "Create"} User`
+            <><User className="lucide lucide-user-plus w-5 h-5" /> {userId ? "Update" : "Create"} User
+            </>
           )}
         </motion.button>
         <motion.button
@@ -463,9 +398,8 @@ export default function UserForm({ mode = "create", initialData }: UserFormProps
           }}
           disabled={submitting}
           whileHover={{ x: -4 }}
-          className="flex-1 px-6 py-3 rounded-xl bg-white/10 border border-white/20
-            text-white font-semibold hover:bg-white/15 disabled:opacity-50
-            transition"
+          className="px-6 py-3 border border-white/10 text-gray-400
+           font-medium rounded-xl hover:bg-white/5 transition-all"
         >
           Cancel
         </motion.button>

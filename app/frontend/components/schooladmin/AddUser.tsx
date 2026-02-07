@@ -186,7 +186,7 @@ export default function AddUser() {
             tabs={[
               { label: "All Users", value: "all" },
               { label: "Add User", value: "add" },
-              { label: "Bulk Import", value: "bulk" },
+              // { label: "Bulk Import", value: "bulk" },
             ]}
             queryKey="view"
           />

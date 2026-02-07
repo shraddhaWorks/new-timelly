@@ -26,6 +26,10 @@ export default function AppSidebar({ menuItems, profile }: Props) {
   const subtitle = profile?.subtitle ?? session?.user?.role ?? "";
   const avatarUrl = (profile?.image != null && profile.image !== "") ? profile.image : (session?.user?.image ?? AVATAR_URL);
 
+  // Only filter menu items for TEACHER role. Other roles see full menu.
+  const allowedFeatures = (session?.user as any)?.allowedFeatures ?? [];
+  const isTeacher = session?.user?.role === "TEACHER";
+
   const handleClick = async (item: SidebarItem) => {
     if (item.action === "logout") {
       await signOut({ callbackUrl: "/admin/login" });
@@ -70,7 +74,24 @@ export default function AppSidebar({ menuItems, profile }: Props) {
 
       {/* Menu */}
       <div className="flex-1 px-4 py-4 space-y-3 overflow-y-auto no-scrollbar">
-        {menuItems.map(item => {
+        {menuItems
+          .filter((item) => {
+            // Only apply filtering for teachers
+            if (!isTeacher) return true;
+
+            // always show action items (logout) or items without tab/permission
+            if (!item.tab && !item.permission) return true;
+
+            // legacy: empty allowedFeatures => unrestricted
+            if (!allowedFeatures || allowedFeatures.length === 0) return true;
+
+            if (item.tab && allowedFeatures.includes(item.tab)) return true;
+
+            if (item.permission && allowedFeatures.includes(String(item.permission))) return true;
+
+            return false;
+          })
+          .map(item => {
           const isActive = item.tab === activeTab;
           const Icon = item.icon;
 

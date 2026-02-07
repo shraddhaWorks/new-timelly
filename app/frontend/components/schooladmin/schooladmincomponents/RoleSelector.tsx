@@ -10,8 +10,8 @@ interface RoleSelectorProps {
 
 const ROLES = [
   { value: "TEACHER", label: "Teacher" },
-//   { value: "SCHOOLADMIN", label: "Admin" },
-//   { value: "STUDENT", label: "Student" },
+  // { value: "SCHOOLADMIN", label: "Admin" },
+  // { value: "STUDENT", label: "Student" },
 ] as const;
 
 export default function RoleSelector({
@@ -26,7 +26,7 @@ export default function RoleSelector({
 
       <div
         className="
-          flex flex-wrap gap-3
+          grid grid-cols-3 gap-4
         "
       >
         {ROLES.map((role) => {
@@ -36,23 +36,17 @@ export default function RoleSelector({
             <label
               key={role.value}
               className={clsx(
-                "relative cursor-pointer select-none",
-                "flex items-center gap-2",
-                "px-5 py-2.5 rounded-2xl",
-                "text-sm font-medium",
-                "transition-all duration-200",
-                "border",
+                "py-3 px-4 rounded-xl border flex items-center justify-center gap-2 transition-all bg-black/20 border-white/10 text-gray-400 hover:border-white/30",
                 isActive
-                  ? "border-lime-400 text-lime-400 bg-lime-400/10"
+                  ? "border-lime-400 text-lime-400  shadow-lg shadow-lime-400/10"
                   : "border-white/10 text-white/70 bg-white/5 hover:bg-white/10"
               )}
             >
-              {/* Hidden Radio */}
               <input
                 type="radio"
                 name="role"
                 value={role.value}
-                checked={true} // {isActive} // Always checked to allow label click, but visually indicated by styles
+                checked={true} //{isActive} Always checked to allow deselection by clicking another option
                 onChange={() => onChange(role.value)}
                 className="hidden"
               />

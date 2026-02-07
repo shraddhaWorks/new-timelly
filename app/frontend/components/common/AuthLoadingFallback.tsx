@@ -3,19 +3,14 @@
 import { useEffect } from "react";
 
 export default function AuthLoadingFallback() {
+  // Do not touch `document.body.style` here — avoid overriding page-level
+  // background or overflow settings (login page should control its own styles).
   useEffect(() => {
-    // Preserve previous overflow value and restore on unmount to avoid
-    // unintentionally overriding page-level styles (login page, etc.)
-    const prev = document.body.style.overflow;
-    // Only adjust if currently hidden (common when modals are open)
-    if (prev === "hidden") document.body.style.overflow = "auto";
-    return () => {
-      document.body.style.overflow = prev || "";
-    };
+    return () => {};
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none bg-transparent">
       {/* Content wrapper - allow interactions */}
       <div className="pointer-events-auto text-center">
         <div className="mb-6">

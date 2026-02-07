@@ -6,8 +6,9 @@ import { useSearchParams } from "next/navigation";
 import AppLayout from "../../AppLayout";
 import { TEACHER_MENU_ITEMS } from "../../constants/sidebar";
 import RequiredRoles from "../../auth/RequiredRoles";
+import RequireFeature from "../../auth/RequireFeature";
 
-const TEACHER_TAB_TITLES: Record<string, string> = {
+const TEACHER_TAB_TITLES = {
   dashboard: "Dashboard",
   attendance: "Attendance",
   marks: "Marks",
@@ -21,10 +22,11 @@ const TEACHER_TAB_TITLES: Record<string, string> = {
 function TeacherDashboardContent() {
   const { data: session } = useSession();
   const tab = useSearchParams().get("tab") ?? "dashboard";
-  const title = TEACHER_TAB_TITLES[tab] ?? tab.toUpperCase();
-  const [profile, setProfile] = useState<{ name: string; subtitle?: string; image?: string | null }>({
+  const title = (TEACHER_TAB_TITLES as any)[tab] ?? tab.toUpperCase();
+  const [profile, setProfile] = useState({
     name: session?.user?.name ?? "Teacher",
     subtitle: "Teacher",
+    image: null as string | null,
   });
 
   useEffect(() => {
@@ -51,19 +53,21 @@ function TeacherDashboardContent() {
     };
   }, [session?.user?.name]);
 
-  return (
-    <RequiredRoles allowedRoles={["TEACHER"]}>
-      <AppLayout
-        activeTab={tab}
-        title={title}
-        menuItems={TEACHER_MENU_ITEMS}
-        profile={profile}
-        children={
-          <div>{/* TODO: render tab content here based on `tab` */}</div>
-        }
-      />
-    </RequiredRoles>
-  );
+    return (
+      <RequiredRoles allowedRoles={["TEACHER"]}>
+        <RequireFeature requiredFeature={tab}>
+          <AppLayout
+            activeTab={tab}
+            title={title}
+            menuItems={TEACHER_MENU_ITEMS}
+            profile={profile}
+            children={
+              <div>{/* TODO: render tab content here based on `tab` */}</div>
+            }
+          />
+        </RequireFeature>
+      </RequiredRoles>
+    );
 }
 
 export default function TeacherDashboard() {
