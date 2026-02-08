@@ -13,7 +13,7 @@ export default function AllowedFeatureToggle({
 }: FeatureToggleProps) {
   return (
     <label className="flex items-center justify-between gap-3 p-3 rounded-lg bg-white/5 border border-white/10
-      hover:border-lime-400/40 cursor-pointer transition">
+      hover:border-lime-400/40 cursor-pointer transition ">
       <span className="text-sm text-white/80">{label}</span>
 
       <button
@@ -21,7 +21,10 @@ export default function AllowedFeatureToggle({
         role="switch"
         aria-checked={checked}
         onClick={onChange}
-        className={`relative inline-flex flex-shrink-0 h-6 w-12 border-2 border-transparent rounded-full transition-colors ease-in-out duration-200 focus:outline-none ${
+        className={`relative inline-flex flex-shrink-0 h-6 w-12 border-2 border-transparent rounded-full 
+          transition-colors ease-in-out duration-200 
+          focus:outline-noneflex items-center gap-2 text-sm text-gray-400
+          hover:text-lime-400 transition-colors ${
           checked ? "bg-lime-400" : "bg-white/10"
         }`}
       >

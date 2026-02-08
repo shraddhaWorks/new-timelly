@@ -18,7 +18,7 @@ export default function PageTabs({
 }: PageTabsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Accept legacy query values (e.g. "add-user", "all-users") and normalize
+
   const rawActive = searchParams.get(queryKey) ?? tabs[0].value;
   const active =
     rawActive === "add-user"
@@ -31,7 +31,6 @@ export default function PageTabs({
     const params = new URLSearchParams(searchParams.toString());
     params.set(queryKey, value);
 
-    // When switching between internal views, clear editing context like userId
     if (queryKey === "view" && value === "add") {
       params.delete("userId");
     }
@@ -40,26 +39,35 @@ export default function PageTabs({
   };
 
   return (
-    <div className="flex bg-[#0F172A]/50 p-1 rounded-xl border border-white/10">
-      {tabs.map((tab) => {
-        const isActive = active === tab.value;
+    <div className="w-full overflow-x-auto">
+      <div className="flex w-max sm:w-full bg-[#0F172A]/50 p-1 rounded-xl border border-white/10">
+        {tabs.map((tab) => {
+          const isActive = active === tab.value;
 
-        return (
-          <button
-            key={tab.value}
-            onClick={() => handleChange(tab.value)}
-            className={`px-5 py-2 rounded-xl text-sm font-medium transition-all
-              ${
-                isActive
-                  ? "bg-lime-400 text-black shadow-lg"
-                  : "text-white/70 hover:text-white"
-              }
-            `}
-          >
-            {tab.label}
-          </button>
-        );
-      })}
+          return (
+            <button
+              key={tab.value}
+              onClick={() => handleChange(tab.value)}
+              className={`
+                whitespace-nowrap
+                px-4 sm:px-5
+                py-2
+                rounded-xl
+                text-xs sm:text-sm
+                font-medium
+                transition-all
+                ${
+                  isActive
+                    ? "bg-lime-400 text-black shadow-lg"
+                    : "text-white/70 hover:text-white"
+                }
+              `}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

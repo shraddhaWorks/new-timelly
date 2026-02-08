@@ -1,0 +1,175 @@
+"use client";
+
+import { Plus } from "lucide-react";
+import InputField from "../schooladmincomponents/InputField";
+import SelectInput from "../../common/SelectInput";
+import { SelectOption, StudentFormErrors, StudentFormState } from "./types";
+
+type Props = {
+  form: StudentFormState;
+  errors: StudentFormErrors;
+  classOptions: SelectOption[];
+  sectionOptions: SelectOption[];
+  ageLabel: string;
+  saving: boolean;
+  title?: string;
+  subtitle?: string;
+  submitLabel?: string;
+  onFieldChange: (key: keyof StudentFormState, value: string) => void;
+  onCancel: () => void;
+  onSave: () => void;
+};
+
+const renderError = (errors: StudentFormErrors, key: keyof StudentFormState) =>
+  errors[key] ? (
+    <p className="text-xs text-red-400 mt-1">{errors[key]}</p>
+  ) : null;
+
+export default function AddStudentForm({
+  form,
+  errors,
+  classOptions,
+  sectionOptions,
+  ageLabel,
+  saving,
+  title = "Add New Student",
+  subtitle = "Enter student details below",
+  submitLabel = "Save Student",
+  onFieldChange,
+  onCancel,
+  onSave,
+}: Props) {
+  return (
+    <div className="bg-[#0F172A]/50 rounded-2xl p-6 border border-white/10">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div>
+          <h3 className="text-lg font-bold text-gray-100 mb-4">{title}</h3>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div>
+          <InputField
+            label="Full Name*"
+            value={form.name}
+            onChange={(value) => onFieldChange("name", value)}
+            placeholder="Student Name"
+            bgColor="white"
+          />
+          {renderError(errors, "name")}
+        </div>
+        <InputField
+          label="Student ID"
+          value={form.rollNo}
+          onChange={(value) => onFieldChange("rollNo", value)}
+          placeholder="e.g. STU001"
+          bgColor="white"
+        />
+        <SelectInput
+          label="Gender"
+          value={form.gender}
+          onChange={(value) => onFieldChange("gender", value)}
+          options={[
+            { label: "Select Gender", value: "" },
+            { label: "Male", value: "Male" },
+            { label: "Female", value: "Female" },
+            { label: "Other", value: "Other" },
+          ]}
+        />
+        <div>
+          <label className="block text-xs font-medium text-white/70 mb-1.5">
+            Age
+          </label>
+          <div className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-gray-200">
+            {ageLabel}
+          </div>
+        </div>
+        <div>
+          <InputField
+            label="Date of Birth*"
+            value={form.dob}
+            onChange={(value) => onFieldChange("dob", value)}
+            placeholder="dd-mm-yyyy"
+            type="date"
+            bgColor="white"
+          />
+          {renderError(errors, "dob")}
+        </div>
+        <InputField
+          label="Previous School Attended"
+          value={form.previousSchool}
+          onChange={(value) => onFieldChange("previousSchool", value)}
+          placeholder="Previous School Name"
+          bgColor="white"
+        />
+        <SelectInput
+          label="Class"
+          value={form.classId}
+          onChange={(value) => onFieldChange("classId", value)}
+          options={classOptions}
+        />
+        <SelectInput
+          label="Section"
+          value={form.section}
+          onChange={(value) => onFieldChange("section", value)}
+          options={sectionOptions}
+        />
+        <SelectInput
+          label="Status"
+          value={form.status}
+          onChange={(value) => onFieldChange("status", value)}
+          options={[
+            { label: "Active", value: "Active" },
+            { label: "Inactive", value: "Inactive" },
+          ]}
+        />
+      </div>
+
+      <div className="mt-6">
+        <h3 className="text-sm font-semibold text-white/80 mb-3">
+          Parent Information
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <InputField
+              label="Parent Name*"
+              value={form.fatherName}
+              onChange={(value) => onFieldChange("fatherName", value)}
+              placeholder="Parent/Guardian Name"
+              bgColor="white"
+            />
+            {renderError(errors, "fatherName")}
+          </div>
+          <div>
+            <InputField
+              label="Contact Number*"
+              value={form.phoneNo}
+              onChange={(value) => onFieldChange("phoneNo", value)}
+              placeholder="+91..."
+              bgColor="white"
+            />
+            {renderError(errors, "phoneNo")}
+          </div>
+        </div>
+      </div>
+
+
+      <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+        <button
+          onClick={onCancel}
+          className="rounded-xl border border-white/10 bg-white/5 px-5 py-2 text-sm font-semibold text-white/70 hover:bg-white/10"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={onSave}
+          disabled={saving}
+          className="inline-flex items-center gap-2 rounded-xl bg-lime-400
+           px-5 py-2 text-sm font-semibold text-black hover:bg-lime-300 disabled:opacity-60"
+        >
+          <Plus size={16} /> {saving ? "Saving..." : submitLabel}
+        </button>
+      </div>
+    </div>
+  );
+}

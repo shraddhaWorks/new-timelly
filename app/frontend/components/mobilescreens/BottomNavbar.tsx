@@ -3,6 +3,8 @@
 import { MoreHorizontal } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SidebarItem } from "../../types/sidebar";
+import { useSession } from "next-auth/react";
+import { useAllowedFeatures } from "@/lib/usePermissions";
 
 export default function BottomNavBar({
   menuItems,
@@ -14,7 +16,32 @@ export default function BottomNavBar({
   const router = useRouter();
   const activeTab = useSearchParams().get("tab") ?? "dashboard";
 
-  const tabItems = menuItems.filter(item => item.tab);
+  // Filter menu items for teachers based on allowed features
+  const { data: session } = useSession();
+  const allowed = useAllowedFeatures();
+
+  const filteredMenu = (menuItems || []).filter((item) => {
+    // always show action items (logout)
+    if (!item.tab && !item.permission) return true;
+    if (!session || !session.user) return true;
+    if (session.user.role !== "TEACHER") return true;
+
+    // legacy: no allowed list means unrestricted
+    if (!allowed || allowed.length === 0) return true;
+
+    const allowedNormalized = (allowed || []).map((a) => String(a).toLowerCase());
+    const tabKey = item.tab ? String(item.tab).toLowerCase() : null;
+    const permKey = item.permission ? String(item.permission).toLowerCase() : null;
+
+    if (tabKey && allowedNormalized.includes(tabKey)) return true;
+    if (permKey && allowedNormalized.includes(permKey)) return true;
+    // allow if base of feature present (e.g., 'attendance' in 'attendance-view')
+    if (tabKey && allowedNormalized.some(a => a.startsWith(tabKey))) return true;
+
+    return false;
+  });
+
+  const tabItems = filteredMenu.filter(item => item.tab);
   const displayedItems = tabItems.slice(0, 4);
 
   // 🔥 KEY FIX

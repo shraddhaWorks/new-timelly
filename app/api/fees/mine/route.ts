@@ -19,17 +19,22 @@ export async function GET() {
   }
 
   try {
-    const cachedKey = `fees:${session.user.studentId}`;
-    const cachedFee = await redis.get(cachedKey);
-
-    if (cachedFee) {
-      console.log("✅ Fee details served from Redis");
-      return NextResponse.json({ fee: cachedFee }, { status: 200 });
+    const studentId = session.user.studentId!;
+    const cachedKey = `fees:${studentId}`;
+    const cached = await redis.get(cachedKey);
+    if (cached && typeof cached === "object" && cached !== null && "fee" in cached) {
+      return NextResponse.json(cached as { fee: unknown });
     }
+
     const fee = await prisma.studentFee.findUnique({
-      where: { studentId: session.user.studentId },
+      where: { studentId },
+      include: {
+        student: {
+          select: { classId: true, schoolId: true, class: { select: { id: true, name: true, section: true } } },
+        },
+        installmentsList: { orderBy: { installmentNumber: "asc" } },
+      },
     });
-    await redis.set(cachedKey,fee,{ex:60 * 5}); // Cache for 5 minutes
 
     if (!fee) {
       return NextResponse.json(
@@ -38,7 +43,79 @@ export async function GET() {
       );
     }
 
-    return NextResponse.json({ fee });
+    const classId = fee.student.classId;
+    const components =
+      classId
+        ? await prisma.classFeeStructure.findUnique({
+            where: { classId },
+            select: { components: true },
+          })
+        : null;
+
+    const extraFees = await prisma.extraFee.findMany({
+      where: {
+        schoolId: fee.student.schoolId,
+        OR: [
+          { targetType: "STUDENT", targetStudentId: studentId },
+          ...(classId ? [{ targetType: "CLASS", targetClassId: classId }] : []),
+          ...(classId && fee.student.class?.section
+            ? [
+                {
+                  targetType: "SECTION",
+                  targetClassId: classId,
+                  targetSection: fee.student.class.section,
+                },
+              ]
+            : []),
+        ],
+      },
+    });
+
+    const payments = await prisma.payment.findMany({
+      where: { studentId },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    });
+
+    const perInstallment = fee.finalFee / Math.max(fee.installments, 1);
+    const baseDue = new Date(new Date().getFullYear(), 6, 15); // Jul 15
+    const installments =
+      fee.installmentsList.length > 0
+        ? fee.installmentsList.map((i) => ({
+            installmentNumber: i.installmentNumber,
+            dueDate: i.dueDate,
+            amount: i.amount,
+            paidAmount: i.paidAmount,
+            status: i.status,
+            paymentId: i.paymentId,
+          }))
+        : Array.from({ length: fee.installments }, (_, idx) => {
+            const d = new Date(baseDue);
+            d.setMonth(d.getMonth() + idx * 2);
+            const amt = Math.round(perInstallment * 100) / 100;
+            const cutoff = (idx + 1) * perInstallment;
+            const status = fee.amountPaid >= cutoff ? "PAID" : "PENDING";
+            const paidAmt = status === "PAID" ? amt : 0;
+            return {
+              installmentNumber: idx + 1,
+              dueDate: d.toISOString().slice(0, 10),
+              amount: amt,
+              paidAmount: paidAmt,
+              status,
+            };
+          });
+
+    const payload = {
+      fee: {
+        ...fee,
+        components: (components?.components as Array<{ name: string; amount: number }>) || [],
+        extraFees,
+        payments,
+        installmentsList: installments,
+      },
+    };
+    await redis.set(cachedKey, payload, { ex: 60 * 5 });
+    return NextResponse.json(payload);
   } catch (error: any) {
     console.error("Fetch student fee error:", error);
     return NextResponse.json(
