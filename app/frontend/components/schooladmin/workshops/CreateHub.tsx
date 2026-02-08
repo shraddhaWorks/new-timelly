@@ -1,39 +1,37 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BadgeCheck, CheckCircle2, ChevronRight, Send, Award} from "lucide-react";
+import { CheckCircle2, ChevronRight, Send, Award } from "lucide-react";
 import TimellyModernCard from "./themes/TimellyModernCard";
 import ClassicGoldCard from "./themes/ClassicGoldCard";
 import CreativeSparkCard from "./themes/CreativeSparkCard";
 import SuccessPopup from "./SuccessPopup";
 
-const events = [
-  {
-    id: "sci",
-    title: "Science Projects Week",
-    date: "Feb 3, 2026",
-    badge: "S",
-    participants: 30,
-  },
-  {
-    id: "write",
-    title: "Creative Writing Sprint",
-    date: "Feb 6, 2026",
-    badge: "C",
-    participants: 45,
-  },
-  {
-    id: "art",
-    title: "Digital Art Masterclass",
-    date: "Jan 28, 2026",
-    badge: "D",
-    participants: 18,
-  },
-];
-
 type ThemeKey = "timelly-modern" | "classic-gold" | "creative-spark";
 
-export default function CreateHub() {
+interface HubEvent {
+  id: string;
+  title: string;
+  eventDate?: string | null;
+  _count?: { registrations: number };
+}
+
+interface CreateHubProps {
+  events: HubEvent[];
+}
+
+function formatDate(dateString?: string | null) {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+export default function CreateHub({ events }: CreateHubProps) {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [selectedTheme, setSelectedTheme] = useState<ThemeKey>("timelly-modern");
   const [showPopup, setShowPopup] = useState(false);
@@ -43,7 +41,7 @@ export default function CreateHub() {
 
   const selectedEvent = useMemo(
     () => events.find((event) => event.id === selectedEventId) ?? null,
-    [selectedEventId]
+    [events, selectedEventId]
   );
 
   const themeLabel = useMemo(() => {
@@ -62,7 +60,6 @@ export default function CreateHub() {
       clearTimeout(closeTimer);
     };
   }, [showPopup]);
-
 
   return (
     <section className="rounded-3xl border border-white/10 bg-white/5 p-4 sm:p-6 md:p-8 backdrop-blur-xl shadow-lg">
@@ -89,7 +86,7 @@ export default function CreateHub() {
               1. Select Event
             </div>
             <div className="text-xs text-lime-300 border border-lime-400/30 bg-lime-400/10 px-3 py-1 rounded-full">
-              3 Events
+              {events.length} Events
             </div>
           </div>
           <div className="mt-4 space-y-3">
@@ -106,7 +103,6 @@ export default function CreateHub() {
                       : "border-white/10 bg-black/20 hover:bg-white/10"
                   }`}
                 >
-                    
                   <div className="flex items-center gap-3">
                     <div
                       className={`h-9 w-9 rounded-xl flex items-center justify-center text-sm font-semibold ${
@@ -115,7 +111,7 @@ export default function CreateHub() {
                           : "bg-white/10 text-white/50"
                       }`}
                     >
-                      {event.badge}
+                      {event.title?.[0] ?? "E"}
                     </div>
                     <div className="flex-1">
                       <div
@@ -130,7 +126,7 @@ export default function CreateHub() {
                           isSelected ? "text-white/60" : "text-white/40"
                         }`}
                       >
-                        {event.date}
+                        {formatDate(event.eventDate) || "Date"}
                       </div>
                     </div>
                     {isSelected && (
@@ -140,6 +136,11 @@ export default function CreateHub() {
                 </button>
               );
             })}
+            {events.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-white/15 bg-white/5 px-4 py-6 text-sm text-white/50">
+                No events yet. Create one to get started.
+              </div>
+            )}
           </div>
         </div>
 
@@ -152,15 +153,15 @@ export default function CreateHub() {
             <div className="mt-4 rounded-2xl border border-dashed border-white/20 bg-white/5 min-h-[220px] flex items-center justify-center text-white/40">
               <div className="flex items-center gap-2">
                 <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3">
-                  <ChevronRight className="lucide lucide-chevron-right w-6 h-6 text-gray-600"/>
+                  <ChevronRight className="lucide lucide-chevron-right w-6 h-6 text-gray-600" />
                 </div>
                 <span>Please select an event from the list to continue</span>
-            </div>
+              </div>
             </div>
           )}
 
           {selectedEvent && (
-            <div className="mt-4 space-y-6">+
+            <div className="mt-4 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <TimellyModernCard
                   selected={selectedTheme === "timelly-modern"}
@@ -183,7 +184,7 @@ export default function CreateHub() {
                   className="inline-flex items-center gap-2 rounded-full bg-lime-400 px-6 py-3 text-sm font-semibold text-black shadow-lg shadow-lime-400/30 hover:bg-lime-300 transition"
                 >
                   <Send size={16} />
-                  Send Certificates to {selectedEvent.participants} Students
+                  Send Certificates to {selectedEvent._count?.registrations ?? 0} Participants
                 </button>
               </div>
             </div>
@@ -200,7 +201,7 @@ export default function CreateHub() {
         }
         description={
           popupStage === "done"
-            ? `${selectedEvent?.participants ?? 0} students updated`
+            ? `${selectedEvent?._count?.registrations ?? 0} students updated`
             : `Applying ${themeLabel} Theme`
         }
         onClose={() => setShowPopup(false)}

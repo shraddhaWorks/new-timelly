@@ -3,11 +3,75 @@
 import HeaderActionButton from "../common/HeaderActionButton";
 import PageHeader from "../common/PageHeader";
 import CreateHub from "./workshops/CreateHub";
-import { CalendarDays, CheckCircle, List, Plus, Users } from "lucide-react";
-import { ReactNode, useState } from "react";
+import CreateEventForm from "./workshops/CreateEventForm";
+import EventCard from "./workshops/EventCard";
+import { CalendarDays, CheckCircle, List, Plus, Users, X } from "lucide-react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
+
+interface EventItem {
+  id: string;
+  title: string;
+  description?: string | null;
+  eventDate?: string | null;
+  location?: string | null;
+  mode?: string | null;
+  additionalInfo?: string | null;
+  teacher?: { name?: string | null } | null;
+  photo?: string | null;
+  _count?: { registrations: number };
+}
 
 export default function WorkshopsAndEventsTab() {
   const [activeAction, setActiveAction] = useState<"workshop" | "none">("none");
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+  const [eventsError, setEventsError] = useState<string | null>(null);
+
+  const fetchEvents = async () => {
+    try {
+      setLoadingEvents(true);
+      setEventsError(null);
+      const res = await fetch("/api/events/list");
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.message || "Failed to load events");
+      }
+      setEvents(Array.isArray(data?.events) ? data.events : []);
+    } catch (err: any) {
+      setEventsError(err?.message || "Failed to load events");
+    } finally {
+      setLoadingEvents(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const stats = useMemo(() => {
+    const now = Date.now();
+    const upcoming = events.filter((event) => {
+      if (!event.eventDate) return false;
+      const time = new Date(event.eventDate).getTime();
+      return !Number.isNaN(time) && time >= now;
+    }).length;
+    const completed = events.filter((event) => {
+      if (!event.eventDate) return false;
+      const time = new Date(event.eventDate).getTime();
+      return !Number.isNaN(time) && time < now;
+    }).length;
+    const participants = events.reduce(
+      (sum, event) => sum + (event._count?.registrations ?? 0),
+      0
+    );
+
+    return {
+      total: events.length,
+      upcoming,
+      completed,
+      participants,
+    };
+  }, [events]);
 
   const StatTile = ({
     title,
@@ -42,20 +106,30 @@ export default function WorkshopsAndEventsTab() {
   ) => {
     const isActive = type === "workshop" && activeAction === "workshop";
 
+    const effectiveLabel = isActive ? "Cancel" : label;
+    const EffectiveIcon = isActive ? X : Icon;
+    const effectivePrimary = isActive ? false : primary;
+    const effectiveOnClick = isActive ? () => setActiveAction("none") : onClick;
+
+    const cancelButton = (
+      <button
+        onClick={effectiveOnClick}
+        className="inline-flex items-center gap-2 rounded-full bg-lime-400 px-5 py-2 text-sm font-semibold text-black shadow-[0_6px_18px_rgba(163,230,53,0.35)] hover:bg-lime-300 transition cursor-pointer"
+      >
+        <X size={16} />
+        <span>Cancel</span>
+      </button>
+    );
+
     return (
       <>
         {/* MOBILE */}
         <div className="xl:hidden">
           {isActive ? (
-            <HeaderActionButton
-              icon={Icon}
-              label={label}
-              primary={primary}
-              onClick={onClick}
-            />
+            cancelButton
           ) : (
             <button
-              onClick={onClick}
+              onClick={effectiveOnClick}
               className="h-10 w-10 flex items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
             >
               <Icon size={18} />
@@ -65,12 +139,16 @@ export default function WorkshopsAndEventsTab() {
 
         {/* DESKTOP */}
         <div className="hidden xl:block">
-          <HeaderActionButton
-            icon={Icon}
-            label={label}
-            primary={primary}
-            onClick={onClick}
-          />
+          {isActive ? (
+            cancelButton
+          ) : (
+            <HeaderActionButton
+              icon={EffectiveIcon}
+              label={effectiveLabel}
+              primary={effectivePrimary}
+              onClick={effectiveOnClick}
+            />
+          )}
         </div>
       </>
     );
@@ -99,13 +177,70 @@ export default function WorkshopsAndEventsTab() {
         />
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatTile title="TOTAL" value="3" icon={<List size={24} />} />
-          <StatTile title="UPCOMING" value="2" icon={<CalendarDays size={24} />} />
-          <StatTile title="PARTICIPANTS" value="143" icon={<Users size={24} />} />
-          <StatTile title="COMPLETED" value="1" icon={<CheckCircle size={24} />} />
+          <StatTile title="TOTAL" value={`${stats.total}`} icon={<List size={24} />} />
+          <StatTile title="UPCOMING" value={`${stats.upcoming}`} icon={<CalendarDays size={24} />} />
+          <StatTile title="PARTICIPANTS" value={`${stats.participants}`} icon={<Users size={24} />} />
+          <StatTile title="COMPLETED" value={`${stats.completed}`} icon={<CheckCircle size={24} />} />
         </div>
 
-        <CreateHub />
+        <CreateHub events={events} />
+
+        {activeAction === "workshop" && (
+          <CreateEventForm
+            onCancel={() => setActiveAction("none")}
+            onCreated={fetchEvents}
+          />
+        )}
+
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-white">
+              Workshops & Events
+            </h3>
+            {loadingEvents && (
+              <span className="text-xs text-white/50">Loading...</span>
+            )}
+          </div>
+
+          {eventsError && (
+            <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+              {eventsError}
+            </div>
+          )}
+
+          {!loadingEvents && events.length === 0 && !eventsError && (
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-6 text-sm text-white/50">
+              No workshops or events yet. Create one above.
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            {events.map((event) => {
+              const dateValue = event.eventDate ? new Date(event.eventDate) : null;
+              const status = dateValue && !Number.isNaN(dateValue.getTime())
+                ? dateValue.getTime() >= Date.now()
+                  ? "upcoming"
+                  : "completed"
+                : "upcoming";
+
+              return (
+                <EventCard
+                  key={event.id}
+                  title={event.title}
+                  description={event.description}
+                  eventDate={event.eventDate}
+                  location={event.location}
+                  mode={event.mode}
+                  registrations={event._count?.registrations ?? 0}
+                  teacherName={event.teacher?.name ?? ""}
+                  status={status}
+                  photo={event.photo}
+                  additionalInfo={event.additionalInfo}
+                />
+              );
+            })}
+          </div>
+        </section>
       </div>
     </div>
   );

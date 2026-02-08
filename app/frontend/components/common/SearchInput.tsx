@@ -15,6 +15,7 @@ interface SearchInputProps {
 
   disabled?: boolean;
   className?: string;
+  inputClassName?: string;
   type?: string;
   label?: string;
   iconClassName?: string;
@@ -31,6 +32,7 @@ export default function SearchInput({
   showSearchIcon = true,
   disabled = false,
   className,
+  inputClassName,
   label,
   type = "text",
   iconClassName = "text-gray-400",
@@ -89,6 +91,7 @@ export default function SearchInput({
             "placeholder-white/40",
             "focus:outline-none focus:ring-0",
             disabled && "opacity-60 cursor-not-allowed",
+            inputClassName,
 
             // 👇 CONDITIONAL STYLING
             isGlass
