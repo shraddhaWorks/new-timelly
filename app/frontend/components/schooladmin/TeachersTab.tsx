@@ -9,6 +9,9 @@ import {
     Coffee,
     Clock,
     XCircle,
+    Trash2,
+    Pencil,
+    Eye,
 } from "lucide-react";
 import DataTable from "../common/TableLayout";
 import TeacherStatCard from "./teacherstab/teacherStatCard";
