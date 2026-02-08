@@ -10,8 +10,83 @@ import {
     Clock,
     XCircle,
 } from "lucide-react";
+import DataTable from "../common/TableLayout";
 import TeacherStatCard from "./teacherstab/teacherStatCard";
-import StatCard from "../common/StatCard";
+
+/* ================= Types ================= */
+
+interface TeacherRow {
+  teacherId: string;
+  name: string;
+  avatar: string;
+  subject: string;
+  attendance: number;
+  phone: string;
+  status: "Active" | "On Leave";
+}
+
+/* ================= Mobile Card Component ================= */
+
+const MobileTeacherCard = ({ teacher, onEdit, onDelete }: { 
+  teacher: TeacherRow; 
+  onEdit: (t: TeacherRow) => void; 
+  onDelete: (id: string) => void; 
+}) => (
+  <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-[2rem] p-5 space-y-4 shadow-xl">
+    <div className="flex items-center gap-4">
+      <img src={teacher.avatar} alt="" className="w-14 h-14 rounded-2xl border border-white/10 object-cover" />
+      <div className="flex-1">
+        <h4 className="font-bold text-gray-100 text-lg leading-tight">{teacher.name}</h4>
+        <p className="text-xs text-gray-500 font-mono">{teacher.teacherId}</p>
+        <span className={`inline-block mt-1 px-3 py-0.5 rounded-full text-[10px] font-bold border ${
+            teacher.status === "Active" ? "bg-lime-400/10 text-lime-400 border-lime-400/20" : "bg-orange-400/10 text-orange-400 border-orange-400/20"
+        }`}>
+          {teacher.status.toUpperCase()}
+        </span>
+      </div>
+    </div>
+
+    <div className="bg-white/5 border border-white/5 rounded-2xl p-3">
+      <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Subject</p>
+      <p className="text-gray-200 font-medium">{teacher.subject}</p>
+    </div>
+
+    <div className="bg-white/5 border border-white/5 rounded-2xl p-3 flex justify-between items-center">
+      <div>
+        <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Attendance</p>
+        <p className="text-lime-400 font-bold">{teacher.attendance}% Present</p>
+      </div>
+      <div className="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden">
+        <div className="h-full bg-lime-400" style={{ width: `${teacher.attendance}%` }} />
+      </div>
+    </div>
+
+    <div className="bg-white/5 border border-white/5 rounded-2xl p-3">
+      <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Phone</p>
+      <p className="text-gray-200 font-medium">{teacher.phone}</p>
+    </div>
+
+    <div className="flex gap-2 pt-2">
+      <button className="flex-1 bg-white/5 hover:bg-white/10 py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-medium text-gray-300 transition-colors">
+        <Eye size={18} /> View
+      </button>
+      <button 
+        onClick={() => onEdit(teacher)}
+        className="flex-[1.5] bg-white/5 hover:bg-lime-400/10 py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-medium text-lime-400 transition-colors border border-white/5"
+      >
+        <Pencil size={18} /> Edit
+      </button>
+      <button 
+        onClick={() => onDelete(teacher.teacherId)}
+        className="bg-red-500/10 hover:bg-red-500/20 p-3 rounded-xl text-red-400 transition-colors border border-red-500/20"
+      >
+        <Trash2 size={18} />
+      </button>
+    </div>
+  </div>
+);
+
+/* ================= Main Component ================= */import StatCard from "../common/StatCard";
 
 
 const SchoolAdminTeacherTab = () => {
