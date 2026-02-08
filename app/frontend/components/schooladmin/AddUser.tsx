@@ -12,7 +12,7 @@ import FilterBar from "../schooladmin/schooladmincomponents/AddUserFilters";
 import SearchInput from "../common/SearchInput";
 import UserForm from "./schooladmincomponents/UserForm";
 import BulkImportZone from "./schooladmincomponents/BulkImportZone";
-import DeleteConfirmation from "./schooladmincomponents/DeleteConfirmation";
+import DeleteConfirmation from "../common/DeleteConfirmation";
 import UserBadge from "./schooladmincomponents/UserBadge";
 import RoleBadge from "./schooladmincomponents/RoleBadge";
 import StatusBadge from "./schooladmincomponents/StatusBadge";

@@ -53,7 +53,7 @@ function SchoolAdminContent() {
       case "dashboard":
         return <div><h2>School Admin Dashboard</h2></div>;
       case "students":
-        return <SchoolAdminStudentsTab/>;
+        return <SchoolAdminStudentsTab />;
       case "add-user":
         return <AddUser/>
       case "classes":

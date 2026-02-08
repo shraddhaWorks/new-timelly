@@ -31,7 +31,7 @@ export default function SelectInput({
   return (
     <div className={clsx("w-full", className)}>
       {label && (
-        <label className="block text-xs sm:text-sm mb-1 text-white/70">
+        <label className="block text-xs md:text-sm font-medium text-gray-400 mb-2">
           {label}
         </label>
       )}
@@ -44,8 +44,8 @@ export default function SelectInput({
           aria-invalid={!!error}
           className={clsx(
             "w-full rounded-xl appearance-none cursor-pointer",
-            "pl-4 pr-4 py-2.5 sm:py-3",
-            "bg-black/20 border border-white/10",
+            "pl-4 pr-4 py-2.5 sm:py-3 ",
+            "bg-[#0F172A]/50 border border-white/10",
             "text-gray-200 text-sm sm:text-base",
             "focus:outline-none focus:ring-0",
             "hover:border-[var(--hover-color)]",
@@ -53,7 +53,6 @@ export default function SelectInput({
             disabled && "opacity-60 cursor-not-allowed"
           )}
           style={{
-            backgroundColor: "rgba(255, 255, 255, 0.05)",
             ["--primary-color" as any]: PRIMARY_COLOR,
             ["--hover-color" as any]: HOVER_COLOR,
           }}

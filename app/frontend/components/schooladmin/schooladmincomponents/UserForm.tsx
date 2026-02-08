@@ -380,7 +380,7 @@ export default function UserForm({ mode = "create", initialData }: UserFormProps
         >
           {submitting ? (
             <>
-              <Spinner />
+              <Spinner color="black"/>
               Saving...
             </>
           ) : (

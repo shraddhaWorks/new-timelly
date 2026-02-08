@@ -11,6 +11,7 @@ interface InputFieldProps {
   placeholder?: string;
   icon?: React.ReactNode;
   required?: boolean;
+  bgColor?: "black" | "white";
 }
 
 export default function InputField({
@@ -21,6 +22,7 @@ export default function InputField({
   placeholder = "",
   icon,
   required = false,
+  bgColor='black'
 }: InputFieldProps) {
   return (
     <div>
@@ -37,8 +39,8 @@ export default function InputField({
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full pl-11 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none
-           focus:ring-1 focus:ring-lime-400/50 text-gray-200"
+          className={`w-full ${icon ? "pl-11" : "pl-4"} pr-4 py-3 ${bgColor==="black"?`bg-black/20`:`bg-white/5`} border border-white/10 rounded-xl 
+          focus:outline-none focus:ring-1 focus:ring-lime-400/50 text-gray-400`}
           placeholder={placeholder}
         />
       </div>

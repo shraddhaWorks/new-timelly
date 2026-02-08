@@ -11,6 +11,8 @@ type DataTableProps<T> = {
   emptyText?: string;
   rowKey?: (row: T, index: number) => string | number;
   caption?: string;
+  tableTitle?: string;
+  tableSubtitle?: string;
   pagination?: {
     page: number;
     totalPages: number;
@@ -31,6 +33,8 @@ function DataTable<T>({
   emptyText = "No data found",
   rowKey,
   caption,
+  tableTitle,
+  tableSubtitle,
   pagination,
 }: DataTableProps<T>) {
 
@@ -50,7 +54,19 @@ function DataTable<T>({
     <div className="w-full space-y-4">
 
       {/* DESKTOP TABLE */}
-      <div className="hidden md:block rounded-3xl overflow-hidden border border-white/10 bg-transparent from-purple-700/30 via-indigo-600/20 to-pink-600/20 backdrop-blur-xl shadow-2xl">
+      <div className="hidden md:block rounded-3xl overflow-hidden border border-white/10 bg-transparent backdrop-blur-xl shadow-2xl">
+        {tableTitle && (
+          <div className="p-5 border-b border-white/10">
+            <div className="text-lg font-semibold text-white">
+              {tableTitle}
+            </div>
+            {tableSubtitle && (
+              <div className="text-xs text-white/60 mt-1">
+                {tableSubtitle}
+              </div>
+            )}
+          </div>
+        )}
 
         <table
           className="w-full text-sm border-collapse"
