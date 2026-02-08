@@ -1,17 +1,640 @@
+
 "use client";
+import Spinner from "../common/Spinner";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Clock,
+  CheckCircle,
+  UserCheck,
+  FileText,
+  AlertTriangle,
+  XCircleIcon
+} from "lucide-react";
+import PageHeader from "../common/PageHeader";
+
+/* ---------------- TYPES ---------------- */
+
+type Status =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "CONDITIONALLY_APPROVED";
+
+interface Leave {
+  id: string;
+  teacher: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  leaveType: string;
+  fromDate: string;
+  toDate: string;
+  status: Status;
+  reason?: string | null;
+  remarks?: string | null;
+  approvedAt?: string | null;
+  updatedAt?: string | null;
+}
+
+/* ---------------- MAIN ---------------- */
 
 export default function SchoolTeacherLeavesTab() {
+  const [pendingLeaves, setPendingLeaves] = useState<Leave[]>([]);
+  const [allLeaves, setAllLeaves] = useState<Leave[]>([]);
+  const [activeTab, setActiveTab] = useState<Status>("PENDING");
+  const [loading, setLoading] = useState(true);
+
+  const [showConditionalModal, setShowConditionalModal] = useState(false);
+  const [selectedLeaveId, setSelectedLeaveId] = useState<string | null>(null);
+  const [conditionalMessage, setConditionalMessage] = useState("");
+
+  /* ---------------- DATE HELPERS ---------------- */
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const isToday = (date?: string | null) => {
+    if (!date) return false;
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime() === today.getTime();
+  };
+
+  const isTodayBetween = (from: string, to: string) => {
+    const f = new Date(from);
+    const t = new Date(to);
+    f.setHours(0, 0, 0, 0);
+    t.setHours(0, 0, 0, 0);
+    return today >= f && today <= t;
+  };
+
+const currentMonthLabel = new Date().toLocaleString("en-US", {
+  month: "short",
+});
+
+const isCurrentMonth = (date: string) => {
+  const d = new Date(date);
+  const now = new Date();
+
   return (
-    <div className="min-h-screen p-3 sm:p-4 md:p-6 text-white overflow-x-hidden">
-      <div className="max-w-5xl mx-auto">
-        <section className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 sm:p-6 md:p-8 mb-4 sm:mb-6">
-          <h2 className="text-xl sm:text-2xl font-semibold mb-1">Teacher Leaves</h2>
-          <p className="text-sm text-gray-300">Manage teacher leave requests</p>
-        </section>
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 text-center text-white/60 text-sm sm:text-base">
-          Teacher leaves content
+    d.getMonth() === now.getMonth() &&
+    d.getFullYear() === now.getFullYear()
+  );
+};
+
+
+  const iconStyles = {
+    yellow: "border-yellow-400 text-yellow-400 bg-yellow-400/10",
+    lime: "border-lime-400 text-lime-400 bg-lime-400/10",
+    blue: "border-blue-400 text-blue-400 bg-blue-400/10",
+    purple: "border-purple-400 text-purple-400 bg-purple-400/10",
+  };
+  const textColor = {
+    yellow: "text-yellow-400",
+    lime: "text-lime-400",
+    blue: "text-blue-400",
+    purple: "text-purple-400",
+  }
+
+  /* ---------------- LOAD DATA ---------------- */
+
+  async function loadPendingLeaves() {
+    const res = await fetch("/api/leaves/pending");
+    setPendingLeaves(await res.json());
+  }
+
+  async function loadAllLeaves() {
+    const res = await fetch("/api/leaves/all");
+    setAllLeaves(await res.json());
+  }
+
+  useEffect(() => {
+    Promise.all([loadPendingLeaves(), loadAllLeaves()]).finally(() =>
+      setLoading(false)
+    );
+  }, []);
+
+  /* ---------------- ACTIONS ---------------- */
+
+  async function approveLeave(id: string) {
+    await fetch(`/api/leaves/${id}/approve`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "FULL" }),
+    });
+
+    loadPendingLeaves();
+    loadAllLeaves();
+  }
+
+  async function conditionalApproveLeave() {
+    if (!selectedLeaveId || !conditionalMessage.trim()) return;
+
+    await fetch(`/api/leaves/${selectedLeaveId}/approve`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "CONDITIONAL",
+        remarks: conditionalMessage,
+      }),
+    });
+
+    setShowConditionalModal(false);
+    setConditionalMessage("");
+    setSelectedLeaveId(null);
+
+    loadPendingLeaves();
+    loadAllLeaves();
+  }
+
+  async function rejectLeave(id: string) {
+    await fetch(`/api/leaves/${id}/reject`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ remarks: "Rejected by admin" }),
+    });
+
+    loadPendingLeaves();
+    loadAllLeaves();
+  }
+
+  /* ---------------- FILTERS ---------------- */
+
+  const approvedToday = useMemo(
+    () =>
+      allLeaves.filter(
+        (l) =>
+          (l.status === "APPROVED" ||
+            l.status === "CONDITIONALLY_APPROVED") &&
+          isToday(l.approvedAt || l.updatedAt)
+      ),
+    [allLeaves]
+  );
+
+  const currentMonthLeaves = useMemo(
+  () =>
+    allLeaves.filter((l) =>
+      isCurrentMonth(l.fromDate)
+    ),
+  [allLeaves]
+);
+
+
+  const teachersOnLeaveToday = useMemo(
+    () => allLeaves.filter((l) => isTodayBetween(l.fromDate, l.toDate)),
+    [allLeaves]
+  );
+
+  const approvedLeaves = useMemo(
+    () =>
+      allLeaves.filter(
+        (l) =>
+          l.status === "APPROVED" ||
+          l.status === "CONDITIONALLY_APPROVED"
+      ),
+    [allLeaves]
+  );
+
+  const rejectedLeaves = useMemo(
+    () => allLeaves.filter((l) => l.status === "REJECTED"),
+    [allLeaves]
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Spinner size={40} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 sm:space-y-6 px-3 md:px-0 overflow-x-hidden">
+      <PageHeader
+        title="Teacher Leave Management"
+        subtitle="Review and manage teacher leave requests"
+      />
+
+      {/* ---------------- STATS ---------------- */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+
+        {/* Pending Requests */}
+        <div className="p-3 sm:p-6 rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl flex items-center gap-2 sm:gap-4">
+          <div className={`p-2 rounded-lg border ${iconStyles.yellow}`}>
+            <Clock size={16} />
+          </div>
+          <div>
+            <p className="text-xs text-white/60">Pending Requests</p>
+            <p className={`text-lg sm:text-2xl font-bold ${textColor.yellow}`}>{pendingLeaves.length}</p>
+          </div>
+        </div>
+
+        {/* Approved Today */}
+        <div className="p-3 sm:p-6 rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl flex items-center gap-2 sm:gap-4">
+          <div className={`p-2 rounded-lg border ${iconStyles.lime}`}>
+            <CheckCircle size={16} />
+          </div>
+          <div>
+            <p className="text-xs text-white/60">Approved Today</p>
+            <p className={`text-lg sm:text-2xl font-bold ${textColor.lime}`}>{approvedToday.length}</p>
+          </div>
+        </div>
+
+        {/* Teachers on Leave */}
+        <div className="p-3 sm:p-6 rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl flex items-center gap-2 sm:gap-4">
+          <div className={`p-2 rounded-lg border ${iconStyles.blue}`}>
+            <UserCheck size={16} />
+          </div>
+          <div>
+            <p className="text-xs text-white/60">Teachers on Leave</p>
+            <p className={`text-lg sm:text-2xl font-bold ${textColor.blue}`}>{teachersOnLeaveToday.length}</p>
+          </div>
+        </div>
+
+        {/* Total Requests */}
+     <div className="p-3 sm:p-6 rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl flex items-center gap-2 sm:gap-4">
+  <div className={`p-2 rounded-lg border ${iconStyles.purple}`}>
+    <FileText size={16} />
+  </div>
+  <div>
+    <p className="text-xs text-white/60">
+      Total Requests ({currentMonthLabel})
+    </p>
+    <p className={`text-lg sm:text-2xl font-bold ${textColor.purple}`}>
+      {currentMonthLeaves.length}
+    </p>
+  </div>
+</div>
+
+      </div>
+
+
+      {/* ---------------- TABS ---------------- */}
+      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-2">
+        <div className="grid grid-cols-3 rounded-lg overflow-hidden">
+          <IconTab label="Pending" count={pendingLeaves.length} icon={Clock} active={activeTab === "PENDING"} onClick={() => setActiveTab("PENDING")} />
+          <IconTab label="Approved" count={approvedLeaves.length} icon={CheckCircle} active={activeTab === "APPROVED"} onClick={() => setActiveTab("APPROVED")} />
+          <IconTab label="Rejected" count={rejectedLeaves.length} icon={UserCheck} active={activeTab === "REJECTED"} onClick={() => setActiveTab("REJECTED")} />
+        </div>
+
+        <div className="mt-4">
+          {/* Mobile View - Card Layout */}
+          <div className="md:hidden">
+            <LeaveCardList
+              leaves={
+                activeTab === "PENDING"
+                  ? pendingLeaves
+                  : activeTab === "APPROVED"
+                    ? approvedLeaves
+                    : rejectedLeaves
+              }
+              status={activeTab}
+              onApprove={approveLeave}
+              onReject={rejectLeave}
+              onConditional={(id: string) => {
+                setSelectedLeaveId(id);
+                setShowConditionalModal(true);
+              }}
+            />
+          </div>
+
+          {/* Desktop View - Table Layout */}
+          <div className="hidden md:block">
+            <LeaveTable
+              leaves={
+                activeTab === "PENDING"
+                  ? pendingLeaves
+                  : activeTab === "APPROVED"
+                    ? approvedLeaves
+                    : rejectedLeaves
+              }
+              status={activeTab}
+              onApprove={approveLeave}
+              onReject={rejectLeave}
+              onConditional={(id: string) => {
+                setSelectedLeaveId(id);
+                setShowConditionalModal(true);
+              }}
+            />
+          </div>
         </div>
       </div>
+
+      {/* ---------------- CONDITIONAL MODAL ---------------- */}
+      {showConditionalModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+
+          <div className="bg-gradient-to-br from-[#0b1222] to-[#101b35] rounded-2xl p-6 w-full sm:w-[420px] space-y-4">
+            <h3 className="text-white text-lg font-semibold flex items-center gap-2">
+              <AlertTriangle className="text-yellow-400" /> Conditional Approval
+            </h3>
+            <p className="text-xs text-white/50">Please specify the condition for approving this leave request. The teacher will be notified of this condition.
+</p>
+            <textarea
+              className="w-full h-28 rounded-xl bg-black/30 border border-yellow-500/40 p-3 text-sm text-white outline-none"
+              placeholder="e.g. Must complete pending grading before leaving..."
+              value={conditionalMessage}
+              onChange={(e) => setConditionalMessage(e.target.value)}
+            />
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowConditionalModal(false)}
+                className="px-4 py-2 rounded-xl bg-white/10 text-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={conditionalApproveLeave}
+                className="px-5 py-2 rounded-xl bg-yellow-500 text-black font-semibold"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+/* ---------------- CARD LIST (MOBILE) ---------------- */
+
+function LeaveCardList({ leaves, status, onApprove, onReject, onConditional }: any) {
+  return (
+    <div className="space-y-3">
+      {leaves.length === 0 ? (
+        <div className="py-8 text-center text-gray-400">
+          No {status.toLowerCase()} requests
+        </div>
+      ) : (
+        leaves.map((l: Leave) => {
+          const days =
+            (new Date(l.toDate).getTime() -
+              new Date(l.fromDate).getTime()) /
+            (1000 * 60 * 60 * 24) +
+            1;
+
+          const fromDate = new Date(l.fromDate).toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "2-digit",
+          });
+
+          const toDate = new Date(l.toDate).toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "2-digit",
+          });
+
+          return (
+            <div
+              key={l.id}
+              className="w-full box-border bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-3 sm:p-4 space-y-2"
+            >
+              {/* Teacher Name */}
+              <p className="text-white font-semibold text-sm">{l.teacher.name}</p>
+
+              {/* Leave Details */}
+              <div className="space-y-1 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Leave Type</span>
+                  <span className="text-white font-medium">{l.leaveType}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Duration</span>
+                  <span className="text-white font-medium">
+                    {fromDate} - {toDate}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Days</span>
+                  <span className="text-white font-medium">{days}</span>
+                </div>
+              </div>
+
+              {/* Reason */}
+              <div className="pt-1">
+                <p className="text-xs text-gray-400">Reason</p>
+                <p className="text-xs text-white">{l.reason ?? "—"}</p>
+              </div>
+
+              {/* Pending Leaves Warning */}
+              {status === "PENDING" && (
+                <div className="flex items-center gap-1 text-yellow-400 text-xs pt-1">
+                  <AlertTriangle size={14} />
+                  <span>pending leaves</span>
+                </div>
+              )}
+
+              {/* Conditional Remarks */}
+              {l.status === "CONDITIONALLY_APPROVED" && l.remarks && (
+                <div className="bg-yellow-500/30 border border-yellow-400 rounded-lg p-2 text-xs mt-1">
+                  <p className="text-yellow-300 font-semibold">
+                    Condition: {l.remarks}
+                  </p>
+                </div>
+              )}
+
+              {/* Actions or Status */}
+              {status === "PENDING" && (
+                <div className="grid grid-cols-3 gap-2 pt-2">
+                  <ActionButton full label="Approve" icon={CheckCircle} color="green" onClick={() => onApprove(l.id)} />
+                  <ActionButton full label="Conditional" icon={AlertTriangle} color="yellow" onClick={() => onConditional(l.id)} />
+                  <ActionButton full label="Reject" icon={XCircleIcon} color="red" onClick={() => onReject(l.id)} />
+                </div>
+
+
+              )}
+
+              {status === "APPROVED" && (
+                <div className="flex justify-end pt-2">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${l.status === "CONDITIONALLY_APPROVED"
+                      ? "bg-yellow-500/20 text-yellow-400"
+                      : "bg-lime-500/20 text-lime-400"
+                      }`}
+                  >
+                    {l.status === "CONDITIONALLY_APPROVED"
+                      ? "Conditional"
+                      : "Approved"}
+                  </span>
+                </div>
+              )}
+
+              {status === "REJECTED" && (
+                <div className="flex justify-end pt-2">
+
+                </div>
+              )}
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+}
+
+/* ---------------- TABLE (DESKTOP) ---------------- */
+
+function LeaveTable({ leaves, status, onApprove, onReject, onConditional }: any) {
+  return (
+    <table className="w-full text-sm">
+      <thead className="text-gray-400 border-b border-gray-600">
+        <tr>
+          <th className="text-left py-2">Teacher Name</th>
+          <th>Leave Type</th>
+          <th>Dates</th>
+          <th>Days</th>
+          <th>Reason</th>
+          {status === "PENDING" && <th>Actions</th>}
+          {status === "APPROVED" && <th>Status</th>}
+        </tr>
+      </thead>
+
+      <tbody>
+        {leaves.map((l: Leave) => {
+          const days =
+            (new Date(l.toDate).getTime() -
+              new Date(l.fromDate).getTime()) /
+            (1000 * 60 * 60 * 24) +
+            1;
+
+          return (
+            <tr key={l.id} className="border-b border-gray-700 text-white">
+              <td className="py-4 font-medium">{l.teacher.name}</td>
+              <td className="text-center">{l.leaveType}</td>
+              <td className="text-center">
+                {new Date(l.fromDate).toLocaleDateString()} –{" "}
+                {new Date(l.toDate).toLocaleDateString()}
+              </td>
+              <td className="text-center">{days}</td>
+
+              <td className="text-center text-gray-300">
+                {l.reason ?? "—"}
+
+                {l.status === "CONDITIONALLY_APPROVED" && l.remarks && (
+                  <div className="mt-1 flex items-center justify-center gap-1 text-yellow-400 text-xs">
+                    <AlertTriangle size={12} />
+                    Condition: {l.remarks}
+                  </div>
+                )}
+              </td>
+
+              {status === "APPROVED" && (
+                <td className="text-center">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${l.status === "CONDITIONALLY_APPROVED"
+                      ? "bg-yellow-500/20 text-yellow-400"
+                      : "bg-lime-500/20 text-lime-400"
+                      }`}
+                  >
+                    {l.status === "CONDITIONALLY_APPROVED"
+                      ? "Conditional"
+                      : "Approved"}
+                  </span>
+                </td>
+              )}
+
+              {status === "PENDING" && (
+                <td className="text-center space-x-2">
+                  <ActionButton icon={CheckCircle} color="green" onClick={() => onApprove(l.id)} />
+                  <ActionButton icon={AlertTriangle} color="yellow" onClick={() => onConditional(l.id)} />
+                  <ActionButton icon={XCircleIcon} color="red" onClick={() => onReject(l.id)} />
+                </td>
+              )}
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
+/* ---------------- UI HELPERS ---------------- */
+
+function Stat({ title, value, icon: Icon, color }: any) {
+  const colors: any = {
+    yellow: "text-yellow-400",
+    lime: "text-lime-400",
+    blue: "text-blue-400",
+    purple: "text-purple-400",
+  };
+
+  return (
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 flex items-center gap-4">
+      <Icon className={colors[color]} size={20} />
+      <div>
+        <p className="text-xs text-gray-400">{title}</p>
+        <p className={`text-2xl font-bold ${colors[color]}`}>{value}</p>
+      </div>
+    </div>
+  );
+}
+
+function IconTab({ label, count, icon: Icon, active, onClick }: any) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 sm:py-3 text-xs sm:text-sm ${active
+        ? "bg-white/5 text-lime-400 border-b-2 border-lime-400"
+        : "text-gray-400 hover:text-white"
+        }`}
+    >
+      <Icon size={16} />
+      <span>
+        {label} <span className="hidden sm:inline">({count})</span>
+        <span className="sm:hidden">({count})</span>
+      </span>
+    </button>
+  );
+}
+
+function ActionButton({ label, icon: Icon, color, onClick, full }: any) {
+  const colorMap: any = {
+    green:
+      "border-lime-400 text-black bg-lime-400",
+    yellow:
+      "border-yellow-400 text-black bg-yellow-400",
+    red:
+      "border-red-500 text-white bg-red-500",
+  };
+  const mobileColorMap: any = {
+    green:
+      "border-lime-400  text-lime-400 bg-lime-400/10",
+    yellow:
+      "border-yellow-400 text-yellow-400 bg-yellow-400/10",
+    red:
+      "border-red-500 text-red-500 bg-red-500/10",
+  };
+
+  // ICON-ONLY (desktop table)
+  if (!label) {
+    return (
+      <button
+        onClick={onClick}
+        className={`p-2 rounded-xl border ${colorMap[color]} transition`}
+      >
+        <Icon size={16} />
+      </button>
+    );
+  }
+
+  // FULL BUTTON (mobile cards)
+  return (
+    <button
+      onClick={onClick}
+      className={`
+        inline-flex items-center gap-2 flex-col
+        px-1 py-2 text-xs font-semibold
+        border ${mobileColorMap[color]}
+        ${full ? "w-full justify-center rounded-xl" : "rounded-full"}
+        transition
+      `}
+    >
+      <Icon size={16} />
+      <span>{label}</span>
+    </button>
   );
 }
