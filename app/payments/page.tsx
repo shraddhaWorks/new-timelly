@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { CheckCircle, Users } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -34,6 +35,8 @@ interface FeeStats {
 
 export default function Page() {
   const { data: session, status } = useSession();
+  const searchParams = useSearchParams();
+  const verifiedRef = useRef(false);
   const [fee, setFee] = useState<StudentFee | null>(null);
   const [loading, setLoading] = useState(true);
   const [plan, setPlan] = useState<1 | 3>(1);
@@ -90,6 +93,38 @@ export default function Page() {
       setLoading(false);
     }
   };
+
+  // Handle Juspay return: verify payment when redirected back with success params
+  useEffect(() => {
+    if (status !== "authenticated" || !session?.user || verifiedRef.current) return;
+    const success = searchParams.get("success");
+    const amount = searchParams.get("amount");
+    const juspayOrder = searchParams.get("juspay_order");
+    const orderId = searchParams.get("order_id") || juspayOrder;
+    const paymentId = searchParams.get("payment_id") || searchParams.get("jp_payment_id");
+    if (success === "1" && orderId && paymentId && amount) {
+      verifiedRef.current = true;
+      const amt = parseFloat(amount);
+      if (isNaN(amt) || amt <= 0) return;
+      fetch("/api/payment/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gateway: "JUSPAY",
+          juspay_order_id: orderId,
+          juspay_payment_id: paymentId,
+          amount: amt,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.fee) setFee(data.fee);
+          if (session?.user?.role === "STUDENT") fetchFee();
+          window.history.replaceState({}, "", "/payments");
+        })
+        .catch(console.error);
+    }
+  }, [status, session?.user, searchParams]);
 
   useEffect(() => {
     if (status !== "authenticated") return;

@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import AppLayout from "../../AppLayout";
 import { PARENT_MENU_ITEMS } from "../../constants/sidebar";
 import RequiredRoles from "../../auth/RequiredRoles";
+import ParentFeesTab from "./ParentFeesTab";
 
 const PARENT_TAB_TITLES: Record<string, string> = {
   dashboard: "Dashboard",
@@ -14,6 +15,15 @@ const PARENT_TAB_TITLES: Record<string, string> = {
   fees: "Fees",
   certificates: "Certificates",
 };
+
+function renderTabContent(tab: string) {
+  switch (tab) {
+    case "fees":
+      return <ParentFeesTab />;
+    default:
+      return <div className="p-6 text-white/60">Content for {tab}</div>;
+  }
+}
 
 export default function ParentDashboardClient() {
   const searchParams = useSearchParams();
@@ -28,7 +38,7 @@ export default function ParentDashboardClient() {
         menuItems={PARENT_MENU_ITEMS}
         profile={{ name: "Parent", subtitle: "Student Parent" }}
       >
-        <div>{/* render tab content here */}</div>
+        {renderTabContent(tab)}
       </AppLayout>
     </RequiredRoles>
   );

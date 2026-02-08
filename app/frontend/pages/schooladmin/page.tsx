@@ -15,6 +15,7 @@ import { ExamsPageInner } from "@/app/schoolAdmin/exams/page";
 import AddUser from "../../components/schooladmin/AddUser";
 import SchoolAdminTeacherTab from "../../components/schooladmin/teacherTab";
 import SchoolAdminCircularsTab from "../../components/schooladmin/circularTab";
+import SchoolAdminFeesTab from "../../components/schooladmin/fees";
 
 function SchoolAdminContent() {
   const tab = useSearchParams().get("tab") ?? "dashboard";
@@ -79,7 +80,7 @@ function SchoolAdminContent() {
       case "analysis":
         return;
       case "fees":
-        return;
+        return <SchoolAdminFeesTab/>;
       case "settings":
         return;
       // case "circulars":
