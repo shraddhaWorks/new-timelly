@@ -27,9 +27,10 @@ import EditClassPanel from "./classes-panels/EditClassPanel";
 import DeleteClassPanel from "./classes-panels/DeleteClassPanel";
 import SearchInput from "../common/SearchInput";
 import SelectInput from "../common/SelectInput";
-import InlinePanelTable from "../common/InlinePanelTable";
-import StatCard from "../common/StatCard";
+import InlinePanelTable from "../common/InlinePanelTable";;
 import Spinner from "../common/Spinner";
+import StatCard from "./StatCard";
+
 
 export default function SchoolAdminClassesTab() {
   const [activeAction, setActiveAction] = useState<
