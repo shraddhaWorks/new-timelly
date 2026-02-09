@@ -10,11 +10,7 @@ interface StatCardProps {
   footer?: ReactNode;
   className?: string;
   children?: ReactNode;
-  iconVariant?: "boxed" | "plain";
-
-  /* ✅ Progress bar props */
-  progress?: number; // 0 - 100
-  progressColor?: string; // tailwind class
+  iconVariant?: "boxed" | "plain"; // ✅ NEW
 }
 
 export default function StatCard({
@@ -24,9 +20,7 @@ export default function StatCard({
   footer,
   className = "",
   children,
-  iconVariant = "boxed",
-  progress,
-  progressColor = "bg-lime-400",
+  iconVariant = "boxed", // ✅ default
 }: StatCardProps) {
   return (
     <motion.div
@@ -36,6 +30,7 @@ export default function StatCard({
         rounded-2xl p-4 md:p-5
         shadow-lg
         hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]
+        hover:-translate-y-1
         transition-all duration-300
         border border-white/10
         group
@@ -66,20 +61,6 @@ export default function StatCard({
               </div>
             )
           )}
-        </div>
-      )}
-
-      {/* ✅ Progress Bar */}
-      {typeof progress === "number" && (
-        <div className="mt-3">
-          <div className="h-2 w-full rounded-full bg-white/15 overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              className={`h-full rounded-full ${progressColor}`}
-            />
-          </div>
         </div>
       )}
 

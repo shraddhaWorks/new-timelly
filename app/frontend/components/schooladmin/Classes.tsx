@@ -25,15 +25,17 @@ import UploadCsvPanel from "./classes-panels/UploadCsvPanel";
 import ClassDetailsPanel from "./classes-panels/ClassDetailsPanel";
 import EditClassPanel from "./classes-panels/EditClassPanel";
 import DeleteClassPanel from "./classes-panels/DeleteClassPanel";
-import StatCard from "./StatCard";
 import SearchInput from "../common/SearchInput";
 import SelectInput from "../common/SelectInput";
-import InlinePanelTable from "../common/InlinePanelTable";
+import InlinePanelTable from "../common/InlinePanelTable";;
+import Spinner from "../common/Spinner";
+import StatCard from "./StatCard";
+
 
 export default function SchoolAdminClassesTab() {
   const [activeAction, setActiveAction] = useState<
     "class" | "section" | "csv" | "none"
-  >("class"); 
+  >("class");
   const [search, setSearch] = useState("");
   const [activeRowId, setActiveRowId] = useState<string | null>(null);
   const [panelMode, setPanelMode] = useState<"view" | "edit" | "delete" | null>(null);
@@ -355,32 +357,38 @@ export default function SchoolAdminClassesTab() {
           <UploadCsvPanel onCancel={() => setActiveAction("none")} />
         )}
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard
-            icon={<BookOpen size={18} />}
-            iconClassName="text-green-400"
-            label="Total Classes"
-            value={String(totalClasses)}
-          />
-          <StatCard
-            icon={<Users size={18} />}
-            iconClassName="text-violet-400"
-            label="Total Students"
-            value={String(totalStudents)}
-          />
-          <StatCard
-            icon={<AlertTriangle size={18} />}
-            iconClassName="text-orange-400"
-            label="Avg Size"
-            value={String(avgSize)}
-          />
-          <StatCard
-            icon={<User size={18} />}
-            iconClassName="text-blue-400"
-            label="Teachers"
-            value={String(totalTeachers)}
-          />
-        </div>
+        {isLoading ? (
+          <div className="py-6 flex items-center justify-center rounded-2xl border border-white/10 bg-white/5">
+            <Spinner size={28} label="Loading stats..." />
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <StatCard
+              icon={<BookOpen size={18} />}
+              iconClassName="text-green-400"
+              label="Total Classes"
+              value={String(totalClasses)}
+            />
+            <StatCard
+              icon={<Users size={18} />}
+              iconClassName="text-violet-400"
+              label="Total Students"
+              value={String(totalStudents)}
+            />
+            <StatCard
+              icon={<AlertTriangle size={18} />}
+              iconClassName="text-orange-400"
+              label="Avg Size"
+              value={String(avgSize)}
+            />
+            <StatCard
+              icon={<User size={18} />}
+              iconClassName="text-blue-400"
+              label="Teachers"
+              value={String(totalTeachers)}
+            />
+          </div>
+        )}
 
         <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 border-b border-white/10">
@@ -435,7 +443,7 @@ export default function SchoolAdminClassesTab() {
               )}
               {isLoading && (
                 <div className="text-center py-10 text-white/60">
-                  Loading classes...
+                  <Spinner/>
                 </div>
               )}
               {pagedRows.map((row) => (

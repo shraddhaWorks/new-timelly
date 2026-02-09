@@ -8,14 +8,19 @@ import RequiredRoles from "../../auth/RequiredRoles";
 import SchoolAdminStudentsTab from "../../components/schooladmin/Students";
 import SchoolAdminClassesTab from "../../components/schooladmin/Classes";
 import SchoolTeacherLeavesTab from "../../components/schooladmin/TeacherLeaves";
-// import SchoolCercularsTab from "../../components/schooladmin/circulars";
 import NewsFeed from "../../components/schooladmin/Newsfeed";
 import TeacherAuditTab from "../../components/schooladmin/TeacherAudit";
-import { ExamsPageInner } from "@/app/schoolAdmin/exams/page";
 import AddUser from "../../components/schooladmin/AddUser";
-import SchoolAdminTeacherTab from "../../components/schooladmin/teacherTab";
+import SchoolAdminFeesTab from "../../components/schooladmin/Fees";
+import SchoolAdminDashboard from "../../components/schooladmin/Dashboard";
+import StudentDetails from "../../components/schooladmin/StudentDetails";
+import Certificates from "../../components/schooladmin/Certificates";
+import { ExamsPageInner } from "../../components/schooladmin/Exams";
+import SchoolAdminAnalysisTab from "../../components/schooladmin/Analysis";
+import SchoolAdminSettingsTab from "../../components/schooladmin/Settings";
+import SchoolAdminTeacherTab from "../../components/schooladmin/TeachersTab";
 import SchoolAdminCircularsTab from "../../components/schooladmin/circularTab";
-import SchoolAdminFeesTab from "../../components/schooladmin/fees";
+
 
 function SchoolAdminContent() {
   const tab = useSearchParams().get("tab") ?? "dashboard";
@@ -35,7 +40,7 @@ function SchoolAdminContent() {
         const u = data.user;
         if (u) {
           setProfile({
-            name: u.name ?? "School Admin",
+            name: u.name ?? "School Admin", 
             subtitle: "School Admin",
             image: u.photoUrl ?? null,
           });
@@ -52,7 +57,7 @@ function SchoolAdminContent() {
   const renderComponent = () => {
     switch (tab) {
       case "dashboard":
-        return <div><h2>School Admin Dashboard</h2></div>;
+        return <SchoolAdminDashboard />;
       case "students":
         return <SchoolAdminStudentsTab />;
       case "add-user":
@@ -60,7 +65,7 @@ function SchoolAdminContent() {
       case "classes":
         return <SchoolAdminClassesTab/>;
       case "student-details":
-        return ;
+        return <StudentDetails/>;
       case "teachers":
         return <SchoolAdminTeacherTab/>
       case "teacher-leaves":
@@ -68,23 +73,21 @@ function SchoolAdminContent() {
       case "teacher-audit":
         return <TeacherAuditTab />;
       case "workshops":
-        return;
+        return ;
       case "newsfeed":
         return <NewsFeed/>;
         case "circulars":
         return <SchoolAdminCircularsTab/>;
       case "certificates":
-        return;
+        return <Certificates/>;
       case "exams":
         return <ExamsPageInner />;
       case "analysis":
-        return;
+        return <SchoolAdminAnalysisTab/>;
       case "fees":
-        return <SchoolAdminFeesTab/>;
+        return <SchoolAdminFeesTab/>;;
       case "settings":
-        return;
-      // case "circulars":
-      //   return <SchoolCercularsTab/>;
+        return <SchoolAdminSettingsTab/>;
       default:
         return <div>Not found</div>;
     }

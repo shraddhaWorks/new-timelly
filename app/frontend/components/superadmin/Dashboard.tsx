@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import PageHeader from "../common/PageHeader";
 
 import { Users, School, GraduationCap } from "lucide-react";
-import StatCard from "../common/statCard";
 import { formatNumber as fmtNum } from "../../utils/format";
+import StatCard from "../common/statCard";
 
 export interface SuperadminDashboardData {
   stats: { totalSchools: number; totalStudents: number; totalTeachers: number };

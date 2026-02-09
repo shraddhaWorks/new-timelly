@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import PageHeader from "../common/PageHeader";
 
-import CircularFilters from "./circularTab/CircularFilters";
-import CircularList from "./circularTab/CircularList";
-import CircularForm from "./circularTab/CircularForm";
-import { CircularRow } from "./circularTab/types";
+import CircularFilters from "./circulartab/CircularFilters";
+import CircularList from "./circulartab/CircularList";
+import CircularForm from "./circulartab/CircularForm";
+import { CircularRow } from "./circulartab/types";
 import { Cross,  Plus, Scroll, X } from "lucide-react";
 
 export default function SchoolAdminCircularsTab() {
