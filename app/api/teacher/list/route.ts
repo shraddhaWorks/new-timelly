@@ -52,12 +52,15 @@ export async function GET() {
         name: true,
         email: true,
         mobile: true,
+        teacherId: true,
+        subject: true,
+        photoUrl: true,
       },
       orderBy: {
         name: "asc",
       },
     });
-    await redis.set(cachedKey,teachers,{ex:60 * 5}); // Cache for 5 minutes
+    await redis.set(cachedKey, teachers, { ex: 60 * 5 }); // Cache for 5 minutes
     return NextResponse.json({ teachers }, { status: 200 });
   } catch (error: any) {
     console.error("List teachers error:", error);

@@ -61,10 +61,11 @@ const DEFAULT_FORM: StudentFormState = {
   status: "Active",
   fatherName: "",
   phoneNo: "",
+  email: "",
+  address: "",
   aadhaarNo: "",
   totalFee: "",
   discountPercent: "",
-  address: "",
 };
 
 const validateForm = (
@@ -287,14 +288,15 @@ export default function useStudentPage({ classes = [], reload }: Props) {
         fatherName: form.fatherName,
         aadhaarNo: form.aadhaarNo,
         phoneNo: form.phoneNo,
+        email: form.email?.trim() || undefined,
         dob: form.dob,
         classId: form.classId,
-        address: form.address || undefined,
+        address: form.address?.trim() || undefined,
         totalFee: Number(form.totalFee),
         discountPercent: form.discountPercent
           ? Number(form.discountPercent)
           : 0,
-        rollNo: form.rollNo || undefined,
+        rollNo: form.rollNo?.trim() || undefined,
       });
 
       const data = await res.json();

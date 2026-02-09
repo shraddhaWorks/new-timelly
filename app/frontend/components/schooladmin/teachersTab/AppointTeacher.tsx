@@ -211,12 +211,30 @@
 
 "use client";
 
-import { GraduationCap, UserPlus, Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { GraduationCap, UserPlus, Trash2 } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+
+const DEFAULT_AVATAR = "https://randomuser.me/api/portraits/lego/1.jpg";
 
 /* ================= TYPES ================= */
-type AppointmentRow = {
+type ClassItem = {
   id: string;
+  name: string;
+  section: string | null;
+  teacherId: string | null;
+  teacher?: { id: string; name: string | null; email: string | null } | null;
+};
+
+type TeacherItem = {
+  id: string;
+  name: string | null;
+  email: string | null;
+  teacherId: string | null;
+  photoUrl: string | null;
+};
+
+type AppointmentRow = {
+  classId: string;
   className: string;
   teacherName: string;
   teacherCode: string;
@@ -243,53 +261,108 @@ const columns: TableColumn<AppointmentRow>[] = [
   { key: "actions", label: "Actions", className: "text-right" },
 ];
 
-/* ================= SAMPLE DATA ================= */
-const initialData: AppointmentRow[] = [
-  {
-    id: "1",
-    className: "10-A",
-    teacherName: "Mrs. Priya Sharma",
-    teacherCode: "TCH001",
-    teacherEmail: "priya.sharma@school.com",
-    avatar: "https://i.pravatar.cc/40?img=32",
-  },
-  {
-    id: "2",
-    className: "9-A",
-    teacherName: "Mr. Rajesh Kumar",
-    teacherCode: "TCH002",
-    teacherEmail: "rajesh.kumar@school.com",
-    avatar: "https://i.pravatar.cc/40?img=12",
-  },
-];
-
 /* ================= COMPONENT ================= */
 export default function AppointTeacher() {
-  const [data, setData] = useState<AppointmentRow[]>(initialData);
-  const [selectedClass, setSelectedClass] = useState("");
-  const [selectedTeacher, setSelectedTeacher] = useState("");
+  const [classes, setClasses] = useState<ClassItem[]>([]);
+  const [teachers, setTeachers] = useState<TeacherItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedClassId, setSelectedClassId] = useState("");
+  const [selectedTeacherId, setSelectedTeacherId] = useState("");
+  const [assigning, setAssigning] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
-  const handleDelete = (id: string) => {
-    setData((prev) => prev.filter((row) => row.id !== id));
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const [classRes, teacherRes] = await Promise.all([
+          fetch("/api/class/list", { credentials: "include" }),
+          fetch("/api/teacher/list", { credentials: "include" }),
+        ]);
+        if (cancelled) return;
+        const classData = await classRes.json();
+        const teacherData = await teacherRes.json();
+        if (classData.classes) setClasses(classData.classes);
+        if (teacherData.teachers) setTeachers(teacherData.teachers);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const appointments: AppointmentRow[] = useMemo(() => {
+    return classes
+      .filter((c) => c.teacherId && c.teacher)
+      .map((c) => ({
+        classId: c.id,
+        className: [c.name, c.section].filter(Boolean).join(c.section ? " - " : ""),
+        teacherName: c.teacher!.name || "Teacher",
+        teacherCode: (c.teacher as { teacherId?: string }).teacherId || c.teacher!.id.slice(0, 6).toUpperCase(),
+        teacherEmail: c.teacher!.email || "-",
+        avatar: DEFAULT_AVATAR,
+      }));
+  }, [classes]);
+
+  const classOptions = useMemo(() => {
+    return classes.map((c) => ({
+      value: c.id,
+      label: [c.name, c.section].filter(Boolean).join(c.section ? " - " : ""),
+    }));
+  }, [classes]);
+
+  const teacherOptions = useMemo(() => {
+    return teachers.map((t) => ({
+      value: t.id,
+      label: t.name || "Teacher",
+    }));
+  }, [teachers]);
+
+  const handleAssign = async () => {
+    if (!selectedClassId || !selectedTeacherId) return;
+    setAssigning(true);
+    try {
+      const res = await fetch(`/api/class/${selectedClassId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ teacherId: selectedTeacherId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to assign");
+      setSelectedClassId("");
+      setSelectedTeacherId("");
+      const listRes = await fetch("/api/class/list", { credentials: "include" });
+      const listData = await listRes.json();
+      if (listData.classes) setClasses(listData.classes);
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : "Failed to assign class teacher.");
+    } finally {
+      setAssigning(false);
+    }
   };
 
-  const handleAssign = () => {
-    if (!selectedClass || !selectedTeacher) return;
-
-    const newRow: AppointmentRow = {
-      id: Date.now().toString(),
-      className: selectedClass,
-      teacherName: selectedTeacher,
-      teacherCode: `TCH${data.length + 3}`,
-      teacherEmail: `${selectedTeacher
-        .toLowerCase()
-        .replace(/\s/g, ".")}@school.com`,
-      avatar: "https://i.pravatar.cc/40?img=50",
-    };
-
-    setData((prev) => [...prev, newRow]);
-    setSelectedClass("");
-    setSelectedTeacher("");
+  const handleRemove = async (classId: string) => {
+    if (!confirm("Remove class teacher from this class?")) return;
+    setRemovingId(classId);
+    try {
+      const res = await fetch(`/api/class/${classId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ teacherId: null }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to remove");
+      const listRes = await fetch("/api/class/list", { credentials: "include" });
+      const listData = await listRes.json();
+      if (listData.classes) setClasses(listData.classes);
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : "Failed to remove class teacher.");
+    } finally {
+      setRemovingId(null);
+    }
   };
 
   return (
@@ -307,46 +380,51 @@ export default function AppointTeacher() {
 
       {/* ================= FORM ================= */}
       <div className="border-y border-white/10 p-4 sm:p-6 bg-[#0F172A]/50">
-        <div className="flex flex-col md:flex-row gap-4">
-          <select
-            value={selectedClass}
-            onChange={(e) => setSelectedClass(e.target.value)}
-            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none"
-          >
-            <option value="">-- Select Class --</option>
-            {["9-A", "10-A", "11-B"].map((cls) => (
-              <option key={cls} value={cls} className="bg-[#0F172A]">
-                {cls}
-              </option>
-            ))}
-          </select>
+        {loading ? (
+          <p className="text-sm text-white/50">Loading classes and teachers...</p>
+        ) : (
+          <div className="flex flex-col md:flex-row gap-4">
+            <select
+              value={selectedClassId}
+              onChange={(e) => setSelectedClassId(e.target.value)}
+              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-lime-400/50"
+            >
+              <option value="">-- Select Class --</option>
+              {classOptions.map((opt) => (
+                <option key={opt.value} value={opt.value} className="bg-[#0F172A]">
+                  {opt.label}
+                </option>
+              ))}
+            </select>
 
-          <select
-            value={selectedTeacher}
-            onChange={(e) => setSelectedTeacher(e.target.value)}
-            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none"
-          >
-            <option value="">-- Select Teacher --</option>
-            {["Mr. Rajesh Kumar", "Mrs. Priya Sharma"].map((t) => (
-              <option key={t} value={t} className="bg-[#0F172A]">
-                {t}
-              </option>
-            ))}
-          </select>
+            <select
+              value={selectedTeacherId}
+              onChange={(e) => setSelectedTeacherId(e.target.value)}
+              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-lime-400/50"
+            >
+              <option value="">-- Select Teacher --</option>
+              {teacherOptions.map((opt) => (
+                <option key={opt.value} value={opt.value} className="bg-[#0F172A]">
+                  {opt.label}
+                </option>
+              ))}
+            </select>
 
-          <button
-            disabled={!selectedClass || !selectedTeacher}
-            onClick={handleAssign}
-            className={`px-6 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 justify-center transition ${
-              !selectedClass || !selectedTeacher
-                ? "bg-white/10 text-white/40 cursor-not-allowed"
-                : "bg-lime-500 text-black hover:bg-lime-400"
-            }`}
-          >
-            <UserPlus size={18} />
-            Assign
-          </button>
-        </div>
+            <button
+              type="button"
+              disabled={!selectedClassId || !selectedTeacherId || assigning}
+              onClick={handleAssign}
+              className={`px-6 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 justify-center transition ${
+                !selectedClassId || !selectedTeacherId || assigning
+                  ? "bg-white/10 text-white/40 cursor-not-allowed"
+                  : "bg-lime-500 text-black hover:bg-lime-400"
+              }`}
+            >
+              <UserPlus size={18} />
+              {assigning ? "Assigning..." : "Assign"}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ================= CURRENT APPOINTMENTS ================= */}
@@ -377,7 +455,7 @@ export default function AppointTeacher() {
 
             {/* ===== TABLE BODY ===== */}
             <tbody>
-              {data.length === 0 ? (
+              {appointments.length === 0 ? (
                 <tr>
                   <td
                     colSpan={columns.length}
@@ -387,9 +465,9 @@ export default function AppointTeacher() {
                   </td>
                 </tr>
               ) : (
-                data.map((item) => (
+                appointments.map((item) => (
                   <tr
-                    key={item.id}
+                    key={item.classId}
                     className="hover:bg-white/5 transition-colors"
                   >
                     {columns.map((col) => {
@@ -400,15 +478,15 @@ export default function AppointTeacher() {
                             className="px-3 py-3 text-right"
                           >
                             <div className="flex justify-end gap-2">
-                              <Pencil
-                                size={14}
-                                className="text-lime-400 cursor-pointer hover:opacity-80"
-                              />
-                              <Trash2
-                                size={14}
-                                className="text-red-400 cursor-pointer hover:opacity-80"
-                                onClick={() => handleDelete(item.id)}
-                              />
+                              <button
+                                type="button"
+                                disabled={removingId === item.classId}
+                                onClick={() => handleRemove(item.classId)}
+                                className="text-red-400 hover:opacity-80 disabled:opacity-50"
+                                title="Remove class teacher"
+                              >
+                                <Trash2 size={14} />
+                              </button>
                             </div>
                           </td>
                         );

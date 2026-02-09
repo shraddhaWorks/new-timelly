@@ -26,8 +26,9 @@ export const toStudentForm = (student: StudentRow): StudentFormState => ({
   status: student.status || "Active",
   fatherName: student.fatherName || "",
   phoneNo: student.phoneNo || "",
+  email: student.user?.email || (student as { email?: string }).email || "",
+  address: student.address || "",
   aadhaarNo: student.aadhaarNo || "",
   totalFee: "",
   discountPercent: "",
-  address: student.address || "",
 });

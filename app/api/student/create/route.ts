@@ -44,6 +44,7 @@ export async function POST(req: Request) {
       fatherName,
       aadhaarNo,
       phoneNo,
+      email: emailInput,
       dob,
       classId,
       address,
@@ -104,11 +105,19 @@ export async function POST(req: Request) {
               ? `${rollNoPrefix}${nextNum}`
               : String(nextNum);
 
+        const emailTrimmed =
+          typeof emailInput === "string" && emailInput.trim().length > 0
+            ? emailInput.trim()
+            : null;
+        const userEmail =
+          emailTrimmed && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed)
+            ? emailTrimmed
+            : `${admissionNumber.replaceAll("/", "")}@${String(settings.admissionPrefix).toLowerCase()}.in`;
+
         const user = await tx.user.create({
           data: {
             name,
-            // Student email format: <admissionNumber>@<admissionPrefix>.in (no slashes in local-part)
-            email: `${admissionNumber.replaceAll("/", "")}@${String(settings.admissionPrefix).toLowerCase()}.in`,
+            email: userEmail,
             password: hashedPassword,
             role: Role.STUDENT,
             schoolId,

@@ -150,6 +150,27 @@ export default function AddStudentForm({
             />
             {renderError(errors, "phoneNo")}
           </div>
+          <div className="md:col-span-2">
+            <InputField
+              label="Email"
+              value={form.email}
+              onChange={(value) => onFieldChange("email", value)}
+              placeholder="parent@example.com"
+              type="email"
+              bgColor="white"
+            />
+            {renderError(errors, "email")}
+          </div>
+          <div className="md:col-span-2">
+            <InputField
+              label="Address"
+              value={form.address}
+              onChange={(value) => onFieldChange("address", value)}
+              placeholder="Full address"
+              bgColor="white"
+            />
+            {renderError(errors, "address")}
+          </div>
         </div>
       </div>
 

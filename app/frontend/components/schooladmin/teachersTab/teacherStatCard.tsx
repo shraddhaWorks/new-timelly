@@ -113,9 +113,10 @@ interface TeacherStatCardProps {
   avatar: string; name: string; code: string; percentage: number;
   stats: { label: string; value: any; color?: string }[];
   statuses: { label: string; active?: boolean }[];
+  onStatusChange?: (label: string) => void;
 }
 
-export default function TeacherStatCard({ avatar, name, code, percentage, stats, statuses }: TeacherStatCardProps) {
+export default function TeacherStatCard({ avatar, name, code, percentage, stats, statuses, onStatusChange }: TeacherStatCardProps) {
   return (
     <motion.div whileHover={{ y: -4 }} className="bg-[#0F172A]/40 rounded-2xl border border-white/10 flex flex-col overflow-hidden hover:border-lime-400/30 transition-all">
       <div className="p-4 flex items-center justify-between gap-3 bg-white/[0.03]">
@@ -140,9 +141,14 @@ export default function TeacherStatCard({ avatar, name, code, percentage, stats,
 
       <div className="p-3 grid grid-cols-4 gap-2">
         {statuses.map((s, i) => (
-          <button key={i} className={`h-9 rounded-xl text-xs font-bold transition-all ${
-            s.active ? "bg-lime-400 text-black shadow-[0_0_15px_rgba(163,230,53,0.3)]" : "bg-white/5 text-white/30 hover:bg-white/10"
-          }`}>
+          <button
+            key={i}
+            type="button"
+            onClick={() => onStatusChange?.(s.label)}
+            className={`h-9 rounded-xl text-xs font-bold transition-all ${
+              s.active ? "bg-lime-400 text-black shadow-[0_0_15px_rgba(163,230,53,0.3)]" : "bg-white/5 text-white/30 hover:bg-white/10"
+            }`}
+          >
             {s.label}
           </button>
         ))}
