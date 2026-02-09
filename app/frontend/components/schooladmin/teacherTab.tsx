@@ -64,6 +64,7 @@ const MobileTeacherCard = ({ teacher, onEdit, onDelete }: {
       <p className="text-gray-200 font-medium">{teacher.phone}</p>
     </div>
 
+
     <div className="flex gap-2 pt-2">
       <button className="flex-1 bg-white/5 hover:bg-white/10 py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-medium text-gray-300 transition-colors">
         <Eye size={18} /> View
