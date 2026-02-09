@@ -297,6 +297,8 @@ export default function useStudentPage({ classes = [], reload }: Props) {
           ? Number(form.discountPercent)
           : 0,
         rollNo: form.rollNo?.trim() || undefined,
+        gender: form.gender?.trim() || undefined,
+        previousSchool: form.previousSchool?.trim() || undefined,
       });
 
       const data = await res.json();
@@ -325,8 +327,11 @@ export default function useStudentPage({ classes = [], reload }: Props) {
         fetchAllStudents();
       }
       reload?.();
-    } catch {
-      toast.error("Something went wrong while adding student");
+    } catch (e) {
+      // api() already shows toast with server message on 4xx/5xx; only show generic on network/unknown errors
+      if (!(e instanceof Error) || !e.message) {
+        toast.error("Something went wrong while adding student");
+      }
     } finally {
       setSaving(false);
     }

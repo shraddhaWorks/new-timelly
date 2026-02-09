@@ -414,6 +414,8 @@ model Student {
   rollNo          String? // modifiable by admin
   dob             DateTime
   address         String?
+  gender          String?
+  previousSchool  String?  @db.Text
 
   // Relations
   attendances          Attendance[]

@@ -6,17 +6,10 @@ type Props = {
 };
 
 export const AcademicPerformance = ({ data = [] }: Props) => {
-  // Default data matching the screenshot values approximately
-  const chartData = data.length > 0 ? data : [
-    { subject: "Math", score: 94 },
-    { subject: "Science", score: 88 },
-    { subject: "English", score: 92 },
-    { subject: "History", score: 85 },
-    { subject: "Computer", score: 98 },
-  ];
+  const chartData = data.length > 0 ? data : [];
 
   return (
-    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] p-8 w-full max-w-3xl">
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] p-4 sm:p-8 w-full max-w-3xl min-w-0 overflow-hidden">
       <div className="flex justify-between items-center mb-10">
         <h3 className="text-white text-2xl font-bold flex items-center gap-3">
           <TrendingUp className="w-6 h-6 text-[#b4f44d]" /> 
@@ -31,7 +24,8 @@ export const AcademicPerformance = ({ data = [] }: Props) => {
         </div>
       </div>
 
-      <div className="h-64 w-full">
+      <div className="h-64 w-full min-h-[200px]">
+        {chartData.length > 0 ? (
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
             <CartesianGrid 
@@ -61,6 +55,9 @@ export const AcademicPerformance = ({ data = [] }: Props) => {
             />
           </BarChart>
         </ResponsiveContainer>
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-500 text-sm">No academic data</div>
+        )}
       </div>
     </div>
   );

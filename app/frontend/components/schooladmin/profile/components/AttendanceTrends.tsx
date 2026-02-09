@@ -10,19 +10,8 @@ const MONTH_LABELS: Record<string, string> = {
   "07": "Jul", "08": "Aug", "09": "Sep", "10": "Oct", "11": "Nov", "12": "Dec",
 };
 
-// --- Dummy Data ---
-const DUMMY_ATTENDANCE = [
-  { month: "2023-09", present: 22, total: 24, pct: 91 },
-  { month: "2023-10", present: 18, total: 24, pct: 75 },
-  { month: "2023-11", present: 23, total: 24, pct: 95 },
-  { month: "2023-12", present: 15, total: 20, pct: 75 },
-  { month: "2024-01", present: 21, total: 24, pct: 87 },
-  { month: "2024-02", present: 19, total: 22, pct: 86 },
-];
-
-export const AttendanceTrends = ({ data }: Props) => {
-  // Force dummy data if prop is missing or an empty array
-  const activeData = data && data.length > 0 ? data : DUMMY_ATTENDANCE;
+export const AttendanceTrends = ({ data = [] }: Props) => {
+  const activeData = data.length > 0 ? data : [];
 
   const chartData = activeData.map((d) => {
     // Splits "2024-01" into ["2024", "01"]
@@ -34,11 +23,11 @@ export const AttendanceTrends = ({ data }: Props) => {
   });
 
   return (
-    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-6 overflow-hidden">
-      <h3 className="text-white text-lg font-semibold flex items-center gap-2 mb-8">
-        <Calendar className="w-5 h-5 text-blue-400" /> Attendance Trends
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-4 sm:p-6 overflow-hidden min-w-0">
+      <h3 className="text-white text-lg font-semibold flex items-center gap-2 mb-6 sm:mb-8">
+        <Calendar className="w-5 h-5 text-blue-400 flex-shrink-0" /> Attendance Trends
       </h3>
-      <div className="h-48 w-full">
+      <div className="h-48 w-full min-h-[200px]">
         {chartData.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ left: -20 }}>

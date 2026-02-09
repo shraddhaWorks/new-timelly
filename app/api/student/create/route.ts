@@ -39,6 +39,7 @@ export async function POST(req: Request) {
       );
     }
 
+    const body = await req.json();
     const {
       name,
       fatherName,
@@ -47,28 +48,40 @@ export async function POST(req: Request) {
       email: emailInput,
       dob,
       classId,
-      address,
-      totalFee,
-      discountPercent,
+      address: addressInput,
+      totalFee: totalFeeInput,
+      discountPercent: discountPercentInput,
       rollNo,
-    } = await req.json();
+      gender: genderInput,
+      previousSchool: previousSchoolInput,
+    } = body;
 
     // Validate all required fields
-    if (!name || !dob || !fatherName || !aadhaarNo || !phoneNo) {
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return NextResponse.json(
+        { message: "Student name is required" },
+        { status: 400 }
+      );
+    }
+    if (!dob || !fatherName || !aadhaarNo || !phoneNo) {
       return NextResponse.json(
         { message: "Missing required fields: name, dob, fatherName, aadhaarNo, and phoneNo are required" },
         { status: 400 }
       );
     }
 
-    if (typeof totalFee !== "number" || totalFee <= 0) {
+    const totalFee = typeof totalFeeInput === "number" ? totalFeeInput : Number(totalFeeInput);
+    if (Number.isNaN(totalFee) || totalFee <= 0) {
       return NextResponse.json(
         { message: "totalFee must be a positive number" },
         { status: 400 }
       );
     }
 
-    const safeDiscount = typeof discountPercent === "number" ? discountPercent : 0;
+    const safeDiscount =
+      typeof discountPercentInput === "number"
+        ? discountPercentInput
+        : Number(discountPercentInput) || 0;
     if (safeDiscount < 0 || safeDiscount > 100) {
       return NextResponse.json(
         { message: "discountPercent must be between 0 and 100" },
@@ -124,6 +137,19 @@ export async function POST(req: Request) {
           },
         });
 
+        const address =
+          typeof addressInput === "string" && addressInput.trim()
+            ? addressInput.trim()
+            : null;
+        const gender =
+          typeof genderInput === "string" && genderInput.trim()
+            ? genderInput.trim()
+            : null;
+        const previousSchool =
+          typeof previousSchoolInput === "string" && previousSchoolInput.trim()
+            ? previousSchoolInput.trim()
+            : null;
+
         const studentRecord = await tx.student.create({
           data: {
             userId: user.id,
@@ -132,9 +158,11 @@ export async function POST(req: Request) {
             classId: classId ?? null,
             dob: dobDate,
             address,
-            fatherName,
-            aadhaarNo,
-            phoneNo,
+            gender,
+            previousSchool,
+            fatherName: String(fatherName).trim(),
+            aadhaarNo: String(aadhaarNo).trim(),
+            phoneNo: String(phoneNo).trim(),
             rollNo: finalRollNo,
           },
           include: {

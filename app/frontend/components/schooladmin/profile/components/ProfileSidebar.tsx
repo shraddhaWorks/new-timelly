@@ -9,6 +9,7 @@ interface StudentProfileProps {
   email: string;
   phone: string;
   address: string;
+  photoUrl?: string | null;
 }
 
 type Props = {
@@ -33,7 +34,7 @@ export const ProfileSidebar = ({
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-4 text-center shadow-xl">
       <div className="relative w-32 h-32 mx-auto mb-6">
         <img
-          src="/avatar.jpg"
+          src={student.photoUrl || "/avatar.jpg"}
           className="rounded-[2rem] border-2 border-[#b4f44d] object-cover w-full h-full shadow-lg"
           alt={student.name}
         />

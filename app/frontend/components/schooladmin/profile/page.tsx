@@ -15,16 +15,16 @@ type StudentDetail = {
     name: string;
     admissionNumber: string;
     email: string;
-    photoUrl: string | null;
+    photoUrl?: string | null;
     rollNo: string;
     age: number | null;
     address: string;
     phone: string;
     fatherName: string;
-    motherName: string;
-    fatherOccupation: string;
-    motherOccupation: string;
-    fatherPhone: string;
+    motherName?: string;
+    fatherOccupation?: string;
+    motherOccupation?: string;
+    fatherPhone?: string;
     class: { id: string; name: string; section: string | null; displayName: string } | null;
   };
   fee: {
@@ -57,6 +57,8 @@ type StudentOption = {
   name: string;
   admissionNumber: string;
   classDisplay: string;
+  classId: string;
+  section: string | null;
 };
 
 export default function StudentDetailsPage() {
@@ -79,11 +81,13 @@ export default function StudentDetailsPage() {
         ]);
         if (!cancelled && studentsRes.ok) {
           const d = await studentsRes.json();
-          const list: StudentOption[] = (d.students || []).map((s: { id: string; user?: { name?: string }; admissionNumber?: string; class?: { name: string; section: string | null } }) => ({
+          const list: StudentOption[] = (d.students || []).map((s: { id: string; user?: { name?: string }; admissionNumber?: string; class?: { id: string; name: string; section: string | null } }) => ({
             id: s.id,
             name: s.user?.name ?? "Unknown",
             admissionNumber: s.admissionNumber ?? "",
             classDisplay: s.class ? `${s.class.name}${s.class.section ? `-${s.class.section}` : ""}` : "-",
+            classId: s.class?.id ?? "",
+            section: s.class?.section ?? null,
           }));
           setStudents(list);
           if (list.length > 0 && !selectedId) setSelectedId(list[0].id);
@@ -129,6 +133,8 @@ export default function StudentDetailsPage() {
       const q = searchQuery.toLowerCase();
       if (!s.name.toLowerCase().includes(q) && !s.admissionNumber.toLowerCase().includes(q)) return false;
     }
+    if (filterClass && s.classId !== filterClass) return false;
+    if (filterSection && s.section !== filterSection) return false;
     return true;
   });
 
@@ -138,7 +144,7 @@ export default function StudentDetailsPage() {
   const sectionOptions = [{ label: "All Sections", value: "" }, ...sections.map((s) => ({ label: s, value: s }))];
 
   return (
-    <div className="p-2 sm:p-6 md:p-8 space-y-6 md:space-y-8 max-w-[1600px] mx-auto">
+    <div className="p-2 sm:p-6 md:p-8 space-y-6 md:space-y-8 max-w-[1600px] mx-auto min-h-0 overflow-y-auto overflow-x-hidden pb-8">
       <PageHeader
         title="Student Details"
         subtitle="View comprehensive academic and personal records."
@@ -209,7 +215,7 @@ export default function StudentDetailsPage() {
       )}
 
       {!loading && detail && (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8 min-w-0">
           <div className="lg:col-span-1">
             <ProfileSidebar
               student={{
@@ -220,7 +226,8 @@ export default function StudentDetailsPage() {
                 age: String(detail.student.age ?? "-"),
                 email: detail.student.email,
                 phone: detail.student.phone,
-                address: detail.student.address,
+                address: detail.student.address || "—",
+                photoUrl: detail.student.photoUrl ?? undefined,
               }}
               fatherName={detail.student.fatherName}
               fatherOccupation={detail.student.fatherOccupation}
@@ -255,7 +262,7 @@ export default function StudentDetailsPage() {
                   <p className="text-lg font-bold text-white">
                     {detail.academicPerformance.length ? "A" : "-"}
                   </p>
-                  <p className="text-[10px] text-blue-400">Academic Rank: 5</p>
+                  <p className="text-[10px] text-blue-400">Academic Rank: —</p>
                 </div>
               </div>
               <div className="bg-white/5 backdrop-blur-xl border-b border-white/10 rounded-2xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4 min-w-0">
@@ -264,8 +271,8 @@ export default function StudentDetailsPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Behavior</p>
-                  <p className="text-lg font-bold text-pink-400">95</p>
-                  <p className="text-[10px] text-pink-400">Excellent</p>
+                  <p className="text-lg font-bold text-pink-400">—</p>
+                  <p className="text-[10px] text-pink-400">—</p>
                 </div>
               </div>
               <div className="bg-white/5 backdrop-blur-xl border-b border-white/10 rounded-2xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4 min-w-0">

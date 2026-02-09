@@ -145,10 +145,42 @@ export default function AddStudentForm({
               label="Contact Number*"
               value={form.phoneNo}
               onChange={(value) => onFieldChange("phoneNo", value)}
-              placeholder="+91..."
+              placeholder="10 digits"
               bgColor="white"
             />
             {renderError(errors, "phoneNo")}
+          </div>
+          <div>
+            <InputField
+              label="Aadhaar Number*"
+              value={form.aadhaarNo}
+              onChange={(value) => onFieldChange("aadhaarNo", value.replace(/\D/g, "").slice(0, 12))}
+              placeholder="12 digits"
+              bgColor="white"
+            />
+            {renderError(errors, "aadhaarNo")}
+          </div>
+          <div>
+            <InputField
+              label="Total Fee*"
+              value={form.totalFee}
+              onChange={(value) => onFieldChange("totalFee", value)}
+              placeholder="e.g. 50000"
+              type="number"
+              bgColor="white"
+            />
+            {renderError(errors, "totalFee")}
+          </div>
+          <div>
+            <InputField
+              label="Discount %"
+              value={form.discountPercent}
+              onChange={(value) => onFieldChange("discountPercent", value)}
+              placeholder="0–100"
+              type="number"
+              bgColor="white"
+            />
+            {renderError(errors, "discountPercent")}
           </div>
           <div className="md:col-span-2">
             <InputField

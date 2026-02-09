@@ -8,40 +8,24 @@ type Certificate = {
   certificateUrl: string | null;
 };
 
-// Dummy data for visualization
-const DUMMY_DATA: Certificate[] = [
-  {
-    id: "1",
-    title: "Academic Excellence Award",
-    issuedDate: "2023-12-01",
-    issuedBy: "School Board",
-    certificateUrl: "#"
-  },
-  {
-    id: "2",
-    title: "Inter-School Sports Winner",
-    issuedDate: "2024-01-15",
-    issuedBy: "Sports Authority",
-    certificateUrl: "#"
-  }
-];
-
 type Props = {
   certificates?: Certificate[];
 };
 
-export const Certificates = ({ certificates }: Props) => {
-  // Use dummy data if the passed array is empty or missing
-  const displayData = certificates && certificates.length > 0 ? certificates : DUMMY_DATA;
+export const Certificates = ({ certificates = [] }: Props) => {
+  const displayData = certificates.length > 0 ? certificates : [];
 
   return (
-    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 shadow-2xl">
-      <h3 className="text-xl font-semibold flex items-center gap-3 mb-10 text-white">
-        <Award className="w-6 h-6 text-[#b4f44d]" />
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-4 sm:p-8 shadow-2xl overflow-hidden min-w-0">
+      <h3 className="text-xl font-semibold flex items-center gap-3 mb-6 sm:mb-10 text-white">
+        <Award className="w-6 h-6 text-[#b4f44d] flex-shrink-0" />
         Certificates
       </h3>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {displayData.length === 0 ? (
+        <div className="py-8 text-center text-gray-500 text-sm">No certificates</div>
+      ) : (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {displayData.map((c) => (
           <div
             key={c.id}
@@ -62,7 +46,7 @@ export const Certificates = ({ certificates }: Props) => {
               href={c.certificateUrl ?? "#"}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-400 hover:text-[#b4f44d] p-2 transition-colors"
+              className="text-gray-400 hover:text-[#b4f44d] p-2 transition-colors touch-manipulation min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
               aria-label="Download"
             >
               <Download size={20} />
@@ -70,6 +54,7 @@ export const Certificates = ({ certificates }: Props) => {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 };
