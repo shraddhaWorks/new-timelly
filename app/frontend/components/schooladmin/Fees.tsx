@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import PageHeader from "../../common/PageHeader";
-import FeeStatCards from "./FeeStatCards";
-import OfflinePaymentForm from "./OfflinePaymentForm";
-import AddExtraFeeForm from "./AddExtraFeeForm";
-import FeeStructureConfig from "./FeeStructureConfig";
-import FeeRecordsTable from "./FeeRecordsTable";
-import type { Class, Student, FeeSummary, FeeRecord, FeeStructure } from "./types";
+import PageHeader from "../common/PageHeader";
+import FeeStatCards from "./fees/FeeStatCards";
+import OfflinePaymentForm from "./fees/OfflinePaymentForm";
+import AddExtraFeeForm from "./fees/AddExtraFeeForm";
+import FeeStructureConfig from "./fees/FeeStructureConfig";
+import FeeRecordsTable from "./fees/FeeRecordsTable";
+import type { Class, Student, FeeSummary, FeeRecord, FeeStructure } from "./fees/types";
 
 export default function FeesTab() {
   const [fees, setFees] = useState<FeeRecord[]>([]);
