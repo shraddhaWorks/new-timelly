@@ -6,13 +6,14 @@ import { useSearchParams } from "next/navigation";
 import AppLayout from "../../AppLayout";
 import { TEACHER_MENU_ITEMS } from "../../constants/sidebar";
 import RequiredRoles from "../../auth/RequiredRoles";
+import HomeworkPage from "../../components/teacher/Homework";
 
 const TEACHER_TAB_TITLES: Record<string, string> = {
   dashboard: "Dashboard",
   attendance: "Attendance",
   marks: "Marks",
-  homework: "Homework",
   classes: "Classes",
+  homework: "Homework",
   leaves: "Leave Request",
   circulars: "Circulars",
   settings: "Settings",
@@ -59,7 +60,9 @@ function TeacherDashboardContent() {
         menuItems={TEACHER_MENU_ITEMS}
         profile={profile}
         children={
-          <div>{/* TODO: render tab content here based on `tab` */}</div>
+          <div>
+            <HomeworkPage/>
+          </div>
         }
       />
     </RequiredRoles>

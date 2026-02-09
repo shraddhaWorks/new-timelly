@@ -82,6 +82,26 @@ textarea::placeholder {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(45, 45, 45, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.5rem;
+  color: #ffffff;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.input:focus {
+  outline: none;
+  background: rgba(45, 45, 45, 0.8);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 3px rgba(91, 43, 255, 0.1);
+}
+
 .glass-input {
   background: rgba(45, 45, 45, 0.6);
   backdrop-filter: blur(8px);
