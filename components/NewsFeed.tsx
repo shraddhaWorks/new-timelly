@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Newspaper, Plus, Edit, Trash2, X, Image, Video, FileText, Save, AlertCircle, User, Calendar } from "lucide-react";
+import { Newspaper, Plus, Edit, Trash2, X, Image, Video, FileText, Save, AlertCircle, User, Calendar, Loader2 } from "lucide-react";
+import { uploadImage } from "@/app/frontend/utils/upload";
 
 interface NewsFeed {
   id: string;
@@ -29,6 +30,8 @@ export default function NewsFeedPage() {
   });
   const [message, setMessage] = useState("");
   const [fetchError, setFetchError] = useState("");
+  const [mediaUploading, setMediaUploading] = useState(false);
+  const mediaInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (session) {
@@ -292,15 +295,52 @@ export default function NewsFeedPage() {
                   <div>
                     <label className="block text-sm font-medium text-[#808080] mb-2 flex items-center gap-2">
                       <Image size={16} />
-                      Media URL (Photo/Video)
+                      Media (upload to bucket or paste URL)
                     </label>
-                    <input
-                      type="text"
-                      value={form.mediaUrl}
-                      onChange={(e) => setForm({ ...form, mediaUrl: e.target.value })}
-                      placeholder="https://example.com/image.jpg"
-                      className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent hover:border-[#808080] transition placeholder-[#6b6b6b]"
-                    />
+                    <div className="flex flex-wrap items-center gap-3">
+                      <input
+                        ref={mediaInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file?.type.startsWith("image/")) return;
+                          setMediaUploading(true);
+                          try {
+                            const url = await uploadImage(file, "newsfeed");
+                            setForm((f) => ({ ...f, mediaUrl: url }));
+                          } catch (err) {
+                            setMessage(err instanceof Error ? err.message : "Upload failed");
+                          } finally {
+                            setMediaUploading(false);
+                          }
+                          e.target.value = "";
+                        }}
+                      />
+                      <button
+                        type="button"
+                        disabled={mediaUploading}
+                        onClick={() => mediaInputRef.current?.click()}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#404040] text-white/80 hover:bg-[#2d2d2d] disabled:opacity-60"
+                      >
+                        {mediaUploading ? <Loader2 size={16} className="animate-spin" /> : <Image size={16} />}
+                        {mediaUploading ? "Uploading…" : "Upload image"}
+                      </button>
+                      <input
+                        type="text"
+                        value={form.mediaUrl}
+                        onChange={(e) => setForm({ ...form, mediaUrl: e.target.value })}
+                        placeholder="Or paste image URL"
+                        className="flex-1 min-w-[200px] bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent placeholder-[#6b6b6b]"
+                      />
+                    </div>
+                    {form.mediaUrl && (
+                      <div className="mt-2 relative inline-block">
+                        <img src={form.mediaUrl} alt="Preview" className="max-h-32 rounded-lg border border-[#404040] object-cover" />
+                        <button type="button" onClick={() => setForm((f) => ({ ...f, mediaUrl: "" }))} className="absolute top-1 right-1 p-1 rounded bg-black/60 text-white hover:bg-black/80"><X size={14} /></button>
+                      </div>
+                    )}
                   </div>
 
                   <div>

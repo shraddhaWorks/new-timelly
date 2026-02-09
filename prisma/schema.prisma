@@ -10,10 +10,11 @@ generator client {
   output          = "../app/generated/prisma"
 }
 
+
 datasource db {
   provider = "postgresql"
 }
-
+        
 enum Role {
   SUPERADMIN
   SCHOOLADMIN
@@ -25,7 +26,10 @@ enum LeaveStatus {
   PENDING
   APPROVED
   REJECTED
+  CONDITIONALLY_APPROVED
 }
+
+
 
 enum LeaveType {
   CASUAL
@@ -202,6 +206,7 @@ model School {
   name                 String
   address              String
   location             String
+  logoUrl              String?               // Image URL (Supabase bucket)
   isActive             Boolean               @default(true)
   //library
   libraryIssues        LibraryIssue[]
@@ -231,6 +236,8 @@ model School {
   cotBookings     CotBooking[]
   roomAllocations RoomAllocation[]
   settings        SchoolSettings?
+  classFeeStructures ClassFeeStructure[]
+  extraFees       ExtraFee[]
 }
 
 model SchoolSettings {
@@ -310,6 +317,7 @@ model Class {
   timetables  Timetable[]
   classRooms  ClassRoom[]
   examTerms   ExamTerm[]
+  feeStructure ClassFeeStructure?
 
   createdAt DateTime @default(now())
 }
@@ -406,6 +414,8 @@ model Student {
   rollNo          String? // modifiable by admin
   dob             DateTime
   address         String?
+  gender          String?
+  previousSchool  String?  @db.Text
 
   // Relations
   attendances          Attendance[]
@@ -856,10 +866,65 @@ model StudentFee {
   // How many installments student is allowed to pay in
   installments Int @default(3)
 
+  installmentsList FeeInstallment[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([studentId])
+}
+
+model FeeInstallment {
+  id           String      @id @default(cuid())
+  studentFeeId String
+  studentFee   StudentFee  @relation(fields: [studentFeeId], references: [id], onDelete: Cascade)
+  installmentNumber Int
+  dueDate      DateTime    @db.Date
+  amount       Float
+  paidAmount   Float       @default(0)
+  status       String      @default("PENDING") // PENDING | PAID | PARTIAL
+  paymentId    String?     // Links to Payment when paid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentFeeId, installmentNumber])
+  @@index([studentFeeId])
+}
+
+// Global fee breakdown per class (Tuition, Transport, Lab, etc.)
+model ClassFeeStructure {
+  id       String @id @default(cuid())
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  classId  String @unique
+  class    Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
+  components Json @default("[]") // [{name: string, amount: number}]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([schoolId])
+}
+
+// Extra fees: uniform, bus, or any custom - applied to class, section, or student
+model ExtraFee {
+  id            String   @id @default(cuid())
+  schoolId      String
+  school        School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  name          String   // e.g. "Uniform Fee", "Bus Fee", "Library Fee"
+  amount        Float
+  targetType    String   // CLASS | SECTION | STUDENT
+  targetClassId String?
+  targetSection String?
+  targetStudentId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([schoolId])
+  @@index([targetStudentId])
+  @@index([targetClassId])
 }
 
 model Payment {
@@ -870,10 +935,19 @@ model Payment {
 
   amount Float
 
-  razorpayOrderId   String
-  razorpayPaymentId String
-  razorpaySignature String
-  status            String @default("SUCCESS") // SUCCESS | FAILED | PENDING
+  gateway String @default("RAZORPAY") // RAZORPAY | JUSPAY
+
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  razorpaySignature String?
+
+  juspayOrderId   String?
+  juspayPaymentId String?
+  juspayStatus    String?
+
+  status String @default("SUCCESS") // SUCCESS | FAILED | PENDING
+
+  transactionId String? // Optional ref for offline/cheque
 
   createdAt DateTime @default(now())
 

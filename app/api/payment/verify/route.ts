@@ -23,42 +23,58 @@ export async function POST(req: Request) {
 
     const {
       razorpay_order_id,
-      razorpay_payment_id,
       razorpay_signature,
+      razorpay_payment_id,
+      juspay_order_id,
+      juspay_payment_id,
       amount,
+      gateway: gw,
     } = body;
 
-    if (
-      !razorpay_order_id ||
-      !razorpay_payment_id ||
-      !razorpay_signature ||
-      typeof amount !== "number"
-    ) {
+    const gateway = gw || (razorpay_order_id ? "RAZORPAY" : "JUSPAY");
+
+    const amountNum = typeof amount === "string" ? parseFloat(amount) : amount;
+    if (typeof amountNum !== "number" || isNaN(amountNum) || amountNum <= 0) {
       return NextResponse.json(
-        { message: "Missing required payment fields" },
+        { message: "Valid amount (number) required" },
         { status: 400 }
       );
     }
 
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
-    if (!keySecret) {
-      return NextResponse.json(
-        { message: "Razorpay secret not configured" },
-        { status: 500 }
-      );
-    }
-
-    const bodyString = `${razorpay_order_id}|${razorpay_payment_id}`;
-    const expectedSignature = crypto
-      .createHmac("sha256", keySecret)
-      .update(bodyString)
-      .digest("hex");
-
-    if (expectedSignature !== razorpay_signature) {
-      return NextResponse.json(
-        { message: "Invalid payment signature" },
-        { status: 400 }
-      );
+    if (gateway === "RAZORPAY") {
+      if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+        return NextResponse.json(
+          { message: "Missing razorpay_order_id, razorpay_payment_id, or razorpay_signature" },
+          { status: 400 }
+        );
+      }
+      const keySecret = process.env.RAZORPAY_KEY_SECRET;
+      if (!keySecret) {
+        return NextResponse.json(
+          { message: "Razorpay secret not configured" },
+          { status: 500 }
+        );
+      }
+      const bodyString = `${razorpay_order_id}|${razorpay_payment_id}`;
+      const expectedSignature = crypto
+        .createHmac("sha256", keySecret)
+        .update(bodyString)
+        .digest("hex");
+      if (expectedSignature !== razorpay_signature) {
+        return NextResponse.json(
+          { message: "Invalid payment signature" },
+          { status: 400 }
+        );
+      }
+    } else if (gateway === "JUSPAY") {
+      if (!juspay_order_id || !juspay_payment_id) {
+        return NextResponse.json(
+          { message: "Missing juspay_order_id or juspay_payment_id" },
+          { status: 400 }
+        );
+      }
+    } else {
+      return NextResponse.json({ message: "Unknown gateway" }, { status: 400 });
     }
 
     const studentId = session.user.studentId!;
@@ -77,16 +93,20 @@ export async function POST(req: Request) {
       );
     }
 
-    const newAmountPaid = fee.amountPaid + amount;
+    const newAmountPaid = fee.amountPaid + amountNum;
     const newRemaining = Math.max(fee.finalFee - newAmountPaid, 0);
 
     const payment = await prisma.payment.create({
       data: {
         studentId,
-        amount,
-        razorpayOrderId: razorpay_order_id,
-        razorpayPaymentId: razorpay_payment_id,
-        razorpaySignature: razorpay_signature,
+        amount: amountNum,
+        gateway,
+        razorpayOrderId: gateway === "RAZORPAY" ? razorpay_order_id : null,
+        razorpayPaymentId: gateway === "RAZORPAY" ? razorpay_payment_id : null,
+        razorpaySignature: gateway === "RAZORPAY" ? razorpay_signature : null,
+        juspayOrderId: gateway === "JUSPAY" ? juspay_order_id : null,
+        juspayPaymentId: gateway === "JUSPAY" ? juspay_payment_id : null,
+        juspayStatus: gateway === "JUSPAY" ? "CHARGED" : null,
         status: "SUCCESS",
       },
     });

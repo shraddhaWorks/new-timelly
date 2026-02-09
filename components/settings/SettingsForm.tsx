@@ -9,23 +9,13 @@ import {
   SETTINGS_TEXT_MAIN,
   SETTINGS_TEXT_MUTED,
 } from "@/app/frontend/constants/colors";
+import { uploadImage } from "@/app/frontend/utils/upload";
 
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (e) => reject(e);
-  });
-}
-
-function getClipboardImageAsBase64(clipboardData: DataTransfer | null): Promise<string | null> {
-  if (!clipboardData?.items?.length) return Promise.resolve(null);
+function getClipboardImageFile(clipboardData: DataTransfer | null): File | null {
+  if (!clipboardData?.items?.length) return null;
   const item = Array.from(clipboardData.items).find((i) => i.type.startsWith("image/"));
-  if (!item) return Promise.resolve(null);
-  const file = item.getAsFile();
-  if (!file) return Promise.resolve(null);
-  return fileToBase64(file);
+  if (!item) return null;
+  return item.getAsFile();
 }
 
 type UserMe = {
@@ -59,6 +49,7 @@ export default function SettingsForm() {
     confirmPassword: "",
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -137,20 +128,30 @@ export default function SettingsForm() {
   const handleAvatarFile = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file?.type.startsWith("image/")) return;
+    setUploadingPhoto(true);
     try {
-      const b64 = await fileToBase64(file);
-      setProfile((p) => ({ ...p, photoUrl: b64 }));
-    } catch {
-      alert("Failed to read image");
+      const url = await uploadImage(file, "avatars");
+      setProfile((p) => ({ ...p, photoUrl: url }));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to upload image");
+    } finally {
+      setUploadingPhoto(false);
     }
     e.target.value = "";
   }, []);
 
   const handleAvatarPaste = useCallback(async (e: React.ClipboardEvent) => {
-    const b64 = await getClipboardImageAsBase64(e.clipboardData);
-    if (b64) {
-      e.preventDefault();
-      setProfile((p) => ({ ...p, photoUrl: b64 }));
+    const file = getClipboardImageFile(e.clipboardData);
+    if (!file) return;
+    e.preventDefault();
+    setUploadingPhoto(true);
+    try {
+      const url = await uploadImage(file, "avatars");
+      setProfile((p) => ({ ...p, photoUrl: url }));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to upload image");
+    } finally {
+      setUploadingPhoto(false);
     }
   }, []);
 
@@ -250,7 +251,7 @@ export default function SettingsForm() {
                   Choose from device
                 </label>
                 <span className="text-xs" style={{ color: SETTINGS_TEXT_MUTED }}>
-                  Or paste a screenshot (Ctrl+V)
+                  {uploadingPhoto ? "Uploading…" : "Or paste an image (Ctrl+V)"}
                 </span>
                 {profile.photoUrl && (
                   <button

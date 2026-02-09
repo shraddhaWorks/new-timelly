@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { Image as ImageIcon, Loader2, X } from "lucide-react";
+import { uploadImage } from "@/app/frontend/utils/upload";
 
 interface Event {
   id: string;
@@ -46,6 +48,8 @@ export default function EventsPage() {
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (session) {
@@ -334,15 +338,52 @@ export default function EventsPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-[#808080] mb-1">
-                    Photo URL (Optional)
+                    Photo (upload to bucket or URL)
                   </label>
-                  <input
-                    type="text"
-                    value={form.photo}
-                    onChange={(e) => setForm({ ...form, photo: e.target.value })}
-                    placeholder="https://example.com/photo.jpg"
-                    className="w-full bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#808080] focus:border-transparent placeholder-[#6b6b6b]"
-                  />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      ref={photoInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file?.type.startsWith("image/")) return;
+                        setPhotoUploading(true);
+                        try {
+                          const url = await uploadImage(file, "events");
+                          setForm((f) => ({ ...f, photo: url }));
+                        } catch (err) {
+                          setMessage(err instanceof Error ? err.message : "Upload failed");
+                        } finally {
+                          setPhotoUploading(false);
+                        }
+                        e.target.value = "";
+                      }}
+                    />
+                    <button
+                      type="button"
+                      disabled={photoUploading}
+                      onClick={() => photoInputRef.current?.click()}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#404040] text-white/80 hover:bg-[#2d2d2d] disabled:opacity-60 text-sm"
+                    >
+                      {photoUploading ? <Loader2 size={14} className="animate-spin" /> : <ImageIcon size={14} />}
+                      {photoUploading ? "Uploading…" : "Upload"}
+                    </button>
+                    <input
+                      type="text"
+                      value={form.photo}
+                      onChange={(e) => setForm({ ...form, photo: e.target.value })}
+                      placeholder="Or paste image URL"
+                      className="flex-1 min-w-[160px] bg-[#2d2d2d] border border-[#404040] text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#808080] placeholder-[#6b6b6b]"
+                    />
+                  </div>
+                  {form.photo && (
+                    <div className="mt-2 relative inline-block">
+                      <img src={form.photo} alt="Event" className="max-h-24 rounded-lg border border-[#404040] object-cover" />
+                      <button type="button" onClick={() => setForm((f) => ({ ...f, photo: "" }))} className="absolute top-1 right-1 p-1 rounded bg-black/60 text-white hover:bg-black/80"><X size={12} /></button>
+                    </div>
+                  )}
                 </div>
               </div>
 

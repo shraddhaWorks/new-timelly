@@ -7,6 +7,8 @@ import { signOut } from "next-auth/react";
 import { useEffect } from "react";
 import { SidebarItem } from "../../types/sidebar";
 import { PRIMARY_COLOR } from "../../constants/colors";
+import { useSession } from "next-auth/react";
+import { useAllowedFeatures } from "@/lib/usePermissions";
 
 export default function MobileMoreOptions({
   items,
@@ -24,8 +26,27 @@ export default function MobileMoreOptions({
     };
   }, []);
 
-  const tabItems = items.filter(item => item.tab);
-  const logoutItem = items.find(item => item.action === "logout");
+  const { data: session } = useSession();
+  const allowed = useAllowedFeatures();
+
+  const filtered = (items || []).filter((item) => {
+    if (!item.tab && !item.permission) return true;
+    if (!session || !session.user) return true;
+    if (session.user.role !== "TEACHER") return true;
+    if (!allowed || allowed.length === 0) return true;
+
+    const allowedNormalized = (allowed || []).map((a) => String(a).toLowerCase());
+    const tabKey = item.tab ? item.tab.toLowerCase() : null;
+    const permKey = item.permission ? String(item.permission).toLowerCase() : null;
+
+    if (tabKey && allowedNormalized.includes(tabKey)) return true;
+    if (permKey && allowedNormalized.includes(permKey)) return true;
+    if (tabKey && allowedNormalized.some(a => a.startsWith(tabKey))) return true;
+    return false;
+  });
+
+  const tabItems = filtered.filter(item => item.tab);
+  const logoutItem = filtered.find(item => item.action === "logout");
 
   // Only show items NOT already in the bottom bar (first 4 tabs)
   const moreOnlyItems = tabItems.slice(4);

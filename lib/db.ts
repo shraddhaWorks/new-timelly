@@ -3,7 +3,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL!,
-  ssl: { rejectUnauthorized: false }, // important for NeonDB
+  ssl: { rejectUnauthorized: false }, // required for Supabase/remote Postgres
 });
 
 const prismaClientSingleton = () => {

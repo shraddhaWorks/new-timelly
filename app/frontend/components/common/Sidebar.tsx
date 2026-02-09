@@ -26,6 +26,10 @@ export default function AppSidebar({ menuItems, profile }: Props) {
   const subtitle = profile?.subtitle ?? session?.user?.role ?? "";
   const avatarUrl = (profile?.image != null && profile.image !== "") ? profile.image : (session?.user?.image ?? AVATAR_URL);
 
+  // Only filter menu items for TEACHER role. Other roles see full menu.
+  const allowedFeatures = (session?.user as any)?.allowedFeatures ?? [];
+  const isTeacher = session?.user?.role === "TEACHER";
+
   const handleClick = async (item: SidebarItem) => {
     if (item.action === "logout") {
       await signOut({ callbackUrl: "/admin/login" });
@@ -45,7 +49,7 @@ export default function AppSidebar({ menuItems, profile }: Props) {
       "
     >
       {/* Logo */}
-      <div className="h-20 flex items-center px-4 border-b border-white/10">
+      <div className="h-21 flex items-center px-4 border-b border-white/10">
         <BrandLogo isbrandLogoWhite />
       </div>
 
@@ -58,11 +62,11 @@ export default function AppSidebar({ menuItems, profile }: Props) {
               alt=""
               className="w-10 h-10 rounded-xl border border-white/20 object-cover"
             />
-            <div>
-              <p className="text-sm font-semibold text-white truncate">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-white break-words line-clamp-2">
                 {displayName}
               </p>
-              <p className="text-xs text-white/60 truncate">{subtitle}</p>
+              <p className="text-xs text-white/60 break-words line-clamp-2">{subtitle}</p>
             </div>
           </div>
         </div>
@@ -70,7 +74,24 @@ export default function AppSidebar({ menuItems, profile }: Props) {
 
       {/* Menu */}
       <div className="flex-1 px-4 py-4 space-y-3 overflow-y-auto no-scrollbar">
-        {menuItems.map(item => {
+        {menuItems
+          .filter((item) => {
+            // Only apply filtering for teachers
+            if (!isTeacher) return true;
+
+            // always show action items (logout) or items without tab/permission
+            if (!item.tab && !item.permission) return true;
+
+            // legacy: empty allowedFeatures => unrestricted
+            if (!allowedFeatures || allowedFeatures.length === 0) return true;
+
+            if (item.tab && allowedFeatures.includes(item.tab)) return true;
+
+            if (item.permission && allowedFeatures.includes(String(item.permission))) return true;
+
+            return false;
+          })
+          .map(item => {
           const isActive = item.tab === activeTab;
           const Icon = item.icon;
 
@@ -81,7 +102,7 @@ export default function AppSidebar({ menuItems, profile }: Props) {
               onClick={() => handleClick(item)}
               className={`
                 w-full flex items-center gap-4 px-5 py-3 rounded-xl
-                transition
+                transition min-w-0
                 ${
                   isActive
                     ? "bg-lime-400/10 text-lime-400 border border-lime-400/20"
@@ -90,9 +111,11 @@ export default function AppSidebar({ menuItems, profile }: Props) {
               `}
             >
               <Icon
+                size={20}
+                className="flex-shrink-0"
                 style={{ color: isActive ? PRIMARY_COLOR : "#9ca3af" }}
               />
-              {item.label}
+              <span className="truncate text-sm">{item.label}</span>
             </motion.button>
           );
         })}

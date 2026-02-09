@@ -9,7 +9,7 @@ export default function ScreenPage() {
     const router = useRouter();
     const { data: session, status } = useSession();
 
-    // ✅ Single effect - only one source of redirect logic
+    // Single effect - only one source of redirect logic
     useEffect(() => {
         // Wait for session to load
         if (status === "loading") {

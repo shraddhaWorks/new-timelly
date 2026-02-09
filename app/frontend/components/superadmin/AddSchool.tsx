@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PRIMARY_COLOR } from "../../constants/colors";
 import SearchInput from "../common/SearchInput";
@@ -21,22 +21,12 @@ import {
 } from "lucide-react";
 import PageHeader from "../common/PageHeader";
 
-
 type FormErrors = {
   schoolName?: string;
   password?: string;
   email?: string;
   phone?: string;
   pincode?: string;
-};
-
-const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (error) => reject(error);
-  });
 };
 
 export default function AddSchool() {
@@ -62,9 +52,6 @@ export default function AddSchool() {
   const [error, setError] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
   const hasFieldErrors = Object.values(errors).some(Boolean);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoBase64, setLogoBase64] = useState<string | null>(null);
 
   /* ---------------- Input Handler ---------------- */
 
@@ -178,8 +165,6 @@ export default function AddSchool() {
     });
 
     setErrors({});
-    setLogoFile(null);
-    setLogoBase64(null);
   };
 
   /* ---------------- UI ---------------- */

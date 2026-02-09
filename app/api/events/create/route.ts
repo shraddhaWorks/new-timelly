@@ -47,6 +47,18 @@ export async function POST(req: Request) {
       }
     }
 
+    let parsedEventDate: Date | null = null;
+    if (eventDate) {
+      const parsed = new Date(eventDate);
+      if (Number.isNaN(parsed.getTime())) {
+        return NextResponse.json(
+          { message: "Invalid eventDate" },
+          { status: 400 }
+        );
+      }
+      parsedEventDate = parsed;
+    }
+
     const event = await prisma.event.create({
       data: {
         title,
@@ -57,7 +69,7 @@ export async function POST(req: Request) {
         mode,
         additionalInfo,
         photo: photo || null,
-        eventDate: eventDate ? new Date(eventDate) : null,
+        eventDate: parsedEventDate,
         classId: classId || null,
         teacherId,
         schoolId,

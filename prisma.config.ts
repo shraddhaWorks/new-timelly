@@ -8,7 +8,8 @@ export default defineConfig({
   migrations: {
     path: "prisma/migrations",
   },
+  // Use DIRECT_URL for migrations (Supabase pooler can break migrations). App runtime uses DATABASE_URL in lib/db.
   datasource: {
-    url: env("DATABASE_URL"),
+    url: process.env.DIRECT_URL || env("DATABASE_URL"),
   },
 });

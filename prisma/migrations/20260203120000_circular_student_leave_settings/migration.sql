@@ -1,5 +1,5 @@
--- Migrate PRINCIPAL and HOD to SCHOOLADMIN before altering enum
-UPDATE "User" SET role = 'SCHOOLADMIN' WHERE role IN ('PRINCIPAL', 'HOD');
+-- Migrate PRINCIPAL and HOD to SCHOOLADMIN (if any exist; compare as text to avoid enum errors on fresh DB)
+UPDATE "User" SET role = 'SCHOOLADMIN' WHERE role::text IN ('PRINCIPAL', 'HOD');
 
 -- NOTE:
 -- Some Postgres providers (including some managed instances) do not support

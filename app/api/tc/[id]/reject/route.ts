@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
+import { redis } from "@/lib/redis";
 
 export async function POST(
   req: Request,
@@ -15,8 +16,14 @@ export async function POST(
     }
 
     const { id } = await params;
-    const schoolId = session.user.schoolId;
-
+    let schoolId = session.user.schoolId;
+    if (!schoolId) {
+      const adminSchool = await prisma.school.findFirst({
+        where: { admins: { some: { id: session.user.id } } },
+        select: { id: true },
+      });
+      schoolId = adminSchool?.id ?? null;
+    }
     if (!schoolId) {
       return NextResponse.json(
         { message: "School not found in session" },
@@ -53,6 +60,12 @@ export async function POST(
         approvedById: session.user.id,
       },
     });
+
+    // Invalidate TC list cache for this school
+    const statuses = ["all", "PENDING", "APPROVED", "REJECTED"];
+    for (const st of statuses) {
+      await redis.del(`tcs:${schoolId}:all:${st}`);
+    }
 
     return NextResponse.json(
       { message: "TC request rejected", tc: updatedTC },
