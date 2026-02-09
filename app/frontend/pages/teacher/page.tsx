@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import AppLayout from "../../AppLayout";
 import { TEACHER_MENU_ITEMS } from "../../constants/sidebar";
 import RequiredRoles from "../../auth/RequiredRoles";
+import HomeworkPage from "../../components/teacher/Homework";
 import RequireFeature from "../../auth/RequireFeature";
 import TeacherDashboard from "../../components/teacher/dashboard/Dashboard";
 import TeacherClasses from "../../components/teacher/classes/Classes";
@@ -24,8 +25,8 @@ const TEACHER_TAB_TITLES = {
   dashboard: "Dashboard",
   attendance: "Attendance",
   marks: "Marks",
-  homework: "Homework",
   classes: "Classes",
+  homework: "Homework",
   leaves: "Leave Request",
   circulars: "Circulars",
   newsfeed: "Newsfeed",
@@ -103,6 +104,17 @@ function TeacherDashboardInner() {
 
   return (
     <RequiredRoles allowedRoles={["TEACHER"]}>
+      <AppLayout
+        activeTab={tab}
+        title={title}
+        menuItems={TEACHER_MENU_ITEMS}
+        profile={profile}
+        children={
+          <div>
+            <HomeworkPage/>
+          </div>
+        }
+      />
       <RequireFeature requiredFeature={tab}>
         <AppLayout
           activeTab={tab}

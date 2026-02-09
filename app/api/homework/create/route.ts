@@ -11,7 +11,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const { title, description, subject, classId, dueDate,assignedDate,file } = await req.json();
+    const { title, description, subject, classId, dueDate, assignedDate } = await req.json();
 
     if (!title || !description || !subject || !classId ) {
       return NextResponse.json(
@@ -50,8 +50,6 @@ export async function POST(req: Request) {
         description,
         subject,
         classId,
-        assignedDate: assignedDate ? new Date(assignedDate) : null,
-        file: file || null,
         teacherId: session.user.id,
         schoolId,
         dueDate: dueDate ? new Date(dueDate) : null,

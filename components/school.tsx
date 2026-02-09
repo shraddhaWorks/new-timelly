@@ -26,6 +26,7 @@ export default function SchoolPage() {
         async function fetchSchool() {
             const res = await fetch("/api/school/mine");
             const data = await res.json();
+            console.log(data);
             if (data.school) {
                 setSchool(data.school);
                 setName(data.school.name);
