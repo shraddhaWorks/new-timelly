@@ -268,7 +268,7 @@ export const TEACHER_MENU_ITEMS: SidebarItem[] = [
         icon: FileText,
         permission: Permission.NEWSFEED,
     },{
-        label:"Parent Char",
+        label:"Parent Chat",
         tab: "chat",
         href: "/frontend/pages/teacher?tab=chat",
         icon: MessageCircle,
