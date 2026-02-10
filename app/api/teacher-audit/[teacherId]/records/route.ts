@@ -4,13 +4,18 @@ import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
 import { TeacherAuditCategory } from "@/app/generated/prisma";
 
+/* ================= HELPERS ================= */
+const clampScore = (value: number) => Math.max(0, Math.min(100, value));
+/* =========================================== */
+
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ teacherId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    if (!session)
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     if (session.user.role !== "SCHOOLADMIN") {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
@@ -35,10 +40,17 @@ export async function GET(
       _count: { _all: true },
     });
 
-    const performanceScore = Math.max(0, Math.min(100, 50 + (agg._sum.scoreImpact ?? 0)));
+    // ✅ Always clamp final score
+    const performanceScore = clampScore(
+      50 + (agg._sum.scoreImpact ?? 0)
+    );
 
     return NextResponse.json(
-      { records, performanceScore, recordCount: agg._count._all },
+      {
+        records,
+        performanceScore,
+        recordCount: agg._count._all,
+      },
       { status: 200 }
     );
   } catch (e: unknown) {
@@ -56,7 +68,8 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    if (!session)
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     if (session.user.role !== "SCHOOLADMIN") {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
@@ -64,24 +77,72 @@ export async function POST(
     const { teacherId } = await params;
     const body = await req.json();
 
-    const category = body.category as TeacherAuditCategory | undefined;
-    const customCategory = typeof body.customCategory === "string" ? body.customCategory.trim() : null;
-    const description = typeof body.description === "string" ? body.description.trim() : "";
+    const rawCategory = body.category as TeacherAuditCategory | undefined;
+
+const category: TeacherAuditCategory =
+  rawCategory &&
+  Object.values(TeacherAuditCategory).includes(rawCategory)
+    ? rawCategory
+    : "CUSTOM";
+
+    const customCategory =
+      typeof body.customCategory === "string"
+        ? body.customCategory.trim()
+        : null;
+    const description =
+      typeof body.description === "string"
+        ? body.description.trim()
+        : "";
     const scoreImpact = Number(body.scoreImpact);
 
-    if (!category) {
-      return NextResponse.json({ message: "category is required" }, { status: 400 });
-    }
+    /* ---------- BASIC VALIDATIONS ---------- */
+   
+
     if (category === "CUSTOM" && !customCategory) {
-      return NextResponse.json({ message: "customCategory is required for CUSTOM" }, { status: 400 });
-    }
-    if (!description) {
-      return NextResponse.json({ message: "description is required" }, { status: 400 });
-    }
-    if (!Number.isFinite(scoreImpact) || Math.abs(scoreImpact) > 100) {
-      return NextResponse.json({ message: "scoreImpact must be a number between -100 and 100" }, { status: 400 });
+      return NextResponse.json(
+        { message: "customCategory is required for CUSTOM" },
+        { status: 400 }
+      );
     }
 
+    // if (!description) {
+    //   return NextResponse.json(
+    //     { message: "description is required" },
+    //     { status: 400 }
+    //   );
+    // }
+
+    if (!Number.isFinite(scoreImpact)) {
+      return NextResponse.json(
+        { message: "scoreImpact must be a valid number" },
+        { status: 400 }
+      );
+    }
+
+    /* ---------- SCORE SAFETY LOGIC ---------- */
+
+    // 1️⃣ Get current score
+    const agg = await prisma.teacherAuditRecord.aggregate({
+      where: { teacherId },
+      _sum: { scoreImpact: true },
+    });
+
+    const currentScore = clampScore(
+      50 + (agg._sum.scoreImpact ?? 0)
+    );
+
+    // 2️⃣ Calculate next score
+    const nextScore = currentScore + scoreImpact;
+
+    // 3️⃣ Block invalid updates
+    if (nextScore > 100 || nextScore < 0) {
+      return NextResponse.json(
+        { message: "Performance score must stay between 0 and 100" },
+        { status: 400 }
+      );
+    }
+
+    /* ---------- CREATE RECORD ---------- */
     const record = await prisma.teacherAuditRecord.create({
       data: {
         teacherId,
@@ -102,4 +163,3 @@ export async function POST(
     );
   }
 }
-

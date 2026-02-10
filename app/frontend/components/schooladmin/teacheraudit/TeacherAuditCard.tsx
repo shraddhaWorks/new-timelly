@@ -5,11 +5,24 @@ import {
   ThumbsDown,
   ChevronDown,
   ChevronUp,
-  GraduationCap,
+  Award,
+  Save
 } from "lucide-react";
 import type { TeacherRow, AuditRecord } from "./types";
-import AddRecordForm from "./AddRecordForm";
 import PerformanceHistory from "./PerformanceHistory";
+/* ================= NEW: CATEGORY MAP ================= */
+const CATEGORY_MAP: Record<string, string> = {
+  "Teaching Method": "TEACHING_METHOD",
+  "Punctuality": "PUNCTUALITY",
+  "Student Engagement": "STUDENT_ENGAGEMENT",
+  "Innovation": "INNOVATION",
+  "Extra Curricular": "EXTRA_CURRICULAR",
+  "Results": "RESULTS",
+};
+
+const CATEGORY_LABEL_FROM_ENUM = (value: string) =>
+  Object.keys(CATEGORY_MAP).find((k) => CATEGORY_MAP[k] === value) ?? value;
+/* ==================================================== */
 
 interface TeacherAuditCardProps {
   teacher: TeacherRow;
@@ -33,6 +46,8 @@ interface TeacherAuditCardProps {
   onCloseAddForm: () => void;
 }
 
+
+
 export default function TeacherAuditCard({
   teacher,
   isAddFormOpen,
@@ -52,116 +67,304 @@ export default function TeacherAuditCard({
   onOpenAddBad,
   onToggleHistory,
   onSaveRecord,
-  onCloseAddForm,
 }: TeacherAuditCardProps) {
+
   const score = Math.max(0, Math.min(100, teacher.performanceScore));
+  const isScoreMaxed =
+    (addFormMode === "good" && score >= 100) ||
+    (addFormMode === "bad" && score <= 0);
+
+
+  const categories =
+    addFormMode === "good"
+      ? [
+        "Teaching Method",
+        "Punctuality",
+        "Student Engagement",
+        "Innovation",
+        "Extra Curricular",
+        "Results",
+      ]
+      : [
+        "Teaching Method",
+        "Punctuality",
+        "Student Engagement",
+        "Innovation",
+        "Extra Curricular",
+        "Results",
+      ];
+
+
+  const isFormReady = Boolean(
+    category || customCategory.trim().length > 0
+  );
+
+
+
+
+
+
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden">
-      <div className="p-4 sm:p-5 md:p-6 space-y-4">
-        {/* Top row: profile + score + actions */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden bg-white/10 border border-white/10 flex-shrink-0 flex items-center justify-center">
-              {teacher.photoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={teacher.photoUrl}
-                  alt={teacher.name ?? "Teacher"}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span className="text-lg sm:text-xl font-semibold text-white/70">
-                  {(teacher.name ?? "T").charAt(0).toUpperCase()}
-                </span>
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-semibold text-white text-base sm:text-lg truncate">
-                  {teacher.name ?? "—"}
-                </h3>
-                <div className="w-5 h-5 rounded bg-amber-500/30 border border-amber-500/40 flex items-center justify-center flex-shrink-0">
-                  <GraduationCap className="w-3 h-3 text-amber-400" />
+    <div className="px-3 md:px-0">
+      <div className="max-w-full mx-auto rounded-2xl border border-white/10 shadow-lg overflow-hidden">
+
+        {/* CARD GRADIENT BACKGROUND */}
+        <div className="">
+
+          <div className="px-8 py-6 space-y-8 bg-white/5 backdrop-blur-xl border-b border-white/10">
+
+
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 ">
+
+              {/* LEFT SECTION: Profile & Name - Added min-w-0 to handle text overflow */}
+              <div className="flex items-center gap-4 min-w-0">
+                <div className="relative flex-shrink-0">
+                  <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-white/10 shadow-xl">
+                    {teacher.photoUrl ? (
+                      <img
+                        src={teacher.photoUrl}
+                        alt={teacher.name || "Teacher"}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-white/10 text-white/70 text-2xl font-bold">
+                        {teacher.name?.charAt(0) || "?"}
+                      </div>
+                    )}
+                  </div>
+                  <div className="absolute -bottom-2 -right-2 w-7 h-7 rounded-full bg-[#1a1a1a] border border-white/20 flex items-center justify-center shadow-lg">
+                    <Award className="w-4 h-4 text-yellow-400" />
+                  </div>
+                </div>
+
+                {/* Text container with truncation to prevent pushing the right side */}
+                <div className="ml-2 min-w-0">
+                  <h3 className="text-xl font-bold text-white tracking-tight truncate">
+                    {teacher.name ?? "-"}
+                  </h3>
+                  <p className="text-sm text-white/50 font-medium truncate">
+                    {teacher.subject ?? "-"}
+                  </p>
+                  <p className="text-xs text-white/20 font-mono mt-0.5 truncate">
+                    {teacher.teacherId ?? "-"}
+                  </p>
                 </div>
               </div>
-              <p className="text-white/80 text-sm">{teacher.subject ?? "—"}</p>
-              <p className="text-white/50 text-xs">
-                {(teacher.teacherId ?? "—").toUpperCase()}
-              </p>
-            </div>
-          </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
-            <div className="flex items-center gap-3">
-              <div className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-amber-500/20 border border-amber-500/40">
-                <span className="text-xl sm:text-2xl font-bold text-amber-400">
-                  {score}
-                </span>
-              </div>
-              <div className="min-w-[100px] sm:min-w-[140px]">
-                <p className="text-xs text-white/60 mb-1">Performance Score</p>
-                <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-emerald-500 transition-all duration-300"
-                    style={{ width: `${score}%` }}
-                  />
+              {/* RIGHT SECTION: Fixed size to ensure alignment */}
+              <div className="flex flex-col lg:flex-row items-center gap-8 flex-shrink-0">
+
+                {/* SCORE SECTION */}
+                <div className="flex items-center gap-4">
+                  <div className="h-14 w-14 flex-shrink-0 rounded-2xl bg-white/5 border border-yellow-400/30 flex items-center justify-center shadow-inner">
+                    <span className="text-xl font-bold text-yellow-400">
+                      {score}
+                    </span>
+                  </div>
+
+                  <div className="w-[180px] sm:w-[200px]">
+                    <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">
+                      Performance Score
+                    </p>
+                    <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                      <div
+                        className="h-full bg-lime-400 rounded-full shadow-[0_0_8px_rgba(163,230,53,0.5)] transition-all duration-500"
+                        style={{ width: `${score}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-white/40 mt-1 font-bold">{score}/100</p>
+                  </div>
                 </div>
-                <p className="text-xs text-white/70 mt-0.5">{score}/100</p>
+
+                {/* BUTTONS SECTION */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={onOpenAddGood}
+                    className={`h-16 px-6 rounded-xl flex items-center gap-2 text-sm font-bold transition-all ${isAddFormOpen && addFormMode === "good"
+                      ? "bg-lime-400 text-black shadow-[0_0_15px_rgba(163,230,53,0.4)]"
+                      : "bg-white/10 border border-white/20 text-white hover:bg-white/20"
+                      }`}
+                  >
+                    <ThumbsUp size={18} /> Add Good
+                  </button>
+
+                  <button
+                    onClick={onOpenAddBad}
+                    className={`h-16 px-6 rounded-xl flex items-center gap-2 text-sm font-bold transition-all ${isAddFormOpen && addFormMode === "bad"
+                      ? "bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.4)]"
+                      : "bg-white/10 border border-white/20 text-white hover:bg-white/20"
+                      }`}
+                  >
+                    <ThumbsDown size={18} /> Add Bad
+                  </button>
+
+                  <button
+                    onClick={onToggleHistory}
+                    className="h-16 px-6 rounded-xl bg-white/10 border border-white/20 text-white flex items-center gap-2 font-bold hover:bg-white/20 transition-all"
+                  >
+                    View All
+                    {isHistoryOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={onOpenAddGood}
-                className="inline-flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-emerald-500/90 hover:bg-emerald-500 text-white font-medium text-sm transition min-h-[44px] sm:min-h-0 touch-manipulation"
-              >
-                <ThumbsUp className="w-4 h-4 flex-shrink-0" />
-                Add Good
-              </button>
-              <button
-                type="button"
-                onClick={onOpenAddBad}
-                className="inline-flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white font-medium text-sm transition min-h-[44px] sm:min-h-0 touch-manipulation"
-              >
-                <ThumbsDown className="w-4 h-4 flex-shrink-0" />
-                Add Bad
-              </button>
-              <button
-                type="button"
-                onClick={onToggleHistory}
-                className="inline-flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white font-medium text-sm transition min-h-[44px] sm:min-h-0 touch-manipulation"
-              >
-                View All
-                {isHistoryOpen ? (
-                  <ChevronUp className="w-4 h-4 flex-shrink-0" />
-                ) : (
-                  <ChevronDown className="w-4 h-4 flex-shrink-0" />
-                )}
-              </button>
-            </div>
+            {/* ================= ADD FORM (SCREENSHOT MATCH) ================= */}
+            {isAddFormOpen && (
+              <div className="mt-6 rounded-2xl bg-white/5 backdrop-blur-lg p-9">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                  {/* LEFT */}
+                  <div className="space-y-4">
+                    <h4
+                      className={`text-sm font-semibold flex items-center gap-2 ${addFormMode === "good"
+                        ? "text-lime-400"
+                        : "text-red-400"
+                        }`}
+                    >
+                      {addFormMode === "good" ? (
+                        <>
+                          <ThumbsUp size={16} /> ADD POSITIVE RECORD
+                        </>
+                      ) : (
+                        <>
+                          <ThumbsDown size={16} /> ADD NEGATIVE RECORD
+                        </>
+                      )}
+                    </h4>
+
+                    <div className="flex flex-wrap gap-2">
+                      {categories.map((c) => {
+                        const enumValue = CATEGORY_MAP[c];
+                        const isSelected = category === enumValue;
+                        const isGood = addFormMode === "good";
+
+                        return (
+                          <button
+                            key={c}
+                            onClick={() => {
+                              onCategoryChange(enumValue);
+                              onCustomCategoryChange(""); // 🔥 clear custom text
+                            }}
+
+                            className={`px-3 py-1.5 rounded-full text-xs border transition
+            ${isSelected
+                                ? isGood
+                                  ? "bg-lime-400 text-black border-lime-400"
+                                  : "bg-red-500 text-white border-red-500"
+                                : isGood
+                                  ? "border-white/20 text-white/70 hover:bg-lime-400 hover:text-black"
+                                  : "border-white/20 text-white/70 hover:bg-red-400 hover:text-white"
+                              }
+          `}
+                          >
+                            {c}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                  </div>
+
+                  {/* RIGHT */}
+                  <div className="lg:col-span-2 space-y-5">
+  {/* CATEGORY SECTION */}
+  <div className="space-y-1.5">
+    <label className="text-[11px] text-white/40 font-medium ml-1">Category</label>
+    <input
+      value={customCategory || CATEGORY_LABEL_FROM_ENUM(category)}
+      onChange={(e) => {
+        onCustomCategoryChange(e.target.value);
+        onCategoryChange("");
+      }}
+      placeholder="Type or select a category..."
+      className="w-full h-11 rounded-2xl bg-black/20 px-4 text-sm text-white 
+                 border border-white/20 focus:outline-none focus:ring-1 
+                 focus:ring-white/30 transition"
+    />
+  </div>
+
+  {/* DETAILS SECTION */}
+  <div className="space-y-1.5">
+    <label className="text-[11px] text-white/40 font-medium ml-1">Details</label>
+    <textarea
+      value={description}
+      onChange={(e) => onDescriptionChange(e.target.value)}
+      placeholder="Add a short description (optional)"
+      className="w-full h-11 rounded-2xl bg-black/20 px-4 py-3 text-sm text-white 
+                 border border-white/20 focus:outline-none focus:ring-1 
+                 focus:ring-white/30 transition resize-none"
+    />
+  </div>
+
+  {/* SCORE IMPACT SECTION */}
+  <div className="space-y-3 pt-1">
+    <div className="flex justify-between items-center">
+      <label className="text-[11px] text-white/40 font-medium ml-1">
+        Score Impact
+      </label>
+      <span className={`text-base font-bold ${addFormMode === "good" ? "text-lime-400" : "text-red-500"}`}>
+        {addFormMode === "good" ? "+" : "-"}{Math.abs(scoreImpact)}
+      </span>
+    </div>
+
+    {/* THE SLIDER */}
+    {/* THE SLIDER */}
+<div className="relative flex items-center h-2">
+  <input
+    type="range"
+    min={0}
+    max={50}
+    step={5}
+    disabled={isScoreMaxed}
+    value={Math.abs(scoreImpact)}
+    onChange={(e) =>
+      onScoreImpactChange(
+        addFormMode === "good"
+          ? Number(e.target.value)
+          : -Number(e.target.value)
+      )
+    }
+    style={{
+      background: `linear-gradient(to right, ${
+        addFormMode === "good" ? "#a3e635" : "#ef4444"
+      } 0%, ${
+        addFormMode === "good" ? "#a3e635" : "#ef4444"
+      } ${(Math.abs(scoreImpact) / 50) * 100}%, rgba(255, 255, 255, 0.1) ${
+        (Math.abs(scoreImpact) / 50) * 100
+      }%, rgba(255, 255, 255, 0.1) 100%)`,
+    }}
+    className="w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-white"
+  />
+</div>
+  </div>
+
+  {/* SAVE BUTTON */}
+  <div className="flex justify-end pt-2">
+    <button
+      type="button"
+      disabled={saving || !isFormReady}
+      onClick={onSaveRecord}
+      className={`h-12 px-8 rounded-2xl flex items-center gap-2 font-bold transition-all
+        ${isFormReady
+          ? "bg-[#A3E635] text-black shadow-[0_8px_20px_rgba(163,230,53,0.3)] hover:scale-[1.02] active:scale-[0.98]"
+          : "bg-white/10 text-white/30"
+        }
+        disabled:cursor-not-allowed`}
+    >
+      <Save size={18} strokeWidth={2.5} />
+      <span>Save Record</span>
+    </button>
+  </div>
+</div>
+                </div>
+              </div>
+            )}
+
+            {isHistoryOpen && <PerformanceHistory records={records} />}
           </div>
         </div>
-
-        {isAddFormOpen && (
-          <AddRecordForm
-            mode={addFormMode}
-            category={category}
-            customCategory={customCategory}
-            description={description}
-            scoreImpact={scoreImpact}
-            saving={saving}
-            onCategoryChange={onCategoryChange}
-            onCustomCategoryChange={onCustomCategoryChange}
-            onDescriptionChange={onDescriptionChange}
-            onScoreImpactChange={onScoreImpactChange}
-            onSave={onSaveRecord}
-            onClose={onCloseAddForm}
-          />
-        )}
-
-        {isHistoryOpen && <PerformanceHistory records={records} />}
       </div>
     </div>
   );

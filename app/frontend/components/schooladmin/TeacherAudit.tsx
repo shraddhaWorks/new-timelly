@@ -5,6 +5,7 @@ import type { TeacherRow, AuditRecord } from "./teacheraudit/types";
 import TeacherAuditHeader from "./teacheraudit/TeacherAuditHeader";
 import TeacherAuditCard from "./teacheraudit/TeacherAuditCard";
 import LoadingSpinner from "./teacheraudit/LoadingSpinner";
+import PageHeader from "../common/PageHeader";
 
 export default function TeacherAuditTab() {
   const [q, setQ] = useState("");
@@ -20,10 +21,11 @@ export default function TeacherAuditTab() {
   const [recordsByTeacher, setRecordsByTeacher] = useState<
     Record<string, AuditRecord[]>
   >({});
-  const [category, setCategory] = useState<string>("TEACHING_METHOD");
+  const [category, setCategory] = useState<string>("");
   const [customCategory, setCustomCategory] = useState("");
   const [description, setDescription] = useState("");
-  const [scoreImpact, setScoreImpact] = useState(5);
+  const [scoreImpact, setScoreImpact] = useState<number>(5);
+
   const [saving, setSaving] = useState(false);
 
   const fetchTeachers = useCallback(async () => {
@@ -66,8 +68,9 @@ export default function TeacherAuditTab() {
     setAddFormMode(mode);
     setDescription("");
     setCustomCategory("");
-    setCategory("TEACHING_METHOD");
+    setCategory("");
     setScoreImpact(mode === "bad" ? -5 : 5);
+
     loadRecords(t.id);
   };
 
@@ -76,80 +79,95 @@ export default function TeacherAuditTab() {
     if (!recordsByTeacher[teacherId]) loadRecords(teacherId);
   };
 
-  const saveRecord = async () => {
-    const teacherId = expandedTeacherId;
-    if (!teacherId) return;
-    setSaving(true);
-    try {
-      const payload = {
-        category,
-        customCategory: category === "CUSTOM" ? customCategory : undefined,
-        description,
-        scoreImpact,
-      };
-      const res = await fetch(`/api/teacher-audit/${teacherId}/records`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to save");
-      await loadRecords(teacherId);
-      await fetchTeachers();
-      setDescription("");
-      setCustomCategory("");
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "Failed to save");
-    } finally {
-      setSaving(false);
-    }
-  };
+const saveRecord = async () => {
+  const teacherId = expandedTeacherId;
+  if (!teacherId) return;
+
+  setSaving(true);
+
+  try {
+    const payload = {
+      category: category || "OTHER",
+      customCategory: category ? null : customCategory.trim(),
+      scoreImpact, // ✅ send raw impact
+      ...(description.trim() && { description: description.trim() }),
+    };
+
+    const res = await fetch(`/api/teacher-audit/${teacherId}/records`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to save");
+
+    await loadRecords(teacherId);
+    await fetchTeachers();
+
+    setDescription("");
+    setCustomCategory("");
+    setCategory("");
+  } catch (e) {
+    alert(e instanceof Error ? e.message : "Failed to save");
+  } finally {
+    setSaving(false);
+  }
+};
+
+
+  
 
   return (
-    <div className="min-h-screen text-white p-3 sm:p-4 md:p-6 overflow-x-hidden">
-      <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
-        <TeacherAuditHeader
-          searchValue={q}
-          onSearchChange={setQ}
-          onSearchSubmit={fetchTeachers}
-        />
+    <div className="space-y-4 sm:space-y-6 px-3 md:px-0 overflow-x-hidden">
+      <PageHeader
+        title=" Teacher Audit & Appraisal"
+        subtitle="Track performance, acknowledge achievements, and identify areas for
+              improvement."
+        rightSlot={<TeacherAuditHeader searchValue={q} onSearchChange={setQ} onSearchSubmit={() => { }} placeholder="Search teachers..." />}
+      />
 
-        {loading ? (
-          <LoadingSpinner />
-        ) : (
-          <div className="space-y-4">
-            {teachers.length === 0 ? (
-              <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-6 sm:p-8 text-center text-white/60 text-sm sm:text-base">
-                No teachers found. Try a different search.
-              </div>
-            ) : (
-              teachers.map((t) => (
-                <TeacherAuditCard
-                  key={t.id}
-                  teacher={t}
-                  isAddFormOpen={expandedTeacherId === t.id}
-                  addFormMode={addFormMode}
-                  records={recordsByTeacher[t.id] ?? []}
-                  isHistoryOpen={!!historyExpanded[t.id]}
-                  category={category}
-                  customCategory={customCategory}
-                  description={description}
-                  scoreImpact={scoreImpact}
-                  saving={saving}
-                  onCategoryChange={setCategory}
-                  onCustomCategoryChange={setCustomCategory}
-                  onDescriptionChange={setDescription}
-                  onScoreImpactChange={setScoreImpact}
-                  onOpenAddGood={() => openAddForm(t, "good")}
-                  onOpenAddBad={() => openAddForm(t, "bad")}
-                  onToggleHistory={() => toggleHistory(t.id)}
-                  onSaveRecord={saveRecord}
-                  onCloseAddForm={() => setExpandedTeacherId(null)}
-                />
-              ))
-            )}
-          </div>
-        )}
+      <div className="">
+        <div className=" mx-auto space-y-4 sm:space-y-6">
+
+
+          {loading ? (
+            <LoadingSpinner />
+          ) : (
+            <div className="space-y-4">
+              {teachers.length === 0 ? (
+                <div className="rounded-2xl border  border-white/10 backdrop-blur-xl p-6 sm:p-8 text-center text-white/60 text-sm sm:text-base">
+                  No teachers found. Try a different search.
+                </div>
+              ) : (
+                teachers.map((t) => (
+                  <TeacherAuditCard
+                    key={t.id}
+                    teacher={t}
+                    isAddFormOpen={expandedTeacherId === t.id}
+                    addFormMode={addFormMode}
+                    records={recordsByTeacher[t.id] ?? []}
+                    isHistoryOpen={!!historyExpanded[t.id]}
+                    category={category}
+                    customCategory={customCategory}
+                    description={description}
+                    scoreImpact={scoreImpact}
+                    saving={saving}
+                    onCategoryChange={setCategory}
+                    onCustomCategoryChange={setCustomCategory}
+                    onDescriptionChange={setDescription}
+                    onScoreImpactChange={setScoreImpact}
+                    onOpenAddGood={() => openAddForm(t, "good")}
+                    onOpenAddBad={() => openAddForm(t, "bad")}
+                    onToggleHistory={() => toggleHistory(t.id)}
+                    onSaveRecord={saveRecord}
+                    onCloseAddForm={() => setExpandedTeacherId(null)}
+                  />
+                ))
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
