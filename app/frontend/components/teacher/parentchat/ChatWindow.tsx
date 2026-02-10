@@ -120,6 +120,7 @@
 
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import {
   ArrowLeft,
   Check,
@@ -128,7 +129,15 @@ import {
   Send,
   UserPlus,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { Chat } from "./ChatList";
+
+type Message = {
+  id: string;
+  senderId: string;
+  content: string;
+  createdAt: string;
+};
 
 type Props = {
   chat: Chat;
@@ -143,8 +152,61 @@ export default function ChatWindow({
   onApprove,
   onReject,
 }: Props) {
+  const { data: session } = useSession();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [messageInput, setMessageInput] = useState("");
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [sending, setSending] = useState(false);
+
+  const fetchMessages = useCallback(async () => {
+    if (chat.status !== "approved") return;
+    setLoadingMessages(true);
+    try {
+      const res = await fetch(
+        `/api/communication/messages?appointmentId=${encodeURIComponent(chat.id)}`
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      setMessages(Array.isArray(data.messages) ? data.messages : []);
+    } catch {
+      setMessages([]);
+    } finally {
+      setLoadingMessages(false);
+    }
+  }, [chat.id, chat.status]);
+
+  useEffect(() => {
+    fetchMessages();
+  }, [fetchMessages]);
+
+  const handleSend = async () => {
+    const text = messageInput.trim();
+    if (!text || sending || chat.status !== "approved") return;
+    setSending(true);
+    try {
+      const res = await fetch("/api/communication/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appointmentId: chat.id, content: text }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        console.error(data?.message ?? "Failed to send");
+        return;
+      }
+      const msg = await res.json();
+      setMessages((prev) => [...prev, msg]);
+      setMessageInput("");
+    } catch (e) {
+      console.error("Send error:", e);
+    } finally {
+      setSending(false);
+    }
+  };
+
   const isPending = chat.status === "pending";
   const isRejected = chat.status === "rejected";
+  const myId = session?.user?.id ?? "";
 
   return (
     <div className="flex flex-col h-full w-full ">
@@ -217,13 +279,31 @@ export default function ChatWindow({
 
       {!isPending && !isRejected && (
         <div className="flex-1 p-3 md:p-4 space-y-3 overflow-y-auto">
-          <div className="max-w-[75%] bg-white/10 rounded-xl p-3 text-sm text-white">
-            Hello teacher 👋
-          </div>
-
-          <div className="max-w-[75%] ml-auto bg-lime-500 text-black rounded-xl p-3 text-sm">
-            Hi! How can I help?
-          </div>
+          {loadingMessages ? (
+            <div className="text-center text-gray-400 text-sm py-4">
+              Loading...
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="text-center text-gray-400 text-sm py-4">
+              No messages yet. Start the conversation.
+            </div>
+          ) : (
+            messages.map((m) => {
+              const isMe = m.senderId === myId;
+              return (
+                <div
+                  key={m.id}
+                  className={`max-w-[75%] rounded-xl p-3 text-sm ${
+                    isMe
+                      ? "ml-auto bg-lime-500 text-black"
+                      : "bg-white/10 text-white"
+                  }`}
+                >
+                  {m.content}
+                </div>
+              );
+            })
+          )}
         </div>
       )}
 
@@ -240,6 +320,14 @@ export default function ChatWindow({
 
           <input
             disabled={isPending}
+            value={messageInput}
+            onChange={(e) => setMessageInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
             className="flex-1 bg-white/5 rounded-lg px-4 py-2 text-sm outline-none text-white disabled:opacity-40"
             placeholder={
               isPending
@@ -249,7 +337,8 @@ export default function ChatWindow({
           />
 
           <button
-            disabled={isPending}
+            disabled={isPending || sending}
+            onClick={handleSend}
             className="text-lime-400 disabled:opacity-40"
           >
             <Send />

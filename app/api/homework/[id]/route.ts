@@ -5,6 +5,10 @@ import prisma from "@/lib/db";
 
 type RouteContext = { params: Promise<{ id: string }> | { params: { id: string } } };
 
+function resolveId(raw: { id?: string; params?: { id: string } }): string {
+  return raw.id ?? raw.params?.id ?? "";
+}
+
 async function resolveSchoolId(session: { user: { id: string; schoolId?: string | null } }) {
   let schoolId = session.user.schoolId ?? null;
   if (!schoolId) {
@@ -24,8 +28,8 @@ export async function PUT(req: Request, context: RouteContext) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const params = "then" in context.params ? await context.params : context.params;
-    const id = params.id;
+    const raw = "then" in context.params ? await context.params : context.params;
+    const id = resolveId(raw as { id?: string; params?: { id: string } });
 
     const schoolId = await resolveSchoolId(session);
     if (!schoolId) {
@@ -101,8 +105,8 @@ export async function DELETE(req: Request, context: RouteContext) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const params = "then" in context.params ? await context.params : context.params;
-    const id = params.id;
+    const raw = "then" in context.params ? await context.params : context.params;
+    const id = resolveId(raw as { id?: string; params?: { id: string } });
 
     const schoolId = await resolveSchoolId(session);
     if (!schoolId) {

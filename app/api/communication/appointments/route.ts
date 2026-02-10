@@ -44,8 +44,20 @@ export async function GET() {
     const appointments = await prisma.appointment.findMany({
       where,
       orderBy: { createdAt: "desc" },
+      include: {
+        student: {
+          include: {
+            user: { select: { name: true, photoUrl: true } },
+          },
+        },
+        messages: {
+          take: 1,
+          orderBy: { createdAt: "desc" as const },
+          select: { content: true },
+        },
+      },
     });
-    await redis.set(cachedKey,appointments,{ex:60 * 5}); // Cache for 5 minutes
+    await redis.set(cachedKey, appointments, { ex: 60 * 5 }); // Cache for 5 minutes
 
     return NextResponse.json({ appointments });
   } catch (error: any) {
