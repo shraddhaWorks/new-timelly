@@ -6,7 +6,6 @@ import { useSearchParams } from "next/navigation";
 import AppLayout from "../../AppLayout";
 import { TEACHER_MENU_ITEMS } from "../../constants/sidebar";
 import RequiredRoles from "../../auth/RequiredRoles";
-import HomeworkPage from "../../components/teacher/Homework";
 import RequireFeature from "../../auth/RequireFeature";
 import TeacherDashboard from "../../components/teacher/dashboard/Dashboard";
 import TeacherClasses from "../../components/teacher/classes/Classes";
@@ -36,7 +35,7 @@ const TEACHER_TAB_TITLES = {
   profile: "Profile",
   settings: "Settings",
 };
- function TeacherDashboardInner() {
+function TeacherDashboardInner() {
   const { data: session } = useSession();
   const tab = useSearchParams().get("tab") ?? "dashboard";
   const title = (TEACHER_TAB_TITLES as any)[tab] ?? tab.toUpperCase();
