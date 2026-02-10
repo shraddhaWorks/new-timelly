@@ -4,7 +4,12 @@ import { authOptions } from "@/lib/authOptions";
 import { supabaseAdmin, SUPABASE_BUCKET } from "@/lib/supabase";
 
 const MAX_SIZE_MB = 10;
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const ALLOWED_DOC_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
 
 export async function POST(req: Request) {
   try {
@@ -31,9 +36,18 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    const allowedTypes =
+      folder === "homework"
+        ? [...ALLOWED_IMAGE_TYPES, ...ALLOWED_DOC_TYPES]
+        : ALLOWED_IMAGE_TYPES;
+    if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
-        { message: "Invalid file type. Use JPEG, PNG, WebP or GIF." },
+        {
+          message:
+            folder === "homework"
+              ? "Invalid file type. Use JPEG, PNG, WebP, GIF, PDF, or DOC/DOCX."
+              : "Invalid file type. Use JPEG, PNG, WebP or GIF.",
+        },
         { status: 400 }
       );
     }

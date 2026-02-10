@@ -11,7 +11,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const { title, description, subject, classId, dueDate, assignedDate } = await req.json();
+    const { title, description, subject, classId, dueDate, assignedDate, file: fileUrl } = await req.json();
 
     if (!title || !description || !subject || !classId ) {
       return NextResponse.json(
@@ -20,8 +20,14 @@ export async function POST(req: Request) {
       );
     }
 
-    const schoolId = session.user.schoolId;
-
+    let schoolId = session.user.schoolId;
+    if (!schoolId) {
+      const teacherClass = await prisma.class.findFirst({
+        where: { teacherId: session.user.id },
+        select: { schoolId: true },
+      });
+      schoolId = teacherClass?.schoolId ?? null;
+    }
     if (!schoolId) {
       return NextResponse.json(
         { message: "School not found in session" },
@@ -53,14 +59,19 @@ export async function POST(req: Request) {
         teacherId: session.user.id,
         schoolId,
         dueDate: dueDate ? new Date(dueDate) : null,
+        assignedDate: assignedDate ? new Date(assignedDate) : null,
+        file: typeof fileUrl === "string" && fileUrl.trim() ? fileUrl.trim() : null,
       },
       include: {
         class: {
-          select: { id: true, name: true, section: true },
+          select: {
+            id: true,
+            name: true,
+            section: true,
+            _count: { select: { students: true } },
+          },
         },
-        teacher: {
-          select: { id: true, name: true, email: true },
-        },
+        _count: { select: { submissions: true } },
       },
     });
 

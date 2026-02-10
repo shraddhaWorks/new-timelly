@@ -16,8 +16,14 @@ export async function GET(req: Request) {
     const classId = searchParams.get("classId");
     const subject = searchParams.get("subject");
 
-    const schoolId = session.user.schoolId;
-
+    let schoolId = session.user.schoolId;
+    if (!schoolId) {
+      const teacherClass = await prisma.class.findFirst({
+        where: { teacherId: session.user.id },
+        select: { schoolId: true },
+      });
+      schoolId = teacherClass?.schoolId ?? null;
+    }
     if (!schoolId) {
       return NextResponse.json(
         { message: "School not found in session" },
@@ -59,7 +65,12 @@ export async function GET(req: Request) {
       where,
       include: {
         class: {
-          select: { id: true, name: true, section: true },
+          select: {
+            id: true,
+            name: true,
+            section: true,
+            _count: { select: { students: true } },
+          },
         },
         teacher: {
           select: { id: true, name: true, email: true },
