@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { redis } from "@/lib/redis";
 
 export async function GET(req: Request) {
   try {
@@ -29,13 +28,6 @@ export async function GET(req: Request) {
         { message: "School not found" },
         { status: 400 }
       );
-    }
-
-    const cacheKey = `room-allocations:${schoolId}`;
-    const cached = await redis.get(cacheKey);
-
-    if (cached) {
-      return NextResponse.json({ roomAllocations: cached }, { status: 200 });
     }
 
     const roomAllocations = await prisma.roomAllocation.findMany({
@@ -92,8 +84,6 @@ export async function GET(req: Request) {
         createdAt: "desc",
       },
     });
-
-    await redis.set(cacheKey, roomAllocations, { ex: 60 * 5 }); // Cache for 5 minutes
 
     return NextResponse.json({ roomAllocations }, { status: 200 });
   } catch (error: any) {

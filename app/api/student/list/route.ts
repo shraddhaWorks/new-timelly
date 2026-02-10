@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { redis } from "@/lib/redis";
 
 export async function GET(req: Request) {
   try {
@@ -67,11 +66,6 @@ export async function GET(req: Request) {
       },
       orderBy: { createdAt: "desc" },
     });
-
-    if (!rollNo && !admissionNumber) {
-      const cachedKey = `students:${schoolId}`;
-      await redis.set(cachedKey, students, { ex: 60 * 5 });
-    }
 
     return NextResponse.json({ students }, { status: 200 });
   } catch (error: unknown) {

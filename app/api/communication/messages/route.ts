@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { redis } from "@/lib/redis";
 
 // GET messages for an appointment
 export async function GET(req: Request) {
@@ -45,17 +44,10 @@ export async function GET(req: Request) {
         { status: 403 }
       );
     }
-    const cachedKey = `messages:${appointmentId}`;
-    const cachedMessages = await redis.get(cachedKey);
-    if (cachedMessages) {
-      console.log("✅ Messages served from Redis");
-      return NextResponse.json({ messages: cachedMessages }, { status: 200 });
-    }
     const messages = await prisma.chatMessage.findMany({
       where: { appointmentId },
       orderBy: { createdAt: "asc" },
     });
-    await redis.set(cachedKey,messages,{ex:60 * 5}); // Cache for 5 minutes
 
     return NextResponse.json({ messages });
   } catch (error: any) {

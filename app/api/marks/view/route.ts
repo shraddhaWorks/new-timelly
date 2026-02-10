@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { redis } from "@/lib/redis";
 
 export async function GET(req: Request) {
   try {
@@ -48,12 +47,6 @@ export async function GET(req: Request) {
     if (subject) {
       where.subject = subject;
     }
-    const cacheKey = `marks:${schoolId}:${session.user.studentId || "all"}:${classId || "all"}:${studentId || "all"}:${subject || "all"}`;
-    const cachedMarks = await redis.get(cacheKey);
-    if (cachedMarks) {
-      console.log("✅ Marks served from Redis");
-      return NextResponse.json({ marks: cachedMarks }, { status: 200 });
-    }
     const marks = await prisma.mark.findMany({
       where,
       include: {
@@ -75,7 +68,6 @@ export async function GET(req: Request) {
         createdAt: "desc",
       },
     });
-    await redis.set(cacheKey, marks, { ex: 60 * 5 }); // Cache for 5 minutes
     return NextResponse.json({ marks }, { status: 200 });
   } catch (error: any) {
     console.error("View marks error:", error);
