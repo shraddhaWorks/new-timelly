@@ -3,11 +3,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
+import { nameToSubdomain } from "@/lib/subdomain";
 
 /**
  * Single API: create school + school admin user and link them (user.schoolId = school.id).
  * POST /api/superadmin/schools/create
- * Body: { schoolName, email, password, address?, location?, phone? }
+ * Body: { schoolName, subdomain, email, password, address?, location?, phone? }
  */
 export async function POST(req: Request) {
   try {
@@ -17,6 +18,8 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const schoolName = typeof body.schoolName === "string" ? body.schoolName.trim() : "";
+    const subdomainRaw = typeof body.subdomain === "string" ? body.subdomain.trim() : "";
+    const subdomain = subdomainRaw ? nameToSubdomain(subdomainRaw) || subdomainRaw.toLowerCase().replace(/[^a-z0-9-]/g, "-") : "";
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     const password = typeof body.password === "string" ? body.password : "";
     const address = typeof body.address === "string" ? body.address.trim() : "";
@@ -29,19 +32,39 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    if (!subdomain) {
+      return NextResponse.json(
+        { message: "subdomain is required (e.g. first-school)" },
+        { status: 400 }
+      );
+    }
+    if (!/^[a-z0-9-]+$/.test(subdomain)) {
+      return NextResponse.json(
+        { message: "Subdomain must contain only lowercase letters, numbers, and hyphens" },
+        { status: 400 }
+      );
+    }
     if (!/^\S+@\S+\.\S+$/.test(email)) {
       return NextResponse.json({ message: "Invalid email format" }, { status: 400 });
     }
 
-    const existing = await prisma.user.findUnique({
+    const existingUser = await prisma.user.findUnique({
       where: { email },
       select: { id: true },
     });
-    if (existing) {
+    if (existingUser) {
       return NextResponse.json({ message: "User already exists with this email" }, { status: 400 });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const existingSubdomain = await prisma.school.findFirst({
+      where: { subdomain },
+      select: { id: true },
+    });
+    if (existingSubdomain) {
+      return NextResponse.json({ message: "Subdomain already in use" }, { status: 400 });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 8);
 
     const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
@@ -59,11 +82,12 @@ export async function POST(req: Request) {
       const school = await tx.school.create({
         data: {
           name: schoolName,
+          subdomain,
           address: address || schoolName,
           location: location || "",
           admins: { connect: { id: user.id } },
         },
-        select: { id: true, name: true, address: true, location: true },
+        select: { id: true, name: true, subdomain: true, address: true, location: true },
       });
 
       await tx.user.update({
@@ -80,13 +104,17 @@ export async function POST(req: Request) {
     );
   } catch (e: unknown) {
     console.error("Superadmin create school:", e);
-    const err = e as { code?: string; meta?: { target?: string[] } };
+    const err = e as { code?: string; name?: string; cause?: unknown };
     if (err?.code === "P2002") {
       return NextResponse.json({ message: "Email already exists" }, { status: 400 });
     }
-    return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
-      { status: 500 }
-    );
+    const msg =
+      err?.name === "DriverAdapterError" ||
+      (e instanceof Error && (e.message.includes("statement timeout") || e.message.includes("Connection terminated")))
+        ? "Database request timed out. Ensure DIRECT_URL is set in .env (Supabase direct connection) to avoid pooler timeout."
+        : e instanceof Error
+          ? e.message
+          : "Internal server error";
+    return NextResponse.json({ message: msg }, { status: 500 });
   }
 }

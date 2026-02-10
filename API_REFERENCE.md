@@ -792,19 +792,169 @@ All fields optional
 ## Newsfeed
 
 ### `GET /api/newsfeed/list`
-**Purpose**: List posts (includes likedByMe)
+
+**Purpose**: List news feed posts for the current user's school
+
+**Methods**: `GET`
+
+**Authentication**: Required
+
+**Query Params**: None
+
+**Response** (200):
+```json
+{
+  "newsFeeds": [
+    {
+      "id": "string",
+      "title": "string",
+      "description": "string",
+      "photo": "string | null",
+      "mediaUrl": "string | null",
+      "mediaType": "PHOTO | null",
+      "likes": 0,
+      "schoolId": "string",
+      "createdById": "string",
+      "createdBy": {
+        "id": "string",
+        "name": "string | null",
+        "email": "string | null"
+      },
+      "createdAt": "ISO8601",
+      "updatedAt": "ISO8601",
+      "likedByMe": false
+    }
+  ]
+}
+```
+
+**Notes**: Returns empty array if user has no schoolId. Ordered by `createdAt` DESC.
+
+---
 
 ### `POST /api/newsfeed/create`
-**Purpose**: Create post
+
+**Purpose**: Create a new news feed post
+
+**Methods**: `POST`
+
+**Authentication**: Required
+
+**Request Body**:
+```json
+{
+  "title": "string",
+  "description": "string",
+  "photo": "string | null",
+  "mediaUrl": "string | null"
+}
+```
+`title` and `description` are required. `photo` or `mediaUrl` optional.
+
+**Response** (201):
+```json
+{
+  "message": "News feed created successfully",
+  "newsFeed": {
+    "id": "string",
+    "title": "string",
+    "description": "string",
+    "photo": "string | null",
+    "likes": 0,
+    "createdBy": { "id": "string", "name": "string | null", "email": "string | null" },
+    "createdAt": "ISO8601",
+    "updatedAt": "ISO8601",
+    "likedByMe": false
+  }
+}
+```
+
+**Error Cases**:
+- `400` - Title and description required; School not found (user has no schoolId)
+
+---
 
 ### `PUT /api/newsfeed/:id`
-**Purpose**: Update post
+
+**Purpose**: Update a news feed post
+
+**Methods**: `PUT`
+
+**Authentication**: Required
+
+**Path Params**: `id` - News feed ID
+
+**Request Body**:
+```json
+{
+  "title": "string",
+  "description": "string",
+  "photo": "string | null",
+  "mediaUrl": "string | null"
+}
+```
+All fields optional; only provided fields are updated.
+
+**Response** (200):
+```json
+{
+  "message": "News feed updated successfully",
+  "newsFeed": { ... }
+}
+```
+
+**Error Cases**:
+- `400` - School not found in session
+- `404` - News feed not found or doesn't belong to your school
+
+---
 
 ### `DELETE /api/newsfeed/:id`
-**Purpose**: Delete post
+
+**Purpose**: Delete a news feed post
+
+**Methods**: `DELETE`
+
+**Authentication**: Required
+
+**Path Params**: `id` - News feed ID
+
+**Response** (200):
+```json
+{
+  "message": "News feed deleted successfully"
+}
+```
+
+**Error Cases**:
+- `400` - School not found in session
+- `404` - News feed not found or doesn't belong to your school
+
+---
 
 ### `POST /api/newsfeed/:id/like`
-**Purpose**: Toggle like
+
+**Purpose**: Toggle like on a news feed post (like if not liked, unlike if already liked)
+
+**Methods**: `POST`
+
+**Authentication**: Required
+
+**Path Params**: `id` - News feed ID
+
+**Request Body**: None
+
+**Response** (200):
+```json
+{
+  "liked": true,
+  "likes": 5
+}
+```
+When unliking: `liked: false`, `likes` is decremented.
+
+**Error Cases**:
+- `404` - News feed not found
 
 ---
 

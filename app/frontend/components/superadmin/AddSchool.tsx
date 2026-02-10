@@ -23,6 +23,7 @@ import PageHeader from "../common/PageHeader";
 
 type FormErrors = {
   schoolName?: string;
+  subdomain?: string;
   password?: string;
   email?: string;
   phone?: string;
@@ -34,6 +35,7 @@ export default function AddSchool() {
 
   const [form, setForm] = useState<SchoolFormState>({
     schoolName: "",
+    subdomain: "",
     password: "",
     phone: "",
     email: "",
@@ -75,6 +77,14 @@ export default function AddSchool() {
           return;
         }
 
+        /* Subdomain → lowercase, letters, numbers, hyphens only */
+        if (field === "subdomain") {
+          const slug = value.toLowerCase().replace(/[^a-z0-9-]/g, "").replace(/-+/g, "-").replace(/^-|-$/g, "");
+          setForm((prev) => ({ ...prev, subdomain: slug }));
+          setErrors((prev) => ({ ...prev, subdomain: "" }));
+          return;
+        }
+
         setForm((prev) => ({ ...prev, [field]: value }));
         setErrors((prev) => ({ ...prev, [field]: "" }));
       };
@@ -86,6 +96,14 @@ export default function AddSchool() {
 
     if (!form.schoolName.trim()) {
       newErrors.schoolName = "School name is required";
+    }
+
+    if (!form.subdomain.trim()) {
+      newErrors.subdomain = "Subdomain is required";
+    } else if (!/^[a-z0-9-]+$/.test(form.subdomain)) {
+      newErrors.subdomain = "Only lowercase letters, numbers, and hyphens";
+    } else if (form.subdomain.length < 2) {
+      newErrors.subdomain = "Subdomain must be at least 2 characters";
     }
 
     if (!form.password.trim()) {
@@ -119,28 +137,50 @@ export default function AddSchool() {
     if (!validateForm()) return;
     setLoading(true);
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000);
+
     try {
       const res = await fetch("/api/superadmin/schools/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           schoolName: form.schoolName,
+          subdomain: form.subdomain.trim(),
           email: form.email,
           password: form.password,
           address: [form.addressLine, form.area, form.city, form.district, form.state].filter(Boolean).join(", ") || form.schoolName,
           location: form.area || form.city || "",
           phone: form.phone || undefined,
         }),
+        signal: controller.signal,
       });
 
-      const data = await res.json();
+      clearTimeout(timeoutId);
+
+      let data: { message?: string };
+      try {
+        data = await res.json();
+      } catch {
+        setError(res.ok ? "Invalid response from server" : `Request failed (${res.status})`);
+        return;
+      }
+
       if (!res.ok) {
-        setError(data.message || "Failed to create school");
+        setError(data?.message || "Failed to create school");
         return;
       }
       setShowSuccess(true);
     } catch (err) {
-      setError("Something went wrong");
+      if (err instanceof Error) {
+        if (err.name === "AbortError") {
+          setError("Request timed out. Please try again.");
+        } else {
+          setError(err.message || "Something went wrong");
+        }
+      } else {
+        setError("Something went wrong");
+      }
     } finally {
       setLoading(false);
     }
@@ -151,6 +191,7 @@ export default function AddSchool() {
   const handleReset = () => {
     setForm({
       schoolName: "",
+      subdomain: "",
       password: "",
       phone: "",
       email: "",
@@ -220,6 +261,15 @@ return (
               onChange={handleChange("schoolName")}
               error={errors.schoolName}
               icon={School}
+            />
+
+            <SearchInput
+              label="Subdomain *"
+              placeholder="e.g. first-school (for first-school.yourdomain.com)"
+              value={form.subdomain}
+              onChange={handleChange("subdomain")}
+              error={errors.subdomain}
+              icon={Globe}
             />
 
             <SearchInput
