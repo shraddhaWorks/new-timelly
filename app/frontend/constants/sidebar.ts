@@ -11,66 +11,105 @@ import {
     Users,
     User,
     Plus,
+    ClipboardList,
+    Send,
+    Settings,
 } from "lucide-react";
 import { SidebarItem } from "../types/sidebar";
 import { Permission } from "../enums/permissions";
 
 export const PARENT_MENU_ITEMS: SidebarItem[] = [
-    {
-        label: "Dashboard",
-        tab: "dashboard",
-        href: "/frontend/pages/parent?tab=dashboard",
-        icon: Home,
-        permission: Permission.DASHBOARD,
-    },
-    {
-        label: "Homework",
-        tab: "homework",
-        href: "/frontend/pages/parent?tab=homework",
-        icon: BookOpen,
-        permission: Permission.HOMEWORK,
-    },
-    {
-        label: "Attendance",
-        tab: "attendance",
-        href: "/frontend/pages/parent?tab=attendance",
-        icon: Calendar,
-        permission: Permission.ATTENDANCE,
-    },
-    {
-        label: "Marks",
-        tab: "marks",
-        href: "/frontend/pages/parent?tab=marks",
-        icon: BarChart2,
-        permission: Permission.MARKS,
-    },
-    {
-        label: "Chat",
-        tab: "chat",
-        href: "/frontend/pages/parent?tab=chat",
-        icon: MessageCircle,
-        permission: Permission.CHAT,
-    },
-    {
-        label: "Fees",
-        tab: "fees",
-        href: "/frontend/pages/parent?tab=fees",
-        icon: CreditCard,
-        permission: Permission.FEES,
-    },
-    {
-        label: "Certificates",
-        tab: "certificates",
-        href: "/frontend/pages/parent?tab=certificates",
-        icon: FileText,
-        permission: Permission.CERTIFICATES,
-    },
-    {
-        label: "Logout",
-        icon: LogOut,
-        action: "logout",
-    },
+  {
+    label: "Home",
+    tab: "dashboard",
+    href: "/frontend/pages/parent?tab=dashboard",
+    icon: Home,
+    permission: Permission.HOME,
+  },
+  {
+    label: "Profile",
+    tab: "profile",
+    href: "/frontend/pages/parent?tab=profile",
+    icon: User,
+    permission: Permission.PROFILE,
+  },
+  {
+    label: "Homework",
+    tab: "homework",
+    href: "/frontend/pages/parent?tab=homework",
+    icon: BookOpen,
+    permission: Permission.HOMEWORK,
+  },
+  {
+    label: "Attendance",
+    tab: "attendance",
+    href: "/frontend/pages/parent?tab=attendance",
+    icon: Calendar,
+    permission: Permission.ATTENDANCE,
+  },
+  {
+    label: "Marks",
+    tab: "marks",
+    href: "/frontend/pages/parent?tab=marks",
+    icon: BarChart2,
+    permission: Permission.MARKS,
+  },
+  {
+    label: "Exams & Syllabus",
+    tab: "exams",
+    href: "/frontend/pages/parent?tab=exams",
+    icon: ClipboardList,
+    permission: Permission.EXAMS,
+  },
+  {
+    label: "Chat",
+    tab: "chat",
+    href: "/frontend/pages/parent?tab=chat",
+    icon: MessageCircle,
+    permission: Permission.CHAT,
+  },
+  {
+    label: "Workshops",
+    tab: "workshops",
+    href: "/frontend/pages/parent?tab=workshops",
+    icon: Users,
+    permission: Permission.WORKSHOPS,
+  },
+  {
+    label: "Certificates",
+    tab: "certificates",
+    href: "/frontend/pages/parent?tab=certificates",
+    icon: FileText,
+    permission: Permission.CERTIFICATES,
+  },
+  {
+    label: "Fees",
+    tab: "fees",
+    href: "/frontend/pages/parent?tab=fees",
+    icon: CreditCard,
+    permission: Permission.FEES,
+  },
+  {
+    label: "Leave Application",
+    tab: "leave",
+    href: "/frontend/pages/parent?tab=leave",
+    icon: Send,
+    permission: Permission.STUDENT_LEAVE,
+  },
+  {
+    label: "Settings",
+    tab: "settings",
+    href: "/frontend/pages/parent?tab=settings",
+    icon: Settings,
+    permission: Permission.SETTINGS,
+  },
+  {
+    label: "Logout",
+    icon: LogOut,
+    action: "logout",
+  },
 ];
+
 
 
 export const SCHOOLADMIN_MENU_ITEMS: SidebarItem[] = [

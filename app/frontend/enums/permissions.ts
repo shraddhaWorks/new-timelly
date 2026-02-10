@@ -30,5 +30,7 @@ export enum Permission {
   CIRCULARS = "CIRCULARS",
   SETTINGS = "SETTINGS",
   PROFILE = "PROFILE",
+  HOME = "HOME",
+  STUDENT_LEAVE = "STUDENT_LEAVE",
   
 }

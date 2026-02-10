@@ -35,14 +35,14 @@ export async function GET() {
     const cachedClasses = await redis.get(cachedKey);
 
     if (cachedClasses) {
-      console.log("✅ Classes served from Redis");
+      console.log("Classes served from Redis");
       return NextResponse.json({ classes: cachedClasses }, { status: 200 });
     }
     const classes = await prisma.class.findMany({
       where,
       include: {
         teacher: {
-          select: { id: true, name: true, email: true },
+          select: { id: true, name: true, email: true, subject: true },
         },
         _count: {
           select: { students: true },
