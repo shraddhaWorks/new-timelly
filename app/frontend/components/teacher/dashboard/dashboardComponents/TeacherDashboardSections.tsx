@@ -68,78 +68,71 @@ export function TeacherDashboardContent({
   const stats = data.stats;
   const notifications = data.notifications ?? [];
   const recentChats = data.recentChats ?? [];
+  const statCards = [
+    {
+      title: "Total Classes",
+      value: stats.totalClasses,
+      subtitle: `${formatNumber(stats.totalStudents)} total students`,
+      icon: <Users size={20} className="w-5 h-5 text-lime-400" />,
+      badge: {
+        label: "ACTIVE",
+        className:
+          "bg-lime-400/10 text-lime-400 border border-lime-400/20",
+      },
+    },
+    {
+      title: "Total Students",
+      value: formatNumber(stats.totalStudents),
+      subtitle: "Across all classes",
+      icon: <BookOpen size={20} className="w-5 h-5 text-lime-400" />,
+      badge: {
+        label: "TOTAL",
+        className: "bg-white/5 text-gray-400 border border-white/10",
+      },
+    },
+    {
+      title: "Pending Chats",
+      value: stats.pendingChats,
+      subtitle: "Parent messages",
+      icon: <MessageCircle size={20} className="w-5 h-5 text-lime-400" />,
+      badge: {
+        label: "ACTION",
+        className: "bg-red-500/10 text-red-400 border border-red-500/20",
+      },
+    },
+    {
+      title: "Unread Alerts",
+      value: stats.unreadAlerts,
+      subtitle: "Important updates",
+      icon: <Bell size={20} className="w-5 h-5 text-lime-400" />,
+      badge: {
+        label: "NEW",
+        className: "bg-red-500/10 text-red-400 border border-red-500/20",
+      },
+    },
+  ];
   return (
     <>
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard className="bg-white/5">
-          <div className="flex items-start justify-between mb-4">
-            <div className="p-3 bg-white/5 rounded-xl group-hover:bg-lime-400/20 transition-colors">
-              <Users size={20} className="w-5 h-5 text-lime-400" />
+        {statCards.map((card) => (
+          <StatCard key={card.title} className="bg-white/5">
+            <div className="flex items-start justify-between">
+              <div className="p-3 bg-white/5 rounded-xl group-hover:bg-lime-400/20 transition-colors">
+                {card.icon}
+              </div>
+              <span
+                className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg ${card.badge.className}`}
+              >
+                {card.badge.label}
+              </span>
             </div>
-            <span className="px-2 py-1 bg-lime-400/10 text-lime-400 text-[10px] font-bold 
-            uppercase tracking-wider rounded-lg border border-lime-400/20">
-              ACTIVE
-            </span>
-          </div>
-          <div className="mt-6">
-            <h3 className="text-sm font-medium text-gray-400 mb-1">Total Classes</h3>
-            <p className="text-3xl font-bold text-white mb-1">{stats.totalClasses}</p>
-            <p className="text-xs text-gray-500">
-              {formatNumber(stats.totalStudents)} total students
-            </p>
-          </div>
-        </StatCard>
-
-        <StatCard className="bg-white/5">
-          <div className="flex items-start justify-between">
-            <div className="p-3 bg-white/5 rounded-xl group-hover:bg-lime-400/20 transition-colors">
-              <BookOpen size={20} className="w-5 h-5 text-lime-400" />
+            <div className="mt-6">
+              <h3 className="text-sm font-medium text-gray-400 mb-1">{card.title}</h3>
+              <p className="text-3xl font-bold text-white mb-1">{card.value}</p>
+              <p className="text-xs text-gray-500">{card.subtitle}</p>
             </div>
-            <span className="px-2 py-1 bg-white/5 text-gray-400 text-[10px] 
-            font-bold uppercase tracking-wider rounded-lg border border-white/10">
-              TOTAL
-            </span>
-          </div>
-          <div className="mt-6">
-            <h3 className="text-sm font-medium text-gray-400 mb-1">Total Students</h3>
-            <p className="text-3xl font-bold text-white mb-1">{formatNumber(stats.totalStudents)}</p>
-            <p className="text-xs text-gray-500">Across all classes</p>
-          </div>
-        </StatCard>
-
-        <StatCard className="bg-white/5">
-          <div className="flex items-start justify-between">
-            <div className="p-3 bg-white/5 rounded-xl group-hover:bg-lime-400/20 transition-colors">
-              <MessageCircle size={20} className="w-5 h-5 text-lime-400" />
-            </div>
-            <span className="px-2 py-1 bg-red-500/10 text-red-400 text-[10px] font-bold
-             uppercase tracking-wider rounded-lg border border-red-500/20">
-              ACTION
-            </span>
-          </div>
-          <div className="mt-6">
-            <h3 className="text-sm font-medium text-gray-400 mb-1">Pending Chats</h3>
-            <p className="text-3xl font-bold text-white mb-1">{stats.pendingChats}</p>
-            <p className="text-xs text-gray-500">Parent messages</p>
-          </div>
-        </StatCard>
-
-        <StatCard className="bg-white/5">
-          <div className="flex items-start justify-between">
-            <div className="p-3 bg-white/5 rounded-xl group-hover:bg-lime-400/20 transition-colors">
-              <Bell size={20} className="w-5 h-5 text-lime-400" />
-            </div>
-            <span className="px-2 py-1 bg-red-500/10 text-red-400 text-[10px] font-bold uppercase 
-            tracking-wider rounded-lg border border-red-500/20">
-              NEW
-            </span>
-          </div>
-          <div className="mt-6">
-            <h3 className="text-sm font-medium text-gray-400 mb-1">Unread Alerts</h3>
-            <p className="text-3xl font-bold text-white mb-1">{stats.unreadAlerts}</p>
-            <p className="text-xs text-gray-500">Important updates</p>
-          </div>
-        </StatCard>
+          </StatCard>
+        ))}
       </section>
 
       <section className="space-y-4">

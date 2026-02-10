@@ -36,8 +36,7 @@ const TEACHER_TAB_TITLES = {
   profile: "Profile",
   settings: "Settings",
 };
-
-export default function TeacherDashboardInner() {
+ function TeacherDashboardInner() {
   const { data: session } = useSession();
   const tab = useSearchParams().get("tab") ?? "dashboard";
   const title = (TEACHER_TAB_TITLES as any)[tab] ?? tab.toUpperCase();
@@ -104,17 +103,6 @@ export default function TeacherDashboardInner() {
 
   return (
     <RequiredRoles allowedRoles={["TEACHER"]}>
-      {/* <AppLayout
-        activeTab={tab}
-        title={title}
-        menuItems={TEACHER_MENU_ITEMS}
-        profile={profile}
-        children={
-          <div>
-            <HomeworkPage/>
-          </div>
-        }
-      /> */}
       <RequireFeature requiredFeature={tab}>
         <AppLayout
           activeTab={tab}
@@ -128,10 +116,10 @@ export default function TeacherDashboardInner() {
   );
 }
 
-// export default function TeacherDashboardContent() {
-//   return (
-//     <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-white/70">Loading…</div>}>
-//       <TeacherDashboardInner />
-//     </Suspense>
-//   );
-// }
+export default function TeacherDashboardContent() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-white/70">Loading…</div>}>
+      <TeacherDashboardInner />
+    </Suspense>
+  );
+}
