@@ -248,6 +248,13 @@ model SchoolSettings {
   admissionPrefix  String   @default("ADM") // e.g. ADM -> ADM/2026/001
   rollNoPrefix     String   @default("") // optional prefix for roll numbers
   admissionCounter Int      @default(0) // last used number for admission
+
+  // Tenant payment credentials - payments go to school's account. Fallback to global env if not set.
+  juspayMerchantId   String?
+  juspayApiKey       String?
+  razorpayKeyId      String?
+  razorpayKeySecret  String?
+
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

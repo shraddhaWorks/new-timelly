@@ -2,10 +2,12 @@ import Razorpay from "razorpay";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
+import prisma from "@/lib/db";
 
-const useJuspay =
-  !!process.env.JUSTPAY_MERCHANT_ID &&
-  !!process.env.JUSTPAY_MERCHANT_KEY_ID;
+// Global Juspay fallback when school has no tenant credentials
+const globalJuspayMerchantId = process.env.JUSTPAY_MERCHANT_ID;
+const globalJuspayApiKey =
+  process.env.JUSTPAY_API_KEY || process.env.JUSTPAY_MERCHANT_KEY_ID;
 
 const razorpay =
   process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET
@@ -27,6 +29,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const rawAmount = body.amount;
+    const returnPath = body.return_path as string | undefined; // e.g. "/frontend/pages/parent?tab=fees"
 
     const amountNumber = typeof rawAmount === "string" ? parseFloat(rawAmount) : rawAmount;
 
@@ -37,13 +40,36 @@ export async function POST(req: Request) {
     const amountPaise = Math.round(amountNumber * 100);
     const customerId = session.user.studentId;
 
+    // Tenant: payments go to the student's school account. Use school Juspay creds or global fallback.
+    const student = await prisma.student.findUnique({
+      where: { id: session.user.studentId },
+      select: { schoolId: true },
+    });
+    if (!student) {
+      return NextResponse.json({ error: "Student not found" }, { status: 404 });
+    }
+
+    const settings = await prisma.schoolSettings.findUnique({
+      where: { schoolId: student.schoolId },
+    });
+
+    const useSchoolJuspay =
+      !!settings?.juspayMerchantId && !!settings?.juspayApiKey;
+    const merchantId = useSchoolJuspay
+      ? settings!.juspayMerchantId!
+      : globalJuspayMerchantId;
+    const apiKey = useSchoolJuspay
+      ? settings!.juspayApiKey!
+      : globalJuspayApiKey;
+    const useJuspay = !!merchantId && !!apiKey;
+
     if (useJuspay) {
-      const merchantId = process.env.JUSTPAY_MERCHANT_ID!;
-      const apiKey = process.env.JUSTPAY_MERCHANT_KEY_ID!;
       const orderId = `ord_${Date.now()}_${session.user.studentId}`;
 
       const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-      const returnUrl = `${baseUrl}/payments?success=1&amount=${amountNumber}&juspay_order=${orderId}`;
+      const path = returnPath && returnPath.startsWith("/") ? returnPath : "/payments";
+      const sep = path.includes("?") ? "&" : "?";
+      const returnUrl = `${baseUrl}${path}${sep}success=1&amount=${amountNumber}&juspay_order=${orderId}`;
       const params = new URLSearchParams({
         order_id: orderId,
         amount: String(amountPaise),
@@ -52,6 +78,7 @@ export async function POST(req: Request) {
         return_url: returnUrl,
       });
 
+      // Juspay typically expects Basic auth: base64(api_key:)
       const auth = Buffer.from(`${apiKey}:`).toString("base64");
       const res = await fetch("https://payments.sandbox.juspay.in/orders", {
         method: "POST",
@@ -67,8 +94,14 @@ export async function POST(req: Request) {
       if (!res.ok) {
         const errText = await res.text();
         console.error("Juspay order error:", res.status, errText);
+        const is401 = res.status === 401;
         return NextResponse.json(
-          { error: "Juspay order failed", details: errText },
+          {
+            error: is401
+              ? "Juspay API key invalid. In .env use JUSTPAY_API_KEY with the API Key from Juspay Dashboard (not Key ID). Restart dev server after changing .env."
+              : "Juspay order failed",
+            details: errText,
+          },
           { status: 500 }
         );
       }
@@ -93,7 +126,10 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(
-      { error: "No payment gateway configured. Set RAZORPAY_* or JUSTPAY_* env vars." },
+      {
+        error:
+          "Payment not configured for this school. Add Juspay credentials in School Settings, or set JUSTPAY_MERCHANT_ID and JUSTPAY_API_KEY in .env as fallback.",
+      },
       { status: 500 }
     );
   } catch (err: any) {

@@ -52,11 +52,18 @@ export async function PUT(req: Request) {
     if (!schoolId) return NextResponse.json({ message: "School not found" }, { status: 400 });
 
     const body = await req.json();
-    const { admissionPrefix, rollNoPrefix } = body;
+    const { admissionPrefix, rollNoPrefix, juspayMerchantId, juspayApiKey } = body;
 
-    const data: { admissionPrefix?: string; rollNoPrefix?: string } = {};
+    const data: {
+      admissionPrefix?: string;
+      rollNoPrefix?: string;
+      juspayMerchantId?: string | null;
+      juspayApiKey?: string | null;
+    } = {};
     if (typeof admissionPrefix === "string") data.admissionPrefix = admissionPrefix;
     if (typeof rollNoPrefix === "string") data.rollNoPrefix = rollNoPrefix;
+    if (juspayMerchantId !== undefined) data.juspayMerchantId = juspayMerchantId === "" ? null : String(juspayMerchantId);
+    if (juspayApiKey !== undefined) data.juspayApiKey = juspayApiKey === "" ? null : String(juspayApiKey);
 
     const settings = await prisma.schoolSettings.upsert({
       where: { schoolId },
