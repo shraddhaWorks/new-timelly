@@ -4,11 +4,11 @@ import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
 import { redis } from "@/lib/redis";
 
-type ApproveParams =
+type RejectParams =
   | { params: { id: string } }
   | { params: Promise<{ id: string }> };
 
-export async function POST(_req: Request, context: ApproveParams) {
+export async function POST(_req: Request, context: RejectParams) {
   const resolved = "then" in context.params ? await context.params : context.params;
   const appointmentId = resolved.id;
 
@@ -40,14 +40,14 @@ export async function POST(_req: Request, context: ApproveParams) {
 
     if (!isTeacher || !isOwnerTeacher) {
       return NextResponse.json(
-        { message: "Only the assigned teacher can approve" },
+        { message: "Only the assigned teacher can reject" },
         { status: 403 }
       );
     }
 
     const updated = await prisma.appointment.update({
       where: { id: appointmentId },
-      data: { status: "APPROVED" },
+      data: { status: "REJECTED" },
     });
 
     // Invalidate appointments cache for teacher and student
@@ -55,16 +55,14 @@ export async function POST(_req: Request, context: ApproveParams) {
     await redis.del(`appointments:STUDENT:${appointment.studentId}`);
 
     return NextResponse.json(
-      { message: "Appointment approved", appointment: updated },
+      { message: "Appointment rejected", appointment: updated },
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("Approve appointment error:", error);
+    console.error("Reject appointment error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }
     );
   }
 }
-
-

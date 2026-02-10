@@ -3,7 +3,7 @@
 export type Status = "pending" | "approved" | "rejected";
 
 export type Chat = {
-  id: number;
+  id: string;
   parent: string;
   student: string;
   lastMessage: string;
