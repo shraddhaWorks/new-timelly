@@ -8,6 +8,7 @@ import { useTeacherClasses } from "./hooks/useTeacherClasses";
 import { useClassMetrics } from "./hooks/useClassMetrics";
 import ClassCards from "./components/ClassCards";
 import StudentsSection from "./components/StudentsSection";
+import PageHeader from "../../common/PageHeader";
 
 const getClassLabel = (name?: string | null, section?: string | null) =>
   name ? `${name}${section ? `-${section}` : ""}` : "—";
@@ -65,13 +66,8 @@ export default function TeacherClasses() {
   const activeStudents = classStudents.length;
 
   return (
-    <div className="min-h-screen text-white px-3 sm:px-6 lg:px-8 py-4 space-y-6">
-      <section className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-6 sm:p-7 shadow-lg">
-        <h2 className="text-2xl sm:text-3xl font-bold">My Classes</h2>
-        <p className="text-white/60 mt-2">
-          Manage your classes and view student information.
-        </p>
-      </section>
+    <div className="min-h-screen text-white sm:lg:space-y-6">
+      <PageHeader title="My Classes" subtitle="Manage your classes and view student information."/>
 
       {loading ? (
         <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-6">
@@ -83,41 +79,8 @@ export default function TeacherClasses() {
         </div>
       ) : (
         <>
-          <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-            {[
-              {
-                title: "Total Classes",
-                value: totalClasses,
-                icon: <BookOpen size={22} className="text-lime-400" />,
-              },
-              {
-                title: "Total Students",
-                value: totalStudents,
-                icon: <Users size={22} className="text-lime-400" />,
-              },
-              {
-                title: "Active Class",
-                value: getClassLabel(selectedClass?.name, selectedClass?.section),
-                icon: <GraduationCap size={22} className="text-lime-400" />,
-              },
-              {
-                title: "Active Students",
-                value: activeStudents,
-                icon: <Users size={22} className="text-lime-400" />,
-              },
-            ].map((card) => (
-              <StatCard
-                key={card.title}
-                title={card.title}
-                value={card.value}
-                icon={card.icon}
-                className="bg-white/5"
-              />
-            ))}
-          </section>
-
           <section className="space-y-4">
-            <div className="flex items-center justify-between">
+            {/* <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-xl font-semibold">Classes</h3>
                 <p className="text-white/60 text-sm">Tap a class to view students</p>
@@ -126,7 +89,7 @@ export default function TeacherClasses() {
                 <span className="w-2.5 h-2.5 rounded-full bg-lime-400" />
                 Selected
               </div>
-            </div>
+            </div> */}
 
             <ClassCards
               classes={classes}

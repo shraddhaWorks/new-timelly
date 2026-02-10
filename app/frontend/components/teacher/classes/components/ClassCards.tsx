@@ -50,7 +50,7 @@ export default function ClassCards({
             >
               <div className="flex items-start justify-between">
                 <div className="p-3 rounded-xl bg-white/5">
-                  <Users size={18} className="text-lime-400" />
+                  <Users size={18} className={isActive?"text-lime-400":"text-gray-400"} />
                 </div>
                 {isActive && (
                   <span className="h-2.5 w-2.5 rounded-full bg-lime-400 shadow-[0_0_10px_rgba(163,230,53,0.6)]" />

@@ -1,9 +1,13 @@
 ﻿"use client";
 
-import { ChevronDown, ChevronUp, Mail, Phone, Search } from "lucide-react";
-import SearchInput from "../../../common/SearchInput";
+import { Award, ChevronDown, ChevronUp, Mail, Phone } from "lucide-react";
+import TableLayout from "../../../common/TableLayout";
+import SectionHeaderWithSearch from "../../../common/SectionHeaderWithSearch";
+import { AVATAR_URL } from "../../../../constants/images";
 import type { StudentRow } from "../hooks/useTeacherClasses";
 import type { StudentMetrics } from "../hooks/useClassMetrics";
+import type { Column } from "../../../../types/superadmin";
+import { useRouter } from "next/navigation";
 
 type StudentWithMetrics = StudentRow & {
   metrics: StudentMetrics;
@@ -16,13 +20,6 @@ type StudentsSectionProps = {
   onSearch: (value: string) => void;
   expandedId: string | null;
   onToggleExpanded: (id: string) => void;
-};
-
-const initials = (name?: string | null) => {
-  if (!name) return "S";
-  const parts = name.trim().split(" ").filter(Boolean);
-  if (parts.length === 1) return parts[0][0]?.toUpperCase() ?? "S";
-  return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
 };
 
 const formatPercent = (value: number | null) =>
@@ -47,6 +44,12 @@ const gradePillClass = (grade?: string | null) => {
   return "bg-white/10 text-white/80 border-white/20";
 };
 
+const getPhotoUrl = (student: StudentWithMetrics) =>
+  student.user?.photoUrl ||
+  student.user?.image ||
+  student.photoUrl ||
+  AVATAR_URL;
+
 export default function StudentsSection({
   classTitle,
   students,
@@ -55,190 +58,194 @@ export default function StudentsSection({
   expandedId,
   onToggleExpanded,
 }: StudentsSectionProps) {
+  const router = useRouter();
   const expandedStudent = students.find((s) => s.id === expandedId) ?? null;
+  const columns: Column<StudentWithMetrics>[] = [
+    {
+      header: "Roll No",
+      accessor: "rollNo",
+      align: "left",
+      render: (row: StudentWithMetrics) =>
+        row.rollNo ?? row.admissionNumber ?? "--",
+    },
+    {
+      header: "Student Name",
+      accessor: "user",
+      align: "left",
+      render: (row: StudentWithMetrics) => (
+        <div className="flex items-center gap-3">
+          <img
+            src={getPhotoUrl(row)}
+            alt={row.user?.name ?? "Student"}
+            onError={(e) => {
+              e.currentTarget.src = AVATAR_URL;
+            }}
+            className="w-10 h-10 rounded-xl object-cover border border-white/10"
+          />
+          <div>
+            <div
+              className={`text-sm font-medium text-white group-hover:text-lime-400 transition-colors ${
+                expandedId === row.id ? "text-lime-300" : "text-white"
+              }`}
+            >
+              {row.user?.name ?? "Unnamed Student"}
+            </div>
+            {/* <div className="text-xs text-white/40">
+              {row.user?.email ?? "No email"}
+            </div> */}
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Attendance",
+      accessor: "metrics",
+      align: "center",
+      render: (row: StudentWithMetrics) => (
+        <div className="flex items-center justify-center gap-3">
+          <div className="h-2 w-28 rounded-full bg-white/10 overflow-hidden">
+            <div
+              className={`h-full rounded-full ${progressColor(
+                row.metrics.attendancePct
+              )}`}
+              style={{ width: progressWidth(row.metrics.attendancePct) }}
+            />
+          </div>
+          <span className="text-sm text-gray-300 font-medium">
+            {formatPercent(row.metrics.attendancePct)}
+          </span>
+        </div>
+      ),
+    },
+    {
+      header: "Avg Marks",
+      accessor: "metrics",
+      align: "center",
+      render: (row: StudentWithMetrics) =>
+        formatPercent(row.metrics.avgMarksPct),
+    },
+    {
+      header: "Grade",
+      accessor: "metrics",
+      align: "center",
+      render: (row: StudentWithMetrics) => (
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-semibold border px-2.5 py-1 rounded-lg text-xs font-bold border uppercase tracking-wider
+              ${gradePillClass(
+            row.metrics.grade
+          )}`}
+        >
+          {gradeLabel(row.metrics.grade)}
+        </span>
+      ),
+    },
+    {
+      header: "Actions",
+      accessor: "id",
+      align: "center",
+      render: (row: StudentWithMetrics) => {
+        const isExpanded = expandedId === row.id;
+        return (
+          <button
+            type="button"
+            onClick={() => onToggleExpanded(row.id)}
+            className={`p-2 rounded-xl transition-all ${
+              isExpanded
+                ? "bg-lime-400 text-black"
+                : "bg-white/10 text-white/80 hover:bg-white/20"
+            }`}
+            aria-label="Toggle student details"
+          >
+            {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </button>
+        );
+      },
+    },
+  ];
 
   return (
-    <section className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 sm:p-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h3 className="text-xl font-semibold text-white">{classTitle} Students</h3>
-          <p className="text-sm text-white/60">{students.length} students enrolled</p>
-        </div>
-        <div className="w-full md:w-[280px]">
-          <SearchInput
-            value={search}
-            onChange={onSearch}
-            placeholder="Search by name or roll number..."
-            variant="glass"
-            icon={Search}
-          />
-        </div>
+    <section className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl">
+      <div className="px-5 pt-5 sm:px-6 sm:pt-6 pb-4 border-b border-white/10">
+        <SectionHeaderWithSearch
+          title={`${classTitle} Students`}
+          subtitle={`${students.length} students enrolled`}
+          searchValue={search}
+          onSearch={onSearch}
+          searchPlaceholder="Search by name or roll number..."
+          searchWidthClassName="md:w-[360px]"
+          searchInputClassName="rounded-full bg-white/5 border-white/10 text-white/80 placeholder-white/40"
+        />
       </div>
 
-      <div className="mt-4 hidden md:block">
-        <div className="rounded-3xl overflow-hidden border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl">
-          <table className="w-full text-sm border-collapse">
-            <thead className="bg-white/5 border-b border-white/10">
-              <tr>
-                {["ROLL NO", "STUDENT NAME", "ATTENDANCE", "AVG MARKS", "GRADE", "ACTIONS"].map(
-                  (label) => (
-                    <th
-                      key={label}
-                      scope="col"
-                      className={`px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider ${
-                        label === "ATTENDANCE" ||
-                        label === "AVG MARKS" ||
-                        label === "GRADE" ||
-                        label === "ACTIONS"
-                          ? "text-center"
-                          : "text-left"
-                      }`}
-                    >
-                      {label}
-                    </th>
-                  )
-                )}
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-white/10">
-              {students.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="p-8 text-center text-white/60">
-                    No students found.
-                  </td>
-                </tr>
-              )}
-
-              {students.map((row) => {
-                const isExpanded = expandedId === row.id;
-                return (
-                  <tr
-                    key={row.id}
-                    className="hover:bg-white/5 transition-colors duration-200"
-                  >
-                    <td className="px-6 py-5 text-white/80">
-                      {row.rollNo ?? row.admissionNumber ?? "--"}
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-xs font-semibold text-white">
-                          {initials(row.user?.name)}
-                        </div>
-                        <div>
-                          <div
-                            className={`font-medium ${
-                              isExpanded ? "text-lime-300" : "text-white"
-                            }`}
-                          >
-                            {row.user?.name ?? "Unnamed Student"}
-                          </div>
-                          <div className="text-xs text-white/40">
-                            {row.user?.email ?? "No email"}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 text-center">
-                      <div className="flex items-center justify-center gap-3">
-                        <div className="h-2 w-28 rounded-full bg-white/10 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${progressColor(
-                              row.metrics.attendancePct
-                            )}`}
-                            style={{ width: progressWidth(row.metrics.attendancePct) }}
-                          />
-                        </div>
-                        <span className="text-white/80 text-xs">
-                          {formatPercent(row.metrics.attendancePct)}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 text-center text-white/80">
-                      {formatPercent(row.metrics.avgMarksPct)}
-                    </td>
-                    <td className="px-6 py-5 text-center">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold border ${gradePillClass(
-                          row.metrics.grade
-                        )}`}
-                      >
-                        {gradeLabel(row.metrics.grade)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5 text-center">
-                      <button
-                        type="button"
-                        onClick={() => onToggleExpanded(row.id)}
-                        className={`h-9 w-9 rounded-full transition flex items-center justify-center ${
-                          isExpanded
-                            ? "bg-lime-400 text-black"
-                            : "bg-white/10 text-white/80 hover:bg-white/20"
-                        }`}
-                        aria-label="Toggle student details"
-                      >
-                        {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+      <div className="hidden md:block">
+        <TableLayout
+          columns={columns}
+          data={students}
+          emptyText="No students found."
+          showMobile={false}
+          container={false}
+          theadClassName="bg-white/5"
+          thClassName="text-white/50 tracking-[0.18em]"
+          rowClassName="hover:bg-white/5"
+          tdClassName="py-5"
+        />
       </div>
 
       {expandedStudent && (
-        <div className="mt-6 hidden md:grid rounded-2xl border border-white/10 bg-gradient-to-r from-purple-500/10 via-indigo-500/5 to-pink-500/10 p-5 grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <div className="flex items-center gap-2 text-sm text-white/70">
-              <Mail size={14} />
-              Contact Information
-            </div>
-            <div className="mt-4 space-y-3 text-sm">
-              <div>
-                <div className="text-xs uppercase text-white/40">Email</div>
-                <div className="text-white/90">
-                  {expandedStudent.user?.email ?? "Not available"}
+        <div className="px-5 pb-5 sm:px-6 sm:pb-6 overflow-hidden bg-white/[0.02]">
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white/5 rounded-2xl p-5 border border-white/5 hover:border-white/10 transition-all">
+              <div className="font-semibold text-white mb-4 flex items-center gap-2 text-sm">
+                <Mail size={14} className="text-lime-400 lucide lucide-mail w-4 h-4"/>
+                Contact Information
+              </div>
+              <div className="mt-4 space-y-3 text-sm">
+                <div>
+                  <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">Email</div>
+                  <div className="text-sm font-medium text-gray-200">
+                    {expandedStudent.user?.email ?? "Not available"}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">Parent Contact</div>
+                  <div className="text-sm font-medium text-gray-200">
+                    {expandedStudent.phoneNo ?? "Not available"}
+                  </div>
                 </div>
               </div>
-              <div>
-                <div className="text-xs uppercase text-white/40">Parent Contact</div>
-                <div className="text-white/90">
-                  {expandedStudent.phoneNo ?? "Not available"}
-                </div>
-              </div>
             </div>
-          </div>
 
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4 flex flex-col gap-4">
-            <div className="flex items-center gap-2 text-sm text-white/70">
-              <Phone size={14} />
-              Performance & Actions
+            <div className="bg-white/5 rounded-2xl p-5 border border-white/5 hover:border-white/10 transition-all">
+              <div className="font-semibold text-white mb-4 flex items-center gap-2 text-sm">
+                <Award size={14} className="rounded-lg text-lime-400 lucide lucide-award w-4 h-4"/>
+                Performance & Actions
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-400">Avg Marks</span>
+                <span className="text-sm font-bold text-white">
+                  {formatPercent(expandedStudent.metrics.avgMarksPct)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm text-white/70 mt-1 mb-2">
+                <span className="text-sm text-gray-400">Attendance</span>
+                <span className="text-white/90">
+                  {formatPercent(expandedStudent.metrics.attendancePct)}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="mt-auto w-full rounded-full border border-lime-400/30
+                bg-lime-400/15 px-4 py-2 text-sm font-semibold text-lime-300 hover:bg-lime-400/25 transition"
+                onClick={()=>{router.push("/frontend/pages/teacher?tab=chat")}}
+              >
+                Message Parent
+              </button>
             </div>
-            <div className="flex items-center justify-between text-sm text-white/70">
-              <span>Avg Marks</span>
-              <span className="text-white/90">
-                {formatPercent(expandedStudent.metrics.avgMarksPct)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-sm text-white/70">
-              <span>Attendance</span>
-              <span className="text-white/90">
-                {formatPercent(expandedStudent.metrics.attendancePct)}
-              </span>
-            </div>
-            <button
-              type="button"
-              className="mt-auto w-full rounded-full border border-lime-400/30 bg-lime-400/15 px-4 py-2 text-sm font-semibold text-lime-300 hover:bg-lime-400/25 transition"
-            >
-              Message Parent
-            </button>
           </div>
         </div>
       )}
 
-      <div className="mt-4 md:hidden space-y-3">
+      <div className="mt-4 md:hidden space-y-3 px-5 pb-5 sm:px-6 sm:pb-6">
         {students.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-white/60 text-center">
             No students found.
@@ -255,9 +262,14 @@ export default function StudentsSection({
                 className="w-full flex items-center justify-between text-left"
               >
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-xs font-semibold text-white">
-                    {initials(student.user?.name)}
-                  </div>
+                  <img
+                    src={getPhotoUrl(student)}
+                    alt={student.user?.name ?? "Student"}
+                    onError={(e) => {
+                      e.currentTarget.src = AVATAR_URL;
+                    }}
+                    className="h-10 w-10 rounded-full object-cover border border-white/10"
+                  />
                   <div>
                     <div className="text-white font-medium">
                       {student.user?.name ?? "Unnamed Student"}

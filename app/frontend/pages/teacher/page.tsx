@@ -36,7 +36,7 @@ const TEACHER_TAB_TITLES = {
   profile: "Profile",
   settings: "Settings",
 };
- function TeacherDashboardInner() {
+function TeacherDashboardInner() {
   const { data: session } = useSession();
   const tab = useSearchParams().get("tab") ?? "dashboard";
   const title = (TEACHER_TAB_TITLES as any)[tab] ?? tab.toUpperCase();

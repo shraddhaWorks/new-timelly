@@ -13,6 +13,15 @@ type DataTableProps<T> = {
   caption?: string;
   tableTitle?: string;
   tableSubtitle?: string;
+  showMobile?: boolean;
+  container?: boolean;
+  containerClassName?: string;
+  tableClassName?: string;
+  theadClassName?: string;
+  thClassName?: string;
+  tbodyClassName?: string;
+  rowClassName?: string;
+  tdClassName?: string;
   pagination?: {
     page: number;
     totalPages: number;
@@ -35,6 +44,15 @@ function DataTable<T>({
   caption,
   tableTitle,
   tableSubtitle,
+  showMobile = true,
+  container = true,
+  containerClassName = "",
+  tableClassName = "",
+  theadClassName = "",
+  thClassName = "",
+  tbodyClassName = "",
+  rowClassName = "",
+  tdClassName = "",
   pagination,
 }: DataTableProps<T>) {
 
@@ -54,7 +72,13 @@ function DataTable<T>({
     <div className="w-full space-y-4">
 
       {/* DESKTOP TABLE */}
-      <div className="hidden md:block rounded-3xl overflow-hidden border border-white/10 bg-transparent backdrop-blur-xl shadow-2xl">
+      <div
+        className={`hidden md:block ${
+          container
+            ? "rounded-3xl overflow-hidden border border-white/10 bg-transparent backdrop-blur-xl shadow-2xl"
+            : "w-full"
+        } ${containerClassName}`}
+      >
         {tableTitle && (
           <div className="p-5 border-b border-white/10">
             <div className="text-lg font-semibold text-white">
@@ -69,21 +93,22 @@ function DataTable<T>({
         )}
 
         <table
-          className="w-full text-sm border-collapse"
+          className={`w-full text-sm border-collapse ${tableClassName}`}
           aria-busy={loading}
         >
           {caption && (
             <caption className="sr-only">{caption}</caption>
           )}
 
-          <thead className="bg-white/5 border-b border-white/10">
+          <thead className={`bg-white/5 border-b border-white/10 ${theadClassName}`}>
             <tr>
               {columns.map((col, i) => (
                 <th
                   key={i}
                   scope="col"
-                  className={`px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider ${ALIGN_CLASS[col.align ?? "left"]
-                    }`}
+                  className={`px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider ${ALIGN_CLASS[
+                    col.align ?? "left"
+                  ]} ${thClassName}`}
                 >
                   {col.header}
                 </th>
@@ -92,7 +117,7 @@ function DataTable<T>({
           </thead>
 
 
-          <tbody className="divide-y divide-white/10">
+          <tbody className={`divide-y divide-white/10 ${tbodyClassName}`}>
 
             {loading && (
               <tr>
@@ -120,13 +145,14 @@ function DataTable<T>({
               data.map((row, rowIndex) => (
                 <tr
                   key={getKey(row, rowIndex)}
-                  className="hover:bg-white/5 transition-colors duration-200"
+                  className={`hover:bg-white/5 transition-colors duration-200 ${rowClassName}`}
                 >
                   {columns.map((col, colIndex) => (
                     <td
                       key={colIndex}
-                      className={`px-6 py-4 whitespace-nowrap ${ALIGN_CLASS[col.align ?? "left"]
-                        }`}
+                      className={`px-6 py-4 whitespace-nowrap ${ALIGN_CLASS[
+                        col.align ?? "left"
+                      ]} ${tdClassName}`}
                     >
                       {renderCell(col, row, rowIndex)}
                     </td>
@@ -138,6 +164,7 @@ function DataTable<T>({
       </div>
 
       {/* MOBILE CARDS */}
+      {showMobile && (
       <div className="md:hidden space-y-4">
 
         {loading && (
@@ -177,6 +204,7 @@ function DataTable<T>({
             </div>
           ))}
       </div>
+      )}
 
       {/* PAGINATION */}
       {pagination && pagination.totalPages > 1 && (

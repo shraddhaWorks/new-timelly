@@ -15,7 +15,13 @@ export type StudentRow = {
   rollNo?: string | null;
   admissionNumber?: string | null;
   phoneNo?: string | null;
-  user?: { name?: string | null; email?: string | null };
+  photoUrl?: string | null;
+  user?: {
+    name?: string | null;
+    email?: string | null;
+    photoUrl?: string | null;
+    image?: string | null;
+  };
   class?: { id: string; name: string; section?: string | null };
 };
 
