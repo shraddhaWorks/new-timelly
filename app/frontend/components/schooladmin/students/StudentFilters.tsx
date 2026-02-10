@@ -42,6 +42,7 @@ export default function StudentFilters({
           value={selectedClass}
           onChange={onClassChange}
           options={classOptions}
+          bgColor="white"
         />
 
         <SelectInput
@@ -49,6 +50,7 @@ export default function StudentFilters({
           value={selectedSection}
           onChange={onSectionChange}
           options={sectionOptions}
+          bgColor="white"
         />
 
         <SearchInput
@@ -62,8 +64,9 @@ export default function StudentFilters({
 
         <button
           onClick={onToggleAddForm}
-          className="flex-1 px-3 md:px-4 py-2 border rounded-xl font-medium transition-all shadow-[0_0_15px_rgba(163,230,53,0.15)] text-xs md:text-sm flex items-center
-           justify-center gap-2 bg-lime-400/10 text-lime-400 border-lime-400/20 hover:bg-lime-400/20"
+          className="flex-1 px-3 md:px-4 py-2 border rounded-xl font-medium 
+          transition-all shadow-[0_0_15px_rgba(163,230,53,0.15)] text-xs md:text-sm flex items-center justify-center
+           gap-2 bg-lime-400/10 text-lime-400 border-lime-400/20 hover:bg-lime-400/20"
         >
           {showAddForm ? (
             <>

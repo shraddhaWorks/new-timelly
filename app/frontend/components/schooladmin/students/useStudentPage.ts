@@ -33,7 +33,7 @@ const preloadClasses = () => {
   if (classesCache) return Promise.resolve(classesCache);
   if (classesPromise) return classesPromise;
 
-  classesPromise = fetch("/api/class/list")
+  classesPromise = fetch("/api/class/list", { cache: "no-store" })
     .then(async (res) => {
       if (!res.ok) return null;
       const data: ClassesListResponse = await res.json();
@@ -118,6 +118,7 @@ export default function useStudentPage({ classes = [], reload }: Props) {
   const [availableClasses, setAvailableClasses] = useState<ClassItem[]>(
     classes.length ? classes : classesCache ?? []
   );
+  const [classesLoading, setClassesLoading] = useState(false);
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSection, setSelectedSection] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -129,7 +130,15 @@ export default function useStudentPage({ classes = [], reload }: Props) {
   const [errors, setErrors] = useState<StudentFormErrors>({});
   const [saving, setSaving] = useState(false);
 
-  const { students, loading, refresh } = useStudents(selectedClass);
+  const selectedClassIdForFetch = useMemo(() => {
+    if (!selectedClass || !selectedSection) return "";
+    const match = availableClasses.find(
+      (item) => item.name === selectedClass && item.section === selectedSection
+    );
+    return match?.id ?? "";
+  }, [availableClasses, selectedClass, selectedSection]);
+
+  const { students, loading, refresh } = useStudents(selectedClassIdForFetch);
   const [allStudents, setAllStudents] = useState<StudentRow[]>([]);
   const [allLoading, setAllLoading] = useState(false);
 
@@ -139,6 +148,7 @@ export default function useStudentPage({ classes = [], reload }: Props) {
   const [editForm, setEditForm] = useState<StudentFormState>(DEFAULT_FORM);
   const [editErrors, setEditErrors] = useState<StudentFormErrors>({});
   const [editSaving, setEditSaving] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     if (classes && classes.length) {
@@ -151,13 +161,19 @@ export default function useStudentPage({ classes = [], reload }: Props) {
 
     if (classesCache?.length) {
       setAvailableClasses(classesCache);
+      return;
     }
 
     let active = true;
-    preloadClasses().then((data) => {
-      if (!active || !data) return;
-      setAvailableClasses(data);
-    });
+    setClassesLoading(true);
+    preloadClasses()
+      .then((data) => {
+        if (!active || !data) return;
+        setAvailableClasses(data);
+      })
+      .finally(() => {
+        if (active) setClassesLoading(false);
+      });
 
     return () => {
       active = false;
@@ -165,10 +181,22 @@ export default function useStudentPage({ classes = [], reload }: Props) {
   }, [classes]);
 
   useEffect(() => {
-    if (!form.classId && selectedClass) {
-      setForm((prev) => ({ ...prev, classId: selectedClass }));
+    if (!form.classId && selectedClassIdForFetch) {
+      setForm((prev) => ({ ...prev, classId: selectedClassIdForFetch }));
     }
-  }, [selectedClass, form.classId]);
+  }, [selectedClassIdForFetch, form.classId]);
+
+  useEffect(() => {
+    if (!selectedSection) return;
+    const sectionExists = availableClasses.some(
+      (item) =>
+        item.section === selectedSection &&
+        (!selectedClass || item.name === selectedClass)
+    );
+    if (!sectionExists) {
+      setSelectedSection("");
+    }
+  }, [availableClasses, selectedClass, selectedSection]);
 
   const fetchAllStudents = async () => {
     setAllLoading(true);
@@ -185,55 +213,73 @@ export default function useStudentPage({ classes = [], reload }: Props) {
   };
 
   useEffect(() => {
-    if (!selectedClass) {
+    if (!selectedClassIdForFetch) {
       fetchAllStudents();
     }
-  }, [selectedClass]);
+  }, [selectedClassIdForFetch]);
 
-  const filterClassOptions = useMemo<SelectOption[]>(
-    () => [
+  const filterClassOptions = useMemo<SelectOption[]>(() => {
+    const uniqueNames = Array.from(
+      new Set(availableClasses.map((item) => item.name).filter(Boolean))
+    ) as string[];
+    return [
       { label: "All Classes", value: "" },
-      ...availableClasses.map((item) => ({
-        label: `${item.name}${item.section ? ` - ${item.section}` : ""}`,
-        value: item.id,
-      })),
-    ],
-    [availableClasses]
-  );
+      ...uniqueNames.map((name) => ({ label: name, value: name })),
+    ];
+  }, [availableClasses]);
 
   const filterSectionOptions = useMemo<SelectOption[]>(() => {
     const sections = Array.from(
-      new Set(availableClasses.map((item) => item.section).filter(Boolean))
+      new Set(
+        availableClasses
+          .filter((item) => !selectedClass || item.name === selectedClass)
+          .map((item) => item.section)
+          .filter(Boolean)
+      )
     ) as string[];
     return [
       { label: "All Sections", value: "" },
       ...sections.map((section) => ({ label: section, value: section })),
     ];
-  }, [availableClasses]);
+  }, [availableClasses, selectedClass]);
 
-  const formClassOptions = useMemo<SelectOption[]>(
-    () => [
+  const formClassOptions = useMemo<SelectOption[]>(() => {
+    if (classesLoading) {
+      return [{ label: "Loading classes...", value: "" }];
+    }
+    if (!availableClasses.length) {
+      return [{ label: "No classes found", value: "" }];
+    }
+    return [
       { label: "Select Class", value: "" },
       ...availableClasses.map((item) => ({
         label: `${item.name}${item.section ? ` - ${item.section}` : ""}`,
         value: item.id,
       })),
-    ],
-    [availableClasses]
-  );
+    ];
+  }, [availableClasses, classesLoading]);
 
   const formSectionOptions = useMemo<SelectOption[]>(() => {
     const sections = Array.from(
       new Set(availableClasses.map((item) => item.section).filter(Boolean))
     ) as string[];
+    if (classesLoading) {
+      return [{ label: "Loading sections...", value: "" }];
+    }
+    if (!sections.length) {
+      return [{ label: "No sections found", value: "" }];
+    }
     return [
       { label: "Select Section", value: "" },
       ...sections.map((section) => ({ label: section, value: section })),
     ];
-  }, [availableClasses]);
+  }, [availableClasses, classesLoading]);
 
   const filteredStudents = useMemo<StudentRow[]>(() => {
-    let list: StudentRow[] = selectedClass ? students : allStudents;
+    let list: StudentRow[] = selectedClassIdForFetch ? students : allStudents;
+    if (selectedClass) {
+      list = list.filter((student) => student.class?.name === selectedClass);
+    }
     if (selectedSection) {
       list = list.filter((student) => student.class?.section === selectedSection);
     }
@@ -253,9 +299,20 @@ export default function useStudentPage({ classes = [], reload }: Props) {
       });
     }
     return list;
-  }, [allStudents, searchQuery, selectedClass, selectedSection, students]);
+  }, [
+    allStudents,
+    searchQuery,
+    selectedClass,
+    selectedSection,
+    selectedClassIdForFetch,
+    students,
+  ]);
 
-  const selectedClassObj = availableClasses.find((item) => item.id === selectedClass);
+  const selectedClassObj = availableClasses.find(
+    (item) =>
+      item.name === selectedClass &&
+      (!selectedSection || item.section === selectedSection)
+  );
 
   const handleFormChange = (key: keyof StudentFormState, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -318,6 +375,7 @@ export default function useStudentPage({ classes = [], reload }: Props) {
       }
 
       toast.success("Student added successfully");
+      setShowSuccess(true);
       setForm({ ...DEFAULT_FORM, classId: form.classId });
       setShowAddForm(false);
       refresh();
@@ -330,6 +388,11 @@ export default function useStudentPage({ classes = [], reload }: Props) {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleResetForm = () => {
+    setForm({ ...DEFAULT_FORM });
+    setErrors({});
   };
 
   const handleUpload = async () => {
@@ -445,6 +508,7 @@ export default function useStudentPage({ classes = [], reload }: Props) {
     filterSectionOptions,
     formClassOptions,
     formSectionOptions,
+    classesLoading,
     selectedClass,
     setSelectedClass,
     selectedSection,
@@ -463,6 +527,7 @@ export default function useStudentPage({ classes = [], reload }: Props) {
     errors,
     saving,
     handleFormChange,
+    handleResetForm,
     handleSaveStudent,
     filteredStudents,
     tableLoading: selectedClass ? loading : allLoading,
@@ -483,5 +548,7 @@ export default function useStudentPage({ classes = [], reload }: Props) {
     handleEditSave,
     handleDelete,
     handleDownloadReport: () => toast.info("Downloading report..."),
+    showSuccess,
+    setShowSuccess,
   };
 }

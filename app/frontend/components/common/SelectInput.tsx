@@ -17,6 +17,7 @@ interface SelectInputProps {
   className?: string;
   label?: string;
   error?: string;
+  bgColor?: "white" | "black";
 }
 
 export default function SelectInput({
@@ -27,6 +28,7 @@ export default function SelectInput({
   className,
   label,
   error,
+  bgColor = "black",
 }: SelectInputProps) {
   return (
     <div className={clsx("w-full", className)}>
@@ -44,13 +46,17 @@ export default function SelectInput({
           aria-invalid={!!error}
           className={clsx(
             "w-full rounded-xl appearance-none cursor-pointer",
-            "pl-4 pr-10 py-2.5 sm:py-3 ",
-            "bg-[#0F172A]/50 border border-white/10",
-            "text-gray-200 text-sm sm:text-base",
+            "pl-4 pr-10 py-2.5 sm:py-3",
+            "border",
+            bgColor === "black"
+              ? "bg-[#0F172A]/50 border-white/10 text-gray-200"
+              : "bg-white/10 border-gray-300/20 text-white",
+            "text-sm sm:text-base",
             "focus:outline-none focus:ring-0",
             "hover:border-[var(--hover-color)]",
             "focus:border-[var(--primary-color)]",
-            disabled && "opacity-60 cursor-not-allowed"
+            disabled && "opacity-60 cursor-not-allowed",
+            error && "border-red-500"
           )}
           style={{
             ["--primary-color" as any]: PRIMARY_COLOR,
@@ -62,12 +68,14 @@ export default function SelectInput({
               key={`${option.label}-${option.value ?? option.label}`}
               value={option.value ?? option.label}
               disabled={option.disabled}
-              className="bg-[#2a1f3a]"
+              className="bg-[#1e1b2e] text-white"
             >
               {option.label}
             </option>
           ))}
         </select>
+
+        {/* Dropdown Arrow */}
         <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white/70">
           <svg
             width="16"
@@ -75,7 +83,6 @@ export default function SelectInput({
             viewBox="0 0 20 20"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
           >
             <path
               d="M5 7.5L10 12.5L15 7.5"
@@ -89,10 +96,7 @@ export default function SelectInput({
       </div>
 
       {error && (
-        <p
-          className="text-sm mt-1 !text-red-500"
-          style={{ color: "#ef4444" }}
-        >
+        <p className="text-sm mt-1 text-red-500">
           {error}
         </p>
       )}

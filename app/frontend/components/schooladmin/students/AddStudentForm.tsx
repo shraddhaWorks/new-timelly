@@ -10,6 +10,7 @@ type Props = {
   errors: StudentFormErrors;
   classOptions: SelectOption[];
   sectionOptions: SelectOption[];
+  classesLoading?: boolean;
   ageLabel: string;
   saving: boolean;
   title?: string;
@@ -17,6 +18,7 @@ type Props = {
   submitLabel?: string;
   onFieldChange: (key: keyof StudentFormState, value: string) => void;
   onCancel: () => void;
+  onReset: () => void;
   onSave: () => void;
 };
 
@@ -30,6 +32,7 @@ export default function AddStudentForm({
   errors,
   classOptions,
   sectionOptions,
+  classesLoading = false,
   ageLabel,
   saving,
   title = "Add New Student",
@@ -37,6 +40,7 @@ export default function AddStudentForm({
   submitLabel = "Save Student",
   onFieldChange,
   onCancel,
+  onReset,
   onSave,
 }: Props) {
   return (
@@ -47,7 +51,7 @@ export default function AddStudentForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
         <div>
           <InputField
             label="Full Name*"
@@ -58,24 +62,38 @@ export default function AddStudentForm({
           />
           {renderError(errors, "name")}
         </div>
-        <InputField
-          label="Student ID"
-          value={form.rollNo}
-          onChange={(value) => onFieldChange("rollNo", value)}
-          placeholder="e.g. STU001"
-          bgColor="white"
-        />
-        <SelectInput
-          label="Gender"
-          value={form.gender}
-          onChange={(value) => onFieldChange("gender", value)}
-          options={[
-            { label: "Select Gender", value: "" },
-            { label: "Male", value: "Male" },
-            { label: "Female", value: "Female" },
-            { label: "Other", value: "Other" },
-          ]}
-        />
+        <div>
+          <InputField
+            label="Student ID"
+            value={form.rollNo}
+            onChange={(value) => onFieldChange("rollNo", value)}
+            placeholder="e.g. STU001"
+            bgColor="white"
+          />
+        </div>
+        <div>
+          <InputField
+            label="Aadhaar Number*"
+            value={form.aadhaarNo}
+            onChange={(value) => onFieldChange("aadhaarNo", value)}
+            placeholder="12-digit Aadhaar"
+            bgColor="white"
+          />
+          {renderError(errors, "aadhaarNo")}
+        </div>
+        <div>
+          <SelectInput
+            label="Gender"
+            value={form.gender}
+            onChange={(value) => onFieldChange("gender", value)}
+            options={[
+              { label: "Select Gender", value: "" },
+              { label: "Male", value: "Male" },
+              { label: "Female", value: "Female" },
+              { label: "Other", value: "Other" },
+            ]}
+          />
+        </div>
         <div>
           <label className="block text-xs font-medium text-white/70 mb-1.5">
             Age
@@ -95,34 +113,66 @@ export default function AddStudentForm({
           />
           {renderError(errors, "dob")}
         </div>
-        <InputField
-          label="Previous School Attended"
-          value={form.previousSchool}
-          onChange={(value) => onFieldChange("previousSchool", value)}
-          placeholder="Previous School Name"
-          bgColor="white"
-        />
-        <SelectInput
-          label="Class"
-          value={form.classId}
-          onChange={(value) => onFieldChange("classId", value)}
-          options={classOptions}
-        />
-        <SelectInput
-          label="Section"
-          value={form.section}
-          onChange={(value) => onFieldChange("section", value)}
-          options={sectionOptions}
-        />
-        <SelectInput
-          label="Status"
-          value={form.status}
-          onChange={(value) => onFieldChange("status", value)}
-          options={[
-            { label: "Active", value: "Active" },
-            { label: "Inactive", value: "Inactive" },
-          ]}
-        />
+        <div>
+          <InputField
+            label="Previous School Attended"
+            value={form.previousSchool}
+            onChange={(value) => onFieldChange("previousSchool", value)}
+            placeholder="Previous School Name"
+            bgColor="white"
+          />
+        </div>
+        <div>
+          <SelectInput
+            label="Class"
+            value={form.classId}
+            onChange={(value) => onFieldChange("classId", value)}
+            options={classOptions}
+            disabled={classesLoading || classOptions.length <= 1}
+          />
+        </div>
+        <div>
+          <SelectInput
+            label="Section"
+            value={form.section}
+            onChange={(value) => onFieldChange("section", value)}
+            options={sectionOptions}
+            disabled={classesLoading || sectionOptions.length <= 1}
+          />
+        </div>
+        <div>
+          <SelectInput
+            label="Status"
+            value={form.status}
+            onChange={(value) => onFieldChange("status", value)}
+            options={[
+              { label: "Active", value: "Active" },
+              { label: "Inactive", value: "Inactive" },
+            ]}
+          />
+        </div>
+        <div>
+          <InputField
+            label="Total Fee*"
+            value={form.totalFee}
+            onChange={(value) => onFieldChange("totalFee", value)}
+            placeholder="e.g. 12000"
+            type="number"
+            bgColor="white"
+          />
+          {renderError(errors, "totalFee")}
+        </div>
+        <div>
+          <InputField
+            label="Discount (%)"
+            value={form.discountPercent}
+            onChange={(value) => onFieldChange("discountPercent", value)}
+            placeholder="e.g. 10"
+            type="number"
+            bgColor="white"
+          />
+          {renderError(errors, "discountPercent")}
+        </div>
       </div>
 
       <div className="mt-6">
@@ -176,6 +226,12 @@ export default function AddStudentForm({
 
 
       <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+        <button
+          onClick={onReset}
+          className="rounded-xl border border-white/10 bg-white/5 px-5 py-2 text-sm font-semibold text-white/70 hover:bg-white/10"
+        >
+          Reset
+        </button>
         <button
           onClick={onCancel}
           className="rounded-xl border border-white/10 bg-white/5 px-5 py-2 text-sm font-semibold text-white/70 hover:bg-white/10"

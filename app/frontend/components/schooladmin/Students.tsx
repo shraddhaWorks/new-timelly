@@ -13,6 +13,7 @@ import useStudentPage from "./students/useStudentPage";
 import { getAge } from "./students/utils";
 import { ClassItem } from "./students/types";
 import StudentMobileCard from "./students/StudentMobileCard";
+import SuccessPopups from "../common/SuccessPopUps";
 
 type Props = {
   classes?: ClassItem[];
@@ -81,10 +82,12 @@ export default function StudentsManagementPage({ classes = [], reload }: Props) 
             errors={page.errors}
             classOptions={page.formClassOptions}
             sectionOptions={page.formSectionOptions}
+            classesLoading={page.classesLoading}
             ageLabel={getAge(page.form.dob)}
             saving={page.saving}
             onFieldChange={page.handleFormChange}
             onCancel={() => page.setShowAddForm(false)}
+            onReset={page.handleResetForm}
             onSave={page.handleSaveStudent}
           />
         )}
@@ -95,8 +98,8 @@ export default function StudentsManagementPage({ classes = [], reload }: Props) 
               All Students ({page.filteredStudents.length})
             </div>
             <div className="text-xs text-white/50">
-              {page.selectedClassObj
-                ? `Class ${page.selectedClassObj.name} ${page.selectedClassObj.section ?? ""}`
+              {page.selectedClass
+                ? `Class ${page.selectedClass}${page.selectedSection ? ` ${page.selectedSection}` : ""}`
                 : "All Classes"}
             </div>
           </div>
@@ -127,8 +130,8 @@ export default function StudentsManagementPage({ classes = [], reload }: Props) 
               emptyText="No students found"
               tableTitle={`All Students (${page.filteredStudents.length})`}
               tableSubtitle={
-                page.selectedClassObj
-                  ? `Class ${page.selectedClassObj.name} ${page.selectedClassObj.section ?? ""}`
+                page.selectedClass
+                  ? `Class ${page.selectedClass}${page.selectedSection ? ` ${page.selectedSection}` : ""}`
                   : undefined
               }
             />
@@ -159,6 +162,13 @@ export default function StudentsManagementPage({ classes = [], reload }: Props) 
         onConfirm={async () => {
           await page.handleDelete();
         }}
+      />
+
+      <SuccessPopups
+        open={page.showSuccess}
+        title="Student Added Successfully"
+        description="The student has been added and assigned to the class."
+        onClose={() => page.setShowSuccess(false)}
       />
 
     </>
