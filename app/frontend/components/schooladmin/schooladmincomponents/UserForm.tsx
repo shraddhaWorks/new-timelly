@@ -36,7 +36,7 @@ const AVAILABLE_FEATURES_FOR_TEACHERS = [
   { key: Permission.WORKSHOPS, label: "Workshops & Events" },
   { key: Permission.NEWSFEED, label: "Newsfeed" },
   { key: Permission.CHAT, label: "Parent Chat" },
-  { key: Permission.TEACHER_LEAVES, label: "Leave" },
+  { key: Permission.LEAVES, label: "Leave" },
   { key: Permission.SETTINGS, label: "Settings" },
 ];
 

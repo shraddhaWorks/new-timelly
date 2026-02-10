@@ -164,7 +164,7 @@ export default function StudentsSection({
   ];
 
   return (
-    <section className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl">
+    <section className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl mt-3">
       <div className="px-5 pt-5 sm:px-6 sm:pt-6 pb-4 border-b border-white/10">
         <SectionHeaderWithSearch
           title={`${classTitle} Students`}

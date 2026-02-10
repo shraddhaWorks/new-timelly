@@ -335,7 +335,7 @@ export const TEACHER_MENU_ITEMS: SidebarItem[] = [
         tab: "leaves",
         href: "/frontend/pages/teacher?tab=leaves",
         icon: FileText,
-        permission: Permission.TEACHER_LEAVES,
+        permission: Permission.LEAVES,
     },
     {
         label:"Profile",
