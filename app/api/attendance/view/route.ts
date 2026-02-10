@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { redis } from "@/lib/redis";
 
 export async function GET(req: Request) {
   try {
@@ -57,16 +56,6 @@ export async function GET(req: Request) {
         lte: new Date(endDate),
       };
     }
-    const cacheKey = `attendance:${schoolId}:${session.user.studentId || "all"}:${classId || "all"}:${studentId || "all"}:${date || "range"}:${startDate || "na"}:${endDate || "na"}`;
-
-
-    const cachedAtendances = await redis.get(cacheKey);
-      console.log("✅ attendence served from Redis");
-
-    if (cachedAtendances) {
-      return NextResponse.json({ attendances: cachedAtendances }, { status: 200 });
-    }
-
     const attendances = await prisma.attendance.findMany({
       where,
       include: {
@@ -89,10 +78,6 @@ export async function GET(req: Request) {
         { period: "asc" },
       ],
     });
-
-    // Cache the result for 5 minutes
-    await redis.set(cacheKey,attendances,{ex:60 * 5}); 
-
 
     return NextResponse.json({ attendances }, { status: 200 });
   } catch (error: any) {

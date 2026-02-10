@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { redis } from "@/lib/redis";
 
 // GET: list appointments for current user (student or teacher)
 export async function GET() {
@@ -34,13 +33,6 @@ export async function GET() {
       { status: 403 }
     );
   }
-   const cachedKey = `appointments:${role}:${userId}`;
-   const cachedAppointments = await redis.get(cachedKey);
-    if (cachedAppointments) {
-      console.log("✅ Appointments served from Redis");
-      return NextResponse.json({ appointments: cachedAppointments }, { status: 200 });
-    }
-
     const appointments = await prisma.appointment.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -57,7 +49,6 @@ export async function GET() {
         },
       },
     });
-    await redis.set(cachedKey, appointments, { ex: 60 * 5 }); // Cache for 5 minutes
 
     return NextResponse.json({ appointments });
   } catch (error: any) {
