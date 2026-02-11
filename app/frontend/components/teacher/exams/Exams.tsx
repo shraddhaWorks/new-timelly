@@ -26,40 +26,21 @@ export default function TeacherExamsTab() {
     async function loadExams() {
         setLoading(true);
         try {
-            const res = await fetch("/api/exams/terms");
+            const res = await fetch("/api/exams/terms", { cache: "no-store", credentials: "include" });
             const data = await res.json();
-            
-            if (data.terms && data.terms.length > 0) {
-                setExams(data.terms);
+            if (!res.ok) {
+                setExams([]);
+                return;
+            }
+            // Teacher API returns data.exams (flattened list of schedules from DB)
+            if (data.exams && Array.isArray(data.exams)) {
+                setExams(data.exams);
             } else {
-                // FALLBACK DUMMY DATA (Remove this once your API is working perfectly)
-                setExams([
-                    {
-                        id: "1",
-                        status: "Upcoming",
-                        name: "Term 1 Mathematics Finals",
-                        subject: "Mathematics",
-                        class: { name: "10", section: "A" },
-                        date: "2026-10-15",
-                        time: "09:00 AM",
-                        duration: "3 Hours",
-                        syllabus: [{ completedPercent: 65 }]
-                    },
-                    {
-                        id: "2",
-                        status: "Completed",
-                        name: "Unit Test 2: Physics",
-                        subject: "Physics",
-                        class: { name: "9", section: "B" },
-                        date: "2026-09-20",
-                        time: "11:00 AM",
-                        duration: "1.5 Hours",
-                        syllabus: [{ completedPercent: 100 }]
-                    }
-                ]);
+                setExams([]);
             }
         } catch (error) {
             console.error("Failed to load exams:", error);
+            setExams([]);
         } finally {
             setLoading(false);
         }
@@ -71,7 +52,7 @@ export default function TeacherExamsTab() {
             <ScheduleExamView
                 mode="create"
                 onCancel={() => setView({ mode: "list" })}
-                onSaved={() => {
+                onSave={() => {
                     loadExams();
                     setView({ mode: "list" });
                 }}
@@ -85,7 +66,7 @@ export default function TeacherExamsTab() {
                 mode="edit"
                 examId={view.examId}
                 onCancel={() => setView({ mode: "list" })}
-                onSaved={() => {
+                onSave={() => {
                     loadExams();
                     setView({ mode: "list" });
                 }}
@@ -103,10 +84,13 @@ export default function TeacherExamsTab() {
         );
     }
 
-    const filtered = exams.filter((e) =>
-        e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        `${e.class.name}-${e.class.section}`.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filtered = exams.filter((e) => {
+        const name = (e.name || "").toLowerCase();
+        const classStr = e.class ? `${e.class.name || ""}-${e.class.section || ""}`.toLowerCase() : "";
+        const subject = (e.subject || "").toLowerCase();
+        const q = searchQuery.toLowerCase().trim();
+        return name.includes(q) || classStr.includes(q) || subject.includes(q);
+    });
 
     return (
         <div className="min-h-screen space-y-6 px-1 md:px-0 animate-in fade-in duration-500">

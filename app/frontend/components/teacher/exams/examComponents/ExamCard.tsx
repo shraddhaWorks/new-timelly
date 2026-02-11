@@ -24,10 +24,14 @@ export default function ExamCard({ exam, onView, onEdit, onDelete }: ExamCardPro
   const coverage =
     !exam.syllabus || exam.syllabus.length === 0
       ? 0
-      : Math.round(
-          exam.syllabus.reduce((s: number, x: any) => s + x.completedPercent, 0) /
+      : Math.min(100, Math.max(0, Math.round(
+          exam.syllabus.reduce((s: number, x: any) => s + (Number(x.completedPercent) || 0), 0) /
           exam.syllabus.length
-        );
+        )));
+
+  const statusLabel = typeof exam.status === "string"
+    ? exam.status.charAt(0).toUpperCase() + exam.status.slice(1).toLowerCase()
+    : exam.status;
 
   return (
     <div className="bg-white/5 border border-white/10 rounded-[24px] p-6 flex flex-col backdrop-blur-md shadow-2xl w-full transition-transform hover:scale-[1.01]">
@@ -35,7 +39,7 @@ export default function ExamCard({ exam, onView, onEdit, onDelete }: ExamCardPro
       {/* HEADER: Status Badge and Top Actions */}
       <div className="flex justify-between items-start">
         <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] border ${getStatusStyles(exam.status)}`}>
-          {exam.status}
+          {statusLabel}
         </span>
         <div className="flex gap-2">
           <button onClick={onEdit} className="p-2 rounded-lg bg-white/5 text-white/40 hover:text-[#b4ff39] transition-colors">
@@ -52,7 +56,7 @@ export default function ExamCard({ exam, onView, onEdit, onDelete }: ExamCardPro
         {exam.name}
       </h3>
       <p className="text-white/40 text-sm font-medium mt-1 uppercase tracking-wider">
-        Class {exam.class.name}-{exam.class.section} • {exam.subject}
+        Class {exam.class?.name ?? ""}{exam.class?.section != null ? `-${exam.class.section}` : ""}{exam.subject ? ` • ${exam.subject}` : ""}
       </p>
 
       {/* SCHEDULE DETAILS */}

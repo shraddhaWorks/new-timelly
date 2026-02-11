@@ -7,13 +7,45 @@ import { ExamTermStatus } from "@/app/generated/prisma";
 async function resolveSchoolId(session: { user: { id: string; schoolId?: string | null; role: string } }) {
   let schoolId = session.user.schoolId;
   if (!schoolId) {
-    const school = await prisma.school.findFirst({
-      where: { admins: { some: { id: session.user.id } } },
-      select: { id: true },
-    });
-    schoolId = school?.id ?? null;
+    if (session.user.role === "TEACHER") {
+      const teacherClass = await prisma.class.findFirst({
+        where: { teacherId: session.user.id },
+        select: { schoolId: true },
+      });
+      schoolId = teacherClass?.schoolId ?? null;
+      if (!schoolId) {
+        const teacherSchool = await prisma.school.findFirst({
+          where: { teachers: { some: { id: session.user.id } } },
+          select: { id: true },
+        });
+        schoolId = teacherSchool?.id ?? null;
+      }
+    }
+    if (!schoolId) {
+      const school = await prisma.school.findFirst({
+        where: { admins: { some: { id: session.user.id } } },
+        select: { id: true },
+      });
+      schoolId = school?.id ?? null;
+    }
   }
   return schoolId;
+}
+
+function formatExamDate(d: Date): string {
+  const date = new Date(d);
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function formatDuration(minutes: number): string {
+  if (minutes >= 60) {
+    const h = Math.floor(minutes / 60);
+    return h === 1 ? "1 Hour" : `${h} Hours`;
+  }
+  return `${minutes} Mins`;
 }
 
 export async function GET(req: Request) {
@@ -22,7 +54,9 @@ export async function GET(req: Request) {
     if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
     const role = session.user.role;
-    if (role !== "SCHOOLADMIN") return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    if (role !== "SCHOOLADMIN" && role !== "TEACHER") {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
 
     const schoolId = await resolveSchoolId(session);
     if (!schoolId) return NextResponse.json({ message: "School not found" }, { status: 400 });
@@ -31,6 +65,63 @@ export async function GET(req: Request) {
     const classId = searchParams.get("classId");
     const status = searchParams.get("status");
 
+    // Teacher: full data and flatten to one exam per schedule
+    if (role === "TEACHER") {
+      const terms = await prisma.examTerm.findMany({
+        where: {
+          schoolId,
+          ...(classId ? { classId } : {}),
+          ...(status ? { status: status as ExamTermStatus } : {}),
+        },
+        include: {
+          class: { select: { id: true, name: true, section: true } },
+          schedules: { orderBy: { examDate: "asc" } },
+          syllabus: {
+            orderBy: { subject: "asc" },
+            include: { units: { orderBy: { order: "asc" } } },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      const exams: Array<{
+        id: string;
+        termId: string;
+        name: string;
+        status: string;
+        subject: string;
+        class: { id: string; name: string; section: string };
+        date: string;
+        time: string;
+        duration: string;
+        syllabus: Array<{ completedPercent: number }>;
+      }> = [];
+      for (const term of terms) {
+        const classInfo = term.class ? { id: term.class.id, name: term.class.name, section: term.class.section } : { id: "", name: "", section: "" };
+        for (const s of term.schedules) {
+          const tracking = term.syllabus.find((sy) => sy.subject === s.subject);
+          const syllabus = tracking
+            ? tracking.units.length > 0
+              ? tracking.units.map((u) => ({ completedPercent: u.completedPercent }))
+              : [{ completedPercent: tracking.completedPercent }]
+            : [];
+          exams.push({
+            id: s.id,
+            termId: term.id,
+            name: term.name,
+            status: term.status,
+            subject: s.subject,
+            class: classInfo,
+            date: formatExamDate(s.examDate),
+            time: s.startTime,
+            duration: formatDuration(s.durationMin),
+            syllabus,
+          });
+        }
+      }
+      return NextResponse.json({ exams }, { status: 200 });
+    }
+
+    // School admin: terms with _count only
     const terms = await prisma.examTerm.findMany({
       where: {
         schoolId,
@@ -43,7 +134,6 @@ export async function GET(req: Request) {
       },
       orderBy: { createdAt: "desc" },
     });
-
     return NextResponse.json({ terms }, { status: 200 });
   } catch (e: unknown) {
     console.error("Exams terms GET:", e);
@@ -58,7 +148,10 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    if (session.user.role !== "SCHOOLADMIN") return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    const role = session.user.role;
+    if (role !== "SCHOOLADMIN" && role !== "TEACHER") {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
 
     const schoolId = await resolveSchoolId(session);
     if (!schoolId) return NextResponse.json({ message: "School not found" }, { status: 400 });

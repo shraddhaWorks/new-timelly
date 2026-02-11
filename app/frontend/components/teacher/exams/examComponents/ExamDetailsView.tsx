@@ -21,39 +21,20 @@ export default function ExamDetailsView({ examId, onBack, onEdit }: any) {
     async function getDetails() {
       setLoading(true);
       try {
-        // Attempt to fetch from API
-        const res = await fetch(`/api/exams/terms/${examId}`);
+        // Teacher list uses schedule id; fetch single schedule detail
+        const res = await fetch(`/api/exams/schedules/${examId}`, { credentials: "include" });
         const data = await res.json();
-        
-        if (data.term) {
-          setExam(data.term);
+        if (res.ok && data.exam) {
+          setExam(data.exam);
         } else {
-          throw new Error("No data");
+          setExam(null);
         }
-      } catch (error) {
-        console.log("Using dummy data fallback...");
-        // EXACT DUMMY DATA MATCHING YOUR SCREENSHOTS
-        setExam({
-          name: "Term 1 Mathematics Finals",
-          status: "UPCOMING",
-          date: "2023-10-15",
-          time: "09:00 AM",
-          duration: "3 Hours",
-          subject: "Mathematics",
-          totalCoverage: 65,
-          class: { name: "10", section: "A" },
-          syllabus: [
-            { subject: "Real Numbers", completedPercent: 100 },
-            { subject: "Polynomials", completedPercent: 100 },
-            { subject: "Quadratic Equations", completedPercent: 60 },
-            { subject: "Arithmetic Progressions", completedPercent: 0 }
-          ]
-        });
+      } catch {
+        setExam(null);
       } finally {
         setLoading(false);
       }
     }
-    
     if (examId) {
       getDetails();
     }
@@ -64,6 +45,21 @@ export default function ExamDetailsView({ examId, onBack, onEdit }: any) {
       <div className="min-h-[400px] flex flex-col items-center justify-center text-[#b4ff39] gap-4">
         <Loader2 className="w-10 h-10 animate-spin" />
         <p className="text-white/40 font-bold tracking-widest uppercase text-xs">Loading Details...</p>
+      </div>
+    );
+  }
+
+  if (!exam) {
+    return (
+      <div className="min-h-screen text-white pb-10">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-white/40 hover:text-white transition-colors mb-6 group"
+        >
+          <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+          <span className="text-sm font-bold uppercase tracking-widest">Back to Exams</span>
+        </button>
+        <p className="text-white/60">Exam not found.</p>
       </div>
     );
   }
@@ -97,7 +93,7 @@ export default function ExamDetailsView({ examId, onBack, onEdit }: any) {
             <div className="flex justify-between items-center">
                <h2 className="text-ms tracking-tight text-white uppercase ">Exam Info</h2>
                <span className="px-4 py-1 rounded-full bg-[#b4ff39]/10   border border-[#b4ff39]/30 text-[#b4ff39] text-[10px] font-black tracking-[0.2em]">
-                 {exam?.status}
+                 {exam?.status ? String(exam.status).charAt(0).toUpperCase() + String(exam.status).slice(1).toLowerCase() : ""}
                </span>
             </div>
 
@@ -132,7 +128,10 @@ export default function ExamDetailsView({ examId, onBack, onEdit }: any) {
                 <div>
                   <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Class & Subject</p>
                   <p className="text-ms  text-white/90">
-                    Class {exam?.class?.name}-{exam?.class?.section} • {exam?.subject}
+                    {exam?.class?.name != null || exam?.class?.section != null
+                      ? `Class ${exam?.class?.name ?? ""}${exam?.class?.section != null ? `-${exam.class.section}` : ""}`
+                      : "—"}
+                    {exam?.subject ? ` • ${exam.subject}` : ""}
                   </p>
                 </div>
               </div>
@@ -142,12 +141,12 @@ export default function ExamDetailsView({ examId, onBack, onEdit }: any) {
             <div className="mt-4 pt-6 border-t border-white/5">
                 <div className="flex justify-between items-end mb-3">
                    <p className="text-[8px]  text-white/40 uppercase tracking-[0.2em]">Total Coverage</p>
-                   <span className="text-xl  text-[#b4ff39]">{exam?.totalCoverage}%</span>
+                   <span className="text-xl  text-[#b4ff39]">{Math.min(100, Math.max(0, Number(exam?.totalCoverage) || 0))}%</span>
                 </div>
                 <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-[#b4ff39] shadow-[0_0_20px_rgba(180,255,57,0.5)] transition-all duration-1000" 
-                      style={{ width: `${exam?.totalCoverage}%` }}
+                      style={{ width: `${Math.min(100, Math.max(0, Number(exam?.totalCoverage) || 0))}%` }}
                     />
                 </div>
             </div>
@@ -171,43 +170,46 @@ export default function ExamDetailsView({ examId, onBack, onEdit }: any) {
           </div>
 
           <div className="p-6 space-y-6 overflow-y-auto max-h-[850px] custom-scrollbar">
-            {exam?.syllabus?.map((unit: any, idx: number) => (
-              <div key={idx} className=" border border-white/5 rounded-[1rem] p-2 flex flex-col gap-6 transition-all hover:bg-[#2a213a]/45">
-                <div className="flex items-center gap-6">
-                  {/* Step ID */}
-                  <div className="h-10 w-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/30 text-sm font-black shadow-inner">
-                    {idx + 1}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-center mb-1">
-                      <h3 className="text-ms  text-white tracking-tight">{unit.subject}</h3>
-                      <span className="text-xl  text-white/90">{unit.completedPercent}%</span>
+            {Array.isArray(exam?.syllabus) && exam.syllabus.length > 0 ? (
+              exam.syllabus.map((unit: { subject?: string; completedPercent?: number }, idx: number) => {
+                const pct = Math.min(100, Math.max(0, Number(unit.completedPercent) || 0));
+                return (
+                  <div key={idx} className=" border border-white/5 rounded-[1rem] p-2 flex flex-col gap-6 transition-all hover:bg-[#2a213a]/45">
+                    <div className="flex items-center gap-6">
+                      <div className="h-10 w-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/30 text-sm font-black shadow-inner">
+                        {idx + 1}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center mb-1">
+                          <h3 className="text-ms  text-white tracking-tight">{unit.subject ?? "Unit"}</h3>
+                          <span className="text-xl  text-white/90">{pct}%</span>
+                        </div>
+                        <p className={`text-[10px]  uppercase tracking-[0.2em] ${
+                          pct === 100 ? "text-[#b4ff39]" :
+                          pct > 0 ? "text-yellow-400" : "text-red-500"
+                        }`}>
+                          {pct === 100 ? "COMPLETED" : pct > 0 ? "PARTIAL" : "PENDING"}
+                        </p>
+                      </div>
                     </div>
-                    <p className={`text-[10px]  uppercase tracking-[0.2em] ${
-                      unit.completedPercent === 100 ? 'text-[#b4ff39]' : 
-                      unit.completedPercent > 0 ? 'text-yellow-400' : 'text-red-500'
-                    }`}>
-                      {unit.completedPercent === 100 ? 'COMPLETED' : unit.completedPercent > 0 ? 'PARTIAL' : 'PENDING'}
-                    </p>
+                    <div className="relative h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(180,255,57,0.4)] ${
+                          pct === 100 ? "bg-[#b4ff39]" :
+                          pct > 0 ? "bg-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.4)]" : "bg-red-400"
+                        }`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <p className="text-[10px]  text-white/20 uppercase tracking-widest">Complete</p>
+                    </div>
                   </div>
-                </div>
-
-                {/* Progress Visual */}
-                <div className="relative h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(180,255,57,0.4)] ${
-                      unit.completedPercent === 100 ? 'bg-[#b4ff39]' : 
-                      unit.completedPercent > 0 ? 'bg-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.4)]' : 'bg-red-400'
-                    }`}
-                    style={{ width: `${unit.completedPercent}%` }}
-                  />
-                </div>
-                
-                <div className="flex justify-end">
-                   <p className="text-[10px]  text-white/20 uppercase tracking-widest">Complete</p>
-                </div>
-              </div>
-            ))}
+                );
+              })
+            ) : (
+              <p className="text-white/40 text-sm py-6">No syllabus units tracked for this exam yet.</p>
+            )}
           </div>
         </div>
       </div>
