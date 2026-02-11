@@ -6,9 +6,13 @@ import { useState } from "react";
 
 interface DeleteConfirmationProps {
     isOpen: boolean;
-    userName: string;
+    userName?: string;
     onConfirm: () => Promise<void>;
     onCancel: () => void;
+    title?: string;
+    message?: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
 }
 
 export default function DeleteConfirmation({
@@ -16,6 +20,10 @@ export default function DeleteConfirmation({
     userName,
     onConfirm,
     onCancel,
+    title = "Delete User",
+    message,
+    confirmLabel = "Delete User",
+    cancelLabel = "Cancel",
 }: DeleteConfirmationProps) {
     const [deleting, setDeleting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -60,18 +68,24 @@ export default function DeleteConfirmation({
                             <div className="w-12 h-12 rounded-full bg-red-400/10 flex items-center justify-center mb-4 mx-auto">
                                 <Trash size={20} className="text-red-400" />
                             </div>
-                            <h3 className="text-lg font-semibold text-white text-center">Delete User</h3>
+                            <h3 className="text-lg font-semibold text-white text-center">{title}</h3>
 
 
                             {/* Content */}
                             <div className="px-6 py-4 space-y-4">
                                 <p className="text-gray-400 text-center text-sm mb-6">
-                                    Are you sure you want to delete{" "}
-                                    <span className="text-white font-semibold">{userName}</span>?
+                                    {message ?? (
+                                        <>
+                                            Are you sure you want to delete{" "}
+                                            <span className="text-white font-semibold">{userName ?? "this item"}</span>?
+                                        </>
+                                    )}
                                 </p>
-                                <p className="text-sm text-white/60">
-                                    This action cannot be undone. All associated data will be removed from the system.
-                                </p>
+                                {!message && (
+                                    <p className="text-sm text-white/60">
+                                        This action cannot be undone. All associated data will be removed from the system.
+                                    </p>
+                                )}
 
                                 {error && (
                                     <motion.div
@@ -94,7 +108,7 @@ export default function DeleteConfirmation({
                                     className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300
                                       font-medium rounded-xl transition-all border border-white/10"
                                 >
-                                    Cancel
+                                    {cancelLabel}
                                 </motion.button>
                                 <motion.button
                                     whileHover={{ x: 4 }}
@@ -105,11 +119,10 @@ export default function DeleteConfirmation({
                                 >
                                     {deleting ? (
                                         <>
-                                            <Loader size={16} className="animate-spin" />
-                                            Deleting...
+                                            Working...
                                         </>
                                     ) : (
-                                        "Delete User"
+                                        confirmLabel
                                     )}
                                 </motion.button>
                             </div>

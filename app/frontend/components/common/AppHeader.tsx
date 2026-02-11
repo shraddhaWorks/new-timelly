@@ -14,6 +14,11 @@ export type HeaderProfile = {
   name: string;
   subtitle?: string;
   image?: string | null;
+  email?: string;
+  phone?: string;
+  userId?: string;
+  address?: string;
+  status?: string;
 };
 
 interface AppHeaderProps {
@@ -108,7 +113,20 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
 
       {showProfile && (
         <ProfileModal
-          profile={profile ? { name: profile.name, image: profile.image, role: profile.subtitle } : undefined}
+          profile={
+            profile
+              ? {
+                  name: profile.name,
+                  image: profile.image,
+                  role: profile.subtitle,
+                  email: profile.email,
+                  phone: profile.phone,
+                  userId: profile.userId,
+                  address: profile.address,
+                  status: profile.status,
+                }
+              : undefined
+          }
           onClose={() => setShowProfile(false)}
           onOpenSettings={() => {
             setShowProfile(false);

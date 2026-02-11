@@ -7,6 +7,7 @@ import { SidebarItem } from "../../types/sidebar";
 import BrandLogo from "./TimellyLogo";
 import { PRIMARY_COLOR } from "../../constants/colors";
 import { AVATAR_URL } from "../../constants/images";
+import { useMemo } from "react";
 
 type Props = {
   menuItems: SidebarItem[];
@@ -15,9 +16,10 @@ type Props = {
     subtitle?: string;
     image?: string | null;
   };
+  onLogoutRequest?: () => void;
 };
 
-export default function AppSidebar({ menuItems, profile }: Props) {
+export default function AppSidebar({ menuItems, profile, onLogoutRequest }: Props) {
   const router = useRouter();
   const { data: session } = useSession();
   const activeTab = useSearchParams().get("tab") ?? "dashboard";
@@ -32,11 +34,35 @@ export default function AppSidebar({ menuItems, profile }: Props) {
 
   const handleClick = async (item: SidebarItem) => {
     if (item.action === "logout") {
-      await signOut({ callbackUrl: "/admin/login" });
+      if (onLogoutRequest) {
+        onLogoutRequest();
+        return;
+      }
+      await signOut({ callbackUrl: "/" });
       return;
     }
     if (item.href) router.push(item.href);
   };
+
+  const isAllowed = (item: SidebarItem) => {
+    if (!isTeacher) return true;
+    if (!item.tab && !item.permission) return true;
+    if (!allowedFeatures || allowedFeatures.length === 0) return true;
+    if (item.tab && allowedFeatures.includes(item.tab)) return true;
+    if (item.permission && allowedFeatures.includes(String(item.permission))) return true;
+    return false;
+  };
+
+  const { mainItems, bottomItems } = useMemo(() => {
+    const allowed = menuItems.filter(isAllowed);
+    const bottom = allowed.filter(
+      (item) => item.action === "logout" || item.tab === "settings"
+    );
+    const main = allowed.filter(
+      (item) => item.action !== "logout" && item.tab !== "settings"
+    );
+    return { mainItems: main, bottomItems: bottom };
+  }, [menuItems, isTeacher, allowedFeatures]);
 
   return (
     <aside
@@ -73,53 +99,71 @@ export default function AppSidebar({ menuItems, profile }: Props) {
       </div>
 
       {/* Menu */}
-      <div className="flex-1 px-4 py-4 space-y-3 overflow-y-auto no-scrollbar">
-        {menuItems
-          .filter((item) => {
-            // Only apply filtering for teachers
-            if (!isTeacher) return true;
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 px-4 py-4 space-y-3 overflow-y-auto no-scrollbar">
+          {mainItems.map((item) => {
+            const isActive = item.tab === activeTab;
+            const Icon = item.icon;
 
-            // always show action items (logout) or items without tab/permission
-            if (!item.tab && !item.permission) return true;
+            return (
+              <motion.button
+                key={item.label}
+                whileHover={{ x: 4 }}
+                onClick={() => handleClick(item)}
+                className={`
+                  w-full flex items-center gap-4 px-5 py-3 rounded-xl
+                  transition min-w-0
+                  ${
+                    isActive
+                      ? "bg-lime-400/10 text-lime-400 border border-lime-400/20"
+                      : "text-white/60 hover:bg-white/5 hover:text-white"
+                  }
+                `}
+              >
+                <Icon
+                  size={20}
+                  className="flex-shrink-0"
+                  style={{ color: isActive ? PRIMARY_COLOR : "#9ca3af" }}
+                />
+                <span className="truncate text-sm">{item.label}</span>
+              </motion.button>
+            );
+          })}
+        </div>
 
-            // legacy: empty allowedFeatures => unrestricted
-            if (!allowedFeatures || allowedFeatures.length === 0) return true;
-
-            if (item.tab && allowedFeatures.includes(item.tab)) return true;
-
-            if (item.permission && allowedFeatures.includes(String(item.permission))) return true;
-
-            return false;
-          })
-          .map(item => {
-          const isActive = item.tab === activeTab;
-          const Icon = item.icon;
-
-          return (
-            <motion.button
-              key={item.label}
-              whileHover={{ x: 4 }}
-              onClick={() => handleClick(item)}
-              className={`
-                w-full flex items-center gap-4 px-5 py-3 rounded-xl
-                transition min-w-0
-                ${
-                  isActive
-                    ? "bg-lime-400/10 text-lime-400 border border-lime-400/20"
-                    : "text-white/60 hover:bg-white/5 hover:text-white"
-                }
-              `}
-            >
-              <Icon
-                size={20}
-                className="flex-shrink-0"
-                style={{ color: isActive ? PRIMARY_COLOR : "#9ca3af" }}
-              />
-              <span className="truncate text-sm">{item.label}</span>
-            </motion.button>
-          );
-        })}
+        {bottomItems.length > 0 && (
+          <div className="px-4 pb-4 pt-2 space-y-3 border-t border-white/10">
+            {bottomItems.map((item) => {
+              const isActive = item.tab === activeTab;
+              const Icon = item.icon;
+              return (
+                <motion.button
+                  key={item.label}
+                  whileHover={{ x: 4 }}
+                  onClick={() => handleClick(item)}
+                  className={`
+                    w-full flex items-center gap-4 px-5 py-3 rounded-xl
+                    transition min-w-0
+                    ${
+                      isActive
+                        ? "bg-lime-400/10 text-lime-400 border border-lime-400/20"
+                        : "text-white/60 hover:bg-white/5 hover:text-white"
+                    }
+                  `}
+                >
+                  <Icon
+                    size={20}
+                    className="flex-shrink-0"
+                    style={{ color: isActive ? PRIMARY_COLOR : "#9ca3af" }}
+                  />
+                  <span className="truncate text-sm">{item.label}</span>
+                </motion.button>
+              );
+            })}
+          </div>
+        )}
       </div>
+
     </aside>
   );
 }
