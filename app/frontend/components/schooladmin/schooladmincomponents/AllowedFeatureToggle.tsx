@@ -2,34 +2,45 @@
 
 interface FeatureToggleProps {
   label: string;
+  description?: string;
   checked?: boolean;
   onChange: () => void;
+  className?: string;
+  labelClassName?: string;
 }
 
 export default function AllowedFeatureToggle({
   label,
+  description,
   checked = false,
   onChange,
+  className,
+  labelClassName,
 }: FeatureToggleProps) {
   return (
-    <label className="flex items-center justify-between gap-3 p-3 rounded-lg bg-white/5 border border-white/10
-      hover:border-lime-400/40 cursor-pointer transition ">
-      <span className="text-sm text-white/80">{label}</span>
+    <label
+      className={[
+        "flex items-center justify-between gap-3 p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-lime-400/40 cursor-pointer transition",
+        className || "",
+      ].join(" ")}
+    >
+      <span>
+        <span className={["text-sm text-white/90 font-medium", labelClassName || ""].join(" ")}>{label}</span>
+        {description ? <span className="block text-xs text-white/55 mt-1">{description}</span> : null}
+      </span>
 
       <button
         type="button"
         role="switch"
         aria-checked={checked}
         onClick={onChange}
-        className={`relative inline-flex flex-shrink-0 h-6 w-12 border-2 border-transparent rounded-full 
-          transition-colors ease-in-out duration-200 
-          focus:outline-noneflex items-center gap-2 text-sm text-gray-400
-          hover:text-lime-400 transition-colors ${
-          checked ? "bg-lime-400" : "bg-white/10"
-        }`}
+        className={[
+          "relative inline-flex h-6 w-12 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+          checked ? "bg-lime-400" : "bg-white/25",
+        ].join(" ")}
       >
         <span
-          className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200 ${
+          className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition duration-200 ease-in-out ${
             checked ? "translate-x-6" : "translate-x-0"
           }`}
         />

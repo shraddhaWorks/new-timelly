@@ -1,8 +1,8 @@
 "use client";
 
-import { Bell, Search, SearchAlert, SearchIcon, Settings } from "lucide-react";
+import { Bell, Search, Settings } from "lucide-react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import SectionHeader from "./SectionHeader";
 import SearchInput from "./SearchInput";
@@ -30,6 +30,8 @@ interface AppHeaderProps {
 
 export default function AppHeader({ title, profile, hideSearchAndNotifications = false }: AppHeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [showProfile, setShowProfile] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -37,6 +39,16 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
   const { data: session } = useSession();
   const displayName = (profile?.name && profile.name.trim()) ? profile.name : (session?.user?.name ?? "User");
   const avatarUrl = (profile?.image != null && profile.image !== "") ? profile.image : (session?.user?.image ?? AVATAR_URL);
+
+  const openSettings = () => {
+    if (pathname?.startsWith("/frontend/pages/")) {
+      const params = new URLSearchParams(searchParams?.toString() ?? "");
+      params.set("tab", "settings");
+      router.push(`${pathname}?${params.toString()}`);
+      return;
+    }
+    router.push("/settings");
+  };
 
   return (
     <>
@@ -84,7 +96,7 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
             <button
               type="button"
               className="p-2 rounded-lg hover:bg-white/10"
-              onClick={() => router.push("/settings")}
+              onClick={openSettings}
               title="Settings"
             >
               <Settings className="text-white" />
@@ -130,7 +142,7 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
           onClose={() => setShowProfile(false)}
           onOpenSettings={() => {
             setShowProfile(false);
-            router.push("/settings");
+            openSettings();
           }}
         />
       )}
