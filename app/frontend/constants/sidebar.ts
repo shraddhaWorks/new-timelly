@@ -348,7 +348,7 @@ export const TEACHER_MENU_ITEMS: SidebarItem[] = [
         label: "Settings",
         tab: "settings",
         href: "/frontend/pages/teacher?tab=settings",
-        icon: User,
+        icon: Settings,
         permission: Permission.SETTINGS,
     },
      {

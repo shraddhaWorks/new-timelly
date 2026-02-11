@@ -19,6 +19,21 @@ export async function GET() {
         mobile: true,
         language: true,
         photoUrl: true,
+        teacherId: true,
+        subject: true,
+        createdAt: true,
+        assignedClasses: {
+          select: {
+            id: true,
+            name: true,
+            section: true,
+            _count: {
+              select: {
+                students: true,
+              },
+            },
+          },
+        },
         role: true,
       },
     });
@@ -47,6 +62,8 @@ export async function PUT(req: Request) {
       language?: string | null;
       photoUrl?: string | null;
       name?: string | null;
+      teacherId?: string | null;
+      subject?: string | null;
     } = {};
     // Email is constant and not updated from settings.
 
@@ -62,20 +79,41 @@ export async function PUT(req: Request) {
     if (typeof body.name === "string" || body.name === null) {
       data.name = body.name;
     }
+    if (typeof body.teacherId === "string" || body.teacherId === null) {
+      data.teacherId = body.teacherId;
+    }
+    if (typeof body.subject === "string" || body.subject === null) {
+      data.subject = body.subject;
+    }
 
     const user = await prisma.user.update({
-      where: { id: session.user.id },
-      data,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        mobile: true,
-        language: true,
-        photoUrl: true,
-        role: true,
-      },
-    });
+        where: { id: session.user.id },
+        data,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          mobile: true,
+          language: true,
+          photoUrl: true,
+          teacherId: true,
+          subject: true,
+          createdAt: true,
+          assignedClasses: {
+            select: {
+              id: true,
+              name: true,
+              section: true,
+              _count: {
+                select: {
+                  students: true,
+                },
+              },
+            },
+          },
+          role: true,
+        },
+      });
 
     return NextResponse.json({ user }, { status: 200 });
   } catch (e: unknown) {
