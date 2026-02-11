@@ -6,6 +6,7 @@ import { Plus, Calendar as CalendarIcon, Search, BookOpen } from "lucide-react";
 import ExamCard from "./examComponents/ExamCard";
 import ScheduleExamView from "./examComponents/ScheduleExamView";
 import ExamDetailsView from "./examComponents/ExamDetailsView";
+import Spinner from "../../common/Spinner";
 
 type ViewState =
     | { mode: "list" }
@@ -130,9 +131,9 @@ export default function TeacherExamsTab() {
 
             {/* EXAM CARDS GRID */}
             {loading ? (
-                <div className="flex flex-col items-center justify-center py-20 opacity-40">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#b4ff39] mb-4"></div>
-                    <p className="text-sm font-bold tracking-widest uppercase">Loading Exams...</p>
+                <div className="flex flex-col items-center justify-center py-20">
+                    
+                    <p className="text-sm font-bold tracking-widest uppercase"><Spinner/></p>
                 </div>
             ) : (
                 <>

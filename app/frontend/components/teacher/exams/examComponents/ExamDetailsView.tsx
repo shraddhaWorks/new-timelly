@@ -11,6 +11,7 @@ import {
   Loader2 
 } from "lucide-react";
 import PageHeader from "../../../common/PageHeader";
+import Spinner from "../../../common/Spinner";
 
 
 export default function ExamDetailsView({ examId, onBack, onEdit }: any) {
@@ -43,8 +44,8 @@ export default function ExamDetailsView({ examId, onBack, onEdit }: any) {
   if (loading) {
     return (
       <div className="min-h-[400px] flex flex-col items-center justify-center text-[#b4ff39] gap-4">
-        <Loader2 className="w-10 h-10 animate-spin" />
-        <p className="text-white/40 font-bold tracking-widest uppercase text-xs">Loading Details...</p>
+        
+        <p className="text-white/40 font-bold tracking-widest uppercase text-xs"><Spinner/></p>
       </div>
     );
   }
