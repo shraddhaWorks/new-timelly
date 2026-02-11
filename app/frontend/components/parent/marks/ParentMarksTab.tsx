@@ -2,14 +2,14 @@ import { Award, Badge, Bell, BookOpen, MessageCircle, Target, TrendingUp, Trophy
 import PageHeader from "../../common/PageHeader";
 import StatCard from "../../common/statCard";
 
-// Utility function
+
 const formatNumber = (num) => {
   if (!num) return "0";
   return num.toLocaleString();
 };
 
 export default function ParentMarksTab() {
-  // Mock / fallback data (replace with API later)
+
   const data = {
     stats: {
       totalClasses: 8,
