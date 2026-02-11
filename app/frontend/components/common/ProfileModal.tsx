@@ -36,7 +36,7 @@ export default function ProfileModal({
 
   const handleLogout = async () => {
     onClose();
-    await signOut({ callbackUrl: "/admin/login" });
+    await signOut({ callbackUrl: "/" });
   };
 
   const handleSettings = () => {
