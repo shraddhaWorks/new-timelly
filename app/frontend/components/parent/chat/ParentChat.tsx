@@ -1,43 +1,45 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Search } from "lucide-react";
 import SearchInput from "../../common/SearchInput";
 import ChatWindow from "../../teacher/parentchat/ChatWindow";
 import { Chat, Status } from "../../teacher/parentchat/ChatList";
 import NewChatModal from "./NewChatModal";
 
-/* ================= Dummy Chats ================= */
+const DEFAULT_AVATAR = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200";
 
-const DUMMY_CHATS: Chat[] = [
-  {
-    id: "1",
-    parent: "Mrs. Meera Singh",
-    student: "Aarav Singh",
-    lastMessage: "Request for leave approval",
-    status: "pending",
-    avatar:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200",
-  },
-  {
-    id: "2",
-    parent: "Mr. Vikram Reddy",
-    student: "Rohan Reddy",
-    lastMessage: "Meeting request regarding performance",
-    status: "approved",
-    avatar:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200",
-  },
-  {
-    id: "3",
-    parent: "Mrs. Anjali Sharma",
-    student: "Diya Sharma",
-    lastMessage: "Concern about math homework",
-    status: "approved",
-    avatar:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200",
-  },
-];
+function mapAppointmentToChat(apt: {
+  id: string;
+  status: string;
+  note?: string | null;
+  student?: {
+    fatherName?: string | null;
+    user?: { name: string | null; photoUrl: string | null };
+  } | null;
+  teacher?: { name: string | null; photoUrl: string | null; subject?: string | null } | null;
+  messages?: { content: string }[];
+}): Chat {
+  const student = apt.student;
+  const teacher = apt.teacher;
+  const studentName = student?.user?.name ?? "Student";
+  const lastMsg = apt.messages?.[0]?.content ?? apt.note ?? "No messages yet";
+  const statusMap: Record<string, Status> = {
+    pending: "pending",
+    approved: "approved",
+    rejected: "rejected",
+    ended: "ended",
+  };
+  const status: Status = statusMap[apt.status.toLowerCase()] ?? "pending";
+  return {
+    id: apt.id,
+    parent: teacher?.name ?? "Teacher",
+    student: studentName,
+    lastMessage: lastMsg,
+    status,
+    avatar: teacher?.photoUrl ?? DEFAULT_AVATAR,
+  };
+}
 
 export default function TeacherParentChatTab() {
   const [activeTab, setActiveTab] = useState<"all" | Status>("all");
@@ -46,13 +48,27 @@ export default function TeacherParentChatTab() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
 
-
-  /* ================= Load Dummy Chats ================= */
+  const fetchAppointments = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/communication/appointments", { credentials: "include" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setChats([]);
+        return;
+      }
+      const list = Array.isArray(data.appointments) ? data.appointments : [];
+      setChats(list.map(mapAppointmentToChat));
+    } catch {
+      setChats([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    setChats(DUMMY_CHATS);
-    setLoading(false);
-  }, []);
+    fetchAppointments();
+  }, [fetchAppointments]);
 
   const activeChat =
     chats.find((c) => c.id === activeChatId) ?? null;
@@ -62,14 +78,20 @@ export default function TeacherParentChatTab() {
       ? chats
       : chats.filter((c) => c.status === activeTab);
 
-  /* ================= Approve Only ================= */
-
-  const approveChat = (id: string) => {
-    setChats((prev) =>
-      prev.map((c) =>
-        c.id === id ? { ...c, status: "approved" } : c
-      )
-    );
+  const approveChat = async (id: string) => {
+    try {
+      const res = await fetch(`/api/communication/appointments/${id}/approve`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (res.ok) {
+        setChats((prev) =>
+          prev.map((c) => (c.id === id ? { ...c, status: "approved" as const } : c))
+        );
+      }
+    } catch {
+      // keep UI state
+    }
   };
 
   return (
@@ -148,7 +170,7 @@ export default function TeacherParentChatTab() {
                     </div>
 
                     <p className="text-xs text-lime-400 truncate">
-                      Parent of {chat.student}
+                      Requested for {chat.student}
                     </p>
 
                     <p className="text-xs text-gray-400 truncate">
@@ -169,7 +191,12 @@ export default function TeacherParentChatTab() {
           </div>
         
         </div>
-  {showModal && <NewChatModal onClose={() => setShowModal(false)} />}
+  {showModal && (
+              <NewChatModal
+                onClose={() => setShowModal(false)}
+                onSuccess={fetchAppointments}
+              />
+            )}
         {/* ================= Chat Window ================= */}
         <div
           className={`flex-1 backdrop-blur-xl bg-white/5 border border-white/10 
@@ -181,6 +208,8 @@ export default function TeacherParentChatTab() {
               chat={activeChat}
               onBack={() => setActiveChatId(null)}
               onApprove={() => approveChat(activeChat.id)}
+              onReject={() => {}}
+              variant="parent"
             />
           ) : (
             <div className="flex-1 flex items-center justify-center text-gray-400">

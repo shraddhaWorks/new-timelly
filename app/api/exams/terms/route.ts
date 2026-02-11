@@ -96,7 +96,7 @@ export async function GET(req: Request) {
         syllabus: Array<{ completedPercent: number }>;
       }> = [];
       for (const term of terms) {
-        const classInfo = term.class ? { id: term.class.id, name: term.class.name, section: term.class.section } : { id: "", name: "", section: "" };
+        const classInfo = term.class ? { id: term.class.id, name: term.class.name, section: term.class.section ?? "" } : { id: "", name: "", section: "" };
         for (const s of term.schedules) {
           const tracking = term.syllabus.find((sy) => sy.subject === s.subject);
           const syllabus = tracking
