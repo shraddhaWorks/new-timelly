@@ -10,8 +10,11 @@ import {
   Check,
   X,
 } from "lucide-react";
+import { log } from "console";
+import PageHeader from "../../../common/PageHeader";
 
 type StudentLeaveItem = {
+  attachment: any;
   id: string;
   leaveType: string;
   reason: string;
@@ -22,7 +25,7 @@ type StudentLeaveItem = {
   createdAt: string;
   student: {
     id: string;
-    user: { id: string; name: string | null; email: string | null };
+    user: { id: string; name: string | null; email: string | null ; photoUrl: string | null } | null;
     class: { id: string; name: string; section: string | null } | null;
   };
 };
@@ -72,9 +75,10 @@ export default function StudentLeave() {
     try {
       const res = await fetch("/api/student-leaves/all");
       const data = await res.json();
+     
       if (res.ok && Array.isArray(data)) setAllLeaves(data);
       else setAllLeaves([]);
-    } catch {
+    } catch (err) {
       setAllLeaves([]);
     }
   }, []);
@@ -128,22 +132,29 @@ export default function StudentLeave() {
   return (
     <div className=" text-white ">
       {/* Header Section */}
-      <div className="max-w-6xl mb-6 bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[1rem] p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xl">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Student Approvals</h2>
-          <p className="text-white/40 text-sm mt-1">Review and manage leave requests from your class</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/30">
-            <Clock size={16} className="text-yellow-400" />
-            <span className="text-yellow-400 font-bold text-sm">{pendingLeaves.length} Pending</span>
-          </div>
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#b4f03d]/10 border border-[#b4f03d]/30">
-            <CheckCircle2 size={16} className="text-[#b4f03d]" />
-            <span className="text-[#b4f03d] font-bold text-sm">{approvedRecent} Approved Recently</span>
-          </div>
-        </div>
+      <PageHeader
+  title="Student Approvals"
+  subtitle="Review and manage leave requests from your class"
+  rightSlot={
+    <div className="flex items-center gap-3">
+      {/* Pending Status Pill */}
+      <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/20">
+        <Clock size={16} className="text-yellow-400" />
+        <span className="text-yellow-400 font-bold text-sm">
+          {pendingLeaves.length} Pending
+        </span>
       </div>
+
+      {/* Approved Status Pill */}
+      <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#b4f03d]/10 border border-[#b4f03d]/20">
+        <CheckCircle2 size={16} className="text-[#b4f03d]" />
+        <span className="text-[#b4f03d] font-bold text-sm">
+          {approvedRecent} Approved Recently
+        </span>
+      </div>
+    </div>
+  }
+/>
 
       {/* Sub-Nav & Search Bar */}
       <div className="max-w-6xl mb-6 bg-white/[0.03] border border-white/10 rounded-[1rem] p-5 backdrop-blur-md">
@@ -151,7 +162,7 @@ export default function StudentLeave() {
           <div className="inline-flex bg-white/5 p-1 rounded-2xl border border-white/5">
             <button
               onClick={() => setSubTab("pending")}
-              className={`px-8 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
+              className={`px-8 py-1 rounded-xl text-sm  transition-all duration-300 ${
                 subTab === "pending" ? "bg-[#b4f03d] text-black" : "text-white/40 hover:text-white"
               }`}
             >
@@ -192,92 +203,99 @@ export default function StudentLeave() {
           {subTab === "pending" ? "No pending student leave requests." : "No leave history."}
         </div>
       ) : (
-        <div className="max-w-6xl mx-auto space-y-4">
-          {filteredList.map((leave) => {
-            const name = leave.student?.user?.name ?? "Student";
-            const classLabel = leave.student?.class
-              ? `${leave.student.class.name}${leave.student.class.section ? `-${leave.student.class.section}` : ""}`
-              : "—";
-            const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=56&background=4ade80&color=fff`;
+     <div className="max-w-6xl mx-auto space-y-4">
+  {filteredList.map((leave) => {
+    const name = leave.student?.user?.name ?? "Student";
+    const classLabel = leave.student?.class
+      ? `${leave.student.class.name}${leave.student.class.section ? `-${leave.student.class.section}` : ""}`
+      : "—";
+    const avatarUrl = leave.student?.user?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=56&background=4ade80&color=fff`;
 
-            return (
-              <div
-                key={leave.id}
-                className=" border border-white/10 rounded-[1rem] p-4 backdrop-blur-lg flex flex-col md:flex-row items-center md:items-stretch gap-6 relative group hover:border-white/20 transition-all shadow-2xl"
-              >
-                <div className="flex flex-row md:flex-col items-center md:items-start gap-4 md:gap-2 min-w-[180px]">
-                  <div className="w-14 h-14 rounded-2xl overflow-hidden border border-white/10 shadow-lg bg-white/5">
-                    <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg tracking-tight leading-none">{name}</h3>
-                    <p className="text-white/40 text-xs font-medium mt-1">Class {classLabel}</p>
-                    <span className="inline-block mt-2 px-2 py-0.5 bg-white/5 border border-white/10 rounded-lg text-[9px] font-bold tracking-widest text-white/40 uppercase">
-                      {leaveTypeShort(leave.leaveType)}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex-1 flex flex-col justify-between py-1">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="inline-flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
-                      <Calendar size={14} className="text-[#b4f03d]" />
-                      <span className="text-xs font-medium text-white/80">
-                        {formatDateRange(leave.fromDate, leave.toDate)}
-                      </span>
-                      <span className="text-white/20">|</span>
-                      <span className="text-xs font-bold text-[#b4f03d]">
-                        {daysBetween(leave.fromDate, leave.toDate)} Days
-                      </span>
-                    </div>
-                  </div>
-                  <div className="bg-black/20 rounded-xl p-3 border border-white/[0.03]">
-                    <p className="text-white/60 text-sm leading-snug font-medium line-clamp-2 md:line-clamp-none">
-                      {leave.reason}
-                    </p>
-                  </div>
-                </div>
-
-                {subTab === "pending" && leave.status === "PENDING" && (
-                  <div className="flex flex-row md:flex-col gap-2 justify-center items-center border-l border-white/10 pl-4">
-                    <div className="flex flex-col items-center gap-3">
-                      <button
-                        onClick={() => handleApprove(leave.id)}
-                        disabled={actionId !== null}
-                        className="flex items-center justify-center gap-2 bg-[#b4f03d]/10 hover:bg-[#b4f03d] hover:text-black border border-[#b4f03d]/20 text-[#b4f03d] px-4 py-3 rounded-xl font-bold text-sm transition-all duration-300 w-[100px] group/btn disabled:opacity-50"
-                      >
-                        <Check size={18} strokeWidth={3} />
-                        <span>Approve</span>
-                      </button>
-                      <button
-                        onClick={() => handleReject(leave.id)}
-                        disabled={actionId !== null}
-                        className="flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/20 text-red-500 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-300 w-[100px] group/btn disabled:opacity-50"
-                      >
-                        <X size={18} strokeWidth={3} />
-                        <span>Reject</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {subTab === "history" && leave.status !== "PENDING" && (
-                  <div className="flex items-center border-l border-white/10 pl-4">
-                    <span
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${
-                        leave.status === "APPROVED"
-                          ? "bg-[#b4f03d]/10 text-[#b4f03d] border-[#b4f03d]/30"
-                          : "bg-red-500/10 text-red-400 border-red-500/30"
-                      }`}
-                    >
-                      {leave.status}
-                    </span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+    return (
+      <div
+        key={leave.id}
+        className="border border-white/10 rounded-[1.2rem] p-6 backdrop-blur-lg flex flex-col md:flex-row items-start gap-6 relative group hover:border-white/20 transition-all shadow-2xl bg-white/[0.02]"
+      >
+        {/* Profile Section */}
+        <div className="flex flex-row items-start gap-4 min-w-[160px]">
+          <div className="w-14 h-14 rounded-xl overflow-hidden shadow-lg">
+            <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+          </div>
+          <div className="flex flex-col">
+            <h3 className="font-bold text-[1.1rem] text-white tracking-tight">{name}</h3>
+            <p className="text-white/40 text-xs font-medium mt-0.5">Class {classLabel}</p>
+            <span className="inline-block mt-3 px-2 py-0.5 bg-white/5 border border-white/10 rounded-md text-[9px] font-bold tracking-widest text-white/40 uppercase w-fit">
+              {leaveTypeShort(leave.leaveType)}
+            </span>
+          </div>
         </div>
+
+        {/* Content Section */}
+        <div className="flex-1 flex flex-col gap-3">
+          <div className="flex items-center">
+            <div className="inline-flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/5">
+              <Calendar size={14} className="text-[#b4f03d]" />
+              <span className="text-xs font-medium text-white/80">
+                {formatDateRange(leave.fromDate, leave.toDate)}
+              </span>
+              <span className="text-white/10 mx-1">|</span>
+              <span className="text-xs font-bold text-white">
+                {daysBetween(leave.fromDate, leave.toDate)} Days
+              </span>
+            </div>
+          </div>
+          
+          <div className="bg-black/20 rounded-xl px-4 py-2 border border-white/[0.03] min-h-[20px] flex flex-col justify-center">
+            <p className="text-white/70 text-[0.9rem]  leading-relaxed font-normal">
+              {leave.reason}
+            </p>
+            {leave.attachment && (
+               <button className="flex items-center gap-1.5 mt-2 text-[#b4f03d] text-xs font-semibold hover:underline">
+                 <Paperclip size={12} /> View Attachment
+               </button>
+            )}
+          </div>
+        </div>
+
+        {/* Action Section */}
+        {subTab === "pending" && leave.status === "PENDING" && (
+          <div className="flex flex-row md:flex-col gap-3 justify-center items-center border-l border-white/5 pl-6 self-stretch">
+            <button
+              onClick={() => handleApprove(leave.id)}
+              disabled={actionId !== null}
+              className="flex items-center justify-start gap-3 bg-white/[0.03] hover:bg-[#b4f03d] hover:text-black border border-white/10 text-[#b4f03d] px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 min-w-[120px] group/btn disabled:opacity-50"
+            >
+              <Check size={16} strokeWidth={3} />
+              <span>Approve</span>
+            </button>
+            <button
+              onClick={() => handleReject(leave.id)}
+              disabled={actionId !== null}
+              className="flex items-center justify-start gap-3 bg-white/[0.03] hover:bg-red-500/80 hover:text-white border border-white/10 text-red-400 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 min-w-[120px] group/btn disabled:opacity-50"
+            >
+              <X size={18} strokeWidth={3} />
+              <span>Reject</span>
+            </button>
+          </div>
+        )}
+
+        {subTab === "history" && leave.status !== "PENDING" && (
+          <div className="flex items-center border-l border-white/5 pl-6 self-stretch">
+            <span
+              className={`px-4 py-2 rounded-lg text-xs font-bold border ${
+                leave.status === "APPROVED"
+                  ? "bg-[#b4f03d]/10 text-[#b4f03d] border-[#b4f03d]/20"
+                  : "bg-red-500/10 text-red-400 border-red-500/20"
+              }`}
+            >
+              {leave.status}
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  })}
+</div>
       )}
     </div>
   );
