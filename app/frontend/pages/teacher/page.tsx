@@ -6,10 +6,7 @@ import { useSearchParams } from "next/navigation";
 import AppLayout from "../../AppLayout";
 import { TEACHER_MENU_ITEMS } from "../../constants/sidebar";
 import RequiredRoles from "../../auth/RequiredRoles";
-<<<<<<< Updated upstream
-=======
 import HomeworkPage from "../../components/teacher/homework/Homework";
->>>>>>> Stashed changes
 import RequireFeature from "../../auth/RequireFeature";
 import TeacherDashboard from "../../components/teacher/dashboard/Dashboard";
 import TeacherClasses from "../../components/teacher/classes/Classes";
