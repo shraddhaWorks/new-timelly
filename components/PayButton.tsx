@@ -7,9 +7,11 @@ import { motion } from "framer-motion";
 interface PayButtonProps {
   amount: number;
   onSuccess?: () => void;
+  /** When paying from parent fees, pass "/frontend/pages/parent?tab=fees" so Juspay redirects back here */
+  returnPath?: string;
 }
 
-export default function PayButton({ amount, onSuccess }: PayButtonProps) {
+export default function PayButton({ amount, onSuccess, returnPath }: PayButtonProps) {
   useEffect(() => {
     if (typeof window === "undefined") return;
     if ((window as any).Razorpay) return;
@@ -44,7 +46,7 @@ export default function PayButton({ amount, onSuccess }: PayButtonProps) {
       const res = await fetch("/api/payment/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: normalizedAmount }),
+        body: JSON.stringify({ amount: normalizedAmount, ...(returnPath && { return_path: returnPath }) }),
       });
 
       if (!res.ok) {
@@ -120,7 +122,7 @@ export default function PayButton({ amount, onSuccess }: PayButtonProps) {
       className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-teal-600 hover:to-emerald-500 text-white py-4 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg border border-emerald-400/30 transition-all duration-300"
     >
       <CreditCard size={20} />
-      Pay ₹{amount}
+      Pay ₹{Number(amount).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
     </motion.button>
   );
 }

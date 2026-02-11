@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { useSubdomainSchool } from "@/context/SubdomainContext";
 
 const LOGO_SRC = "/timelylogo.webp";
 
 export default function LoginForm() {
+  const school = useSubdomainSchool();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -37,13 +39,21 @@ export default function LoginForm() {
       <div className="rounded-3xl overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.3)] backdrop-blur-xl bg-black/20">
         {/* Header - logo from public folder (root path) */}
         <div className="p-8 pb-6 border-b border-white/5 flex flex-col items-center text-center bg-white/[0.02]">
-          <img
-            src={LOGO_SRC}
-            alt="Timelly"
-            className="h-12 w-40 mb-6 drop-shadow-[0_0_15px_rgba(163,230,53,0.3)] object-contain"
-          />
+          {school?.logoUrl ? (
+            <img
+              src={school.logoUrl}
+              alt={school.name}
+              className="h-12 w-auto max-w-[10rem] mb-6 object-contain"
+            />
+          ) : (
+            <img
+              src={LOGO_SRC}
+              alt="Timelly"
+              className="h-12 w-40 mb-6 drop-shadow-[0_0_15px_rgba(163,230,53,0.3)] object-contain"
+            />
+          )}
           <h1 className="text-2xl font-bold text-white mb-2">
-            Welcome Back
+            Welcome Back{school ? ` to ${school.name}` : ""}
           </h1>
           <p className="text-gray-400 text-sm">
             Sign in to access your dashboard

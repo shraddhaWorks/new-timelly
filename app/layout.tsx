@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Inter, Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/context/AuthContext";
+import SubdomainSchoolFetcher from "@/components/SubdomainSchoolFetcher";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -38,7 +39,9 @@ export default function RootLayout({
           antialiased
         `}
       >
-        <AuthProvider>{children}</AuthProvider>
+        <SubdomainSchoolFetcher>
+          <AuthProvider>{children}</AuthProvider>
+        </SubdomainSchoolFetcher>
       </body>
     </html>
   );
