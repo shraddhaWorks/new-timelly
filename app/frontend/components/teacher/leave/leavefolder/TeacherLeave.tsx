@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Calendar, ChevronDown, Send, Plus, X, CheckCircle, Edit3, XCircle } from "lucide-react";
+import { Calendar, ChevronDown, Send, Plus, X, CheckCircle, Edit3, XCircle, Clock } from "lucide-react";
 import PageHeader from "../../../common/PageHeader";
+import Spinner from "../../../common/Spinner";
 
 const LEAVE_TYPE_OPTIONS = [
   { label: "Sick Leave", value: "SICK" },
@@ -29,9 +30,11 @@ function leaveTypeLabel(t: string) {
 }
 
 function statusStyle(s: string) {
-  if (s === "APPROVED" || s === "CONDITIONALLY_APPROVED") return "bg-[#b4f03d]/10 text-[#b4f03d] border-[#b4f03d]/30";
+  if (s === "APPROVED") return "bg-[#b4f03d]/10 text-[#b4f03d] border-[#b4f03d]/30";
+  if (s === "CONDITIONALLY_APPROVED") return "bg-yellow-500/10 text-yellow-400 border-yellow-500/30";
   if (s === "REJECTED") return "bg-red-500/10 text-red-400 border-red-500/30";
   return "bg-yellow-500/10 text-yellow-400 border-yellow-500/30";
+
 }
 
 export default function TeacherLeave() {
@@ -162,20 +165,19 @@ export default function TeacherLeave() {
   };
 
   return (
-    <div className="w-full space-y-6 animate-in fade-in duration-500">
-
+    <div className="w-full space-y-6 animate-in fade-in duration-500 text-white pb-10">
       {/* 1. Header Section */}
       <PageHeader
-        title={showForm ? "Apply New Leave" : "My Leave Application"}
-        subtitle={showForm ? "Please fill in the details below" : "Apply for leave and track your balance"}
+        title={showForm ? (editingLeave ? "Edit Leave Request" : "Apply New Leave") : "My Leave Application"}
+        subtitle={showForm ? "Please fill in the details below" : "Apply for leave and track your status"}
         rightSlot={
           !showForm ? (
             <button
               onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 border border-[#b4f03d]/20 bg-[#b4f03d]/5 text-[#b4f03d] px-6 py-3 rounded-2xl font-bold text-sm hover:bg-[#b4f03d]/10 transition-all"
+              className="flex items-center gap-2 border border-[#b4f03d]/20 bg-[#b4f03d]/5 text-[#b4f03d] px-4 md:px-6 py-2.5 md:py-3 rounded-2xl font-bold text-xs md:text-sm hover:bg-[#b4f03d]/10 transition-all"
             >
-              <Plus size={20} strokeWidth={3} />
-              <span>Apply New Leave</span>
+              <Plus size={18} strokeWidth={3} />
+              <span>New Leave</span>
             </button>
           ) : (
             <button
@@ -185,21 +187,30 @@ export default function TeacherLeave() {
                 setEditingLeave(null);
                 setFormData({ leaveType: "SICK", startDate: "", endDate: "", reason: "" });
               }}
-              className="flex items-center gap-2 border border-white/10 bg-white/5 text-white/60 px-6 py-3 rounded-2xl font-bold text-sm hover:bg-white/10 hover:text-white transition-all"
+              className="flex items-center gap-2 border border-white/10 bg-white/5 text-white/60 px-4 md:px-6 py-2.5 md:py-3 rounded-2xl font-bold text-xs md:text-sm hover:bg-white/10 hover:text-white transition-all"
             >
-              <ChevronDown size={20} strokeWidth={3} />
+              <ChevronDown size={18} strokeWidth={3} />
               <span>Cancel</span>
             </button>
           )
         }
       />
+      {/* GLOBAL PAGE LOADING */}
+      {loading && !showForm && (
+        <div className="flex justify-center items-center min-h-[300px]">
+          <Spinner />
+        </div>
+      )}
+
 
       {/* 2. The Form */}
       {showForm && (
-        <div className=" border border-white/10 rounded-[2rem] p-6 md:p-8 shadow-2xl animate-in slide-in-from-top-2 duration-400">
+        <div className="max-w-6xl mx-auto border border-white/10 rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-8 shadow-2xl animate-in slide-in-from-top-2 duration-400 bg-white/[0.02] backdrop-blur-xl">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-4">
-              <h2 className="text-xl font-bold text-white ml-1">{editingLeave ? "Edit Leave Request" : "New Leave Request"}</h2>
+              <h2 className="text-xl font-bold text-white ml-1">
+                {editingLeave ? "Edit Leave Request" : "New Leave Request"}
+              </h2>
               <div className="w-full h-px bg-white/10"></div>
             </div>
 
@@ -211,7 +222,7 @@ export default function TeacherLeave() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] ml-1">Leave Type</label>
+                <label className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] ml-1">Leave Type</label>
                 <div className="relative">
                   <select
                     className="w-full bg-black/30 border border-white/10 rounded-xl py-3 px-4 appearance-none text-white text-sm focus:outline-none focus:border-[#b4f03d]/50 cursor-pointer transition-all"
@@ -230,28 +241,24 @@ export default function TeacherLeave() {
 
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] ml-1">From Date</label>
-                <div className="relative group">
-                  <input
-                    type="date"
-                    required
-                    className="w-full  bg-black/30 border border-white/10 rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:border-[#b4f03d]/50 [color-scheme:dark] transition-all"
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                  />
-                </div>
+                <input
+                  type="date"
+                  required
+                  className="w-full bg-black/30 border border-white/10 rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:border-[#b4f03d]/50 [color-scheme:dark] transition-all"
+                  value={formData.startDate}
+                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                />
               </div>
 
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] ml-1">To Date</label>
-                <div className="relative group">
-                  <input
-                    type="date"
-                    required
-                    className="w-full  bg-black/30 border border-white/10 rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:border-[#b4f03d]/50 [color-scheme:dark] transition-all"
-                    value={formData.endDate}
-                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                  />
-                </div>
+                <input
+                  type="date"
+                  required
+                  className="w-full bg-black/30 border border-white/10 rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:border-[#b4f03d]/50 [color-scheme:dark] transition-all"
+                  value={formData.endDate}
+                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                />
               </div>
             </div>
 
@@ -259,8 +266,9 @@ export default function TeacherLeave() {
               <label className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] ml-1">Reason for Leave</label>
               <textarea
                 required
-                placeholder="Provide a detailed reason for your leave request..."
-                className="w-full  bg-black/30 border border-white/10 rounded-xl p-4 text-white text-sm focus:outline-none focus:border-[#b4f03d]/50 resize-none placeholder:text-white/20 transition-all"
+                placeholder="Provide a detailed reason..."
+                rows={4}
+                className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-white text-sm focus:outline-none focus:border-[#b4f03d]/50 resize-none placeholder:text-white/20 transition-all"
                 value={formData.reason}
                 onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
               />
@@ -270,30 +278,111 @@ export default function TeacherLeave() {
               <button
                 type="submit"
                 disabled={submitLoading}
-                className="flex items-center gap-2 bg-[#b4f03d] text-black px-8 py-3 rounded-xl font-bold text-sm hover:shadow-[0_0_20px_rgba(180,240,61,0.2)] transition-all active:scale-95 disabled:opacity-60"
+                className="w-full md:w-auto flex items-center justify-center gap-2 bg-[#b4f03d] text-black px-8 py-4 md:py-3 rounded-xl font-bold text-sm hover:shadow-[0_0_20px_rgba(180,240,61,0.2)] transition-all active:scale-95 disabled:opacity-60"
               >
                 <CheckCircle size={18} strokeWidth={3} />
-                {submitLoading ? (editingLeave ? "Updating…" : "Submitting…") : editingLeave ? "Update Application" : "Submit Application"}
+                <span>{submitLoading ? "Processing..." : (editingLeave ? "Update Application" : "Submit Application")}</span>
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* 3. My Leave History Table */}
-      {!showForm && error && (
-        <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2 mt-4">
-          {error}
-        </p>
-      )}
-      {!loading && myLeaves.length > 0 && (
-        <div className="mt-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[1.5rem] p-0 shadow-2xl">
-          <h3 className="text-xl font-bold text-white m p-6">My Leave History</h3>
+      {/* 3. Leave History Section */}
+      {!loading && myLeaves.length > 0 && !showForm && (
+        <div className="max-w-6xl mx-auto">
+          <h3 className="text-xl font-bold text-white px-4 md:px-0 mb-6">My Leave History</h3>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[800px]">
+          {/* MOBILE VIEW: Vertical Cards */}
+          <div className="md:hidden max-w-6xl mx-auto space-y-4 ">
+            {myLeaves.map((leave) => {
+              const start = new Date(leave.fromDate);
+              const end = new Date(leave.toDate);
+              const days =
+                Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+              return (
+                <div
+                  key={leave.id}
+                  className="border border-white/10 rounded-[1.2rem] p-4 backdrop-blur-lg bg-white/[0.02] shadow-2xl space-y-4"
+                >
+                  {/* Header */}
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-white/30 font-bold">
+                        Leave Type
+                      </p>
+                      <p className="text-[#b4f03d] font-bold text-sm">
+                        {leaveTypeLabel(leave.leaveType)}
+                      </p>
+                    </div>
+
+                    <span
+                      className={`px-3 py-1 rounded-lg text-[10px] font-bold border ${statusStyle(
+                        leave.status
+                      )}`}
+                    >
+                      {leave.status.replace("_", " ")}
+                    </span>
+                  </div>
+
+                  {/* Date Info */}
+                  <div className="flex flex-wrap gap-3">
+                    <div className="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-xl border border-white/10">
+                      <Calendar size={14} className="text-[#b4f03d]" />
+                      <span className="text-xs text-white/80">
+                        {formatDate(leave.fromDate)} – {formatDate(leave.toDate)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-xl border border-white/10">
+                      <span className="text-xs font-bold text-white">
+                        {days} {days > 1 ? "Days" : "Day"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Reason */}
+                  <div className="bg-black/20 rounded-xl px-4 py-3 border border-white/[0.05]">
+                    <p className="text-[11px] uppercase tracking-widest text-white/30 font-bold mb-1">
+                      Reason
+                    </p>
+                    <p className="text-sm text-white/70 leading-relaxed">
+                      {leave.reason || "—"}
+                    </p>
+                  </div>
+
+                  {/* Actions */}
+                  {leave.status === "PENDING" && (
+                    <div className="flex gap-3 pt-2">
+                      <button
+                        onClick={() => handleEdit(leave)}
+                        className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 py-2.5 rounded-xl text-xs font-bold transition-all"
+                      >
+                        <Edit3 size={14} />
+                        Edit
+                      </button>
+
+                      <button
+                        onClick={() => handleCancel(leave.id)}
+                        className="flex-1 flex items-center justify-center gap-2 bg-red-500/5 hover:bg-red-500/10 border border-red-500/20 py-2.5 rounded-xl text-xs font-bold text-red-400 transition-all"
+                      >
+                        <X size={14} />
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+
+          {/* DESKTOP VIEW: Table */}
+          <div className="hidden md:block border border-white/10 rounded-[1.5rem] overflow-hidden bg-white/[0.02]">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border border-white/10 text-white/30 text-[11px] uppercase tracking-[0.2em] bg-white/5">
+                <tr className="border-b border-white/10 text-white/30 text-[11px] uppercase tracking-[0.2em] bg-white/5">
                   <th className="px-6 py-4 font-bold">Type</th>
                   <th className="px-6 py-4 font-bold">Dates</th>
                   <th className="px-6 py-4 font-bold text-center">Days</th>
@@ -304,62 +393,27 @@ export default function TeacherLeave() {
               </thead>
               <tbody className="divide-y divide-white/5">
                 {myLeaves.map((leave) => {
-                  const start = new Date(leave.fromDate);
-                  const end = new Date(leave.toDate);
-                  const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-                  const fromStr = leave.fromDate.toString().split("T")[0];
-                  const toStr = leave.toDate.toString().split("T")[0];
-
+                  const days = Math.ceil((new Date(leave.toDate).getTime() - new Date(leave.fromDate).getTime()) / (1000 * 60 * 60 * 24)) + 1;
                   return (
                     <tr key={leave.id} className="group hover:bg-white/[0.02] transition-colors">
-                      <td className="px-4 py-5">
-                        <span className="font-bold text-white text-sm">{leaveTypeLabel(leave.leaveType)}</span>
+                      <td className="px-6 py-5 font-bold text-sm">{leaveTypeLabel(leave.leaveType)}</td>
+                      <td className="px-6 py-5 text-white/60 text-sm">{leave.fromDate.split("T")[0]} - {leave.toDate.split("T")[0]}</td>
+                      <td className="px-6 py-5 text-center font-bold text-sm">{days}</td>
+                      <td className="px-6 py-5 text-center">
+                        <span className={`px-4 py-1.5 rounded-lg text-[11px] font-bold border ${statusStyle(leave.status)}`}>
+                          {leave.status.replace("_", " ")}
+                        </span>
                       </td>
-                      <td className="px-4 py-5 text-white/60 text-sm">
-                        {fromStr} to {toStr}
-                      </td>
-                      <td className="px-4 py-5 text-center">
-                        <span className="font-bold text-white text-sm">{days}</span>
-                      </td>
-                      <td className="px-4 py-5">
-                        <div className="flex justify-center">
-                          <span className={`px-4 py-1.5 rounded-lg text-[11px] font-bold border ${statusStyle(leave.status)}`}>
-                            {leave.status === "CONDITIONALLY_APPROVED" ? "Approved" : leave.status.replace("_", " ").charAt(0) + leave.status.replace("_", " ").slice(1).toLowerCase()}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-5 max-w-xs">
-                        <div className="flex flex-col">
-                          <span className="text-white text-sm font-bold line-clamp-1">{leave.reason}</span>
-                          <span className="text-white/30 text-[11px] mt-0.5">
-                            {leave.status === "APPROVED" || leave.status === "CONDITIONALLY_APPROVED"
-                              ? (leave.remarks ? `Approved by Principal: ${leave.remarks}` : "Approved")
-                              : leave.status === "PENDING"
-                                ? "Awaiting approval"
-                                : leave.remarks || "Insufficient notice period" /* For REJECTED */}
-                          </span>
-                        </div>
+                      <td className="px-6 py-5 max-w-[200px]">
+                        <div className="truncate text-sm text-white/80">{leave.reason}</div>
+                        <div className="text-[10px] text-white/30 mt-1 truncate">{leave.remarks || "Awaiting review"}</div>
                       </td>
                       <td className="px-6 py-5">
-                        <div className="flex justify-end items-center gap-3">
+                        <div className="flex justify-end gap-3">
                           {leave.status === "PENDING" && (
                             <>
-                              <button
-                                type="button"
-                                onClick={() => handleEdit(leave)}
-                                className="text-white/40 hover:text-white transition-colors"
-                                title="Edit"
-                              >
-                                <Edit3 size={18} strokeWidth={2} />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleCancel(leave.id)}
-                                className="text-white/40 hover:text-red-400 transition-colors"
-                                title="Withdraw"
-                              >
-                                <XCircle size={18} strokeWidth={2} />
-                              </button>
+                              <button onClick={() => handleEdit(leave)} className="p-2 text-white/40 hover:text-[#b4f03d] transition-all"><Edit3 size={18} /></button>
+                              <button onClick={() => handleCancel(leave.id)} className="p-2 text-white/40 hover:text-red-400 transition-all"><XCircle size={18} /></button>
                             </>
                           )}
                         </div>
@@ -372,9 +426,11 @@ export default function TeacherLeave() {
           </div>
         </div>
       )}
+
       {!loading && myLeaves.length === 0 && !showForm && (
-        <div className="max-w-6xl mx-auto border border-white/10 rounded-[1.5rem] p-8 text-center text-white/50">
-          No leave applications yet. Click &quot;Apply New Leave&quot; to submit one.
+        <div className="max-w-6xl mx-auto border border-white/10 rounded-[1.5rem] p-12 text-center text-white/40 bg-white/5 backdrop-blur-xl">
+          <Clock className="mx-auto mb-4 opacity-20" size={48} />
+          <p>No leave applications found. Apply your first leave today!</p>
         </div>
       )}
     </div>
