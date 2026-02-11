@@ -11,8 +11,8 @@ export default function TeacherLeavesTab() {
   return (
     <div className=" text-white ">
       {/* 1. Main Toggle Switch (Centered) */}
-      <div className="flex justify-center mb-10">
-        <div className="inline-flex items-center bg-white/5 p-1 rounded-full border border-white/10 backdrop-blur-md">
+      <div className="flex justify-center mb-8">
+        <div className="inline-flex items-center bg-white/5 p-1 rounded-2xl border border-white/10 backdrop-blur-md">
           <button
             onClick={() => setActiveTab("student")}
             className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-bold text-sm transition-all duration-300 ${
