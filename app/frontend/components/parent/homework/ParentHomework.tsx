@@ -246,6 +246,8 @@ export default function Page() {
           font-weight: 700;
         }
 
+        
+
         .statLabel {
           margin-top: 4px;
           font-size: 14px;
