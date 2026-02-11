@@ -10,6 +10,7 @@ import {
   UserPlus,
   Phone,
   Video,
+  PhoneOff,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Chat } from "./ChatList";
@@ -26,6 +27,8 @@ type Props = {
   onBack: () => void;
   onApprove: () => void;
   onReject: () => void;
+  onEndChat?: () => void;
+  variant?: "teacher" | "parent";
 };
 
 export default function ChatWindow({
@@ -33,6 +36,8 @@ export default function ChatWindow({
   onBack,
   onApprove,
   onReject,
+  onEndChat,
+  variant = "teacher",
 }: Props) {
   const { data: session } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -41,7 +46,7 @@ export default function ChatWindow({
   const [sending, setSending] = useState(false);
 
   const fetchMessages = useCallback(async () => {
-    if (chat.status !== "approved") return;
+    if (chat.status !== "approved" && chat.status !== "ended") return;
     setLoadingMessages(true);
     try {
       const res = await fetch(
@@ -65,7 +70,7 @@ export default function ChatWindow({
 
   const handleSend = async () => {
     const text = messageInput.trim();
-    if (!text || sending || chat.status !== "approved") return;
+    if (!text || sending || !canChat) return;
     setSending(true);
     try {
       const res = await fetch("/api/communication/messages", {
@@ -90,6 +95,8 @@ export default function ChatWindow({
 
   const isPending = chat.status === "pending";
   const isRejected = chat.status === "rejected";
+  const isEnded = chat.status === "ended";
+  const canChat = chat.status === "approved";
   const myId = session?.user?.id ?? "";
 
   return (
@@ -119,7 +126,7 @@ export default function ChatWindow({
                 {chat.parent}
               </p>
               <p className="text-xs md:text-sm text-lime-400 truncate">
-                Parent of {chat.student}
+                {variant === "parent" ? `Requested for ${chat.student}` : `Parent of ${chat.student}`}
               </p>
             </div>
           </div>
@@ -127,8 +134,8 @@ export default function ChatWindow({
           {/* Right Actions */}
           <div className="flex items-center gap-2 shrink-0">
 
-            {/* Voice & Video (Only if Approved) */}
-            {!isPending && !isRejected && (
+            {/* Voice & Video (Only if Approved and not ended) */}
+            {canChat && (
               <>
                 <button
                   onClick={() => alert("Starting voice call...")}
@@ -146,8 +153,8 @@ export default function ChatWindow({
               </>
             )}
 
-            {/* Approve / Reject (Only if Pending) */}
-            {isPending && (
+            {/* Approve / Reject: only teacher sees these */}
+            {isPending && variant === "teacher" && (
               <>
                 <button
                   onClick={onApprove}
@@ -165,6 +172,18 @@ export default function ChatWindow({
                   <span className="hidden sm:inline">Reject</span>
                 </button>
               </>
+            )}
+
+            {/* End chat: only teacher can end an approved chat */}
+            {canChat && variant === "teacher" && onEndChat && (
+              <button
+                onClick={onEndChat}
+                className="px-3 py-1.5 rounded-full bg-amber-500/20 text-amber-400 text-xs md:text-sm flex items-center gap-1"
+                title="End chat"
+              >
+                <PhoneOff size={14} />
+                <span className="hidden sm:inline">End chat</span>
+              </button>
             )}
           </div>
         </div>
@@ -187,32 +206,39 @@ export default function ChatWindow({
       )}
 
       {!isPending && !isRejected && (
-        <div className="flex-1 p-3 md:p-4 space-y-3 overflow-y-auto">
-          {loadingMessages ? (
-            <div className="text-center text-gray-400 text-sm py-4">
-              Loading...
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="text-center text-gray-400 text-sm py-4">
-              No messages yet. Start the conversation.
-            </div>
-          ) : (
-            messages.map((m) => {
-              const isMe = m.senderId === myId;
-              return (
-                <div
-                  key={m.id}
-                  className={`max-w-[75%] rounded-xl p-3 text-sm ${
-                    isMe
-                      ? "ml-auto bg-lime-500 text-black"
-                      : "bg-white/10 text-white"
-                  }`}
-                >
-                  {m.content}
-                </div>
-              );
-            })
+        <div className="flex-1 flex flex-col p-3 md:p-4 overflow-hidden">
+          {isEnded && (
+            <p className="text-center text-amber-400/90 text-sm py-2 border-b border-white/10 mb-2">
+              Chat ended by the teacher. No new messages can be sent.
+            </p>
           )}
+          <div className="flex-1 space-y-3 overflow-y-auto">
+            {loadingMessages ? (
+              <div className="text-center text-gray-400 text-sm py-4">
+                Loading...
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="text-center text-gray-400 text-sm py-4">
+                {isEnded ? "No messages in this chat." : "No messages yet. Start the conversation."}
+              </div>
+            ) : (
+              messages.map((m) => {
+                const isMe = m.senderId === myId;
+                return (
+                  <div
+                    key={m.id}
+                    className={`max-w-[75%] rounded-xl p-3 text-sm ${
+                      isMe
+                        ? "ml-auto bg-lime-500 text-black"
+                        : "bg-white/10 text-white"
+                    }`}
+                  >
+                    {m.content}
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
       )}
 
@@ -223,12 +249,12 @@ export default function ChatWindow({
       )}
 
       {/* ================= Input ================= */}
-      {!isRejected && (
+      {!isRejected && !isEnded && (
         <div className="p-3 md:p-4 border-t border-white/10 flex items-center gap-3">
           <Paperclip className="text-gray-400 shrink-0" />
 
           <input
-            disabled={isPending}
+            disabled={isPending || !canChat}
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
             onKeyDown={(e) => {
@@ -246,7 +272,7 @@ export default function ChatWindow({
           />
 
           <button
-            disabled={isPending || sending}
+            disabled={isPending || !canChat || sending}
             onClick={handleSend}
             className="text-lime-400 disabled:opacity-40"
           >

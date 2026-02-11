@@ -109,7 +109,12 @@ export async function POST(req: Request) {
 
     if (appointment.status !== "APPROVED") {
       return NextResponse.json(
-        { message: "Chat is only available for approved appointments" },
+        {
+          message:
+            appointment.status === "ENDED"
+              ? "This chat has been ended by the teacher"
+              : "Chat is only available for approved appointments",
+        },
         { status: 400 }
       );
     }

@@ -3,7 +3,7 @@ import PageHeader from "../../common/PageHeader";
 import StatCard from "../../common/statCard";
 
 
-const formatNumber = (num) => {
+const formatNumber = (num: number | null | undefined): string => {
   if (!num) return "0";
   return num.toLocaleString();
 };

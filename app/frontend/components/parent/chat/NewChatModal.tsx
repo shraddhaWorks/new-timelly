@@ -1,16 +1,85 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+
+type Teacher = {
+  id: string;
+  name: string | null;
+  subject?: string | null;
+};
 
 type Props = {
   onClose: () => void;
+  onSuccess?: () => void;
 };
 
-export default function NewChatModal({ onClose }: Props) {
-  const [recipient, setRecipient] = useState("Mr. Rajesh Kumar - Mathematics");
+export default function NewChatModal({ onClose, onSuccess }: Props) {
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [loadingTeachers, setLoadingTeachers] = useState(true);
+  const [teacherError, setTeacherError] = useState<string | null>(null);
+  const [selectedTeacherId, setSelectedTeacherId] = useState("");
   const [topic, setTopic] = useState("Academic Performance");
   const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const fetchTeachers = useCallback(async () => {
+    setLoadingTeachers(true);
+    setTeacherError(null);
+    try {
+      const res = await fetch("/api/teacher/list", { credentials: "include" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setTeacherError(data.message || "Failed to load teachers");
+        setTeachers([]);
+        return;
+      }
+      const list = Array.isArray(data.teachers) ? data.teachers : [];
+      setTeachers(list);
+      if (list.length > 0 && !selectedTeacherId) {
+        setSelectedTeacherId(list[0].id);
+      }
+    } catch {
+      setTeacherError("Failed to load teachers");
+      setTeachers([]);
+    } finally {
+      setLoadingTeachers(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTeachers();
+  }, [fetchTeachers]);
+
+  const handleSubmit = async () => {
+    if (!selectedTeacherId) {
+      setSubmitError("Please select a teacher");
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const note = [topic, message].filter(Boolean).join("\n\n");
+      const res = await fetch("/api/communication/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ teacherId: selectedTeacherId, note: note || undefined }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setSubmitError(data.message || "Request failed");
+        return;
+      }
+      onSuccess?.();
+      onClose();
+    } catch {
+      setSubmitError("Something went wrong");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
@@ -21,28 +90,37 @@ export default function NewChatModal({ onClose }: Props) {
           <h2 className="text-lg font-semibold text-white">
             New Chat Request
           </h2>
-          <button onClick={onClose}>
-            <X className="text-gray-400 hover:text-white" />
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition">
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Body */}
         <div className="p-6 space-y-6">
 
-          {/* Recipient */}
+          {/* Recipient – real teachers */}
           <div>
             <label className="text-xs text-gray-400 block mb-2">
               SELECT RECIPIENT
             </label>
-            <select
-              value={recipient}
-              onChange={(e) => setRecipient(e.target.value)}
-              className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white"
-            >
-              <option>Mr. Rajesh Kumar - Mathematics</option>
-              <option>Ms. Priya Sharma - English</option>
-              <option>Mr. Arjun Patel - Science</option>
-            </select>
+            {loadingTeachers ? (
+              <p className="text-white/60 text-sm py-2">Loading teachers…</p>
+            ) : teacherError ? (
+              <p className="text-red-400 text-sm py-2">{teacherError}</p>
+            ) : (
+              <select
+                value={selectedTeacherId}
+                onChange={(e) => setSelectedTeacherId(e.target.value)}
+                className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-lime-400/50 outline-none"
+              >
+                <option value="">Select a teacher</option>
+                {teachers.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name ?? "Teacher"} {t.subject ? `- ${t.subject}` : ""}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* Topic */}
@@ -53,7 +131,7 @@ export default function NewChatModal({ onClose }: Props) {
             <select
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white"
+              className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-lime-400/50 outline-none"
             >
               <option>Academic Performance</option>
               <option>Attendance</option>
@@ -70,25 +148,31 @@ export default function NewChatModal({ onClose }: Props) {
               placeholder="Type your message here..."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white h-32 resize-none"
+              className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white h-32 resize-none focus:border-lime-400/50 outline-none placeholder:text-white/40"
             />
           </div>
+
+          {submitError && (
+            <p className="text-red-400 text-sm">{submitError}</p>
+          )}
         </div>
 
         {/* Footer */}
         <div className="flex justify-between p-6 border-t border-white/10">
           <button
+            type="button"
             onClick={onClose}
-            className="bg-white/10 text-gray-300 px-6 py-2 rounded-xl"
+            className="bg-white/10 text-gray-300 px-6 py-2 rounded-xl hover:bg-white/15 transition"
           >
             Cancel
           </button>
-
           <button
-            onClick={onClose}
-            className="bg-lime-400 text-black font-semibold px-6 py-2 rounded-xl hover:bg-lime-300"
+            type="button"
+            onClick={handleSubmit}
+            disabled={submitting || loadingTeachers || teachers.length === 0}
+            className="bg-lime-400 text-black font-semibold px-6 py-2 rounded-xl hover:bg-lime-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Send Request
+            {submitting ? "Sending…" : "Send Request"}
           </button>
         </div>
       </div>

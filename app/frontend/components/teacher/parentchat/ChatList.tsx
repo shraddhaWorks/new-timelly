@@ -1,6 +1,6 @@
 
 
-export type Status = "pending" | "approved" | "rejected";
+export type Status = "pending" | "approved" | "rejected" | "ended";
 
 export type Chat = {
   id: string;
