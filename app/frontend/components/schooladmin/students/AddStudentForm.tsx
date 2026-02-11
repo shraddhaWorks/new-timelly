@@ -200,7 +200,7 @@ export default function AddStudentForm({
             />
             {renderError(errors, "phoneNo")}
           </div>
-          <div>
+          {/* <div>
             <InputField
               label="Aadhaar Number*"
               value={form.aadhaarNo}
@@ -209,7 +209,7 @@ export default function AddStudentForm({
               bgColor="white"
             />
             {renderError(errors, "aadhaarNo")}
-          </div>
+          </div> */}
           <div>
             <InputField
               label="Total Fee*"

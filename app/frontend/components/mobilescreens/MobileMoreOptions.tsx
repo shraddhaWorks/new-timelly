@@ -13,9 +13,11 @@ import { useAllowedFeatures } from "@/lib/usePermissions";
 export default function MobileMoreOptions({
   items,
   onClose,
+  onLogoutRequest,
 }: {
   items: SidebarItem[];
   onClose: () => void;
+  onLogoutRequest?: () => void;
 }) {
   const router = useRouter();
 
@@ -53,6 +55,11 @@ export default function MobileMoreOptions({
 
   const handleItemClick = async (item: SidebarItem) => {
     if (item.action === "logout") {
+      if (onLogoutRequest) {
+        onLogoutRequest();
+        onClose();
+        return;
+      }
       await signOut({ callbackUrl: "/admin/login" });
       return;
     }

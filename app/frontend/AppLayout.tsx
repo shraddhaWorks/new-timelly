@@ -7,6 +7,8 @@ import AppHeader from "./components/common/AppHeader";
 import MobileMoreOptions from "./components/mobilescreens/MobileMoreOptions";
 import BottomNavBar from "./components/mobilescreens/BottomNavbar";
 import { ToastProvider } from "./context/ToastContext";
+import DeleteConfirmation from "./components/common/DeleteConfirmation";
+import { signOut } from "next-auth/react";
 
 type Props = {
   title: string;
@@ -15,6 +17,11 @@ type Props = {
     name: string;
     subtitle?: string;
     image?: string | null;
+    email?: string;
+    phone?: string;
+    userId?: string;
+    address?: string;
+    status?: string;
   };
   activeTab: string;
   children?: React.ReactNode;
@@ -31,13 +38,18 @@ export default function AppLayout({
   hideSearchAndNotifications = false,
 }: Props) {
   const [showMore, setShowMore] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   return (
     <ToastProvider>
       <div className="flex h-screen overflow-hidden">
         {/* DESKTOP SIDEBAR - profile from layout (sidebar + header show same) */}
         <aside className="hidden md:block">
-          <AppSidebar menuItems={menuItems} profile={profile} />
+          <AppSidebar
+            menuItems={menuItems}
+            profile={profile}
+            onLogoutRequest={() => setShowLogoutConfirm(true)}
+          />
         </aside>
 
         {/* MAIN */}
@@ -64,8 +76,23 @@ export default function AppLayout({
           <MobileMoreOptions
             items={menuItems}
             onClose={() => setShowMore(false)}
+            onLogoutRequest={() => setShowLogoutConfirm(true)}
           />
         )}
+
+        <DeleteConfirmation
+          isOpen={showLogoutConfirm}
+          userName={profile?.name}
+          title="Confirm Logout"
+          message="Are you sure you want to logout?"
+          confirmLabel="Logout"
+          cancelLabel="Cancel"
+          onCancel={() => setShowLogoutConfirm(false)}
+          onConfirm={async () => {
+            await signOut({ callbackUrl: "/" });
+            setShowLogoutConfirm(false);
+          }}
+        />
       </div>
     </ToastProvider>
   );

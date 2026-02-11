@@ -107,7 +107,7 @@ export default function Dashboard() {
     n >= 0 ? `+${n} this month` : `${n} this month`;
 
   return (
-    <div className="min-h-screen p-3 sm:p-6 md:p-10 space-y-4 md:space-y-8 max-w-[1900px] mx-auto">
+    <div className="min-h-screen space-y-4 md:space-y-8 max-w-[1900px] mx-auto">
       <div className="bg-white/5 backdrop-blur-xl border-b border-white/10 rounded-2xl p-2 sm:p-8 md:p-4 mb-6 md:mb-10 bg-gradient-to-br from-white/5 to-transparent border-none">
         <h2 className="text-2xl sm:text-4xl md:text-2xl font-black text-white mb-2 md:mb-3">
           Welcome back, {userName}! 👋
