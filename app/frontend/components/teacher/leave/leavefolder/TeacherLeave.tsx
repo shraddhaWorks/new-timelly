@@ -46,13 +46,12 @@ export default function TeacherLeave() {
   const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editingLeave, setEditingLeave] = useState<LeaveRecord | null>(null);
 
   const fetchMyLeaves = useCallback(async () => {
     try {
-      const res = await fetch("/api/leaves/my");
-
+      const res = await fetch("/api/leaves/my", { credentials: "include" });
       const data = await res.json();
-      console.log("Fetched my leaves:", data);
       if (res.ok && Array.isArray(data)) setMyLeaves(data);
       else setMyLeaves([]);
     } catch {
@@ -75,28 +74,90 @@ export default function TeacherLeave() {
     setError(null);
     setSubmitLoading(true);
     try {
-      const res = await fetch("/api/leaves/apply", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          leaveType: formData.leaveType,
-          fromDate: formData.startDate,
-          toDate: formData.endDate,
-          reason: formData.reason.trim(),
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data?.error || data?.message || "Failed to submit leave");
-        return;
+      if (editingLeave) {
+        const res = await fetch(`/api/leaves/${editingLeave.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            leaveType: formData.leaveType,
+            fromDate: formData.startDate,
+            toDate: formData.endDate,
+            reason: formData.reason.trim(),
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data?.error || data?.message || "Failed to update leave");
+          return;
+        }
+        setEditingLeave(null);
+        setFormData({ leaveType: "SICK", startDate: "", endDate: "", reason: "" });
+        setShowForm(false);
+        await fetchMyLeaves();
+      } else {
+        const res = await fetch("/api/leaves/apply", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            leaveType: formData.leaveType,
+            fromDate: formData.startDate,
+            toDate: formData.endDate,
+            reason: formData.reason.trim(),
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data?.error || data?.message || "Failed to submit leave");
+          return;
+        }
+        setFormData({ leaveType: "SICK", startDate: "", endDate: "", reason: "" });
+        setShowForm(false);
+        await fetchMyLeaves();
       }
-      setFormData({ leaveType: "SICK", startDate: "", endDate: "", reason: "" });
-      setShowForm(false);
-      await fetchMyLeaves();
     } catch {
       setError("Something went wrong");
     } finally {
       setSubmitLoading(false);
+    }
+  };
+
+  const handleEdit = (leave: LeaveRecord) => {
+    const fromStr = leave.fromDate.toString().split("T")[0];
+    const toStr = leave.toDate.toString().split("T")[0];
+    setFormData({
+      leaveType: leave.leaveType || "SICK",
+      startDate: fromStr,
+      endDate: toStr,
+      reason: leave.reason || "",
+    });
+    setEditingLeave(leave);
+    setError(null);
+    setShowForm(true);
+  };
+
+  const handleCancel = async (id: string) => {
+    if (!confirm("Are you sure you want to withdraw this leave request? This cannot be undone.")) return;
+    setError(null);
+    try {
+      const res = await fetch(`/api/leaves/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data?.error || data?.message || "Failed to delete leave");
+        return;
+      }
+      if (editingLeave?.id === id) {
+        setEditingLeave(null);
+        setShowForm(false);
+        setFormData({ leaveType: "SICK", startDate: "", endDate: "", reason: "" });
+      }
+      await fetchMyLeaves();
+    } catch {
+      setError("Something went wrong");
     }
   };
 
@@ -118,7 +179,12 @@ export default function TeacherLeave() {
             </button>
           ) : (
             <button
-              onClick={() => setShowForm(false)}
+              type="button"
+              onClick={() => {
+                setShowForm(false);
+                setEditingLeave(null);
+                setFormData({ leaveType: "SICK", startDate: "", endDate: "", reason: "" });
+              }}
               className="flex items-center gap-2 border border-white/10 bg-white/5 text-white/60 px-6 py-3 rounded-2xl font-bold text-sm hover:bg-white/10 hover:text-white transition-all"
             >
               <ChevronDown size={20} strokeWidth={3} />
@@ -133,7 +199,7 @@ export default function TeacherLeave() {
         <div className=" border border-white/10 rounded-[2rem] p-6 md:p-8 shadow-2xl animate-in slide-in-from-top-2 duration-400">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-4">
-              <h2 className="text-xl font-bold text-white ml-1">New Leave Request</h2>
+              <h2 className="text-xl font-bold text-white ml-1">{editingLeave ? "Edit Leave Request" : "New Leave Request"}</h2>
               <div className="w-full h-px bg-white/10"></div>
             </div>
 
@@ -207,7 +273,7 @@ export default function TeacherLeave() {
                 className="flex items-center gap-2 bg-[#b4f03d] text-black px-8 py-3 rounded-xl font-bold text-sm hover:shadow-[0_0_20px_rgba(180,240,61,0.2)] transition-all active:scale-95 disabled:opacity-60"
               >
                 <CheckCircle size={18} strokeWidth={3} />
-                {submitLoading ? "Submitting…" : "Submit Application"}
+                {submitLoading ? (editingLeave ? "Updating…" : "Submitting…") : editingLeave ? "Update Application" : "Submit Application"}
               </button>
             </div>
           </form>
@@ -215,7 +281,11 @@ export default function TeacherLeave() {
       )}
 
       {/* 3. My Leave History Table */}
-      {/* 3. My Leave History Table */}
+      {!showForm && error && (
+        <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2 mt-4">
+          {error}
+        </p>
+      )}
       {!loading && myLeaves.length > 0 && (
         <div className="mt-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[1.5rem] p-0 shadow-2xl">
           <h3 className="text-xl font-bold text-white m p-6">My Leave History</h3>
@@ -237,14 +307,8 @@ export default function TeacherLeave() {
                   const start = new Date(leave.fromDate);
                   const end = new Date(leave.toDate);
                   const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
-                  function handleEdit(leave: LeaveRecord): void {
-                    throw new Error("Function not implemented.");
-                  }
-
-                  function handleCancel(id: string): void {
-                    throw new Error("Function not implemented.");
-                  }
+                  const fromStr = leave.fromDate.toString().split("T")[0];
+                  const toStr = leave.toDate.toString().split("T")[0];
 
                   return (
                     <tr key={leave.id} className="group hover:bg-white/[0.02] transition-colors">
@@ -252,7 +316,7 @@ export default function TeacherLeave() {
                         <span className="font-bold text-white text-sm">{leaveTypeLabel(leave.leaveType)}</span>
                       </td>
                       <td className="px-4 py-5 text-white/60 text-sm">
-                        {leave.fromDate.split('T')[0]} to {leave.toDate.split('T')[0]}
+                        {fromStr} to {toStr}
                       </td>
                       <td className="px-4 py-5 text-center">
                         <span className="font-bold text-white text-sm">{days}</span>
@@ -278,18 +342,21 @@ export default function TeacherLeave() {
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex justify-end items-center gap-3">
-                          {/* This block only renders if status is PENDING */}
                           {leave.status === "PENDING" && (
                             <>
                               <button
-                                onClick={() => handleEdit(leave)} // Example handler
+                                type="button"
+                                onClick={() => handleEdit(leave)}
                                 className="text-white/40 hover:text-white transition-colors"
+                                title="Edit"
                               >
                                 <Edit3 size={18} strokeWidth={2} />
                               </button>
                               <button
-                                onClick={() => handleCancel(leave.id)} // Example handler
+                                type="button"
+                                onClick={() => handleCancel(leave.id)}
                                 className="text-white/40 hover:text-red-400 transition-colors"
+                                title="Withdraw"
                               >
                                 <XCircle size={18} strokeWidth={2} />
                               </button>
