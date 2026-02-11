@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Calendar, ChevronDown, Send, Plus, X, CheckCircle } from "lucide-react";
+import { Calendar, ChevronDown, Send, Plus, X, CheckCircle, Edit3, XCircle } from "lucide-react";
+import PageHeader from "../../../common/PageHeader";
 
 const LEAVE_TYPE_OPTIONS = [
   { label: "Sick Leave", value: "SICK" },
@@ -49,7 +50,9 @@ export default function TeacherLeave() {
   const fetchMyLeaves = useCallback(async () => {
     try {
       const res = await fetch("/api/leaves/my");
+
       const data = await res.json();
+      console.log("Fetched my leaves:", data);
       if (res.ok && Array.isArray(data)) setMyLeaves(data);
       else setMyLeaves([]);
     } catch {
@@ -99,35 +102,31 @@ export default function TeacherLeave() {
 
   return (
     <div className="w-full space-y-6 animate-in fade-in duration-500">
-      {/* 1. Header Section */}
-      <div className="max-w-6xl mx-auto bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[1.5rem] p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-2xl">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold tracking-tight text-white">
-            {showForm ? "Apply New Leave" : "My Leave Application"}
-          </h2>
-          <p className="text-white/40 text-sm">
-            {showForm ? "Please fill in the details below" : "Apply for leave and track your balance"}
-          </p>
-        </div>
 
-        {!showForm ? (
-          <button
-            onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 border border-[#b4f03d]/20 bg-[#b4f03d]/5 text-[#b4f03d] px-6 py-3 rounded-2xl font-bold text-sm"
-          >
-            <Plus size={20} strokeWidth={3} />
-            <span>Apply New Leave</span>
-          </button>
-        ) : (
-          <button
-            onClick={() => setShowForm(false)}
-            className="flex items-center gap-2 border border-white/10 bg-white/5 text-white/60 px-6 py-3 rounded-2xl font-bold text-sm hover:bg-white/10 hover:text-white transition-all"
-          >
-            <ChevronDown size={20} strokeWidth={3} />
-            <span>Cancel</span>
-          </button>
-        )}
-      </div>
+      {/* 1. Header Section */}
+      <PageHeader
+        title={showForm ? "Apply New Leave" : "My Leave Application"}
+        subtitle={showForm ? "Please fill in the details below" : "Apply for leave and track your balance"}
+        rightSlot={
+          !showForm ? (
+            <button
+              onClick={() => setShowForm(true)}
+              className="flex items-center gap-2 border border-[#b4f03d]/20 bg-[#b4f03d]/5 text-[#b4f03d] px-6 py-3 rounded-2xl font-bold text-sm hover:bg-[#b4f03d]/10 transition-all"
+            >
+              <Plus size={20} strokeWidth={3} />
+              <span>Apply New Leave</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowForm(false)}
+              className="flex items-center gap-2 border border-white/10 bg-white/5 text-white/60 px-6 py-3 rounded-2xl font-bold text-sm hover:bg-white/10 hover:text-white transition-all"
+            >
+              <ChevronDown size={20} strokeWidth={3} />
+              <span>Cancel</span>
+            </button>
+          )
+        }
+      />
 
       {/* 2. The Form */}
       {showForm && (
@@ -215,35 +214,97 @@ export default function TeacherLeave() {
         </div>
       )}
 
-      {/* 3. My leaves list */}
+      {/* 3. My Leave History Table */}
+      {/* 3. My Leave History Table */}
       {!loading && myLeaves.length > 0 && (
-        <div className="max-w-6xl mx-auto border border-white/10 rounded-[1.5rem] p-6 backdrop-blur-xl bg-white/[0.03]">
-          <h3 className="text-lg font-bold text-white mb-4">My Applications</h3>
-          <div className="space-y-4">
-            {myLeaves.map((leave) => (
-              <div
-                key={leave.id}
-                className="border border-white/10 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4"
-              >
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-white">{leaveTypeLabel(leave.leaveType)}</span>
-                    <span className={`px-2 py-0.5 rounded-lg text-xs font-bold border ${statusStyle(leave.status)}`}>
-                      {leave.status.replace("_", " ")}
-                    </span>
-                  </div>
-                  <p className="text-white/60 text-sm mt-1">
-                    {formatDate(leave.fromDate)} – {formatDate(leave.toDate)}
-                  </p>
-                  {leave.reason && <p className="text-white/50 text-sm mt-1 line-clamp-2">{leave.reason}</p>}
-                  {leave.remarks && <p className="text-white/40 text-xs mt-1">Remarks: {leave.remarks}</p>}
-                </div>
-              </div>
-            ))}
+        <div className="mt-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[1.5rem] p-0 shadow-2xl">
+          <h3 className="text-xl font-bold text-white m p-6">My Leave History</h3>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[800px]">
+              <thead>
+                <tr className="border border-white/10 text-white/30 text-[11px] uppercase tracking-[0.2em] bg-white/5">
+                  <th className="px-6 py-4 font-bold">Type</th>
+                  <th className="px-6 py-4 font-bold">Dates</th>
+                  <th className="px-6 py-4 font-bold text-center">Days</th>
+                  <th className="px-6 py-4 font-bold text-center">Status</th>
+                  <th className="px-6 py-4 font-bold">Reason/Remarks</th>
+                  <th className="px-6 py-4 font-bold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {myLeaves.map((leave) => {
+                  const start = new Date(leave.fromDate);
+                  const end = new Date(leave.toDate);
+                  const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+                  function handleEdit(leave: LeaveRecord): void {
+                    throw new Error("Function not implemented.");
+                  }
+
+                  function handleCancel(id: string): void {
+                    throw new Error("Function not implemented.");
+                  }
+
+                  return (
+                    <tr key={leave.id} className="group hover:bg-white/[0.02] transition-colors">
+                      <td className="px-4 py-5">
+                        <span className="font-bold text-white text-sm">{leaveTypeLabel(leave.leaveType)}</span>
+                      </td>
+                      <td className="px-4 py-5 text-white/60 text-sm">
+                        {leave.fromDate.split('T')[0]} to {leave.toDate.split('T')[0]}
+                      </td>
+                      <td className="px-4 py-5 text-center">
+                        <span className="font-bold text-white text-sm">{days}</span>
+                      </td>
+                      <td className="px-4 py-5">
+                        <div className="flex justify-center">
+                          <span className={`px-4 py-1.5 rounded-lg text-[11px] font-bold border ${statusStyle(leave.status)}`}>
+                            {leave.status === "CONDITIONALLY_APPROVED" ? "Approved" : leave.status.replace("_", " ").charAt(0) + leave.status.replace("_", " ").slice(1).toLowerCase()}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-5 max-w-xs">
+                        <div className="flex flex-col">
+                          <span className="text-white text-sm font-bold line-clamp-1">{leave.reason}</span>
+                          <span className="text-white/30 text-[11px] mt-0.5">
+                            {leave.status === "APPROVED" || leave.status === "CONDITIONALLY_APPROVED"
+                              ? (leave.remarks ? `Approved by Principal: ${leave.remarks}` : "Approved")
+                              : leave.status === "PENDING"
+                                ? "Awaiting approval"
+                                : leave.remarks || "Insufficient notice period" /* For REJECTED */}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex justify-end items-center gap-3">
+                          {/* This block only renders if status is PENDING */}
+                          {leave.status === "PENDING" && (
+                            <>
+                              <button
+                                onClick={() => handleEdit(leave)} // Example handler
+                                className="text-white/40 hover:text-white transition-colors"
+                              >
+                                <Edit3 size={18} strokeWidth={2} />
+                              </button>
+                              <button
+                                onClick={() => handleCancel(leave.id)} // Example handler
+                                className="text-white/40 hover:text-red-400 transition-colors"
+                              >
+                                <XCircle size={18} strokeWidth={2} />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
-
       {!loading && myLeaves.length === 0 && !showForm && (
         <div className="max-w-6xl mx-auto border border-white/10 rounded-[1.5rem] p-8 text-center text-white/50">
           No leave applications yet. Click &quot;Apply New Leave&quot; to submit one.
