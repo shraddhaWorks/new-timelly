@@ -119,7 +119,6 @@ export default function DeleteConfirmation({
                                 >
                                     {deleting ? (
                                         <>
-                                            <Loader size={16} className="animate-spin" />
                                             Working...
                                         </>
                                     ) : (
