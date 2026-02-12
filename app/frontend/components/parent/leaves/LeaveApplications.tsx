@@ -1,7 +1,20 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Calendar, ChevronDown, Plus, CheckCircle } from "lucide-react";
+import {
+  Calendar,
+  ChevronDown,
+  Plus,
+  CheckCircle,
+  Clock,
+  Info,
+  Upload,
+  Send,
+  File
+} from "lucide-react";
+import PageHeader from "../../common/PageHeader";
+import Spinner from "../../common/Spinner";
+
 
 const LEAVE_TYPE_OPTIONS = [
   { label: "Sick Leave", value: "SICK" },
@@ -20,9 +33,20 @@ type LeaveRecord = {
   remarks: string | null;
   createdAt: string;
 };
+type ApprovalAuthority = {
+  teacherName: string;
+
+  photoUrl: string;
+  className: string;
+  section: string;
+};
 
 function formatDate(d: string) {
-  return new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(d).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric"
+  });
 }
 
 function leaveTypeLabel(t: string) {
@@ -37,7 +61,7 @@ function statusStyle(s: string) {
 }
 
 export default function ParentLeavesTab() {
-  const [showForm, setShowForm] = useState(false);
+  const [activeTab, setActiveTab] = useState<"NEW" | "HISTORY">("NEW");
   const [formData, setFormData] = useState({
     leaveType: "SICK",
     startDate: "",
@@ -49,10 +73,15 @@ export default function ParentLeavesTab() {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [approvalAuthority, setApprovalAuthority] =
+    useState<ApprovalAuthority | null>(null);
+
+
   const fetchMyLeaves = useCallback(async () => {
     try {
       const res = await fetch("/api/student-leaves/my");
       const data = await res.json();
+      console.log("Fetched Leaves:", data);
       if (res.ok && Array.isArray(data)) setMyLeaves(data);
       else setMyLeaves([]);
     } catch {
@@ -62,9 +91,34 @@ export default function ParentLeavesTab() {
     }
   }, []);
 
+  const fetchApprovalAuthority = useCallback(async () => {
+    try {
+      const res = await fetch("/api/student-leaves/approval-authority");
+
+      const data = await res.json();
+      console.log("Approval Authority Data:", data);
+      if (res.ok) {
+        setApprovalAuthority({
+          teacherName: data.teacherName,
+          photoUrl: data.photoUrl,
+          className: data.className,
+          section: data.section,
+        });
+      }
+    } catch {
+      setApprovalAuthority(null);
+    }
+  }, []);
+
   useEffect(() => {
     fetchMyLeaves();
   }, [fetchMyLeaves]);
+
+  useEffect(() => {
+    fetchMyLeaves();
+    fetchApprovalAuthority();
+  }, [fetchMyLeaves, fetchApprovalAuthority]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,7 +145,7 @@ export default function ParentLeavesTab() {
         return;
       }
       setFormData({ leaveType: "SICK", startDate: "", endDate: "", reason: "" });
-      setShowForm(false);
+      setActiveTab("HISTORY");
       await fetchMyLeaves();
     } catch {
       setError("Something went wrong");
@@ -100,164 +154,220 @@ export default function ParentLeavesTab() {
     }
   };
 
+  // Stats calculation based on your actual API data
+  const leavesTaken = myLeaves.filter(l => l.status === "APPROVED").length;
+  const pendingRequests = myLeaves.filter(l => l.status === "PENDING").length;
+
   return (
-    <div className="w-full space-y-6 text-white">
-      {/* Header */}
-      <div className="max-w-6xl mx-auto bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[1.5rem] p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-2xl">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold tracking-tight text-white">
-            {showForm ? "Apply New Leave" : "Leave Application"}
-          </h2>
-          <p className="text-white/40 text-sm">
-            {showForm ? "Please fill in the details below" : "Apply for your child's leave and track status"}
-          </p>
+    <div className="min-h-screen p-4  text-white ">
+      <div className="max-w-7xl mx-auto">
+        <PageHeader
+          title="Leave Applications"
+          subtitle="Apply for leave and track your application status. Requests are sent directly to your class teacher for approval."
+          icon={<Calendar className="text-[#b4ff39]" size={28} />}
+        />
+        {/* Navigation Tabs */}
+        <div className="flex gap-4 mb-4 ml-90  border-b border-white/5">
+          <button
+            onClick={() => setActiveTab("NEW")}
+            className={`pb-4 text-sm font-bold transition-all ${activeTab === "NEW" ? "text-[#b4f03d] border-b-2 border-[#b4f03d]" : "text-white/40"}`}
+          >
+            New Application
+          </button>
+          <button
+            onClick={() => setActiveTab("HISTORY")}
+            className={`pb-4 text-sm font-bold transition-all ${activeTab === "HISTORY" ? "text-[#b4f03d] border-b-2 border-[#b4f03d]" : "text-white/40"}`}
+          >
+            Application History
+          </button>
         </div>
-        {!showForm ? (
-          <button
-            onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 border border-[#b4f03d]/20 bg-[#b4f03d]/5 text-[#b4f03d] px-6 py-3 rounded-2xl font-bold text-sm"
-          >
-            <Plus size={20} strokeWidth={3} />
-            <span>Apply New Leave</span>
-          </button>
-        ) : (
-          <button
-            onClick={() => setShowForm(false)}
-            className="flex items-center gap-2 border border-white/10 bg-white/5 text-white/60 px-6 py-3 rounded-2xl font-bold text-sm hover:bg-white/10 hover:text-white transition-all"
-          >
-            <ChevronDown size={20} strokeWidth={3} />
-            <span>Cancel</span>
-          </button>
-        )}
-      </div>
 
-      {/* Form */}
-      {showForm && (
-        <div className="max-w-6xl mx-auto border border-white/10 rounded-[2rem] p-6 md:p-8 shadow-2xl">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="space-y-4">
-              <h2 className="text-xl font-bold text-white ml-1">New Leave Request</h2>
-              <div className="w-full h-px bg-white/10" />
-            </div>
-            {error && (
-              <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2">
-                {error}
-              </p>
-            )}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] ml-1">
-                  Leave Type
-                </label>
-                <div className="relative">
-                  <select
-                    className="w-full bg-black/30 border border-white/10 rounded-xl py-3 px-4 appearance-none text-white text-sm focus:outline-none focus:border-[#b4f03d]/50 cursor-pointer transition-all"
-                    value={formData.leaveType}
-                    onChange={(e) => setFormData({ ...formData, leaveType: e.target.value })}
-                  >
-                    {LEAVE_TYPE_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value} className="bg-[#0f0f0f]">
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none"
-                    size={16}
-                  />
+        <div className="grid grid-cols-1  lg:grid-cols-12 gap-6">
+
+          {/* LEFT SIDEBAR: Stats & Authority */}
+          <div className="lg:col-span-4 space-y-4">
+
+            {/* Leave Summary */}
+            <div className="somu rounded-xl p-2 shadow-xl">
+              <div className="flex items-center gap-2 mb-6 text-white/70">
+                <Clock size={18} className="text-[#b4f03d]" />
+                <h3 className="text-sm font-bold  ">Leave Summary</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="somu rounded-xl p-2 border border-white/10">
+                  <div className="text-xl text-bold  mb-1">{leavesTaken}</div>
+                  <div className="text-[10px] text-white/40">Leaves Taken</div>
+                </div>
+                <div className="somu rounded-xl p-2 border border-white/10">
+                  <div className="text-xl  mb-1 text-bold text-orange-400">{pendingRequests}</div>
+                  <div className="text-[10px] text-white/40 ">Pending Requests</div>
                 </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] ml-1">
-                  From Date
-                </label>
-                <input
-                  type="date"
-                  required
-                  className="w-full bg-black/30 border border-white/10 rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:border-[#b4f03d]/50 [color-scheme:dark] transition-all"
-                  value={formData.startDate}
-                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] ml-1">
-                  To Date
-                </label>
-                <input
-                  type="date"
-                  required
-                  className="w-full bg-black/30 border border-white/10 rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:border-[#b4f03d]/50 [color-scheme:dark] transition-all"
-                  value={formData.endDate}
-                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                />
-              </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] ml-1">
-                Reason for Leave
-              </label>
-              <textarea
-                required
-                placeholder="Provide a detailed reason for your leave request..."
-                className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-white text-sm focus:outline-none focus:border-[#b4f03d]/50 resize-none placeholder:text-white/20 transition-all"
-                value={formData.reason}
-                onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-              />
-            </div>
-            <div className="flex justify-end pt-2">
-              <button
-                type="submit"
-                disabled={submitLoading}
-                className="flex items-center gap-2 bg-[#b4f03d] text-black px-8 py-3 rounded-xl font-bold text-sm hover:shadow-[0_0_20px_rgba(180,240,61,0.2)] transition-all active:scale-95 disabled:opacity-60"
-              >
-                <CheckCircle size={18} strokeWidth={3} />
-                {submitLoading ? "Submitting…" : "Submit Application"}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
 
-      {/* My leaves list */}
-      {!loading && myLeaves.length > 0 && (
-        <div className="max-w-6xl mx-auto border border-white/10 rounded-[1.5rem] p-6 backdrop-blur-xl bg-white/[0.03]">
-          <h3 className="text-lg font-bold text-white mb-4">My Applications</h3>
-          <div className="space-y-4">
-            {myLeaves.map((leave) => (
-              <div
-                key={leave.id}
-                className="border border-white/10 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4"
-              >
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-white">{leaveTypeLabel(leave.leaveType)}</span>
-                    <span
-                      className={`px-2 py-0.5 rounded-lg text-xs font-bold border ${statusStyle(leave.status)}`}
-                    >
-                      {leave.status.replace("_", " ")}
-                    </span>
+            {/* Approval Authority */}
+            <div className="somu rounded-2xl p-4 shadow-xl">
+              {approvalAuthority ? (
+                <>
+                  <div className="flex items-center gap-2 mb-6 text-white/70">
+                    <File size={18} className="text-[#b4f03d]" />
+                    <h3 className="text-sm font-bold uppercase tracking-wider">Approval Authority</h3>
                   </div>
-                  <p className="text-white/60 text-sm mt-1">
-                    {formatDate(leave.fromDate)} – {formatDate(leave.toDate)}
-                  </p>
-                  {leave.reason && (
-                    <p className="text-white/50 text-sm mt-1 line-clamp-2">{leave.reason}</p>
-                  )}
-                  {leave.remarks && (
-                    <p className="text-white/40 text-xs mt-1">Remarks: {leave.remarks}</p>
-                  )}
-                </div>
+                  <div className="flex items-center gap-4 bg-white/5 p-2 rounded-xl border border-white/5">
+                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[#b4f03d]/30">
+                      <img
+                        src={approvalAuthority.photoUrl}
+                        alt={approvalAuthority.teacherName}
+                      />
+                    </div>
+                    <div>
+                      <div className="font-bold text-sm">{approvalAuthority.teacherName}</div>
+                      <div className="text-xs text-white/40">Class Teacher ({approvalAuthority.className}-{approvalAuthority.section})</div>
+                      <div className="mt-1 text-[10px] bg-[#b4f03d]/10 text-[#b4f03d] px-2 py-0.5 rounded-full inline-block">
+                        Usually replies in 24 hrs
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-xs text-white/40"><Spinner /></div>
+              )}
+            </div>
+
+            {/* Important Note */}
+            <div className="somu rounded-2xl p-6">
+              <div className="flex items-center gap-2 mb-3 text-yellow-400">
+                <Info size={18} />
+                <h3 className="text-sm font-bold uppercase tracking-wider">Important Note</h3>
               </div>
-            ))}
+              <p className="text-xs leading-relaxed text-white/50">
+                For sick leaves exceeding 2 days, a medical certificate must be attached or submitted to the class teacher upon return.
+              </p>
+            </div>
+          </div>
+
+          {/* RIGHT CONTENT: Form or History */}
+          <div className="lg:col-span-8">
+            {activeTab === "NEW" ? (
+              <div className="bg-gradient-to-br from-white/10 to-transparent backdrop-blur-2xl border border-white/10 rounded-2xl p-6 md:p-10 shadow-2xl">
+                <form className="space-y-8" onSubmit={handleSubmit}>
+                  {error && (
+                    <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm">
+                      {error}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-3">
+                      <label className="text-[12px] text-white/50  ml-1">Leave Type</label>
+                      <div className="relative">
+                        <select
+                          className="w-full somu rounded-3xl py-3 px-5 appearance-none text-white text-sm focus:outline-none focus:ring-2 focus:ring-[yellow]/40 transition-all cursor-pointer"
+                          value={formData.leaveType}
+                          onChange={(e) => setFormData({ ...formData, leaveType: e.target.value })}
+                        >
+                          {LEAVE_TYPE_OPTIONS.map((o) => (
+                            <option key={o.value} value={o.value} className="bg-[#1a1a1a]">
+                              {o.label}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" size={18} />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <label className="text-[12px] text-white/50  ml-1">From Date</label>
+                      <input
+                        type="date"
+                        className="w-full bg-white/5 border border-white/10 rounded-3xl py-3 px-5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[yellow]/40 [color-scheme:dark]"
+                        value={formData.startDate}
+                        onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="space-y-3">
+                      <label className="text-[12px] text-white/50  ml-1">To Date</label>
+                      <input
+                        type="date"
+                        className="w-full bg-white/5 border border-white/10 rounded-3xl py-3 px-5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[yellow]/40 [color-scheme:dark]"
+                        value={formData.endDate}
+                        onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-[11px] font-bold text-white/40 uppercase tracking-widest ml-1">Reason for Leave</label>
+                    <textarea
+                      placeholder="Please explain why you need to take leave..."
+                      className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl p-5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#b4f03d]/20 resize-none placeholder:text-white/20"
+                      value={formData.reason}
+                      onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                    />
+                  </div>
+
+
+                  <div className="flex justify-end pt-4">
+                    <button
+                      type="submit"
+                      disabled={submitLoading}
+                      className="flex items-center gap-3 bg-[#b4f03d] text-black px-10 py-4 rounded-full font-black text-sm hover:scale-105 transition-all active:scale-95 disabled:opacity-50 shadow-[0_10px_30px_rgba(180,240,61,0.3)]"
+                    >
+                      <Send size={18} />
+                      {submitLoading ? "SUBMITTING..." : "SUBMIT APPLICATION"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            ) : (
+              /* HISTORY LIST */
+              <div className="space-y-4">
+                {loading ? (
+                  <div className="text-center py-20 text-white/20"><Spinner /></div>
+                ) : myLeaves.length === 0 ? (
+                  <div className="bg-white/5 border border-white/10 rounded-3xl p-20 text-center">
+                    <p className="text-white/40">No leave history found.</p>
+                  </div>
+                ) : (
+                  myLeaves.map((leave) => (
+                    <div key={leave.id} className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col md:flex-row justify-between gap-4 transition-all hover:bg-white/[0.08]">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="font-bold text-lg">{leaveTypeLabel(leave.leaveType)}</span>
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black border ${statusStyle(leave.status)}`}>
+                            {leave.status.replace("_", " ")}
+                          </span>
+                        </div>
+                        <p className="text-sm text-white/60">
+                          {formatDate(leave.fromDate)} — {formatDate(leave.toDate)}
+                        </p>
+                        <p className="text-sm text-white/40 italic mt-2 leading-relaxed">"{leave.reason}"</p>
+                      </div>
+
+                      <div className="md:text-right flex flex-col justify-center">
+                        {leave.remarks ? (
+                          <>
+                            <div className="text-[10px] text-white/30 uppercase font-bold mb-1">Teacher Remarks</div>
+                            <p className="text-xs text-[#b4f03d]/70">{leave.remarks}</p>
+                          </>
+                        ) : (
+                          leave.status === "APPROVED" && (
+                            <div className="flex items-center md:justify-end gap-1 text-[10px] text-[#b4f03d]/60 font-bold uppercase">
+                              <CheckCircle size={12} />
+                              Verified
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
         </div>
-      )}
-
-      {!loading && myLeaves.length === 0 && !showForm && (
-        <div className="max-w-6xl mx-auto border border-white/10 rounded-[1.5rem] p-8 text-center text-white/50">
-          No leave applications yet. Click &quot;Apply New Leave&quot; to submit one.
-        </div>
-      )}
+      </div>
     </div>
   );
 }
