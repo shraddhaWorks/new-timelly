@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 import { motion } from "framer-motion";
 
 interface PageHeaderProps {
-  title: string;
+  title: ReactNode; // Changed from string to ReactNode
   subtitle?: string;
   icon?: ReactNode;
   rightSlot?: ReactNode;
