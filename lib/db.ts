@@ -1,11 +1,20 @@
 import { PrismaClient } from "@/app/generated/prisma";
 
-// Use DIRECT_URL to avoid Supabase pooler's 60s statement timeout (causes "statement timeout" errors)
-// Append statement_timeout for long-running operations (school create, etc.)
+// Keep Prisma connection count low in dev/serverless to avoid exhausting pooled sessions.
+// Also append statement timeout for heavier operations.
 const base = process.env.DIRECT_URL || process.env.DATABASE_URL!;
-const connectionString = base.includes("?")
-  ? `${base}&statement_timeout=120000`
-  : `${base}?statement_timeout=120000`;
+
+function withParam(url: string, key: string, value: string) {
+  const hasQuery = url.includes("?");
+  const encodedKey = `${key}=`;
+  if (url.includes(encodedKey)) return url;
+  return `${url}${hasQuery ? "&" : "?"}${key}=${value}`;
+}
+
+let connectionString = base;
+connectionString = withParam(connectionString, "statement_timeout", "120000");
+connectionString = withParam(connectionString, "connection_limit", "1");
+connectionString = withParam(connectionString, "pool_timeout", "20");
 
 const prismaClientSingleton = () => {
   return new PrismaClient({

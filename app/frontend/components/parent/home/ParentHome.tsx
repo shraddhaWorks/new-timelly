@@ -51,7 +51,10 @@ export default function ParentHomeTab() {
 
     (async () => {
       try {
-        const res = await fetch("/api/student/dashboard", { credentials: "include" });
+        const res = await fetch("/api/student/dashboard", {
+          credentials: "include",
+          cache: "no-store",
+        });
         const payload = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(payload?.message || "Failed to load parent home dashboard");
         if (!active) return;

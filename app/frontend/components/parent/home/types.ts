@@ -23,6 +23,7 @@ export type ParentFeed = {
   description: string;
   photo?: string | null;
   likes?: number;
+  likedByMe?: boolean;
   createdAt: string;
   createdBy?: {
     name?: string | null;

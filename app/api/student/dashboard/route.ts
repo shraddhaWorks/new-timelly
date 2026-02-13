@@ -44,7 +44,7 @@ export async function GET() {
 
     const { start, end } = getAcademicYearRange();
 
-    const [attendance, marks, fee, circulars, events, feeds, homeworks] = await Promise.all([
+    const [attendance, marks, fee, circulars, events, feeds, homeworks] = await prisma.$transaction([
       prisma.attendance.findMany({
         where: { studentId: student.id, date: { gte: start, lte: end } },
         select: { date: true, status: true },
@@ -74,7 +74,14 @@ export async function GET() {
       }),
       prisma.newsFeed.findMany({
         where: { schoolId: student.schoolId },
-        include: { createdBy: { select: { name: true } } },
+        include: {
+          createdBy: { select: { name: true } },
+          likedBy: {
+            where: { userId: session.user.id },
+            select: { id: true },
+            take: 1,
+          },
+        },
         orderBy: { createdAt: "desc" },
         take: 6,
       }),
@@ -138,6 +145,7 @@ export async function GET() {
           description: f.description,
           photo: f.photo,
           likes: f.likes,
+          likedByMe: f.likedBy.length > 0,
           createdAt: f.createdAt.toISOString(),
           createdBy: { name: f.createdBy?.name ?? null },
         })),
