@@ -9,6 +9,7 @@ generator client {
   output   = "../app/generated/prisma"
 }
 
+// Note: url is required for Prisma 6.x. Prisma 7+ uses a different approach.
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
