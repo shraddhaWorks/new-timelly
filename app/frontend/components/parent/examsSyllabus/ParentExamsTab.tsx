@@ -12,21 +12,28 @@ interface ExamSchedule {
   durationMin: number;
 }
 
+interface SyllabusUnit {
+  id: string;
+  unitName: string;
+  completedPercent: number;
+  order: number;
+}
+
+interface SyllabusTracking {
+  id: string;
+  subject: string;
+  completedPercent: number;
+  units: SyllabusUnit[];
+}
+
 interface TermData {
   id: string;
   name: string;
-  status: "COMPLETED" | "UPCOMING";
+  status: "COMPLETED" | "UPCOMING" | "ONGOING";
   class: { name: string; section: string };
   schedules: ExamSchedule[];
+  syllabus?: SyllabusTracking[];
 }
-
-const MOCK_SYLLABUS = [
-  { name: "Quadratic Equations", status: "Done", progress: 100 },
-  { name: "Arithmetic Progressions", status: "Done", progress: 100 },
-  { name: "Circles", status: "Done", progress: 100 },
-  { name: "Surface Areas and Volumes", status: "60%", progress: 60 },
-  { name: "Statistics", status: "20%", progress: 20 },
-];
 
 export default function ParentExamsTab() {
   const [terms, setTerms] = useState<TermData[]>([]);
@@ -173,58 +180,96 @@ export default function ParentExamsTab() {
 
           {/* SYLLABUS DETAIL CARDS */}
           {/* If "All Subjects" is selected, we loop through subjects. Otherwise, just show the selected one. */}
-          {(selectedSubject === "all" ? uniqueSubjects : [selectedSubject]).map((subName) => (
-            <div key={subName} className="somu rounded-3xl p-6 md:p-8 border-none mb-6">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
-                <div className="flex items-center gap-4">
-                  <div className="bg-white/10 p-3 rounded-2xl">
-                    <BookOpen className="text-[#B4F42A]" size={24} />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold capitalize">{subName === 'maths' ? 'Mathematics' : subName}</h2>
-                    <p className="text-white/40 text-xs flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#B4F42A]"></span> Mr. Rajesh Kumar
-                    </p>
-                  </div>
-                </div>
+          {(selectedSubject === "all" ? uniqueSubjects : [selectedSubject]).map((subName) => {
+            // Find syllabus tracking for this subject in the active term
+            const syllabusTracking = activeTerm.syllabus?.find(
+              (s) => s.subject.toLowerCase() === subName.toLowerCase()
+            );
+            
+            // Get units for this subject
+            const units = syllabusTracking?.units || [];
+            
+            // Calculate overall progress
+            const overallProgress = syllabusTracking
+              ? units.length > 0
+                ? Math.round(units.reduce((sum, u) => sum + u.completedPercent, 0) / units.length)
+                : syllabusTracking.completedPercent
+              : 0;
 
-                <div className="w-full md:w-auto">
-                  <div className="flex justify-between md:justify-end items-center gap-3 mb-2">
-                    <span className="text-[10px] text-white/40 uppercase font-bold tracking-widest">Completion</span>
-                    <span className="text-lg font-bold">60%</span>
-                  </div>
-                  <div className="w-full md:w-40 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                    <div className="bg-[#B4F42A] h-full w-[60%] rounded-full" />
-                  </div>
-                </div>
-              </div>
+            // Prepare display units - use real units if available, otherwise show overall progress
+            const displayUnits = units.length > 0
+              ? units.map((u) => ({
+                  name: u.unitName,
+                  progress: u.completedPercent,
+                  status: u.completedPercent === 100 ? "Done" : `${u.completedPercent}%`,
+                }))
+              : syllabusTracking
+              ? [{
+                  name: `${subName} Syllabus`,
+                  progress: syllabusTracking.completedPercent,
+                  status: syllabusTracking.completedPercent === 100 ? "Done" : `${syllabusTracking.completedPercent}%`,
+                }]
+              : [];
 
-              {/* TOPICS GRID */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {MOCK_SYLLABUS.map((item, idx) => (
-                  <div key={idx} className="bg-white/5 p-4 rounded-2xl flex justify-between items-center border border-white/5">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-2 h-2 rounded-full ${item.progress === 100 ? 'bg-[#B4F42A]' : 'bg-blue-400'}`} />
-                      <span className="text-sm font-medium text-white/90">{item.name}</span>
+            return (
+              <div key={subName} className="somu rounded-3xl p-6 md:p-8 border-none mb-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-white/10 p-3 rounded-2xl">
+                      <BookOpen className="text-[#B4F42A]" size={24} />
                     </div>
-                    {item.progress === 100 ? (
-                      <div className="flex items-center gap-1.5 bg-[#B4F42A]/10 px-3 py-1 rounded-lg border border-[#B4F42A]/20">
-                        <CheckCircle2 size={12} className="text-[#B4F42A]" />
-                        <span className="text-[10px] font-bold text-[#B4F42A] uppercase">Done</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-bold text-white/30 uppercase">{item.status}</span>
-                        <div className="w-10 h-1 bg-white/10 rounded-full overflow-hidden">
-                          <div className="bg-blue-400 h-full" style={{ width: `${item.progress}%` }} />
-                        </div>
-                      </div>
-                    )}
+                    <div>
+                      <h2 className="text-xl font-bold capitalize">{subName === 'maths' ? 'Mathematics' : subName}</h2>
+                      <p className="text-white/40 text-xs flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#B4F42A]"></span> {activeTerm.class?.name || "Class"} {activeTerm.class?.section || ""}
+                      </p>
+                    </div>
                   </div>
-                ))}
+
+                  <div className="w-full md:w-auto">
+                    <div className="flex justify-between md:justify-end items-center gap-3 mb-2">
+                      <span className="text-[10px] text-white/40 uppercase font-bold tracking-widest">Completion</span>
+                      <span className="text-lg font-bold">{overallProgress}%</span>
+                    </div>
+                    <div className="w-full md:w-40 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div className="bg-[#B4F42A] h-full rounded-full" style={{ width: `${overallProgress}%` }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* TOPICS GRID */}
+                {displayUnits.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {displayUnits.map((item, idx) => (
+                      <div key={idx} className="bg-white/5 p-4 rounded-2xl flex justify-between items-center border border-white/5">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-2 h-2 rounded-full ${item.progress === 100 ? 'bg-[#B4F42A]' : 'bg-blue-400'}`} />
+                          <span className="text-sm font-medium text-white/90">{item.name}</span>
+                        </div>
+                        {item.progress === 100 ? (
+                          <div className="flex items-center gap-1.5 bg-[#B4F42A]/10 px-3 py-1 rounded-lg border border-[#B4F42A]/20">
+                            <CheckCircle2 size={12} className="text-[#B4F42A]" />
+                            <span className="text-[10px] font-bold text-[#B4F42A] uppercase">Done</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-bold text-white/30 uppercase">{item.status}</span>
+                            <div className="w-10 h-1 bg-white/10 rounded-full overflow-hidden">
+                              <div className="bg-blue-400 h-full" style={{ width: `${item.progress}%` }} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-white/40 text-sm">
+                    No syllabus units available for {subName}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
