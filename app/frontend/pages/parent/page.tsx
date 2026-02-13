@@ -18,6 +18,7 @@ import ParentCertificatesTab from "../../components/parent/certificates/ParentCe
 import ParentLeavesTab from "../../components/parent/leaves/LeaveApplications";
 import ParentSettingsTab from "../../components/parent/settings/ParentSettings";
 import ParentAnalyticsTab from "../../components/parent/analytics/ParentAnalyticsTab";
+import Spinner from "../../components/common/Spinner";
 
 const PARENT_TAB_TITLES: Record<string, string> = {
   dashboard: "Home",
@@ -32,6 +33,7 @@ const PARENT_TAB_TITLES: Record<string, string> = {
   certificates: "Certificates",
   leave: "Leave Application",
   settings: "Settings",
+  analytics:"Analytics"
 };
 
 function ParentDashboardInner() {
@@ -123,7 +125,7 @@ export default function ParentDashboardContent() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center text-white/70">
-          Loading…
+          <Spinner/>
         </div>
       }
     >

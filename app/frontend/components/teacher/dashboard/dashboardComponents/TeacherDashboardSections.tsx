@@ -1,32 +1,20 @@
 "use client";
 
 import {
-  AlertCircle,
   ArrowRight,
   Bell,
   BookOpen,
   Calendar,
-  CheckCircle2,
-  CircleAlert,
-  ClipboardList,
-  FileText,
   MessageCircle,
-  MessageSquare,
-  Ticket,
   Users,
 } from "lucide-react";
 import StatCard from "../../../common/statCard";
-import { formatNumber, formatRelativeTime } from "../../../../utils/format";
+import { formatNumber } from "../../../../utils/format";
 import { TeacherDashboardData } from "./types";
+import CircularNoticeCard from "../../../common/CircularNoticeCard";
+import TeacherDashboardSideColumn from "./TeacherDashboardSideColumn";
 
 const STATUS_COLORS = ["bg-red-500", "bg-yellow-400", "bg-blue-500"];
-
-function getInitials(name: string) {
-  const parts = name.trim().split(" ").filter(Boolean);
-  if (parts.length === 0) return "T";
-  if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase();
-  return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-}
 
 function formatEventDate(value?: string | null) {
   if (!value) return "TBD";
@@ -49,11 +37,6 @@ function formatEventTime(value?: string | null) {
   });
 }
 
-function fileLabel(path: string) {
-  const parts = path.split("/");
-  return parts[parts.length - 1] || "Attachment";
-}
-
 interface DashboardContentProps {
   data: TeacherDashboardData;
   onManageClasses: () => void;
@@ -66,8 +49,6 @@ export function TeacherDashboardContent({
   onOpenChat,
 }: DashboardContentProps) {
   const stats = data.stats;
-  const notifications = data.notifications ?? [];
-  const recentChats = data.recentChats ?? [];
   const statCards = [
     {
       title: "Total Classes",
@@ -146,64 +127,18 @@ export function TeacherDashboardContent({
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
           {data.circulars.map((c, index) => (
-            <div
+            <CircularNoticeCard
               key={c.id}
-              className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl group flex flex-col"
-            >
-              <div className={`absolute top-0 left-0 w-full h-1 bg-red-500 ${STATUS_COLORS[index % STATUS_COLORS.length]}`} />
-              <div className="flex items-center justify-between text-xs text-white/60">
-                <span>{c.referenceNumber}</span>
-                <span className="px-2 py-1 rounded-full bg-white/10 text-white/70 font-semibold">
-                  {c.publishStatus}
-                </span>
-              </div>
-              <h4 className="text-xl font-bold text-white mb-4 leading-tight group-hover:text-lime-400 transition-colors">{c.subject}</h4>
-              <div className="bg-black/20 rounded-xl p-5 border border-white/5 mb-6 flex-1 flex flex-col">
-                <p className="text-sm text-gray-400 italic font-serif leading-relaxed line-clamp-4 mb-4">
-                  {c.content}
-                </p>
-              </div>
-
-              {c.attachments && c.attachments.length > 0 && (
-                <div className="mt-2 space-y-2">
-                  {c.attachments.slice(0, 2).map((file) => (
-                    <div
-                      key={file}
-                      className="flex items-center justify-between p-2.5 rounded-lg 
-                      bg-white/5 border border-white/5 hover:bg-white/10 transition-colors group/file cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        <FileText size={16} className="lucide lucide-file-text w-3.5 h-3.5" />
-                        <span className="text-xs text-gray-300 truncate font-medium">{fileLabel(file)}</span>
-                      </div>
-                      <ArrowRight size={14} className="lucide lucide-download w-3.5 h-3.5 text-gray-500
-                       group-hover/file:text-lime-400 transition-colors" />
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="mt-auto pt-4 flex items-center justify-between text-xs text-white/60">
-                <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-full bg-lime-400/20 text-lime-300 flex items-center justify-center font-semibold overflow-hidden">
-                    {c.issuedByPhoto ? (
-                      <img
-                        src={c.issuedByPhoto}
-                        alt={c.issuedBy ?? "Publisher"}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      getInitials(c.issuedBy ?? "School")
-                    )}
-                  </div>
-                  <span>{c.issuedBy ?? "School Admin"}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar size={14} />
-                  <span>{new Date(c.date).toLocaleDateString("en-GB")}</span>
-                </div>
-              </div>
-            </div>
+              referenceNumber={c.referenceNumber}
+              subject={c.subject}
+              content={c.content}
+              publishStatus={c.publishStatus}
+              date={c.date}
+              issuedBy={c.issuedBy}
+              issuedByPhoto={c.issuedByPhoto}
+              attachments={c.attachments}
+              accentClassName={STATUS_COLORS[index % STATUS_COLORS.length]}
+            />
           ))}
 
           {data.circulars.length === 0 && (
@@ -277,123 +212,11 @@ export function TeacherDashboardContent({
           </div>
         </div>
 
-        <div className="space-y-4 lg:sticky lg:top-6">
-          <div className="rounded-2xl border border-white/10 background-blur-2xl bg-white/5 p-6 min-h-[500px]">
-            <h3 className="text-xl font-semibold text-white">Notifications</h3>
-            <p className="text-sm text-white/60 mt-1">Recent alerts and updates</p>
-
-            <div className="mt-4 space-y-3 divide-y divide-white/5 overflow-y-auto max-h-[400px] no-scrollbar scrollbar-thumb-white/10">
-              <div className="mt-4 space-y-3 divide-y divide-white/5 
-                  overflow-y-auto max-h-[400px] no-scrollbar">
-
-                {notifications.length === 0 ? (
-                  <div className="text-sm text-white/50 py-6 text-center">
-                    No notifications available.
-                  </div>
-                ) : (
-                  notifications.map((n) => (
-                    <div
-                      key={n.id}
-                      className="flex gap-3 p-4 hover:bg-white/5 
-                      transition-all cursor-pointer group"
-                    >
-                      <div className="p-2 rounded-lg bg-red-500/10 text-red-400 
-                         border border-red-500/20 h-8">
-                        <CircleAlert size={16} />
-                      </div>
-
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-200 text-sm 
-                          group-hover:text-white transition-colors truncate">
-                          {n.title}
-                        </h4>
-
-                        <p className="text-xs text-gray-400 mt-1 line-clamp-2">
-                          {n.message}
-                        </p>
-
-                        <p className="text-[10px] text-gray-600 mt-2 uppercase tracking-wider">
-                          {formatRelativeTime(n.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-
-            </div>
-          </div>
-
-          <div className="min-h-[500px] rounded-2xl border border-white/10 bg-white/5 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-semibold text-white">Recent Parent Chats</h3>
-                <p className="text-sm text-white/60 mt-1">Latest messages from parents</p>
-              </div>
-              <button
-                type="button"
-                onClick={onOpenChat}
-                className="px-3 py-1.5 bg-lime-400/10 hover:bg-lime-400/20 
-                text-lime-400 border border-lime-400/20 rounded-lg font-medium transition-all text-xs"
-              >
-                View All
-              </button>
-            </div>
-
-            <div className="mt-4 space-y-3 divide-y divide-white/5 overflow-y-auto no-scrollbar scrollbar-thumb-white/10">
-              <div className="mt-4 space-y-3 divide-y divide-white/5 overflow-y-auto">
-                {recentChats.length === 0 ? (
-                  <div className="text-sm text-white/50 py-6 text-center">
-                    No recent chats.
-                  </div>
-                ) : (
-                  recentChats.map((chat) => (
-                    <div
-                      key={chat.id}
-                      className="flex items-start gap-4 p-4 
-                      hover:bg-white/5 transition-all cursor-pointer group"
-                    >
-                      <div className="p-2.5 bg-white/5 rounded-xl text-gray-400 
-                        group-hover:bg-lime-400/10 group-hover:text-lime-400 
-                        transition-all border border-white/5">
-                        <MessageSquare size={18} />
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-gray-200 text-sm truncate 
-                        group-hover:text-white">
-                          {chat.parentName}
-                        </h4>
-
-                        <p className="text-xs text-lime-400/80 mb-1 truncate">
-                          Parent of {chat.studentName}
-                        </p>
-
-                        <p className="text-xs text-gray-400 truncate">
-                          {chat.note || "No message preview available."}
-                        </p>
-
-                        <p className="text-[10px] text-gray-600 mt-2 uppercase tracking-wider">
-                          {formatRelativeTime(chat.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-
-            </div>
-
-            {/* <button
-              type="button"
-              onClick={onOpenChat}
-              className="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-full border border-lime-400/40 bg-lime-400/10 px-4 py-2 text-sm font-semibold text-lime-300"
-            >
-              Open Chat
-              <ArrowRight size={14} />
-            </button> */}
-          </div>
-        </div>
+        <TeacherDashboardSideColumn
+          notifications={data.notifications ?? []}
+          recentChats={data.recentChats ?? []}
+          onOpenChat={onOpenChat}
+        />
       </section>
     </>
   );

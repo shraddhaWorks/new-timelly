@@ -210,28 +210,6 @@ export default function AddStudentForm({
             />
             {renderError(errors, "aadhaarNo")}
           </div> */}
-          <div>
-            <InputField
-              label="Total Fee*"
-              value={form.totalFee}
-              onChange={(value) => onFieldChange("totalFee", value)}
-              placeholder="e.g. 50000"
-              type="number"
-              bgColor="white"
-            />
-            {renderError(errors, "totalFee")}
-          </div>
-          <div>
-            <InputField
-              label="Discount %"
-              value={form.discountPercent}
-              onChange={(value) => onFieldChange("discountPercent", value)}
-              placeholder="0–100"
-              type="number"
-              bgColor="white"
-            />
-            {renderError(errors, "discountPercent")}
-          </div>
           <div className="md:col-span-2">
             <InputField
               label="Email"
