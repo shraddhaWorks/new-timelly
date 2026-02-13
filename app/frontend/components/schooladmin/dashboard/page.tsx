@@ -69,8 +69,14 @@ export default function Dashboard() {
     (async () => {
       try {
         const [dashboardRes, userRes] = await Promise.all([
-          fetch("/api/school/dashboard", { credentials: "include" }),
-          fetch("/api/user/me", { credentials: "include" }),
+          fetch("/api/school/dashboard", { 
+            credentials: "include",
+            cache: "no-store"
+          }),
+          fetch("/api/user/me", { 
+            credentials: "include",
+            cache: "no-store"
+          }),
         ]);
 
         if (userRes.ok) {
@@ -79,12 +85,15 @@ export default function Dashboard() {
         }
 
         if (!dashboardRes.ok) {
-          setData(null);
+          const errorData = await dashboardRes.json().catch(() => ({}));
+          console.error("Dashboard API error:", errorData.message || dashboardRes.statusText);
+          if (!cancelled) setData(null);
           return;
         }
         const json = await dashboardRes.json();
         if (!cancelled) setData(json);
-      } catch {
+      } catch (error) {
+        console.error("Dashboard fetch error:", error);
         if (!cancelled) setData(null);
       } finally {
         if (!cancelled) setLoading(false);

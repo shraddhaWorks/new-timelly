@@ -1,20 +1,21 @@
 "use client";
 
 import { MoreHorizontal } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { SidebarItem } from "../../types/sidebar";
 import { useSession } from "next-auth/react";
 import { useAllowedFeatures } from "@/lib/usePermissions";
 
 export default function BottomNavBar({
   menuItems,
+  activeTab = "dashboard",
   onMoreClick,
 }: {
   menuItems: SidebarItem[];
+  activeTab?: string;
   onMoreClick: () => void;
 }) {
   const router = useRouter();
-  const activeTab = useSearchParams().get("tab") ?? "dashboard";
 
   // Filter menu items for teachers based on allowed features
   const { data: session } = useSession();
