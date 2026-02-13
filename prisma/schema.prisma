@@ -5,16 +5,15 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
-  output          = "../app/generated/prisma"
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
 }
-
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
-        
+
 enum Role {
   SUPERADMIN
   SCHOOLADMIN
@@ -28,8 +27,6 @@ enum LeaveStatus {
   REJECTED
   CONDITIONALLY_APPROVED
 }
-
-
 
 enum LeaveType {
   CASUAL
@@ -92,8 +89,8 @@ model User {
   student Student?
 
   // News Feed
-  newsFeedsCreated NewsFeed[] @relation("NewsFeedCreator")
-  newsFeedLikes   NewsFeedLike[]
+  newsFeedsCreated NewsFeed[]     @relation("NewsFeedCreator")
+  newsFeedLikes    NewsFeedLike[]
   circularsIssued  Circular[]
 
   // Communication
@@ -207,7 +204,7 @@ model School {
   subdomain            String?               @unique // e.g. "first-school" for first-school.domain.com
   address              String
   location             String
-  logoUrl              String?               // Image URL (Supabase bucket)
+  logoUrl              String? // Image URL (Supabase bucket)
   isActive             Boolean               @default(true)
   //library
   libraryIssues        LibraryIssue[]
@@ -230,33 +227,33 @@ model School {
 
   createdAt DateTime @default(now())
 
-  users           User[]
-  buses           Bus[]
-  busBookings     BusBooking[]
-  hostels         Hostel[]
-  cotBookings     CotBooking[]
-  roomAllocations RoomAllocation[]
-  settings        SchoolSettings?
+  users              User[]
+  buses              Bus[]
+  busBookings        BusBooking[]
+  hostels            Hostel[]
+  cotBookings        CotBooking[]
+  roomAllocations    RoomAllocation[]
+  settings           SchoolSettings?
   classFeeStructures ClassFeeStructure[]
-  extraFees       ExtraFee[]
+  extraFees          ExtraFee[]
 }
 
 model SchoolSettings {
-  id               String   @id @default(cuid())
-  schoolId         String   @unique
-  school           School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  admissionPrefix  String   @default("ADM") // e.g. ADM -> ADM/2026/001
-  rollNoPrefix     String   @default("") // optional prefix for roll numbers
-  admissionCounter Int      @default(0) // last used number for admission
+  id               String @id @default(cuid())
+  schoolId         String @unique
+  school           School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  admissionPrefix  String @default("ADM") // e.g. ADM -> ADM/2026/001
+  rollNoPrefix     String @default("") // optional prefix for roll numbers
+  admissionCounter Int    @default(0) // last used number for admission
 
   // Tenant payment credentials - payments go to school's account. Fallback to global env if not set.
-  juspayMerchantId   String?
-  juspayApiKey       String?
-  razorpayKeyId      String?
-  razorpayKeySecret  String?
+  juspayMerchantId  String?
+  juspayApiKey      String?
+  razorpayKeyId     String?
+  razorpayKeySecret String?
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([schoolId])
 }
@@ -317,14 +314,14 @@ model Class {
   teacherId String?
   teacher   User?   @relation("TeacherClass", fields: [teacherId], references: [id])
 
-  students    Student[]
-  attendances Attendance[]
-  marks       Mark[]
-  events      Event[]
-  homeworks   Homework[]
-  timetables  Timetable[]
-  classRooms  ClassRoom[]
-  examTerms   ExamTerm[]
+  students     Student[]
+  attendances  Attendance[]
+  marks        Mark[]
+  events       Event[]
+  homeworks    Homework[]
+  timetables   Timetable[]
+  classRooms   ClassRoom[]
+  examTerms    ExamTerm[]
   feeStructure ClassFeeStructure?
 
   createdAt DateTime @default(now())
@@ -370,12 +367,12 @@ model ExamSchedule {
 }
 
 model SyllabusTracking {
-  id               String        @id @default(cuid())
+  id               String         @id @default(cuid())
   termId           String
-  term             ExamTerm      @relation(fields: [termId], references: [id], onDelete: Cascade)
+  term             ExamTerm       @relation(fields: [termId], references: [id], onDelete: Cascade)
   subject          String
-  completedPercent Int           @default(0) // 0-100
-  notes            String?       @db.Text
+  completedPercent Int            @default(0) // 0-100
+  notes            String?        @db.Text
   units            SyllabusUnit[]
 
   updatedAt DateTime @updatedAt
@@ -386,12 +383,12 @@ model SyllabusTracking {
 }
 
 model SyllabusUnit {
-  id               String   @id @default(cuid())
+  id               String           @id @default(cuid())
   trackingId       String
   tracking         SyllabusTracking @relation(fields: [trackingId], references: [id], onDelete: Cascade)
   unitName         String
-  completedPercent Int      @default(0)
-  order            Int      @default(0)
+  completedPercent Int              @default(0)
+  order            Int              @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -611,15 +608,15 @@ model NewsFeed {
   title       String
   description String  @db.Text
   photo       String? // URL or base64
-  likes       Int      @default(0)
+  likes       Int     @default(0)
   // Relations
-  schoolId String
-  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  schoolId    String
+  school      School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
   createdById String
   createdBy   User   @relation("NewsFeedCreator", fields: [createdById], references: [id], onDelete: Cascade)
 
-  likedBy   NewsFeedLike[]
+  likedBy NewsFeedLike[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -647,13 +644,13 @@ model NewsFeedLike {
 // =====================
 
 model Homework {
-  id          String    @id @default(cuid())
-  title       String
-  description String    @db.Text
-  subject     String
+  id           String    @id @default(cuid())
+  title        String
+  description  String    @db.Text
+  subject      String
   assignedDate DateTime?
-  file        String? 
-  dueDate     DateTime?
+  file         String?
+  dueDate      DateTime?
 
   // Relations
   classId String
@@ -884,15 +881,15 @@ model StudentFee {
 }
 
 model FeeInstallment {
-  id           String      @id @default(cuid())
-  studentFeeId String
-  studentFee   StudentFee  @relation(fields: [studentFeeId], references: [id], onDelete: Cascade)
+  id                String     @id @default(cuid())
+  studentFeeId      String
+  studentFee        StudentFee @relation(fields: [studentFeeId], references: [id], onDelete: Cascade)
   installmentNumber Int
-  dueDate      DateTime    @db.Date
-  amount       Float
-  paidAmount   Float       @default(0)
-  status       String      @default("PENDING") // PENDING | PAID | PARTIAL
-  paymentId    String?     // Links to Payment when paid
+  dueDate           DateTime   @db.Date
+  amount            Float
+  paidAmount        Float      @default(0)
+  status            String     @default("PENDING") // PENDING | PAID | PARTIAL
+  paymentId         String? // Links to Payment when paid
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -903,12 +900,12 @@ model FeeInstallment {
 
 // Global fee breakdown per class (Tuition, Transport, Lab, etc.)
 model ClassFeeStructure {
-  id       String @id @default(cuid())
-  schoolId String
-  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  classId  String @unique
-  class    Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
-  components Json @default("[]") // [{name: string, amount: number}]
+  id         String @id @default(cuid())
+  schoolId   String
+  school     School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  classId    String @unique
+  class      Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
+  components Json   @default("[]") // [{name: string, amount: number}]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -918,14 +915,14 @@ model ClassFeeStructure {
 
 // Extra fees: uniform, bus, or any custom - applied to class, section, or student
 model ExtraFee {
-  id            String   @id @default(cuid())
-  schoolId      String
-  school        School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  name          String   // e.g. "Uniform Fee", "Bus Fee", "Library Fee"
-  amount        Float
-  targetType    String   // CLASS | SECTION | STUDENT
-  targetClassId String?
-  targetSection String?
+  id              String  @id @default(cuid())
+  schoolId        String
+  school          School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  name            String // e.g. "Uniform Fee", "Bus Fee", "Library Fee"
+  amount          Float
+  targetType      String // CLASS | SECTION | STUDENT
+  targetClassId   String?
+  targetSection   String?
   targetStudentId String?
 
   createdAt DateTime @default(now())
