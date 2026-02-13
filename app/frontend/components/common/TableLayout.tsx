@@ -15,6 +15,7 @@ type DataTableProps<T> = {
   tableSubtitle?: string;
   showMobile?: boolean;
   container?: boolean;
+  rounded?: boolean; // ✅ NEW PROP
   containerClassName?: string;
   tableClassName?: string;
   theadClassName?: string;
@@ -46,6 +47,7 @@ function DataTable<T>({
   tableSubtitle,
   showMobile = true,
   container = true,
+  rounded = true, // ✅ default true
   containerClassName = "",
   tableClassName = "",
   theadClassName = "",
@@ -75,10 +77,16 @@ function DataTable<T>({
       <div
         className={`hidden md:block ${
           container
-            ? "rounded-3xl overflow-hidden border border-white/10 bg-transparent backdrop-blur-xl shadow-2xl"
+            ? `
+              ${rounded ? "rounded-3xl" : "rounded-none"}
+              overflow-hidden
+              border border-white/10
+              bg-transparent backdrop-blur-xl shadow-2xl
+            `
             : "w-full"
         } ${containerClassName}`}
       >
+
         {tableTitle && (
           <div className="p-5 border-b border-white/10">
             <div className="text-lg font-semibold text-white">
@@ -96,9 +104,7 @@ function DataTable<T>({
           className={`w-full text-sm border-collapse ${tableClassName}`}
           aria-busy={loading}
         >
-          {caption && (
-            <caption className="sr-only">{caption}</caption>
-          )}
+          {caption && <caption className="sr-only">{caption}</caption>}
 
           <thead className={`bg-white/5 border-b border-white/10 ${theadClassName}`}>
             <tr>
@@ -116,15 +122,11 @@ function DataTable<T>({
             </tr>
           </thead>
 
-
           <tbody className={`divide-y divide-white/10 ${tbodyClassName}`}>
 
             {loading && (
               <tr>
-                <td
-                  colSpan={columns.length}
-                  className="p-8 text-center text-white/60"
-                >
+                <td colSpan={columns.length} className="p-8 text-center text-white/60">
                   <Spinner size={26} label="Loading..." />
                 </td>
               </tr>
@@ -132,10 +134,7 @@ function DataTable<T>({
 
             {!loading && data.length === 0 && (
               <tr>
-                <td
-                  colSpan={columns.length}
-                  className="p-8 text-center text-white/60"
-                >
+                <td colSpan={columns.length} className="p-8 text-center text-white/60">
                   {emptyText}
                 </td>
               </tr>
@@ -165,76 +164,36 @@ function DataTable<T>({
 
       {/* MOBILE CARDS */}
       {showMobile && (
-      <div className="md:hidden space-y-4">
-
-        {loading && (
-          <div className="flex justify-center py-10">
-            <Spinner size={26} label="Loading..." />
-          </div>
-        )}
-
-        {!loading && data.length === 0 && (
-          <div className="text-center py-10 text-white/60">
-            {emptyText}
-          </div>
-        )}
-
-        {!loading &&
-          data.map((row, index) => (
-            <div
-              key={getKey(row, index)}
-              className="rounded-2xl p-4 border border-white/10 bg-gradient-to-br from-purple-600/25 via-indigo-600/20 to-pink-600/20 backdrop-blur-xl shadow-lg transition hover:shadow-xl"
-            >
-              {columns.map(
-                (col, colIndex) =>
-                  !col.hideOnMobile && (
-                    <div
-                      key={colIndex}
-                      className="flex justify-between text-sm py-1"
-                    >
-                      <span className="text-white/60">
-                        {col.header}
-                      </span>
-                      <span className="text-white text-right">
-                        {renderCell(col, row, index)}
-                      </span>
-                    </div>
-                  )
-              )}
-            </div>
-          ))}
-      </div>
-      )}
-
-      {/* PAGINATION */}
-      {pagination && pagination.totalPages > 1 && (
-        <div className="flex justify-end items-center gap-3 pt-2">
-
-          <button
-            aria-label="Previous page"
-            disabled={pagination.page === 1}
-            onClick={() =>
-              pagination.onChange(pagination.page - 1)
-            }
-            className="px-3 py-1.5 rounded-lg bg-white/10 text-white hover:bg-white/20 transition disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Prev
-          </button>
-
-          <span className="text-white/70 text-sm">
-            {pagination.page} / {pagination.totalPages}
-          </span>
-
-          <button
-            aria-label="Next page"
-            disabled={pagination.page === pagination.totalPages}
-            onClick={() =>
-              pagination.onChange(pagination.page + 1)
-            }
-            className="px-3 py-1.5 rounded-lg bg-lime-400 text-black font-medium hover:bg-lime-300 transition disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Next
-          </button>
+        <div className="md:hidden space-y-4">
+          {!loading &&
+            data.map((row, index) => (
+              <div
+                key={getKey(row, index)}
+                className={`
+                  ${rounded ? "rounded-2xl" : "rounded-none"}
+                  p-4 border border-white/10
+                  bg-gradient-to-br from-purple-600/25 via-indigo-600/20 to-pink-600/20
+                  backdrop-blur-xl shadow-lg transition hover:shadow-xl
+                `}
+              >
+                {columns.map(
+                  (col, colIndex) =>
+                    !col.hideOnMobile && (
+                      <div
+                        key={colIndex}
+                        className="flex justify-between text-sm py-1"
+                      >
+                        <span className="text-white/60">
+                          {col.header}
+                        </span>
+                        <span className="text-white text-right">
+                          {renderCell(col, row, index)}
+                        </span>
+                      </div>
+                    )
+                )}
+              </div>
+            ))}
         </div>
       )}
     </div>

@@ -1,123 +1,3 @@
-
-// "use client";
-
-// import {
-//   ArrowLeft,
-//   Check,
-//   X,
-//   Paperclip,
-//   Send,
-//   UserPlus,
-// } from "lucide-react";
-// import { Chat } from "./ChatList";
-
-// type Props = {
-//   chat: Chat;
-//   onBack: () => void;
-//   onApprove: () => void;
-//   onReject: () => void;
-// };
-
-// export default function ChatWindow({
-//   chat,
-//   onBack,
-//   onApprove,
-//   onReject,
-// }: Props) {
-//   const isPending = chat.status === "pending";
-//   const isRejected = chat.status === "rejected";
-
-//   return (
-//     <div className="flex flex-col h-full w-full">
-//       {/* ===== Header ===== */}
-//       <div className="p-4 border-b border-white/10 flex justify-between items-center">
-//         <div className="flex items-center gap-3">
-//           <button onClick={onBack} className="lg:hidden">
-//             <ArrowLeft />
-//           </button>
-
-//           <img
-//             src={chat.avatar}
-//             className="w-10 h-10 rounded-full object-cover"
-//             alt={chat.parent}
-//           />
-
-//           <div>
-//             <p className="font-semibold text-white">{chat.parent}</p>
-//             <p className="text-sm text-lime-400">
-//               Parent of {chat.student}
-//             </p>
-//           </div>
-//         </div>
-
-//         {isPending && (
-//           <div className="flex gap-2">
-//             <button
-//               onClick={onApprove}
-//               className="px-3 py-1.5 rounded-full bg-lime-400 text-black text-sm flex items-center gap-1"
-//             >
-//               <Check size={14} /> Approve
-//             </button>
-//             <button
-//               onClick={onReject}
-//               className="px-3 py-1.5 rounded-full bg-red-500/20 text-red-400 text-sm flex items-center gap-1"
-//             >
-//               <X size={14} /> Reject
-//             </button>
-//           </div>
-//         )}
-//       </div>
-
-//       {/* ===== Body ===== */}
-//       {isPending && (
-//         <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
-//           <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-4">
-//             <UserPlus className="text-lime-400" size={28} />
-//           </div>
-//           <p className="text-lg text-white/80">
-//             {chat.parent} wants to connect with you
-//           </p>
-//           <p className="text-sm text-white/40 mt-2">
-//             Approve to start chatting
-//           </p>
-//         </div>
-//       )}
-
-//       {!isPending && !isRejected && (
-//         <div className="flex-1 p-4 space-y-3 overflow-y-auto">
-//           <div className="max-w-[70%] bg-white/10 rounded-xl p-3 text-sm">
-//             Hello teacher 👋
-//           </div>
-
-//           <div className="max-w-[70%] ml-auto bg-lime-500 text-black rounded-xl p-3 text-sm">
-//             Hi! How can I help?
-//           </div>
-//         </div>
-//       )}
-
-//       {isRejected && (
-//         <div className="flex-1 flex items-center justify-center text-gray-400">
-//           This conversation has been closed.
-//         </div>
-//       )}
-
-//       {/* ===== Input ===== */}
-//       {!isRejected && (
-//         <div className="p-4 border-t border-white/10 flex items-center gap-3">
-//           <Paperclip className="text-gray-400" />
-//           <input
-//             className="flex-1 bg-white/5 rounded-lg px-4 py-2 text-sm outline-none"
-//             placeholder="Type a message…"
-//           />
-//           <Send className="text-lime-400" />
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
-
-
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -128,6 +8,9 @@ import {
   Paperclip,
   Send,
   UserPlus,
+  Phone,
+  Video,
+  PhoneOff,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Chat } from "./ChatList";
@@ -144,6 +27,8 @@ type Props = {
   onBack: () => void;
   onApprove: () => void;
   onReject: () => void;
+  onEndChat?: () => void;
+  variant?: "teacher" | "parent";
 };
 
 export default function ChatWindow({
@@ -151,6 +36,8 @@ export default function ChatWindow({
   onBack,
   onApprove,
   onReject,
+  onEndChat,
+  variant = "teacher",
 }: Props) {
   const { data: session } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -159,11 +46,13 @@ export default function ChatWindow({
   const [sending, setSending] = useState(false);
 
   const fetchMessages = useCallback(async () => {
-    if (chat.status !== "approved") return;
+    if (chat.status !== "approved" && chat.status !== "ended") return;
     setLoadingMessages(true);
     try {
       const res = await fetch(
-        `/api/communication/messages?appointmentId=${encodeURIComponent(chat.id)}`
+        `/api/communication/messages?appointmentId=${encodeURIComponent(
+          chat.id
+        )}`
       );
       if (!res.ok) return;
       const data = await res.json();
@@ -181,7 +70,7 @@ export default function ChatWindow({
 
   const handleSend = async () => {
     const text = messageInput.trim();
-    if (!text || sending || chat.status !== "approved") return;
+    if (!text || sending || !canChat) return;
     setSending(true);
     try {
       const res = await fetch("/api/communication/messages", {
@@ -206,13 +95,17 @@ export default function ChatWindow({
 
   const isPending = chat.status === "pending";
   const isRejected = chat.status === "rejected";
+  const isEnded = chat.status === "ended";
+  const canChat = chat.status === "approved";
   const myId = session?.user?.id ?? "";
 
   return (
-    <div className="flex flex-col h-full w-full ">
+    <div className="flex flex-col h-full w-full">
+
       {/* ================= Header ================= */}
       <div className="p-3 md:p-4 border-b border-white/10">
         <div className="flex items-center justify-between gap-3">
+
           {/* Left */}
           <div className="flex items-center gap-3 min-w-0">
             <button
@@ -233,31 +126,66 @@ export default function ChatWindow({
                 {chat.parent}
               </p>
               <p className="text-xs md:text-sm text-lime-400 truncate">
-                Parent of {chat.student}
+                {variant === "parent" ? `Requested for ${chat.student}` : `Parent of ${chat.student}`}
               </p>
             </div>
           </div>
 
-          {/* Right (actions) */}
-          {isPending && (
-            <div className="flex gap-2 shrink-0">
-              <button
-                onClick={onApprove}
-                className="px-3 py-1.5 rounded-full bg-lime-400 text-black text-xs md:text-sm flex items-center gap-1"
-              >
-                <Check size={14} />
-                <span className="hidden sm:inline">Approve</span>
-              </button>
+          {/* Right Actions */}
+          <div className="flex items-center gap-2 shrink-0">
 
+            {/* Voice & Video (Only if Approved and not ended) */}
+            {canChat && (
+              <>
+                <button
+                  onClick={() => alert("Starting voice call...")}
+                  className="p-2 rounded-full hover:bg-white/10 text-gray-300 hover:text-white transition"
+                >
+                  <Phone size={18} />
+                </button>
+
+                <button
+                  onClick={() => alert("Starting video call...")}
+                  className="p-2 rounded-full hover:bg-white/10 text-gray-300 hover:text-white transition"
+                >
+                  <Video size={18} />
+                </button>
+              </>
+            )}
+
+            {/* Approve / Reject: only teacher sees these */}
+            {isPending && variant === "teacher" && (
+              <>
+                <button
+                  onClick={onApprove}
+                  className="px-3 py-1.5 rounded-full bg-lime-400 text-black text-xs md:text-sm flex items-center gap-1"
+                >
+                  <Check size={14} />
+                  <span className="hidden sm:inline">Approve</span>
+                </button>
+
+                <button
+                  onClick={onReject}
+                  className="px-3 py-1.5 rounded-full bg-red-500/20 text-red-400 text-xs md:text-sm flex items-center gap-1"
+                >
+                  <X size={14} />
+                  <span className="hidden sm:inline">Reject</span>
+                </button>
+              </>
+            )}
+
+            {/* End chat: only teacher can end an approved chat */}
+            {canChat && variant === "teacher" && onEndChat && (
               <button
-                onClick={onReject}
-                className="px-3 py-1.5 rounded-full bg-red-500/20 text-red-400 text-xs md:text-sm flex items-center gap-1"
+                onClick={onEndChat}
+                className="px-3 py-1.5 rounded-full bg-amber-500/20 text-amber-400 text-xs md:text-sm flex items-center gap-1"
+                title="End chat"
               >
-                <X size={14} />
-                <span className="hidden sm:inline">Reject</span>
+                <PhoneOff size={14} />
+                <span className="hidden sm:inline">End chat</span>
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
@@ -278,32 +206,39 @@ export default function ChatWindow({
       )}
 
       {!isPending && !isRejected && (
-        <div className="flex-1 p-3 md:p-4 space-y-3 overflow-y-auto">
-          {loadingMessages ? (
-            <div className="text-center text-gray-400 text-sm py-4">
-              Loading...
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="text-center text-gray-400 text-sm py-4">
-              No messages yet. Start the conversation.
-            </div>
-          ) : (
-            messages.map((m) => {
-              const isMe = m.senderId === myId;
-              return (
-                <div
-                  key={m.id}
-                  className={`max-w-[75%] rounded-xl p-3 text-sm ${
-                    isMe
-                      ? "ml-auto bg-lime-500 text-black"
-                      : "bg-white/10 text-white"
-                  }`}
-                >
-                  {m.content}
-                </div>
-              );
-            })
+        <div className="flex-1 flex flex-col p-3 md:p-4 overflow-hidden">
+          {isEnded && (
+            <p className="text-center text-amber-400/90 text-sm py-2 border-b border-white/10 mb-2">
+              Chat ended by the teacher. No new messages can be sent.
+            </p>
           )}
+          <div className="flex-1 space-y-3 overflow-y-auto">
+            {loadingMessages ? (
+              <div className="text-center text-gray-400 text-sm py-4">
+                Loading...
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="text-center text-gray-400 text-sm py-4">
+                {isEnded ? "No messages in this chat." : "No messages yet. Start the conversation."}
+              </div>
+            ) : (
+              messages.map((m) => {
+                const isMe = m.senderId === myId;
+                return (
+                  <div
+                    key={m.id}
+                    className={`max-w-[75%] rounded-xl p-3 text-sm ${
+                      isMe
+                        ? "ml-auto bg-lime-500 text-black"
+                        : "bg-white/10 text-white"
+                    }`}
+                  >
+                    {m.content}
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
       )}
 
@@ -314,12 +249,12 @@ export default function ChatWindow({
       )}
 
       {/* ================= Input ================= */}
-      {!isRejected && (
+      {!isRejected && !isEnded && (
         <div className="p-3 md:p-4 border-t border-white/10 flex items-center gap-3">
           <Paperclip className="text-gray-400 shrink-0" />
 
           <input
-            disabled={isPending}
+            disabled={isPending || !canChat}
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
             onKeyDown={(e) => {
@@ -337,7 +272,7 @@ export default function ChatWindow({
           />
 
           <button
-            disabled={isPending || sending}
+            disabled={isPending || !canChat || sending}
             onClick={handleSend}
             className="text-lime-400 disabled:opacity-40"
           >

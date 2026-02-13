@@ -15,13 +15,20 @@ export async function GET() {
     let schoolId = session.user.schoolId;
 
     if (!schoolId) {
-      // Try to get school from admin relation
+      // Try school from admin relation
       const adminSchool = await prisma.school.findFirst({
         where: { admins: { some: { id: session.user.id } } },
         select: { id: true },
       });
       schoolId = adminSchool?.id ?? null;
-
+      // For students: get school from student record
+      if (!schoolId && (session.user as { studentId?: string }).studentId) {
+        const student = await prisma.student.findUnique({
+          where: { id: (session.user as { studentId: string }).studentId },
+          select: { schoolId: true },
+        });
+        schoolId = student?.schoolId ?? null;
+      }
       if (schoolId) {
         await prisma.user.update({
           where: { id: session.user.id },

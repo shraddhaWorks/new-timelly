@@ -26,6 +26,7 @@ function mapAppointmentToChat(a: AppointmentRow): Chat {
     PENDING: "pending",
     APPROVED: "approved",
     REJECTED: "rejected",
+    ENDED: "ended",
   };
   const status = statusMap[a.status] ?? "pending";
   const lastMsg =
@@ -91,6 +92,20 @@ export default function TeacherParentChatTab() {
     );
   };
 
+  const endChat = async (id: string) => {
+    const res = await fetch(`/api/communication/appointments/${id}/end`, {
+      method: "POST",
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data?.message ?? "Failed to end chat");
+      return;
+    }
+    setChats((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, status: "ended" as const } : c))
+    );
+  };
+
   return (
     <div className="max-w-7xl mx-auto h-full flex flex-col gap-6">
       <PageHeader
@@ -107,7 +122,7 @@ export default function TeacherParentChatTab() {
         >
           {/* Tabs */}
           <div className="p-3 flex gap-2 border-b border-white/10">
-            {(["all", "approved", "pending", "rejected"] as const).map(
+            {(["all", "approved", "pending", "rejected", "ended"] as const).map(
               (tab) => (
                 <button
                   key={tab}
@@ -184,6 +199,7 @@ export default function TeacherParentChatTab() {
               onBack={() => setActiveChatId(null)}
               onApprove={() => updateStatus(activeChat.id, "approved")}
               onReject={() => updateStatus(activeChat.id, "rejected")}
+              onEndChat={() => endChat(activeChat.id)}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center text-gray-400">

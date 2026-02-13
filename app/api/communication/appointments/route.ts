@@ -46,8 +46,18 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       include: {
         student: {
-          include: {
+          select: {
+            id: true,
+            fatherName: true,
             user: { select: { name: true, photoUrl: true } },
+          },
+        },
+        teacher: {
+          select: {
+            id: true,
+            name: true,
+            photoUrl: true,
+            subject: true,
           },
         },
         messages: {

@@ -3,6 +3,32 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
 
+async function resolveSchoolId(session: { user: { id: string; schoolId?: string | null; role: string } }) {
+  let schoolId = session.user.schoolId;
+  if (!schoolId && session.user.role === "TEACHER") {
+    const teacherClass = await prisma.class.findFirst({
+      where: { teacherId: session.user.id },
+      select: { schoolId: true },
+    });
+    schoolId = teacherClass?.schoolId ?? null;
+    if (!schoolId) {
+      const teacherSchool = await prisma.school.findFirst({
+        where: { teachers: { some: { id: session.user.id } } },
+        select: { id: true },
+      });
+      schoolId = teacherSchool?.id ?? null;
+    }
+  }
+  if (!schoolId) {
+    const school = await prisma.school.findFirst({
+      where: { admins: { some: { id: session.user.id } } },
+      select: { id: true },
+    });
+    schoolId = school?.id ?? null;
+  }
+  return schoolId;
+}
+
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -10,16 +36,27 @@ export async function POST(
   try {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    if (session.user.role !== "SCHOOLADMIN") {
+    if (session.user.role !== "SCHOOLADMIN" && session.user.role !== "TEACHER") {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
+    const schoolId = await resolveSchoolId(session);
+    if (!schoolId) return NextResponse.json({ message: "School not found" }, { status: 400 });
+
     const { id: termId } = await params;
+    const term = await prisma.examTerm.findFirst({
+      where: { id: termId, schoolId },
+      select: { id: true },
+    });
+    if (!term) return NextResponse.json({ message: "Exam term not found" }, { status: 404 });
+
     const body = await req.json();
     const subject = typeof body.subject === "string" ? body.subject.trim() : "";
     const unitName = typeof body.unitName === "string" ? body.unitName.trim() : "";
     const order = Number(body.order);
     const validOrder = Number.isFinite(order) ? Math.max(0, Math.trunc(order)) : 0;
+    const completedPercentRaw = Number(body.completedPercent ?? 0);
+    const completedPercent = Math.max(0, Math.min(100, Math.trunc(completedPercentRaw)));
 
     if (!subject || !unitName) {
       return NextResponse.json(
@@ -41,6 +78,7 @@ export async function POST(
         trackingId: tracking.id,
         unitName,
         order: validOrder,
+        completedPercent,
       },
     });
 

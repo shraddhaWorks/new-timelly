@@ -9,6 +9,7 @@ import AllowedFeatureToggle from "./AllowedFeatureToggle";
 import RoleSelector from "./RoleSelector";
 import { Permission } from "@/app/frontend/enums/permissions";
 import Spinner from "../../common/Spinner";
+import { label } from "framer-motion/client";
 
 interface UserFormData {
   name: string;
@@ -37,6 +38,7 @@ const AVAILABLE_FEATURES_FOR_TEACHERS = [
   { key: Permission.NEWSFEED, label: "Newsfeed" },
   { key: Permission.CHAT, label: "Parent Chat" },
   { key: Permission.LEAVES, label: "Leave" },
+  { key: Permission.PROFILE, label: "Profile" },
   { key: Permission.SETTINGS, label: "Settings" },
 ];
 
@@ -263,7 +265,7 @@ export default function UserForm({ mode = "create", initialData }: UserFormProps
               icon={<Mail className="w-4 h-4" />}
               required
             />
-               <InputField
+            <InputField
               label="Username"
               value={formData.username}
               onChange={(v) => handleChange("username", v)}
@@ -380,7 +382,7 @@ export default function UserForm({ mode = "create", initialData }: UserFormProps
         >
           {submitting ? (
             <>
-              <Spinner color="black"/>
+              <Spinner color="black" />
               Saving...
             </>
           ) : (
