@@ -1,9 +1,9 @@
 "use client";
 
-import { forwardRef } from "react";
+import { forwardRef, type HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-interface GlassPanelProps extends React.HTMLAttributes<HTMLDivElement> {
+interface GlassPanelProps extends HTMLAttributes<HTMLDivElement> {
   padding?: "none" | "sm" | "md" | "lg";
 }
 

@@ -1,9 +1,9 @@
 "use client";
 
-import { forwardRef } from "react";
+import { forwardRef, type HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
+interface GlassCardProps extends HTMLAttributes<HTMLDivElement> {
   variant?: "default" | "strong" | "card";
 }
 

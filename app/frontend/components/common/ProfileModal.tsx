@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { X, Mail, User, Settings, LogOut, Phone, MapPin, Hash } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { AVATAR_URL } from "../../constants/images";
@@ -44,40 +45,64 @@ export default function ProfileModal({
     onOpenSettings?.();
   };
 
+  // Close on Escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onClose]);
+
   return (
     <div
       className="
         fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] animate-fadeIn
       "
-      onClick={onClose}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="profile-modal-title"
     >
       <div
         onClick={(e) => e.stopPropagation()}
         className="bg-[rgba(255,255,255,0.05)] backdrop-blur-xl border
          border-[rgba(255,255,255,0.1)] border-solid rounded-2xl 
-        shadow-[0px_10px_15px_0px_rgba(0,0,0,0.1),0px_4px_6px_0px_rgba(0,0,0,0.1)] 
-        max-w-md w-full mx-4 animate-scaleIn p-0 overflow-hidden p-3"
+         shadow-[0px_10px_15px_0px_rgba(0,0,0,0.1),0px_4px_6px_0px_rgba(0,0,0,0.1)] 
+         max-w-md w-full mx-4 animate-scaleIn overflow-hidden p-6 relative"
         
       >
         <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 hover:bg-white/[0.1] rounded-lg transition-all text-white/65 hover:text-white"
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+          className="absolute top-4 right-4 p-2 hover:bg-white/[0.1] rounded-lg transition-all text-white/65 hover:text-white z-10"
+          aria-label="Close profile modal"
         >
-          <X className="text-white" />
+          <X className="text-white" size={20} />
         </button>
 
-        <div className="flex gap-4 items-center mb-6 relative px-6 py-6 border-b border-white/[0.1] bg-white/[0.02]">
+        <div className="flex gap-4 items-center mb-6 relative pb-6 border-b border-white/[0.1] bg-white/[0.02] -mx-6 -mt-6 px-6 pt-6">
           <img
             src={imageUrl}
-            alt=""
+            alt={name}
             className="w-16 h-16 rounded-2xl border-2 border-white/[0.1] object-cover"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = AVATAR_URL;
+            }}
           />
           <div>
-            <h2 className="text-xl font-bold text-white">{name}</h2>
+            <h2 id="profile-modal-title" className="text-xl font-bold text-white">{name}</h2>
             <p className="text-[#C7F000] text-sm font-medium">{roleLabel || "-"}</p>
-            {/* <span className="inline-block mt-1 px-3 py-0.5 text-xs rounded-full bg-lime-500/20 text-lime-400">
-              {status}
-            </span> */}
           </div>
         </div>
 

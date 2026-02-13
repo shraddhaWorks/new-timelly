@@ -92,13 +92,12 @@ export async function POST(req: Request) {
         },
       });
 
-      // Invalidate cache
+      // Invalidate cache - delete common cache keys for this student
       if (schoolId) {
-        const cachePattern = `homeworks:${schoolId}:${session.user.studentId}:*`;
-        const keys = await redis.keys(cachePattern);
-        if (keys.length > 0) {
-          await redis.del(...keys);
-        }
+        // Delete the most common cache key pattern for this student
+        await redis.del(`homeworks:${schoolId}:${session.user.studentId}:all:all`);
+        // Also delete cache for all students view (in case teacher/admin views it)
+        await redis.del(`homeworks:${schoolId}:all:all:all`);
       }
 
       return NextResponse.json(
@@ -117,13 +116,12 @@ export async function POST(req: Request) {
       },
     });
 
-    // Invalidate cache
+    // Invalidate cache - delete common cache keys for this student
     if (schoolId) {
-      const cachePattern = `homeworks:${schoolId}:${session.user.studentId}:*`;
-      const keys = await redis.keys(cachePattern);
-      if (keys.length > 0) {
-        await redis.del(...keys);
-      }
+      // Delete the most common cache key pattern for this student
+      await redis.del(`homeworks:${schoolId}:${session.user.studentId}:all:all`);
+      // Also delete cache for all students view (in case teacher/admin views it)
+      await redis.del(`homeworks:${schoolId}:all:all:all`);
     }
 
     return NextResponse.json(

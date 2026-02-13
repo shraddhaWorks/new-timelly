@@ -6,17 +6,17 @@ interface ButtonProps {
   onClick?: () => void;
 }
 
-export default function SecondaryButton({ title, loading,onClick }: ButtonProps) {
+export default function SecondaryButton({ title, loading, onClick }: ButtonProps) {
   return (
     <motion.button
       whileHover={{ scale: 1.03 }}
       whileTap={{ scale: 0.97 }}
       disabled={loading}
       onClick={onClick}
-      type="submit"
-      className="bg-white/5 text-white border border-white/10 rounded-xl hover:bg-white/10 m-4 py-2 rounded-xl"
+      type="button"
+      className="w-full bg-white/5 text-white border border-white/10 rounded-xl hover:bg-white/10 py-2.5 px-4 transition"
     >
-      {loading ? "Logging in..." : title}
+      {loading ? "Loading..." : title}
     </motion.button>
   );
 }

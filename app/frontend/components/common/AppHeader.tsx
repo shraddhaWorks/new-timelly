@@ -35,6 +35,7 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
   const [showProfile, setShowProfile] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: session } = useSession();
   const displayName = (profile?.name && profile.name.trim()) ? profile.name : (session?.user?.name ?? "User");
@@ -48,6 +49,39 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
       return;
     }
     router.push("/settings");
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const handleSearchSubmit = (queryValue?: string) => {
+    const query = (queryValue || searchQuery).trim();
+    if (!query) return;
+
+    const currentPath = pathname || "";
+
+    // Navigate based on current path
+    if (currentPath.startsWith("/frontend/pages/parent")) {
+      router.push(`/frontend/pages/parent?tab=dashboard&search=${encodeURIComponent(query)}`);
+    } else if (currentPath.startsWith("/frontend/pages/teacher")) {
+      router.push(`/frontend/pages/teacher?tab=dashboard&search=${encodeURIComponent(query)}`);
+    } else if (currentPath.startsWith("/frontend/pages/schooladmin")) {
+      router.push(`/frontend/pages/schooladmin?tab=students&search=${encodeURIComponent(query)}`);
+    } else {
+      // Default: navigate to current page with search query
+      const params = new URLSearchParams(searchParams?.toString() ?? "");
+      params.set("search", query);
+      router.push(`${currentPath}?${params.toString()}`);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const inputValue = (e.target as HTMLInputElement).value;
+      handleSearchSubmit(inputValue);
+    }
   };
 
   return (
@@ -70,7 +104,17 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
             {!hideSearchAndNotifications && (
               <>
                 <div className="hidden md:block">
-                  <SearchInput showSearchIcon icon={Search}/>
+                  <SearchInput 
+                    showSearchIcon 
+                    icon={Search}
+                    iconClickable={true}
+                    onIconClick={() => handleSearchSubmit(searchQuery)}
+                    value={searchQuery}
+                    onChange={handleSearch}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Search..."
+                    className="w-[200px] md:w-[250px]"
+                  />
                 </div>
                 <button
                   className="md:hidden p-2 rounded-lg hover:bg-white/10"
@@ -104,14 +148,21 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
 
             {/* PROFILE - always show */}
             <button
-              onClick={() => setShowProfile(true)}
-              className="p-1 rounded-xl bg-white/5 hover:bg-white/10 flex-shrink-0"
+              type="button"
+              onClick={() => {
+                setShowProfile(true);
+              }}
+              className="p-1 rounded-xl bg-white/5 hover:bg-white/10 flex-shrink-0 transition"
               title="My profile"
             >
               <img
                 src={avatarUrl}
-                alt=""
+                alt="Profile"
                 className="w-9 h-9 rounded-lg border border-white/10 object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = AVATAR_URL;
+                }}
               />
             </button>
           </div>
@@ -151,13 +202,31 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
       {!hideSearchAndNotifications && showSearch && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-start p-4 md:hidden">
           <div className="w-full bg-neutral-900 rounded-xl p-4">
-            <SearchInput icon={Search} showSearchIcon/>
-            <button
-              onClick={() => setShowSearch(false)}
-              className="mt-3 text-sm text-white/60"
-            >
-              Close
-            </button>
+            <SearchInput 
+              icon={Search} 
+              showSearchIcon
+              value={searchQuery}
+              onChange={handleSearch}
+              onKeyDown={handleKeyDown}
+              placeholder="Search..."
+            />
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={() => {
+                  handleSearchSubmit(searchQuery);
+                  setShowSearch(false);
+                }}
+                className="px-4 py-2 bg-lime-400 text-black rounded-lg text-sm font-medium"
+              >
+                Search
+              </button>
+              <button
+                onClick={() => setShowSearch(false)}
+                className="px-4 py-2 text-sm text-white/60 hover:text-white"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

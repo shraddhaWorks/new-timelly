@@ -78,12 +78,31 @@ export default function PortalSettingsPanel({ portal }: { portal: PortalVariant 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/user/me");
-      const data = await res.json();
-      if (!res.ok || !data?.user) throw new Error(data?.message || "Unable to load settings");
+      const [userRes, parentDetailsRes] = await Promise.all([
+        fetch("/api/user/me"),
+        portal === "parent" ? fetch("/api/student/parent-details") : Promise.resolve(null),
+      ]);
 
-      const u = data.user as UserMe;
+      const userData = await userRes.json();
+      if (!userRes.ok || !userData?.user) throw new Error(userData?.message || "Unable to load settings");
+
+      const u = userData.user as UserMe;
       setUserId(u.id ?? "");
+
+      let parentDetails: any = {};
+      if (portal === "parent" && parentDetailsRes) {
+        try {
+          const parentData = await parentDetailsRes.json();
+          if (parentDetailsRes.ok && parentData) {
+            parentDetails = parentData;
+          }
+        } catch (e) {
+          // If parent details fetch fails, use empty values
+          console.warn("Failed to load parent details:", e);
+          parentDetails = {};
+        }
+      }
+
       const next: FormState = {
         name: u.name ?? session?.user?.name ?? "User",
         email: u.email ?? session?.user?.email ?? "",
@@ -92,6 +111,9 @@ export default function PortalSettingsPanel({ portal }: { portal: PortalVariant 
         timezone: "Asia/Kolkata",
         photoUrl: u.photoUrl ?? session?.user?.image ?? "",
         location: "New Delhi, India",
+        address: parentDetails.address ?? "",
+        fatherName: parentDetails.fatherName ?? "",
+        fatherPhone: parentDetails.fatherPhone ?? "",
       };
       setForm(next);
       setInitialForm(next);
@@ -108,7 +130,7 @@ export default function PortalSettingsPanel({ portal }: { portal: PortalVariant 
     } finally {
       setLoading(false);
     }
-  }, [session?.user?.email, session?.user?.image, session?.user?.mobile, session?.user?.name, toast]);
+  }, [session?.user?.email, session?.user?.image, session?.user?.mobile, session?.user?.name, toast, portal]);
 
   useEffect(() => {
     loadData();
@@ -158,16 +180,36 @@ export default function PortalSettingsPanel({ portal }: { portal: PortalVariant 
       setUploading(true);
       try {
         const photoUrl = await uploadImage(file, "avatars");
+        // Update form state immediately
         setForm((prev) => ({ ...prev, photoUrl }));
-        toast.show("Profile photo updated.", "success");
+        // Save to database immediately
+        const res = await fetch("/api/user/me", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: form.name.trim(),
+            mobile: form.mobile.trim() || null,
+            language: form.language,
+            photoUrl: photoUrl || null,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data?.message || "Failed to save photo");
+        }
+        // Update initial form to reflect saved state
+        setInitialForm((prev) => prev ? { ...prev, photoUrl } : null);
+        toast.show("Profile photo updated and saved.", "success");
       } catch (error) {
         toast.show(error instanceof Error ? error.message : "Image upload failed.", "error");
       } finally {
         setUploading(false);
       }
-      event.target.value = "";
+      if (event.target) {
+        event.target.value = "";
+      }
     },
-    [toast]
+    [toast, setForm, form.name, form.mobile, form.language]
   );
 
   const toggleNotification = useCallback((key: keyof NotificationState) => {
@@ -187,7 +229,7 @@ export default function PortalSettingsPanel({ portal }: { portal: PortalVariant 
     if (!canSave) return;
     setSaving(true);
     try {
-      await saveProfile(form);
+      await saveProfile(form, portal);
       await savePassword(passwords, passwordDirty, setPasswordSaving);
       localStorage.setItem(prefKey, JSON.stringify(prefs));
       setInitialForm(form);
@@ -198,7 +240,7 @@ export default function PortalSettingsPanel({ portal }: { portal: PortalVariant 
     } finally {
       setSaving(false);
     }
-  }, [canSave, form, passwords, passwordDirty, prefKey, prefs, toast]);
+  }, [canSave, form, passwords, passwordDirty, prefKey, prefs, toast, portal]);
 
   if (loading) {
     return (
@@ -271,27 +313,51 @@ function baseForm(overrides?: Partial<FormState>): FormState {
     timezone: "Asia/Kolkata",
     photoUrl: "",
     location: "New Delhi, India",
+    address: "",
+    fatherName: "",
+    fatherPhone: "",
     ...overrides,
   };
 }
 
-async function saveProfile(form: FormState) {
-  const mobile = form.mobile.trim();
+async function saveProfile(form: FormState, portal: PortalVariant) {
+  const mobile = form.mobile?.trim() || "";
+  // Only validate if mobile is provided
   if (mobile && mobile.replace(/\D/g, "").length < 10) {
     throw new Error("Phone number should contain at least 10 digits.");
   }
-  const res = await fetch("/api/user/me", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name: form.name.trim(),
-      mobile: mobile || null,
-      language: form.language,
-      photoUrl: form.photoUrl || null,
+  
+  const [userRes, parentDetailsRes] = await Promise.all([
+    fetch("/api/user/me", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: form.name?.trim() || "",
+        mobile: mobile || null,
+        language: form.language || "English",
+        photoUrl: form.photoUrl || null,
+      }),
     }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.message || "Failed to save account settings.");
+    portal === "parent" ? fetch("/api/student/parent-details", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        address: form.address || null,
+        fatherName: form.fatherName || null,
+        fatherPhone: form.fatherPhone || null,
+      }),
+    }) : Promise.resolve(null),
+  ]);
+
+  const userData = await userRes.json();
+  if (!userRes.ok) throw new Error(userData?.message || "Failed to save account settings.");
+
+  if (portal === "parent" && parentDetailsRes) {
+    const parentData = await parentDetailsRes.json();
+    if (!parentDetailsRes.ok) {
+      throw new Error(parentData?.message || "Failed to save parent details.");
+    }
+  }
 }
 
 async function savePassword(
@@ -322,11 +388,4 @@ function validatePasswordInput(passwords: PasswordState) {
   if (!passwords.currentPassword) throw new Error("Current password is required.");
   if (!passwords.newPassword) throw new Error("Please enter a new password.");
   if (passwords.newPassword !== passwords.confirmPassword) throw new Error("Passwords do not match.");
-  if (passwords.newPassword.length < 8) throw new Error("Password must be at least 8 characters long.");
-  if (!/[A-Z]/.test(passwords.newPassword)) throw new Error("Password must include one uppercase letter.");
-  if (!/[a-z]/.test(passwords.newPassword)) throw new Error("Password must include one lowercase letter.");
-  if (!/\d/.test(passwords.newPassword)) throw new Error("Password must include one number.");
-  if (!/[!@#$%^&*(),.?\":{}|<>_\-\\[\]\\/+=~`]/.test(passwords.newPassword)) {
-    throw new Error("Password must include one special character.");
-  }
 }

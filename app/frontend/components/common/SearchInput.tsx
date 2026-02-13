@@ -8,6 +8,8 @@ import { PRIMARY_COLOR, HOVER_COLOR } from "../../constants/colors";
 interface SearchInputProps {
   value?: string;
   onChange?: (value: string) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onIconClick?: () => void;
   placeholder?: string;
 
   icon?: ComponentType<LucideProps>;
@@ -30,6 +32,8 @@ interface SearchInputProps {
 export default function SearchInput({
   value,
   onChange,
+  onKeyDown,
+  onIconClick,
   placeholder = "Search...",
   icon,
   showSearchIcon = true,
@@ -59,6 +63,10 @@ export default function SearchInput({
   const shouldRenderIconButton = shouldShowIcon && iconClickable && !disabled;
 
   const handleIconClick = () => {
+    if (onIconClick) {
+      onIconClick();
+      return;
+    }
     if (!inputRef.current) return;
     if (typeof inputRef.current.showPicker === "function") {
       inputRef.current.showPicker();
@@ -116,6 +124,7 @@ export default function SearchInput({
           disabled={disabled}
           placeholder={placeholder}
           onChange={(e) => onChange?.(e.target.value)}
+          onKeyDown={onKeyDown}
           aria-invalid={!!error}
           className={clsx(
             "w-full rounded-xl",
