@@ -13,6 +13,7 @@ interface CertificateRequestCardProps {
   daysElapsed: string;
   progress?: number;
   highPriority?: boolean;
+  downloadUrl?: string | null;
 }
 
 const CertificateRequestCard = ({
@@ -26,6 +27,7 @@ const CertificateRequestCard = ({
   daysElapsed,
   progress = 0,
   highPriority = false,
+  downloadUrl,
 }: CertificateRequestCardProps) => {
   const isProcessing = status === "processing";
 
@@ -142,15 +144,31 @@ const CertificateRequestCard = ({
 
         {/* ================= DOWNLOAD BUTTON ================= */}
         {!isProcessing && (
-          <button
-            className="mt-6 w-full py-4 rounded-2xl 
+          downloadUrl ? (
+            <a
+              href={downloadUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 w-full py-4 rounded-2xl 
                        bg-[#A3E635] text-black font-semibold
                        flex items-center justify-center gap-2
                        hover:bg-[#A3E635]/90 transition"
-          >
-            <Download className="w-4 h-4" />
-            Download Certificate Now
-          </button>
+            >
+              <Download className="w-4 h-4" />
+              Download Certificate Now
+            </a>
+          ) : (
+            <button
+              disabled
+              className="mt-6 w-full py-4 rounded-2xl 
+                       bg-gray-500 text-white font-semibold
+                       flex items-center justify-center gap-2
+                       cursor-not-allowed opacity-50"
+            >
+              <Download className="w-4 h-4" />
+              Document Not Available Yet
+            </button>
+          )
         )}
       </div>
     </div>

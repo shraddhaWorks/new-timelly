@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
+import { redis } from "@/lib/redis";
 
 export async function POST(req: Request) {
   try {
@@ -85,6 +86,12 @@ export async function POST(req: Request) {
         },
       },
     });
+
+    // Invalidate cache
+    const cacheKey = `certificates:${schoolId}:all`;
+    const studentCacheKey = `certificates:${schoolId}:${studentId}`;
+    await redis.del(cacheKey);
+    await redis.del(studentCacheKey);
 
     return NextResponse.json(
       { message: "Certificate assigned successfully", certificate },

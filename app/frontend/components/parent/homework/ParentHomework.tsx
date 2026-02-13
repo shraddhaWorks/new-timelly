@@ -1,209 +1,260 @@
 'use client';
 
+import { useState, useMemo } from 'react';
 import {
   ListChecks,
   Clock,
   CheckCircle2,
   TrendingUp,
+  ChevronDown,
+  ChevronUp,
+  Upload,
 } from 'lucide-react';
 
-/* =======================
-   PAGE
-======================= */
 export default function Page() {
+  const [assignments, setAssignments] = useState([
+    {
+      id: 1,
+      subject: 'Mathematics',
+      title: 'Chapter 5: Quadratic Equations - Exercise 5.3',
+      teacher: 'Mr. Rajesh Kumar',
+      assigned: '18 Jan 2026',
+      due: '23 Jan 2026',
+      status: 'Pending',
+      description:
+        'Complete all questions from Exercise 5.3. Show all steps clearly. Use graph paper for question 7.',
+    },
+    {
+      id: 2,
+      subject: 'Science',
+      title: 'Physics: Laws of Motion Worksheet',
+      teacher: 'Mrs. Kavitha',
+      assigned: '15 Jan 2026',
+      due: '20 Jan 2026',
+      status: 'Submitted',
+      description: 'Answer all MCQs and 5 long questions.',
+    },
+    {
+      id: 3,
+      subject: 'English',
+      title: 'Essay Writing - Climate Change',
+      teacher: 'Mr. Daniel',
+      assigned: '10 Jan 2026',
+      due: '15 Jan 2026',
+      status: 'Late',
+      description: 'Write 500 word essay on Climate Change.',
+    },
+  ]);
+
+  const [subject, setSubject] = useState('All Subjects');
+  const [status, setStatus] = useState('All');
+  const [openId, setOpenId] = useState<number | null>(null);
+
+  const filteredAssignments = useMemo(() => {
+    return assignments.filter((item) => {
+      const subjectMatch =
+        subject === 'All Subjects' || item.subject === subject;
+      const statusMatch =
+        status === 'All' || item.status === status;
+      return subjectMatch && statusMatch;
+    });
+  }, [subject, status, assignments]);
+
+  const total = assignments.length;
+  const pending = assignments.filter(a => a.status === 'Pending').length;
+  const submitted = assignments.filter(a => a.status === 'Submitted').length;
+  const completion = Math.round((submitted / total) * 100);
+
+  const handleUpload = (id: number) => {
+    setAssignments(prev =>
+      prev.map(item =>
+        item.id === id
+          ? { ...item, status: 'Submitted' }
+          : item
+      )
+    );
+  };
+
   return (
-    <main className="min-h-screen p-8 space-y-8 bg-gradient-to-br from-[#2a0b52] via-[#3a0f4f] to-[#4a1b2d] text-white">
-      <Header />
-      <StatsGrid />
-      <FilterSection />
-    </main>
-  );
-}
+    <main className="min-h-screen p-8 space-y-8  text-white">
 
-/* =======================
-   HEADER
-======================= */
-function Header() {
-  return (
-    <section className="
-      rounded-2xl p-7
-      bg-gradient-to-br from-purple-700/70 to-rose-700/60
-      backdrop-blur-xl border border-white/15
-      shadow-xl
-    ">
-      <h1 className="text-2xl font-semibold">
-        Homework & Assignments
-      </h1>
-      <p className="mt-1 text-sm text-white/70">
-        Track and submit Aarav Kumar&apos;s homework
-      </p>
-    </section>
-  );
-}
+      {/* HEADER */}
+      <section className="somu rounded-2xl p-7">
+        <h1 className="text-2xl font-semibold">
+          Homework & Assignments
+        </h1>
+        <p className="mt-1 text-sm text-white/70">
+          Track and submit Aarav Kumar's homework
+        </p>
+      </section>
 
-/* =======================
-   STATS GRID
-======================= */
-function StatsGrid() {
-  return (
-    <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-      <StatCard
-        icon={ListChecks}
-        iconColor="text-lime-400"
-        badge="This Month"
-        badgeBg="bg-lime-400/20 text-lime-300"
-        value="5"
-        label="All assignments"
-      />
+      {/* STATS */}
+      <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
 
-      <StatCard
-        icon={Clock}
-        iconColor="text-orange-400"
-        badge="Due Soon"
-        badgeBg="bg-orange-400/20 text-orange-300"
-        value="2"
-        label="Need attention"
-      />
-
-      <StatCard
-        icon={CheckCircle2}
-        iconColor="text-lime-400"
-        badge="Great!"
-        badgeBg="bg-lime-400/20 text-lime-300"
-        value="2"
-        label="On time"
-      />
-
-      <StatCard
-        icon={TrendingUp}
-        iconColor="text-yellow-300"
-        badge="+12%"
-        badgeBg="bg-yellow-300/20 text-yellow-200"
-        value="60%"
-        label="Overall progress"
-      />
-    </section>
-  );
-}
-
-/* =======================
-   STAT CARD
-======================= */
-function StatCard({
-  icon: Icon,
-  iconColor,
-  badge,
-  badgeBg,
-  value,
-  label,
-}: {
-  icon: any;
-  iconColor: string;
-  badge: string;
-  badgeBg: string;
-  value: string;
-  label: string;
-}) {
-  return (
-    <div
-      className="
-        rounded-2xl p-6
-        bg-gradient-to-br from-white/15 to-white/5
-        backdrop-blur-xl border border-white/15
-        transition-all duration-300
-        hover:-translate-y-1.5 hover:shadow-2xl
-      "
-    >
-      <div className="flex items-center justify-between">
-        <Icon className={`h-7 w-7 ${iconColor}`} />
-        <span className={`rounded-full px-3 py-1 text-xs ${badgeBg}`}>
-          {badge}
-        </span>
-      </div>
-
-      <div className="mt-4 text-4xl font-bold">
-        {value}
-      </div>
-
-      <p className="mt-1 text-sm text-white/70">
-        {label}
-      </p>
-    </div>
-  );
-}
-
-/* =======================
-   FILTER SECTION
-======================= */
-function FilterSection() {
-  return (
-    <section className="
-      rounded-2xl p-7 space-y-6
-      bg-gradient-to-br from-white/15 to-white/5
-      backdrop-blur-xl border border-white/15
-      shadow-xl
-    ">
-      <div className="flex items-start justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">
-            Filter Homework
-          </h3>
-          <p className="text-sm text-white/70">
-            Find assignments quickly
-          </p>
+        <div className="somu rounded-2xl statCard">
+          <ListChecks className="icon text-lime-400" />
+          <div className="statValue">{total}</div>
+          <p className="statLabel">All assignments</p>
         </div>
 
-        <span className="rounded-full bg-lime-400/20 px-4 py-1 text-sm text-lime-300">
-          1 Result
-        </span>
+        <div className="somu rounded-2xl statCard">
+          <Clock className="icon text-orange-400" />
+          <div className="statValue">{pending}</div>
+          <p className="statLabel">Need attention</p>
+        </div>
+
+        <div className="somu rounded-2xl statCard">
+          <CheckCircle2 className="icon text-lime-400" />
+          <div className="statValue">{submitted}</div>
+          <p className="statLabel">On time</p>
+        </div>
+
+        <div className="somu rounded-2xl statCard">
+          <TrendingUp className="icon text-yellow-300" />
+          <div className="statValue">{completion}%</div>
+          <p className="statLabel">Overall progress</p>
+        </div>
+
+      </section>
+
+      {/* FILTER */}
+      <section className="somu rounded-2xl p-7 space-y-6">
+
+        <div className="flex justify-between">
+          <div>
+            <h3 className="text-lg font-semibold">Filter Homework</h3>
+            <p className="text-sm text-white/70">
+              Find assignments quickly
+            </p>
+          </div>
+
+          <span className="rounded-full border border-lime-400/30 px-4 py-1 text-sm text-lime-300">
+            {filteredAssignments.length} Results
+          </span>
+        </div>
+
+        <select
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          className="w-72 rounded-xl px-4 py-3 bg-transparent border border-white/20 outline-none"
+        >
+          <option>All Subjects</option>
+          <option>Mathematics</option>
+          <option>Science</option>
+          <option>English</option>
+        </select>
+
+        <div className="flex gap-3 flex-wrap">
+          {['All', 'Pending', 'Submitted', 'Late'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setStatus(tab)}
+              className={`px-6 py-3 rounded-xl border transition ${
+                status === tab
+                  ? 'border-lime-400 text-lime-300'
+                  : 'border-white/20 hover:border-white/40'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* ASSIGNMENTS */}
+      <div className="space-y-6">
+        {filteredAssignments.map((item) => {
+
+          const statusColor =
+            item.status === 'Pending'
+              ? 'border-orange-400 text-orange-300'
+              : item.status === 'Submitted'
+              ? 'border-lime-400 text-lime-300'
+              : 'border-red-400 text-red-300';
+
+          return (
+            <div key={item.id} className="somu rounded-2xl p-6">
+
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm text-lime-300">{item.subject}</p>
+                  <h3 className="text-lg font-semibold">{item.title}</h3>
+                  <p className="text-sm text-white/70">
+                    {item.teacher} • Due: {item.due}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <span className={`px-4 py-1 rounded-full text-xs border ${statusColor}`}>
+                    {item.status}
+                  </span>
+
+                  <button
+                    onClick={() =>
+                      setOpenId(openId === item.id ? null : item.id)
+                    }
+                  >
+                    {openId === item.id ? <ChevronUp /> : <ChevronDown />}
+                  </button>
+                </div>
+              </div>
+
+              {openId === item.id && (
+                <div className="mt-6 space-y-4 border-t border-white/20 pt-4">
+                  <p className="text-sm text-white/70">
+                    {item.description}
+                  </p>
+
+                  <button
+                    onClick={() => handleUpload(item.id)}
+                    className="w-full flex justify-center items-center gap-2 py-3 rounded-xl border border-lime-400 text-lime-300 hover:bg-lime-400/10 transition"
+                  >
+                    <Upload size={18} />
+                    Upload Submission
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
-      <select
-        className="
-          w-72 rounded-xl px-4 py-3 text-sm
-          bg-white/15 backdrop-blur-md
-          border border-white/20
-          outline-none
-        "
-      >
-        <option>All Subjects</option>
-        <option>Math</option>
-        <option>Science</option>
-      </select>
+      <style jsx>{`
+        .card {
+          background: transparent;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 16px;
+          transition: 0.3s ease;
+        }
 
-      <StatusTabs />
-    </section>
-  );
-}
+        .card:hover {
+          border: 1px solid rgba(255, 255, 255, 0.25);
+        }
 
-/* =======================
-   STATUS TABS
-======================= */
-function StatusTabs() {
-  const tabs = ['All', 'Pending', 'Submitted', 'Late'];
+        .statCard {
+          padding: 24px;
+        }
 
-  return (
-    <div className="flex flex-wrap gap-3">
-      {tabs.map((tab) => {
-        const isLate = tab === 'Late';
+        .icon {
+          height: 24px;
+          width: 24px;
+        }
 
-        return (
-          <button
-            key={tab}
-            className={`
-              rounded-xl px-6 py-3 text-sm
-              transition-all
-              ${
-                isLate
-                  ? 'bg-lime-400/30 text-lime-200 border border-lime-400/40'
-                  : 'bg-white/15 hover:bg-white/25 border border-white/15'
-              }
-            `}
-          >
-            {tab}
-          </button>
-        );
-      })}
-    </div>
+        .statValue {
+          margin-top: 16px;
+          font-size: 28px;
+          font-weight: 700;
+        }
+
+        
+
+        .statLabel {
+          margin-top: 4px;
+          font-size: 14px;
+          color: rgba(255, 255, 255, 0.7);
+        }
+      `}</style>
+
+    </main>
   );
 }
