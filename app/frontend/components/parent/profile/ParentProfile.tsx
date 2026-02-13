@@ -238,8 +238,8 @@ export default function ParentProfile() {
   ];
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 md:p-8">
-      <main className="max-w-5xl mx-auto space-y-6 md:space-y-8">
+    <div className="min-h-screen p-3 sm:p-5 md:p-6">
+      <main className="max-w-6xl mx-auto space-y-5 md:space-y-7">
         {/* Header: title + Download only */}
         <section className="rounded-2xl sm:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 md:p-8">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
@@ -260,7 +260,7 @@ export default function ParentProfile() {
         </section>
 
         {/* Profile card: image + name + tags */}
-        <section className="rounded-2xl sm:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 md:p-10 transition-all duration-200 hover:border-white/20">
+        <section className="rounded-2xl sm:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 md:p-8 transition-all duration-200 hover:border-white/20">
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-6">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 md:gap-6">
               <div className="flex items-center gap-4">
@@ -281,8 +281,9 @@ export default function ParentProfile() {
               </div>
             </div>
             <div className="shrink-0 flex justify-center md:justify-end">
-              <div className="relative h-40 w-40 sm:h-48 sm:w-48 md:h-56 md:w-56 rounded-2xl overflow-hidden border-2 border-white/20 bg-white/5 transition-all duration-200 hover:border-lime-400/40 hover:shadow-lg">
+                <div className="relative h-32 w-32 sm:h-44 sm:w-44 md:h-52 md:w-52 rounded-2xl overflow-hidden border-2 border-white/20 bg-white/5 transition-all duration-200 hover:border-lime-400/40 hover:shadow-lg">
                 {photoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={photoUrl}
                     alt={s.name}
@@ -299,7 +300,7 @@ export default function ParentProfile() {
         </section>
 
         {/* Stats grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
           {stats.map((item) => (
             <div
               key={item.label}
@@ -316,14 +317,15 @@ export default function ParentProfile() {
 
         {/* Academic performance – bar graph */}
         {profile.academicPerformance.length > 0 && (
-          <section className="rounded-2xl sm:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 md:p-8 transition-all duration-200 hover:border-white/20">
+          <section className="rounded-2xl sm:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 md:p-8 transition-all duration-200 hover:border-white/20 overflow-hidden">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
               <h2 className="flex items-center gap-2 text-xl sm:text-2xl font-bold text-white">
                 <BarChart3 className="w-6 h-6 text-lime-400" />
                 Academic performance
               </h2>
             </div>
-            <div className="flex gap-3 sm:gap-6" style={{ minHeight: 240 }}>
+            <div className="overflow-x-auto no-scrollbar">
+              <div className="flex gap-3 sm:gap-6 min-w-[620px]" style={{ minHeight: 240 }}>
               {/* Y-axis labels */}
               <div
                 className="flex flex-col justify-between text-white/60 text-xs sm:text-sm shrink-0 py-1"
@@ -366,12 +368,13 @@ export default function ParentProfile() {
                   ))}
                 </div>
               </div>
+              </div>
             </div>
           </section>
         )}
 
         {/* Student details (read-only) */}
-        <section className="rounded-2xl sm:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 md:p-10 transition-all duration-200 hover:border-white/20">
+        <section className="rounded-2xl sm:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 md:p-8 transition-all duration-200 hover:border-white/20">
           <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 flex items-center gap-2">
             <User className="w-6 h-6 text-lime-400" />
             Student details
