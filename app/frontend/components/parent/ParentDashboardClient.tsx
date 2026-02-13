@@ -5,6 +5,7 @@ import AppLayout from "../../AppLayout";
 import { PARENT_MENU_ITEMS } from "../../constants/sidebar";
 import RequiredRoles from "../../auth/RequiredRoles";
 import ParentFeesTab from "./ParentFeesTab";
+import ParentAnalyticsTab from "./analytics/ParentAnalyticsTab";
 
 const PARENT_TAB_TITLES: Record<string, string> = {
   dashboard: "Dashboard",
@@ -14,12 +15,15 @@ const PARENT_TAB_TITLES: Record<string, string> = {
   chat: "Chat",
   fees: "Fees",
   certificates: "Certificates",
+  analytics: "Analytics",
 };
 
 function renderTabContent(tab: string) {
   switch (tab) {
     case "fees":
       return <ParentFeesTab />;
+    case "analytics":
+      return <ParentAnalyticsTab />;
     default:
       return <div className="p-6 text-white/60">Content for {tab}</div>;
   }
