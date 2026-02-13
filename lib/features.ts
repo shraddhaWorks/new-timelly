@@ -22,6 +22,7 @@ export const FEATURES = [
   { id: "school", label: "School Details", description: "School information" },
   { id: "payments", label: "Payments & Fees", description: "Fees and payments" },
   { id: "tc", label: "Transfer Certificate", description: "TC requests and approval" },
+  { id: "profile", label: "Profile", description: "View and edit the profile" },
   
 ] as const;
 
