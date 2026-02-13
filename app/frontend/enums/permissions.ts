@@ -32,5 +32,6 @@ export enum Permission {
   PROFILE = "PROFILE",
   HOME = "HOME",
   STUDENT_LEAVE = "STUDENT_LEAVE",
-  LEAVES="LEAVES"
+  LEAVES="LEAVES",
+  ANALYTICS = "ANALYTICS"
 }

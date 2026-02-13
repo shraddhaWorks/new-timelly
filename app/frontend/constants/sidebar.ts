@@ -36,95 +36,102 @@ import { SidebarItem } from "../types/sidebar";
 import { Permission } from "../enums/permissions";
 
 export const PARENT_MENU_ITEMS: SidebarItem[] = [
-  {
-    label: "Home",
-    tab: "dashboard",
-    href: "/frontend/pages/parent?tab=dashboard",
-    icon: House,
-    permission: Permission.HOME,
-  },
-  {
-    label: "Profile",
-    tab: "profile",
-    href: "/frontend/pages/parent?tab=profile",
-    icon: User,
-    permission: Permission.PROFILE,
-  },
-  {
-    label: "Homework",
-    tab: "homework",
-    href: "/frontend/pages/parent?tab=homework",
-    icon: BookOpen,
-    permission: Permission.HOMEWORK,
-  },
-  {
-    label: "Attendance",
-    tab: "attendance",
-    href: "/frontend/pages/parent?tab=attendance",
-    icon: Calendar,
-    permission: Permission.ATTENDANCE,
-  },
-  {
-    label: "Marks",
-    tab: "marks",
-    href: "/frontend/pages/parent?tab=marks",
-    icon: Award,
-    permission: Permission.MARKS,
-  },
-  {
-    label: "Exams & Syllabus",
-    tab: "exams",
-    href: "/frontend/pages/parent?tab=exams",
-    icon: ClipboardList,
-    permission: Permission.EXAMS,
-  },
-  {
-    label: "Chat",
-    tab: "chat",
-    href: "/frontend/pages/parent?tab=chat",
-    icon: MessageCircle,
-    permission: Permission.CHAT,
-  },
-  {
-    label: "Workshops",
-    tab: "workshops",
-    href: "/frontend/pages/parent?tab=workshops",
-    icon: Briefcase,
-    permission: Permission.WORKSHOPS,
-  },
-  {
-    label: "Certificates",
-    tab: "certificates",
-    href: "/frontend/pages/parent?tab=certificates",
-    icon: FileText,
-    permission: Permission.CERTIFICATES,
-  },
-  {
-    label: "Fees",
-    tab: "fees",
-    href: "/frontend/pages/parent?tab=fees",
-    icon: CreditCard,
-    permission: Permission.FEES,
-  },
-  {
-    label: "Leave Application",
-    tab: "leave",
-    href: "/frontend/pages/parent?tab=leave",
-    icon: CalendarClock,
-    permission: Permission.STUDENT_LEAVE,
-  },
-  {
-    label: "Settings",
-    tab: "settings",
-    href: "/frontend/pages/parent?tab=settings",
-    icon: Settings,
-    permission: Permission.SETTINGS,
-  },
-  {
-    label: "Logout",
-    icon: LogOut,
-    action: "logout",
-  },
+    {
+        label: "Analytics",
+        tab: "analytics",
+        href: "/frontend/pages/parent?tab=analytics",
+        icon: ChartColumn,
+        permission: Permission.ANALYTICS,
+    },
+    {
+        label: "Home",
+        tab: "dashboard",
+        href: "/frontend/pages/parent?tab=dashboard",
+        icon: House,
+        permission: Permission.HOME,
+    },
+    {
+        label: "Profile",
+        tab: "profile",
+        href: "/frontend/pages/parent?tab=profile",
+        icon: User,
+        permission: Permission.PROFILE,
+    },
+    {
+        label: "Homework",
+        tab: "homework",
+        href: "/frontend/pages/parent?tab=homework",
+        icon: BookOpen,
+        permission: Permission.HOMEWORK,
+    },
+    {
+        label: "Attendance",
+        tab: "attendance",
+        href: "/frontend/pages/parent?tab=attendance",
+        icon: Calendar,
+        permission: Permission.ATTENDANCE,
+    },
+    {
+        label: "Marks",
+        tab: "marks",
+        href: "/frontend/pages/parent?tab=marks",
+        icon: Award,
+        permission: Permission.MARKS,
+    },
+    {
+        label: "Exams & Syllabus",
+        tab: "exams",
+        href: "/frontend/pages/parent?tab=exams",
+        icon: ClipboardList,
+        permission: Permission.EXAMS,
+    },
+    {
+        label: "Chat",
+        tab: "chat",
+        href: "/frontend/pages/parent?tab=chat",
+        icon: MessageCircle,
+        permission: Permission.CHAT,
+    },
+    {
+        label: "Workshops",
+        tab: "workshops",
+        href: "/frontend/pages/parent?tab=workshops",
+        icon: Briefcase,
+        permission: Permission.WORKSHOPS,
+    },
+    {
+        label: "Certificates",
+        tab: "certificates",
+        href: "/frontend/pages/parent?tab=certificates",
+        icon: FileText,
+        permission: Permission.CERTIFICATES,
+    },
+    {
+        label: "Fees",
+        tab: "fees",
+        href: "/frontend/pages/parent?tab=fees",
+        icon: CreditCard,
+        permission: Permission.FEES,
+    },
+    {
+        label: "Leave Application",
+        tab: "leave",
+        href: "/frontend/pages/parent?tab=leave",
+        icon: CalendarClock,
+        permission: Permission.STUDENT_LEAVE,
+    },
+    {
+        label: "Settings",
+        tab: "settings",
+        href: "/frontend/pages/parent?tab=settings",
+        icon: Settings,
+        permission: Permission.SETTINGS,
+    },
+    {
+        label: "Logout",
+        icon: LogOut,
+        action: "logout",
+    },
 ];
 
 
@@ -276,21 +283,21 @@ export const TEACHER_MENU_ITEMS: SidebarItem[] = [
         icon: LayoutDashboard,
         permission: Permission.DASHBOARD,
     },
-        {
+    {
         label: "Classes",
         tab: "classes",
         href: "/frontend/pages/teacher?tab=classes",
         icon: GraduationCap,
         permission: Permission.CLASSES,
     },
-        {
+    {
         label: "Homework",
         tab: "homework",
         href: "/frontend/pages/teacher?tab=homework",
         icon: BookOpen,
         permission: Permission.HOMEWORK,
     },
-       {
+    {
         label: "Marks",
         tab: "marks",
         href: "/frontend/pages/teacher?tab=marks",
@@ -305,26 +312,26 @@ export const TEACHER_MENU_ITEMS: SidebarItem[] = [
         permission: Permission.ATTENDANCE,
     },
     {
-        label:"Exams & Syllabus",
+        label: "Exams & Syllabus",
         tab: "exams",
         href: "/frontend/pages/teacher?tab=exams",
         icon: FileText,
         permission: Permission.EXAMS,
     },
     {
-        label:"Worksops & Events",
+        label: "Worksops & Events",
         tab: "workshops",
         href: "/frontend/pages/teacher?tab=workshops",
         icon: Briefcase,
         permission: Permission.WORKSHOPS,
-    },{
-        label:"Newsfeed",
+    }, {
+        label: "Newsfeed",
         tab: "newsfeed",
         href: "/frontend/pages/teacher?tab=newsfeed",
         icon: Newspaper,
         permission: Permission.NEWSFEED,
-    },{
-        label:"Parent Chat",
+    }, {
+        label: "Parent Chat",
         tab: "chat",
         href: "/frontend/pages/teacher?tab=chat",
         icon: MessageSquare,
@@ -338,7 +345,7 @@ export const TEACHER_MENU_ITEMS: SidebarItem[] = [
         permission: Permission.LEAVES,
     },
     {
-        label:"Profile",
+        label: "Profile",
         tab: "profile",
         href: "/frontend/pages/teacher?tab=profile",
         icon: User,
@@ -351,7 +358,7 @@ export const TEACHER_MENU_ITEMS: SidebarItem[] = [
         icon: Settings,
         permission: Permission.SETTINGS,
     },
-     {
+    {
         label: "Sign Out",
         action: "logout",
         icon: LogOut,
