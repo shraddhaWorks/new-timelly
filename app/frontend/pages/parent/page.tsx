@@ -17,6 +17,7 @@ import ParentWorkshopsTab from "../../components/parent/workshops/ParentWorkshop
 import ParentCertificatesTab from "../../components/parent/certificates/ParentCerticates";
 import ParentLeavesTab from "../../components/parent/leaves/LeaveApplications";
 import ParentSettingsTab from "../../components/parent/settings/ParentSettings";
+import ParentAnalyticsTab from "../../components/parent/analytics/ParentAnalyticsTab";
 
 const PARENT_TAB_TITLES: Record<string, string> = {
   dashboard: "Home",
@@ -45,6 +46,8 @@ function ParentDashboardInner() {
 
   const renderTabContent = () => {
     switch (tab) {
+      case "analytics":
+        return <ParentAnalyticsTab/>
       case "dashboard":
         return <ParentHomeTab />;
       case "profile":
