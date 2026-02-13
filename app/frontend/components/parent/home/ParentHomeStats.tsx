@@ -45,9 +45,9 @@ export default function ParentHomeStats({
       badge: attendancePct >= 90 ? "Excellent" : "Needs Focus",
       badgeClass:
         attendancePct >= 90
-          ? "bg-lime-400/10 text-lime-300 border border-lime-400/20"
-          : "bg-orange-400/10 text-orange-300 border border-orange-400/20",
-      icon: <CheckCircle2 className="w-5 h-5 text-lime-400" />,
+          ? "px-2.5 py-1 text-xs font-semibold rounded-lg border bg-[#A3E635]/10 text-[#A3E635] border-[#A3E635]/20"
+          : "bg-orange-400/10 text-orange-300 border border-orange-400/20 px-2.5 py-1 text-xs font-semibold rounded-lg",
+      icon: <CheckCircle2 className="w-5 h-5 text-[#A3E635]" />,
     },
     {
       key: "homework",
@@ -55,8 +55,8 @@ export default function ParentHomeStats({
       value: `${homeworkSubmitted}/${homeworkTotal}`,
       subtitle: "Tasks completed",
       badge: `${Math.max(homeworkTotal - homeworkSubmitted, 0)} Pending`,
-      badgeClass: "bg-lime-400/10 text-lime-300 border border-lime-400/20",
-      icon: <BookOpen className="w-5 h-5 text-lime-400" />,
+      badgeClass: "px-2.5 py-1 text-xs font-semibold rounded-lg border bg-[#A3E635]/10 text-[#A3E635] border-[#A3E635]/20",
+      icon: <BookOpen className="w-5 h-5 text-[#A3E635]" />,
     },
     {
       key: "marks",
@@ -64,8 +64,8 @@ export default function ParentHomeStats({
       value: gradeLabel,
       subtitle: `${averageMarksPct.toFixed(1)}% Average`,
       badge: "Top 3",
-      badgeClass: "bg-lime-400/10 text-lime-300 border border-lime-400/20",
-      icon: <Trophy className="w-5 h-5 text-lime-400" />,
+      badgeClass: "px-2.5 py-1 text-xs font-semibold rounded-lg border bg-[#A3E635]/10 text-[#A3E635] border-[#A3E635]/20",
+      icon: <Trophy className="w-5 h-5 text-[#A3E635]" />,
     },
     {
       key: "fees",
@@ -75,8 +75,8 @@ export default function ParentHomeStats({
       badge: feePendingAmount > 0 ? "Due Soon" : "Cleared",
       badgeClass:
         feePendingAmount > 0
-          ? "bg-red-500/10 text-red-300 border border-red-500/20"
-          : "bg-lime-400/10 text-lime-300 border border-lime-400/20",
+          ? "bg-red-500/10 text-red-300 border border-red-500/20 px-2.5 py-1 text-xs font-semibold rounded-lg"
+          : "px-2.5 py-1 text-xs font-semibold rounded-lg border bg-[#A3E635]/10 text-[#A3E635] border-[#A3E635]/20",
       icon: <IndianRupee className="w-5 h-5 text-red-300" />,
     },
   ];
@@ -85,16 +85,16 @@ export default function ParentHomeStats({
     <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
       {items.map((item) => (
         <StatCard key={item.key} className="bg-white/5">
-          <div className="flex items-start justify-between">
-            <div className="p-3 bg-white/5 rounded-xl">{item.icon}</div>
+          <div className="flex items-start justify-between mb-4">
+            <div className="p-2.5 rounded-xl transition-transform duration-300 hover:scale-110 bg-[#A3E635]/10">{item.icon}</div>
             <span className={`px-2 py-1 text-xs font-bold rounded-full ${item.badgeClass}`}>
               {item.badge}
             </span>
           </div>
           <div className="mt-5">
-            <h3 className="text-sm font-medium text-white/60 mb-1">{item.title}</h3>
-            <p className="text-4xl font-bold text-white leading-tight">{item.value}</p>
-            <p className="text-sm text-white/65 mt-2">{item.subtitle}</p>
+            <h3 className="text-sm font-medium text-gray-400 mb-1">{item.title}</h3>
+            <p className="text-3xl font-bold text-white mb-2 tracking-tight">{item.value}</p>
+            <p className="text-xs text-[rgb(204,213,238)] font-medium">{item.subtitle}</p>
           </div>
         </StatCard>
       ))}

@@ -42,28 +42,29 @@ export default function ParentHomeCircularsSection({ circulars }: Props) {
 
   return (
     <section className="space-y-5">
-      <div className="grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-4 xl:gap-6 items-start">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-start gap-3">
           <span className="w-1.5 h-12 rounded-full bg-lime-400 mt-1" />
           <div>
-            <h3 className="text-4xl md:text-5xl font-bold text-white leading-tight">Circulars & Notices</h3>
-            <p className="text-white/65 text-base md:text-lg mt-2">Create and manage school-wide circulars</p>
+            <h3 className="text-xl font-bold text-white flex items-center gap-2">Circulars & Notices</h3>
+            <p className="text-sm text-gray-400 mt-1">Create and manage school-wide circulars</p>
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-end">
+        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
           <div className="w-full lg:max-w-md">
             <SearchInput
               value={search}
               onChange={setSearch}
               icon={Search}
               showSearchIcon
-              placeholder="Search circulars by title or reference"
+              placeholder="Search circulars by title.."
               variant="glass"
+              className="text-sm"
             />
           </div>
 
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2">
             {IMPORTANCE_FILTERS.map((filter) => {
               const active = importance === filter;
               const label =
@@ -75,7 +76,7 @@ export default function ParentHomeCircularsSection({ circulars }: Props) {
                   key={filter}
                   type="button"
                   onClick={() => setImportance(filter)}
-                  className={`rounded-full px-5 py-2.5 text-sm font-semibold border transition ${
+                  className={`h-[42px] px-4 border rounded-xl text-sm font-medium whitespace-nowrap ${
                     active
                       ? "bg-lime-400/10 text-lime-300 border-lime-400/40"
                       : "bg-white/5 text-white/60 border-white/15 hover:bg-white/10"
@@ -94,7 +95,7 @@ export default function ParentHomeCircularsSection({ circulars }: Props) {
           No circulars found for the selected filters.
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6 auto-rows-fr">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((c, index) => (
             <CircularNoticeCard
               key={c.id}
