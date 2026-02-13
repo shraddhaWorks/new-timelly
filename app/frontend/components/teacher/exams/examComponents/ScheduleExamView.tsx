@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { X, Plus, BookOpen, CheckCircle2, Trash2, Save } from "lucide-react";
 import PageHeader from "../../../common/PageHeader";
+import Spinner from "../../../common/Spinner";
 
 interface ClassItem {
     id: string;
@@ -247,8 +248,7 @@ export default function ScheduleExamView({
     if (isEdit && examLoading) {
         return (
             <div className="min-h-screen text-white pb-10 flex flex-col items-center justify-center gap-4">
-                <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#b4ff39]" />
-                <p className="text-white/60 text-sm uppercase tracking-wider">Loading exam...</p>
+                <Spinner/>
             </div>
         );
     }
@@ -452,7 +452,7 @@ export default function ScheduleExamView({
             >
               <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
                 {/* Number Badge */}
-                <div className="h-10 w-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 text-sm font-black shrink-0">
+                <div className="h-10 w-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 text-sm shrink-0">
                   {idx + 1}
                 </div>
 
@@ -497,7 +497,7 @@ export default function ScheduleExamView({
                               if (status === "Pending") newUnits[idx].completion = 0;
                               setUnits(newUnits);
                             }}
-                            className={`px-3 lg:px-4 py-2 rounded-lg text-[10px] lg:text-[11px] font-black transition-all whitespace-nowrap ${
+                            className={`px-3 lg:px-4 py-2 rounded-lg text-[10px] lg:text-[11px]  transition-all whitespace-nowrap ${
                               unit.status === status
                                 ? status === "Completed" ? "bg-[#b4ff39] text-black shadow-lg" : status === "Partial" ? "bg-yellow-400 text-black" : "bg-red-500 text-white"
                                 : "text-white/30 hover:text-white/60 hover:bg-white/5"
@@ -513,7 +513,7 @@ export default function ScheduleExamView({
                     <div className="flex-1 w-full mt-2 lg:mt-0">
                       <div className="flex justify-between items-center mb-2 px-1">
                         <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Completion %</label>
-                        <span className="text-sm font-black text-[#b4ff39]">{unit.completion}%</span>
+                        <span className="text-sm text-[#b4ff39]">{unit.completion}%</span>
                       </div>
                       <div className="relative h-6 flex items-center group">
                         <div className="h-2 w-full bg-white/5 rounded-full relative">
