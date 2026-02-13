@@ -1,222 +1,273 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import {
-  ListChecks,
-  Clock,
-  CheckCircle2,
-  TrendingUp,
-  ChevronDown,
-  ChevronUp,
-  Upload,
-} from 'lucide-react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
+import HomeworkHeader from './HomeworkHeader';
+import HomeworkStats from './HomeworkStats';
+import HomeworkFilters from './HomeworkFilters';
+import HomeworkCard from './HomeworkCard';
+
+interface Homework {
+  id: string;
+  title: string;
+  subject: string;
+  description: string;
+  teacher: {
+    name: string;
+  };
+  dueDate: string | null;
+  assignedDate: string | null;
+  hasSubmitted?: boolean;
+  submission?: {
+    id: string;
+    fileUrl: string | null;
+    submittedAt: string;
+  } | null;
+}
 
 export default function Page() {
-  const [assignments, setAssignments] = useState([
-    {
-      id: 1,
-      subject: 'Mathematics',
-      title: 'Chapter 5: Quadratic Equations - Exercise 5.3',
-      teacher: 'Mr. Rajesh Kumar',
-      assigned: '18 Jan 2026',
-      due: '23 Jan 2026',
-      status: 'Pending',
-      description:
-        'Complete all questions from Exercise 5.3. Show all steps clearly. Use graph paper for question 7.',
-    },
-    {
-      id: 2,
-      subject: 'Science',
-      title: 'Physics: Laws of Motion Worksheet',
-      teacher: 'Mrs. Kavitha',
-      assigned: '15 Jan 2026',
-      due: '20 Jan 2026',
-      status: 'Submitted',
-      description: 'Answer all MCQs and 5 long questions.',
-    },
-    {
-      id: 3,
-      subject: 'English',
-      title: 'Essay Writing - Climate Change',
-      teacher: 'Mr. Daniel',
-      assigned: '10 Jan 2026',
-      due: '15 Jan 2026',
-      status: 'Late',
-      description: 'Write 500 word essay on Climate Change.',
-    },
-  ]);
-
+  const { data: session } = useSession();
+  const [homeworks, setHomeworks] = useState<Homework[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [subject, setSubject] = useState('All Subjects');
   const [status, setStatus] = useState('All');
-  const [openId, setOpenId] = useState<number | null>(null);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [studentName, setStudentName] = useState('Student');
 
-  const filteredAssignments = useMemo(() => {
-    return assignments.filter((item) => {
+  const fetchStudentName = useCallback(async () => {
+    if (!session?.user) return;
+    
+    const studentId = (session.user as { studentId?: string | null })?.studentId;
+    if (!studentId) {
+      if (session.user.name) {
+        setStudentName(session.user.name);
+      }
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/student/${studentId}`, {
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.student?.user?.name) {
+          setStudentName(data.student.user.name);
+        } else if (session.user.name) {
+          setStudentName(session.user.name);
+        }
+      } else if (session.user.name) {
+        setStudentName(session.user.name);
+      }
+    } catch {
+      if (session.user.name) {
+        setStudentName(session.user.name);
+      }
+    }
+  }, [session]);
+
+  const fetchHomeworks = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams();
+      if (subject !== 'All Subjects') {
+        params.append('subject', subject);
+      }
+
+      const res = await fetch(`/api/homework/list?${params.toString()}`, {
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to fetch homework');
+      }
+
+      const data = await res.json();
+      const fetchedHomeworks = data.homeworks || [];
+      setHomeworks(fetchedHomeworks);
+    } catch (err) {
+      console.error('Error fetching homeworks:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load homework');
+    } finally {
+      setLoading(false);
+    }
+  }, [subject]);
+
+  useEffect(() => {
+    if (session) {
+      fetchStudentName();
+      fetchHomeworks();
+    }
+  }, [session, fetchStudentName, fetchHomeworks]);
+
+  const filteredHomeworks = useMemo(() => {
+    return homeworks.filter((item) => {
       const subjectMatch =
         subject === 'All Subjects' || item.subject === subject;
-      const statusMatch =
-        status === 'All' || item.status === status;
+      
+      let statusMatch = true;
+      if (status !== 'All') {
+        const itemStatus = item.hasSubmitted
+          ? 'Submitted'
+          : item.dueDate && new Date(item.dueDate) < new Date()
+          ? 'Late'
+          : 'Pending';
+        statusMatch = itemStatus === status;
+      }
+      
       return subjectMatch && statusMatch;
     });
-  }, [subject, status, assignments]);
+  }, [subject, status, homeworks]);
 
-  const total = assignments.length;
-  const pending = assignments.filter(a => a.status === 'Pending').length;
-  const submitted = assignments.filter(a => a.status === 'Submitted').length;
-  const completion = Math.round((submitted / total) * 100);
+  const total = homeworks.length;
+  const pending = homeworks.filter((h) => {
+    if (h.hasSubmitted) return false;
+    if (h.dueDate) {
+      try {
+        const due = new Date(h.dueDate);
+        const now = new Date();
+        if (now > due) return false; // It's late, not pending
+      } catch {
+        // Invalid date, treat as pending
+      }
+    }
+    return true;
+  }).length;
+  const submitted = homeworks.filter((h) => h.hasSubmitted).length;
+  const completion = total > 0 ? Math.round((submitted / total) * 100) : 0;
 
-  const handleUpload = (id: number) => {
-    setAssignments(prev =>
-      prev.map(item =>
-        item.id === id
-          ? { ...item, status: 'Submitted' }
-          : item
-      )
-    );
+  const availableSubjects = useMemo(() => {
+    const subjects = new Set(homeworks.map((h) => h.subject));
+    return Array.from(subjects).sort();
+  }, [homeworks]);
+
+  const handleUpload = async (homeworkId: string) => {
+    const homework = homeworks.find((h) => h.id === homeworkId);
+    if (!homework) return;
+
+    // Create a file input element
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp';
+    
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      setUploadingId(homeworkId);
+      try {
+        // First upload the file
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('folder', 'homework');
+
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          credentials: 'include',
+          body: formData,
+        });
+
+        if (!uploadRes.ok) {
+          const uploadData = await uploadRes.json().catch(() => ({}));
+          throw new Error(uploadData.message || 'File upload failed');
+        }
+
+        const uploadData = await uploadRes.json();
+        const fileUrl = uploadData.url;
+
+        // Then submit the homework
+        const submitRes = await fetch('/api/homework/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            homeworkId,
+            fileUrl,
+          }),
+        });
+
+        if (!submitRes.ok) {
+          const submitData = await submitRes.json().catch(() => ({}));
+          throw new Error(submitData.message || 'Submission failed');
+        }
+
+        // Refresh the homework list
+        await fetchHomeworks();
+      } catch (err) {
+        console.error('Error submitting homework:', err);
+        alert(err instanceof Error ? err.message : 'Failed to submit homework');
+      } finally {
+        setUploadingId(null);
+      }
+    };
+
+    input.click();
   };
 
+  if (loading) {
+    return (
+      <main className="min-h-screen p-8 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-white/30 border-t-white" />
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="min-h-screen p-8">
+        <div className="somu rounded-2xl p-7 text-center">
+          <p className="text-red-400">{error}</p>
+          <button
+            onClick={() => fetchHomeworks()}
+            className="mt-4 px-6 py-2 rounded-xl border border-lime-400 text-lime-300 hover:bg-lime-400/10 transition"
+          >
+            Retry
+          </button>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-screen p-8 space-y-8  text-white">
+    <main className="min-h-screen p-8 space-y-8 text-white">
+      <HomeworkHeader studentName={studentName} />
 
-      {/* HEADER */}
-      <section className="somu rounded-2xl p-7">
-        <h1 className="text-2xl font-semibold">
-          Homework & Assignments
-        </h1>
-        <p className="mt-1 text-sm text-white/70">
-          Track and submit Aarav Kumar's homework
-        </p>
-      </section>
+      <HomeworkStats
+        total={total}
+        pending={pending}
+        submitted={submitted}
+        completion={completion}
+      />
 
-      {/* STATS */}
-      <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+      <HomeworkFilters
+        subject={subject}
+        status={status}
+        onSubjectChange={setSubject}
+        onStatusChange={setStatus}
+        filteredCount={filteredHomeworks.length}
+        availableSubjects={availableSubjects}
+      />
 
-        <div className="somu rounded-2xl statCard">
-          <ListChecks className="icon text-lime-400" />
-          <div className="statValue">{total}</div>
-          <p className="statLabel">All assignments</p>
-        </div>
-
-        <div className="somu rounded-2xl statCard">
-          <Clock className="icon text-orange-400" />
-          <div className="statValue">{pending}</div>
-          <p className="statLabel">Need attention</p>
-        </div>
-
-        <div className="somu rounded-2xl statCard">
-          <CheckCircle2 className="icon text-lime-400" />
-          <div className="statValue">{submitted}</div>
-          <p className="statLabel">On time</p>
-        </div>
-
-        <div className="somu rounded-2xl statCard">
-          <TrendingUp className="icon text-yellow-300" />
-          <div className="statValue">{completion}%</div>
-          <p className="statLabel">Overall progress</p>
-        </div>
-
-      </section>
-
-      {/* FILTER */}
-      <section className="somu rounded-2xl p-7 space-y-6">
-
-        <div className="flex justify-between">
-          <div>
-            <h3 className="text-lg font-semibold">Filter Homework</h3>
-            <p className="text-sm text-white/70">
-              Find assignments quickly
-            </p>
-          </div>
-
-          <span className="rounded-full border border-lime-400/30 px-4 py-1 text-sm text-lime-300">
-            {filteredAssignments.length} Results
-          </span>
-        </div>
-
-        <select
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          className="w-72 rounded-xl px-4 py-3 bg-transparent border border-white/20 outline-none"
-        >
-          <option>All Subjects</option>
-          <option>Mathematics</option>
-          <option>Science</option>
-          <option>English</option>
-        </select>
-
-        <div className="flex gap-3 flex-wrap">
-          {['All', 'Pending', 'Submitted', 'Late'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setStatus(tab)}
-              className={`px-6 py-3 rounded-xl border transition ${
-                status === tab
-                  ? 'border-lime-400 text-lime-300'
-                  : 'border-white/20 hover:border-white/40'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {/* ASSIGNMENTS */}
       <div className="space-y-6">
-        {filteredAssignments.map((item) => {
-
-          const statusColor =
-            item.status === 'Pending'
-              ? 'border-orange-400 text-orange-300'
-              : item.status === 'Submitted'
-              ? 'border-lime-400 text-lime-300'
-              : 'border-red-400 text-red-300';
-
-          return (
-            <div key={item.id} className="somu rounded-2xl p-6">
-
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-sm text-lime-300">{item.subject}</p>
-                  <h3 className="text-lg font-semibold">{item.title}</h3>
-                  <p className="text-sm text-white/70">
-                    {item.teacher} • Due: {item.due}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <span className={`px-4 py-1 rounded-full text-xs border ${statusColor}`}>
-                    {item.status}
-                  </span>
-
-                  <button
-                    onClick={() =>
-                      setOpenId(openId === item.id ? null : item.id)
-                    }
-                  >
-                    {openId === item.id ? <ChevronUp /> : <ChevronDown />}
-                  </button>
-                </div>
-              </div>
-
-              {openId === item.id && (
-                <div className="mt-6 space-y-4 border-t border-white/20 pt-4">
-                  <p className="text-sm text-white/70">
-                    {item.description}
-                  </p>
-
-                  <button
-                    onClick={() => handleUpload(item.id)}
-                    className="w-full flex justify-center items-center gap-2 py-3 rounded-xl border border-lime-400 text-lime-300 hover:bg-lime-400/10 transition"
-                  >
-                    <Upload size={18} />
-                    Upload Submission
-                  </button>
-                </div>
-              )}
-            </div>
-          );
-        })}
+        {filteredHomeworks.length === 0 ? (
+          <div className="somu rounded-2xl p-7 text-center">
+            <p className="text-white/70">No homework found</p>
+          </div>
+        ) : (
+          filteredHomeworks.map((homework) => (
+            <HomeworkCard
+              key={homework.id}
+              homework={homework}
+              onUpload={handleUpload}
+              isUploading={uploadingId === homework.id}
+            />
+          ))
+        )}
       </div>
 
       <style jsx>{`
@@ -246,15 +297,12 @@ export default function Page() {
           font-weight: 700;
         }
 
-        
-
         .statLabel {
           margin-top: 4px;
           font-size: 14px;
           color: rgba(255, 255, 255, 0.7);
         }
       `}</style>
-
     </main>
   );
 }

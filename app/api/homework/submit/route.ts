@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
+import { redis } from "@/lib/redis";
 
 export async function POST(req: Request) {
   try {
@@ -71,6 +72,15 @@ export async function POST(req: Request) {
       },
     });
 
+    let schoolId = session.user.schoolId;
+    if (!schoolId) {
+      const studentData = await prisma.student.findUnique({
+        where: { id: session.user.studentId },
+        select: { schoolId: true, classId: true },
+      });
+      schoolId = studentData?.schoolId ?? null;
+    }
+
     if (existingSubmission) {
       // Update existing submission
       const updated = await prisma.homeworkSubmission.update({
@@ -81,6 +91,15 @@ export async function POST(req: Request) {
           submittedAt: new Date(),
         },
       });
+
+      // Invalidate cache
+      if (schoolId) {
+        const cachePattern = `homeworks:${schoolId}:${session.user.studentId}:*`;
+        const keys = await redis.keys(cachePattern);
+        if (keys.length > 0) {
+          await redis.del(...keys);
+        }
+      }
 
       return NextResponse.json(
         { message: "Homework submission updated successfully", submission: updated },
@@ -97,6 +116,15 @@ export async function POST(req: Request) {
         fileUrl: fileUrl || null,
       },
     });
+
+    // Invalidate cache
+    if (schoolId) {
+      const cachePattern = `homeworks:${schoolId}:${session.user.studentId}:*`;
+      const keys = await redis.keys(cachePattern);
+      if (keys.length > 0) {
+        await redis.del(...keys);
+      }
+    }
 
     return NextResponse.json(
       { message: "Homework submitted successfully", submission },
