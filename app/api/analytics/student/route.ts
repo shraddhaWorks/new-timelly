@@ -246,7 +246,9 @@ export async function GET() {
         rollNo: student.rollNo || "",
         class: student.class
           ? `${student.class.name}${student.class.section ? ` • ${student.class.section}` : ""}`
-          : "",
+          : student.classId
+          ? "Class not found"
+          : "Not assigned",
         photoUrl: student.user?.photoUrl,
       },
       stats: {

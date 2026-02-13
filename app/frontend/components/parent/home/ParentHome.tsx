@@ -7,6 +7,7 @@ import ParentHomeStats from "./ParentHomeStats";
 import ParentHomeCircularsSection from "./ParentHomeCircularsSection";
 import ParentHomeUpdatesSection from "./ParentHomeUpdatesSection";
 import { ParentHomeData } from "./types";
+import Spinner from "../../common/Spinner";
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -82,7 +83,7 @@ export default function ParentHomeTab() {
   }, []);
 
   if (loading) {
-    return <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-white/70">Loading home dashboard...</div>;
+    return <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-white/70 text-center"><Spinner/></div>;
   }
 
   if (error) {

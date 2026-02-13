@@ -33,7 +33,7 @@ const PARENT_TAB_TITLES: Record<string, string> = {
   certificates: "Certificates",
   leave: "Leave Application",
   settings: "Settings",
-  analytics:"Analytics"
+  analytics: "Analytics"
 };
 
 function ParentDashboardInner() {
@@ -49,7 +49,7 @@ function ParentDashboardInner() {
   const renderTabContent = () => {
     switch (tab) {
       case "analytics":
-        return <ParentAnalyticsTab/>
+        return <ParentAnalyticsTab />
       case "dashboard":
         return <ParentHomeTab />;
       case "profile":
@@ -125,7 +125,7 @@ export default function ParentDashboardContent() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center text-white/70">
-          <Spinner/>
+          <Spinner />
         </div>
       }
     >
