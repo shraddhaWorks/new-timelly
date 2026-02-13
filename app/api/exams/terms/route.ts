@@ -161,6 +161,10 @@ if (role === "STUDENT") {
     include: {
       class: { select: { id: true, name: true, section: true } },
       schedules: { orderBy: { examDate: "asc" } },
+      syllabus: {
+        orderBy: { subject: "asc" },
+        include: { units: { orderBy: { order: "asc" } } },
+      },
     },
     orderBy: { createdAt: "desc" },
   });
