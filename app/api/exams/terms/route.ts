@@ -152,14 +152,20 @@ if (role === "STUDENT") {
     );
   }
 
-  const terms = await prisma.examTerm.findMany({
+ const terms = await prisma.examTerm.findMany({
     where: {
       schoolId,
       classId: student.classId,
       ...(status ? { status: status as ExamTermStatus } : {}),
     },
     include: {
-      class: { select: { id: true, name: true, section: true } },
+      class: { 
+        include: { 
+          teacher: { // Fetch the class teacher
+            select: { name: true } 
+          } 
+        } 
+      },
       schedules: { orderBy: { examDate: "asc" } },
       syllabus: {
         orderBy: { subject: "asc" },
