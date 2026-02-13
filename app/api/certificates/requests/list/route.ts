@@ -34,7 +34,7 @@ export async function GET(req: Request) {
       schoolId: schoolId,
     };
 
-    // For students: only show their own TC requests
+    // For students: only show their own certificate requests
     if (session.user.studentId) {
       where.studentId = session.user.studentId;
     }
@@ -42,13 +42,13 @@ export async function GET(req: Request) {
     if (status) {
       where.status = status;
     }
-   const cachedKey = `tcs:${schoolId}:${session.user.studentId || "all"}:${status || "all"}`;
-   const cachedTcs = await redis.get(cachedKey);
-    if (cachedTcs) {
-      console.log("✅ TCs served from Redis");
-      return NextResponse.json({ tcs: JSON.parse(cachedTcs as string) }, { status: 200 });
+   const cachedKey = `certificate-requests:${schoolId}:${session.user.studentId || "all"}:${status || "all"}`;
+   const cachedRequests = await redis.get(cachedKey);
+    if (cachedRequests) {
+      console.log("✅ Certificate requests served from Redis");
+      return NextResponse.json({ certificateRequests: JSON.parse(cachedRequests as string) }, { status: 200 });
     }
-    const tcs = await prisma.transferCertificate.findMany({
+    const certificateRequests = await prisma.transferCertificate.findMany({
       where,
       include: {
         student: {
@@ -72,10 +72,10 @@ export async function GET(req: Request) {
         createdAt: "desc",
       },
     });
-    await redis.set(cachedKey, JSON.stringify(tcs), { ex: 60 * 5 }); // Cache for 5 minutes
-    return NextResponse.json({ tcs }, { status: 200 });
+    await redis.set(cachedKey, JSON.stringify(certificateRequests), { ex: 60 * 5 }); // Cache for 5 minutes
+    return NextResponse.json({ certificateRequests }, { status: 200 });
   } catch (error: any) {
-    console.error("List TC error:", error);
+    console.error("List certificate requests error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }

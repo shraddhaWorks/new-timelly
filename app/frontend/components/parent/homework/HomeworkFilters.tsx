@@ -1,24 +1,24 @@
 'use client';
 
-type ParentHomeworkFilterProps = {
+interface HomeworkFiltersProps {
   subject: string;
-  setSubject: (v: string) => void;
   status: string;
-  setStatus: (v: string) => void;
-  resultCount: number;
-  subjects?: string[];
-};
+  onSubjectChange: (subject: string) => void;
+  onStatusChange: (status: string) => void;
+  filteredCount: number;
+  availableSubjects: string[];
+}
 
-export default function ParentHomeworkFilter({
+export default function HomeworkFilters({
   subject,
-  setSubject,
   status,
-  setStatus,
-  resultCount,
-  subjects = ['All Subjects', 'Mathematics', 'Science', 'English'],
-}: ParentHomeworkFilterProps) {
+  onSubjectChange,
+  onStatusChange,
+  filteredCount,
+  availableSubjects,
+}: HomeworkFiltersProps) {
   return (
-    <section className="somu rounded-2xl p-7 space-y-6 text-white transition-all duration-200 hover:border-white/20 hover:shadow-lg">
+    <section className="somu rounded-2xl p-7 space-y-6">
       <div className="flex justify-between">
         <div>
           <h3 className="text-lg font-semibold">Filter Homework</h3>
@@ -28,17 +28,20 @@ export default function ParentHomeworkFilter({
         </div>
 
         <span className="rounded-full border border-lime-400/30 px-4 py-1 text-sm text-lime-300">
-          {resultCount} Results
+          {filteredCount} Results
         </span>
       </div>
 
       <select
         value={subject}
-        onChange={(e) => setSubject(e.target.value)}
-        className="w-72 rounded-xl px-4 py-3 bg-transparent border border-white/20 outline-none focus:border-lime-400/50 text-white"
+        onChange={(e) => onSubjectChange(e.target.value)}
+        className="w-72 rounded-xl px-4 py-3 bg-transparent border border-white/20 outline-none"
       >
-        {subjects.map((s) => (
-          <option key={s}>{s}</option>
+        <option>All Subjects</option>
+        {availableSubjects.map((subj) => (
+          <option key={subj} value={subj}>
+            {subj}
+          </option>
         ))}
       </select>
 
@@ -46,12 +49,11 @@ export default function ParentHomeworkFilter({
         {['All', 'Pending', 'Submitted', 'Late'].map((tab) => (
           <button
             key={tab}
-            type="button"
-            onClick={() => setStatus(tab)}
+            onClick={() => onStatusChange(tab)}
             className={`px-6 py-3 rounded-xl border transition ${
               status === tab
                 ? 'border-lime-400 text-lime-300'
-                : 'border-white/20 hover:border-white/40 text-white'
+                : 'border-white/20 hover:border-white/40'
             }`}
           >
             {tab}

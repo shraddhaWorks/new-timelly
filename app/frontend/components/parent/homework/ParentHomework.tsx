@@ -1,209 +1,308 @@
 'use client';
 
-import {
-  ListChecks,
-  Clock,
-  CheckCircle2,
-  TrendingUp,
-} from 'lucide-react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
+import HomeworkHeader from './HomeworkHeader';
+import HomeworkStats from './HomeworkStats';
+import HomeworkFilters from './HomeworkFilters';
+import HomeworkCard from './HomeworkCard';
 
-/* =======================
-   PAGE
-======================= */
+interface Homework {
+  id: string;
+  title: string;
+  subject: string;
+  description: string;
+  teacher: {
+    name: string;
+  };
+  dueDate: string | null;
+  assignedDate: string | null;
+  hasSubmitted?: boolean;
+  submission?: {
+    id: string;
+    fileUrl: string | null;
+    submittedAt: string;
+  } | null;
+}
+
 export default function Page() {
-  return (
-    <main className="min-h-screen p-8 space-y-8 bg-gradient-to-br from-[#2a0b52] via-[#3a0f4f] to-[#4a1b2d] text-white">
-      <Header />
-      <StatsGrid />
-      <FilterSection />
-    </main>
-  );
-}
+  const { data: session } = useSession();
+  const [homeworks, setHomeworks] = useState<Homework[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [subject, setSubject] = useState('All Subjects');
+  const [status, setStatus] = useState('All');
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [studentName, setStudentName] = useState('Student');
 
-/* =======================
-   HEADER
-======================= */
-function Header() {
-  return (
-    <section className="
-      rounded-2xl p-7
-      bg-gradient-to-br from-purple-700/70 to-rose-700/60
-      backdrop-blur-xl border border-white/15
-      shadow-xl
-    ">
-      <h1 className="text-2xl font-semibold">
-        Homework & Assignments
-      </h1>
-      <p className="mt-1 text-sm text-white/70">
-        Track and submit Aarav Kumar&apos;s homework
-      </p>
-    </section>
-  );
-}
+  const fetchStudentName = useCallback(async () => {
+    if (!session?.user) return;
+    
+    const studentId = (session.user as { studentId?: string | null })?.studentId;
+    if (!studentId) {
+      if (session.user.name) {
+        setStudentName(session.user.name);
+      }
+      return;
+    }
 
-/* =======================
-   STATS GRID
-======================= */
-function StatsGrid() {
-  return (
-    <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-      <StatCard
-        icon={ListChecks}
-        iconColor="text-lime-400"
-        badge="This Month"
-        badgeBg="bg-lime-400/20 text-lime-300"
-        value="5"
-        label="All assignments"
-      />
+    try {
+      const res = await fetch(`/api/student/${studentId}`, {
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.student?.user?.name) {
+          setStudentName(data.student.user.name);
+        } else if (session.user.name) {
+          setStudentName(session.user.name);
+        }
+      } else if (session.user.name) {
+        setStudentName(session.user.name);
+      }
+    } catch {
+      if (session.user.name) {
+        setStudentName(session.user.name);
+      }
+    }
+  }, [session]);
 
-      <StatCard
-        icon={Clock}
-        iconColor="text-orange-400"
-        badge="Due Soon"
-        badgeBg="bg-orange-400/20 text-orange-300"
-        value="2"
-        label="Need attention"
-      />
+  const fetchHomeworks = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams();
+      if (subject !== 'All Subjects') {
+        params.append('subject', subject);
+      }
 
-      <StatCard
-        icon={CheckCircle2}
-        iconColor="text-lime-400"
-        badge="Great!"
-        badgeBg="bg-lime-400/20 text-lime-300"
-        value="2"
-        label="On time"
-      />
+      const res = await fetch(`/api/homework/list?${params.toString()}`, {
+        credentials: 'include',
+      });
 
-      <StatCard
-        icon={TrendingUp}
-        iconColor="text-yellow-300"
-        badge="+12%"
-        badgeBg="bg-yellow-300/20 text-yellow-200"
-        value="60%"
-        label="Overall progress"
-      />
-    </section>
-  );
-}
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to fetch homework');
+      }
 
-/* =======================
-   STAT CARD
-======================= */
-function StatCard({
-  icon: Icon,
-  iconColor,
-  badge,
-  badgeBg,
-  value,
-  label,
-}: {
-  icon: any;
-  iconColor: string;
-  badge: string;
-  badgeBg: string;
-  value: string;
-  label: string;
-}) {
-  return (
-    <div
-      className="
-        rounded-2xl p-6
-        bg-gradient-to-br from-white/15 to-white/5
-        backdrop-blur-xl border border-white/15
-        transition-all duration-300
-        hover:-translate-y-1.5 hover:shadow-2xl
-      "
-    >
-      <div className="flex items-center justify-between">
-        <Icon className={`h-7 w-7 ${iconColor}`} />
-        <span className={`rounded-full px-3 py-1 text-xs ${badgeBg}`}>
-          {badge}
-        </span>
-      </div>
+      const data = await res.json();
+      const fetchedHomeworks = data.homeworks || [];
+      setHomeworks(fetchedHomeworks);
+    } catch (err) {
+      console.error('Error fetching homeworks:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load homework');
+    } finally {
+      setLoading(false);
+    }
+  }, [subject]);
 
-      <div className="mt-4 text-4xl font-bold">
-        {value}
-      </div>
+  useEffect(() => {
+    if (session) {
+      fetchStudentName();
+      fetchHomeworks();
+    }
+  }, [session, fetchStudentName, fetchHomeworks]);
 
-      <p className="mt-1 text-sm text-white/70">
-        {label}
-      </p>
-    </div>
-  );
-}
+  const filteredHomeworks = useMemo(() => {
+    return homeworks.filter((item) => {
+      const subjectMatch =
+        subject === 'All Subjects' || item.subject === subject;
+      
+      let statusMatch = true;
+      if (status !== 'All') {
+        const itemStatus = item.hasSubmitted
+          ? 'Submitted'
+          : item.dueDate && new Date(item.dueDate) < new Date()
+          ? 'Late'
+          : 'Pending';
+        statusMatch = itemStatus === status;
+      }
+      
+      return subjectMatch && statusMatch;
+    });
+  }, [subject, status, homeworks]);
 
-/* =======================
-   FILTER SECTION
-======================= */
-function FilterSection() {
-  return (
-    <section className="
-      rounded-2xl p-7 space-y-6
-      bg-gradient-to-br from-white/15 to-white/5
-      backdrop-blur-xl border border-white/15
-      shadow-xl
-    ">
-      <div className="flex items-start justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">
-            Filter Homework
-          </h3>
-          <p className="text-sm text-white/70">
-            Find assignments quickly
-          </p>
-        </div>
+  const total = homeworks.length;
+  const pending = homeworks.filter((h) => {
+    if (h.hasSubmitted) return false;
+    if (h.dueDate) {
+      try {
+        const due = new Date(h.dueDate);
+        const now = new Date();
+        if (now > due) return false; // It's late, not pending
+      } catch {
+        // Invalid date, treat as pending
+      }
+    }
+    return true;
+  }).length;
+  const submitted = homeworks.filter((h) => h.hasSubmitted).length;
+  const completion = total > 0 ? Math.round((submitted / total) * 100) : 0;
 
-        <span className="rounded-full bg-lime-400/20 px-4 py-1 text-sm text-lime-300">
-          1 Result
-        </span>
-      </div>
+  const availableSubjects = useMemo(() => {
+    const subjects = new Set(homeworks.map((h) => h.subject));
+    return Array.from(subjects).sort();
+  }, [homeworks]);
 
-      <select
-        className="
-          w-72 rounded-xl px-4 py-3 text-sm
-          bg-white/15 backdrop-blur-md
-          border border-white/20
-          outline-none
-        "
-      >
-        <option>All Subjects</option>
-        <option>Math</option>
-        <option>Science</option>
-      </select>
+  const handleUpload = async (homeworkId: string) => {
+    const homework = homeworks.find((h) => h.id === homeworkId);
+    if (!homework) return;
 
-      <StatusTabs />
-    </section>
-  );
-}
+    // Create a file input element
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp';
+    
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
 
-/* =======================
-   STATUS TABS
-======================= */
-function StatusTabs() {
-  const tabs = ['All', 'Pending', 'Submitted', 'Late'];
+      setUploadingId(homeworkId);
+      try {
+        // First upload the file
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('folder', 'homework');
 
-  return (
-    <div className="flex flex-wrap gap-3">
-      {tabs.map((tab) => {
-        const isLate = tab === 'Late';
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          credentials: 'include',
+          body: formData,
+        });
 
-        return (
+        if (!uploadRes.ok) {
+          const uploadData = await uploadRes.json().catch(() => ({}));
+          throw new Error(uploadData.message || 'File upload failed');
+        }
+
+        const uploadData = await uploadRes.json();
+        const fileUrl = uploadData.url;
+
+        // Then submit the homework
+        const submitRes = await fetch('/api/homework/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            homeworkId,
+            fileUrl,
+          }),
+        });
+
+        if (!submitRes.ok) {
+          const submitData = await submitRes.json().catch(() => ({}));
+          throw new Error(submitData.message || 'Submission failed');
+        }
+
+        // Refresh the homework list
+        await fetchHomeworks();
+      } catch (err) {
+        console.error('Error submitting homework:', err);
+        alert(err instanceof Error ? err.message : 'Failed to submit homework');
+      } finally {
+        setUploadingId(null);
+      }
+    };
+
+    input.click();
+  };
+
+  if (loading) {
+    return (
+      <main className="min-h-screen p-8 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-white/30 border-t-white" />
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="min-h-screen p-8">
+        <div className="somu rounded-2xl p-7 text-center">
+          <p className="text-red-400">{error}</p>
           <button
-            key={tab}
-            className={`
-              rounded-xl px-6 py-3 text-sm
-              transition-all
-              ${
-                isLate
-                  ? 'bg-lime-400/30 text-lime-200 border border-lime-400/40'
-                  : 'bg-white/15 hover:bg-white/25 border border-white/15'
-              }
-            `}
+            onClick={() => fetchHomeworks()}
+            className="mt-4 px-6 py-2 rounded-xl border border-lime-400 text-lime-300 hover:bg-lime-400/10 transition"
           >
-            {tab}
+            Retry
           </button>
-        );
-      })}
-    </div>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen p-8 space-y-8 text-white">
+      <HomeworkHeader studentName={studentName} />
+
+      <HomeworkStats
+        total={total}
+        pending={pending}
+        submitted={submitted}
+        completion={completion}
+      />
+
+      <HomeworkFilters
+        subject={subject}
+        status={status}
+        onSubjectChange={setSubject}
+        onStatusChange={setStatus}
+        filteredCount={filteredHomeworks.length}
+        availableSubjects={availableSubjects}
+      />
+
+      <div className="space-y-6">
+        {filteredHomeworks.length === 0 ? (
+          <div className="somu rounded-2xl p-7 text-center">
+            <p className="text-white/70">No homework found</p>
+          </div>
+        ) : (
+          filteredHomeworks.map((homework) => (
+            <HomeworkCard
+              key={homework.id}
+              homework={homework}
+              onUpload={handleUpload}
+              isUploading={uploadingId === homework.id}
+            />
+          ))
+        )}
+      </div>
+
+      <style jsx>{`
+        .card {
+          background: transparent;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 16px;
+          transition: 0.3s ease;
+        }
+
+        .card:hover {
+          border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        .statCard {
+          padding: 24px;
+        }
+
+        .icon {
+          height: 24px;
+          width: 24px;
+        }
+
+        .statValue {
+          margin-top: 16px;
+          font-size: 28px;
+          font-weight: 700;
+        }
+
+        .statLabel {
+          margin-top: 4px;
+          font-size: 14px;
+          color: rgba(255, 255, 255, 0.7);
+        }
+      `}</style>
+    </main>
   );
 }

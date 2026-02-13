@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
+import { redis } from "@/lib/redis";
 
 export async function POST(req: Request) {
   try {
@@ -39,6 +40,10 @@ export async function POST(req: Request) {
         createdById: session.user.id,
       },
     });
+
+    // Invalidate templates cache if needed
+    const cacheKey = `certificate-templates:${schoolId}`;
+    await redis.del(cacheKey);
 
     return NextResponse.json(
       { message: "Certificate template created successfully", template: certificateTemplate },

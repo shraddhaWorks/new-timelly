@@ -6,10 +6,11 @@ import { CircleAlert, Clock, FileText, SquareCheck } from "lucide-react";
 import StatCard from "../common/statCard";
 import CertificatesTab from "./certificatesTab/CertificatesTab";
 
-export type TCStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type CertificateRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
 
-export interface TCListItem {
+export interface CertificateRequestListItem {
   id: string;
+  certificateType: string | null;
   reason: string | null;
   status: string;
   issuedDate: string | null;
@@ -25,37 +26,37 @@ export interface TCListItem {
 }
 
 export default function SchoolAdminCertificatesTab() {
-  const [tcs, setTcs] = useState<TCListItem[]>([]);
+  const [certificateRequests, setCertificateRequests] = useState<CertificateRequestListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTCs = useCallback(async () => {
+  const fetchCertificateRequests = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/tc/list", { credentials: "include" });
+      const res = await fetch("/api/certificates/requests/list", { credentials: "include" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data?.message || "Failed to load certificate requests");
       }
       const data = await res.json();
-      setTcs(data.tcs ?? []);
+      setCertificateRequests(data.certificateRequests ?? []);
     } catch (e: any) {
       setError(e?.message || "Something went wrong");
-      setTcs([]);
+      setCertificateRequests([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchTCs();
-  }, [fetchTCs]);
+    fetchCertificateRequests();
+  }, [fetchCertificateRequests]);
 
-  const total = tcs.length;
-  const pending = tcs.filter((t) => t.status === "PENDING").length;
-  const approved = tcs.filter((t) => t.status === "APPROVED").length;
-  const rejected = tcs.filter((t) => t.status === "REJECTED").length;
+  const total = certificateRequests.length;
+  const pending = certificateRequests.filter((t) => t.status === "PENDING").length;
+  const approved = certificateRequests.filter((t) => t.status === "APPROVED").length;
+  const rejected = certificateRequests.filter((t) => t.status === "REJECTED").length;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-6 text-gray-200">
@@ -101,10 +102,10 @@ export default function SchoolAdminCertificatesTab() {
 
       <div className="mt-6 w-full overflow-x-auto">
         <CertificatesTab
-          tcs={tcs}
+          certificateRequests={certificateRequests}
           loading={loading}
           error={error}
-          onRefresh={fetchTCs}
+          onRefresh={fetchCertificateRequests}
         />
       </div>
     </div>

@@ -25,6 +25,7 @@ export default function ExamDetailsView({ examId, onBack, onEdit }: any) {
         // Teacher list uses schedule id; fetch single schedule detail
         const res = await fetch(`/api/exams/schedules/${examId}`, { credentials: "include" });
         const data = await res.json();
+        console.log("Fetched exam details:", data);
         if (res.ok && data.exam) {
           setExam(data.exam);
         } else {
@@ -44,8 +45,8 @@ export default function ExamDetailsView({ examId, onBack, onEdit }: any) {
   if (loading) {
     return (
       <div className="min-h-[400px] flex flex-col items-center justify-center text-[#b4ff39] gap-4">
+        <Spinner/>
         
-        <p className="text-white/40 font-bold tracking-widest uppercase text-xs"><Spinner/></p>
       </div>
     );
   }
@@ -89,7 +90,7 @@ export default function ExamDetailsView({ examId, onBack, onEdit }: any) {
         
         {/* LEFT COLUMN: EXAM PROFILE CARD */}
         <div className="lg:col-span-4 flex flex-col gap-6">
-          <div className=" bg-white/5 backdrop-blur-xl border-b border-white/10 rounded-[1rem] p-4 flex flex-col gap-5 shadow-2xl">
+          <div className="somu rounded-[1rem] p-4 flex flex-col gap-5 shadow-2xl">
             
             <div className="flex justify-between items-center">
                <h2 className="text-ms tracking-tight text-white uppercase ">Exam Info</h2>
@@ -164,7 +165,7 @@ export default function ExamDetailsView({ examId, onBack, onEdit }: any) {
         </div>
 
         {/* RIGHT COLUMN: SYLLABUS BREAKDOWN */}
-        <div className="lg:col-span-8 bg-[#1e162e]/40 backdrop-blur-xl border border-white/10 rounded-[2.5rem] flex flex-col shadow-2xl overflow-hidden">
+        <div className="lg:col-span-8 somu rounded-[1rem] flex flex-col shadow-2xl overflow-hidden">
           <div className="p-9 border-b border-white/5 flex items-center gap-4 bg-white/[0.02]">
             <CheckCircle2 className="text-[#b4ff39]" size={24} />
             <h2 className="text-ms tracking-tight text-white ">Syllabus Breakdown</h2>

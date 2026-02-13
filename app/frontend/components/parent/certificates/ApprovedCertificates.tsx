@@ -1,28 +1,15 @@
 import { BadgeCheck, Download, Stamp } from "lucide-react"
 
-const certificates = [
-  {
-    id: 1,
-    name: "Aarav Kumar",
-    title: "Bonafide Certificate",
-    date: "10/12/2025",
-    number: "BNF2025/1015",
-  },
-  {
-    id: 2,
-    name: "Riya Sharma",
-    title: "Completion Certificate",
-    date: "15/12/2025",
-    number: "CC2025/1020",
-  },
-  {
-    id: 3,
-    name: "Aditya Rao",
-    title: "Excellence Award",
-    date: "20/12/2025",
-    number: "EA2025/1035",
-  },
-]
+interface Certificate {
+  id: string;
+  title: string;
+  description: string | null;
+  issuedDate: string;
+  certificateUrl: string | null;
+  student: {
+    user: { name: string | null };
+  };
+}
 
 const CertificateCard = ({ data }: any) => {
   return (
@@ -105,16 +92,37 @@ const CertificateCard = ({ data }: any) => {
 
       {/* Hover Overlay */}
       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
-        <button className="flex items-center gap-2 px-6 py-3 bg-[#A3E635] text-black font-semibold rounded-full shadow-lg hover:scale-105 transition">
-          <Download size={18} />
-          Download PDF
-        </button>
+        {data.url ? (
+          <a
+            href={data.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-6 py-3 bg-[#A3E635] text-black font-semibold rounded-full shadow-lg hover:scale-105 transition"
+          >
+            <Download size={18} />
+            Download PDF
+          </a>
+        ) : (
+          <button disabled className="flex items-center gap-2 px-6 py-3 bg-gray-500 text-white font-semibold rounded-full shadow-lg cursor-not-allowed">
+            <Download size={18} />
+            No PDF Available
+          </button>
+        )}
       </div>
     </div>
   )
 }
 
-const ApprovedCertificates = () => {
+const ApprovedCertificates = ({ certificates = [] }: { certificates?: Certificate[] }) => {
+  const formattedCertificates = certificates.map((cert) => ({
+    id: cert.id,
+    name: cert.student.user.name || "Student",
+    title: cert.title,
+    date: new Date(cert.issuedDate).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" }),
+    number: `CERT${cert.id.slice(-6).toUpperCase()}`,
+    url: cert.certificateUrl,
+  }));
+
   return (
     <div className="bg-[rgba(255,255,255,0.05)] backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg overflow-hidden">
       
@@ -130,17 +138,21 @@ const ApprovedCertificates = () => {
         </div>
 
         <span className="px-3 py-1 bg-[#A3E635]/20 text-[#A3E635] rounded-full text-xs font-bold border border-[#A3E635]/30">
-          {certificates.length}
+          {formattedCertificates.length}
         </span>
       </div>
 
       {/* Certificates Grid */}
       <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {certificates.map((certificate) => (
-            <CertificateCard key={certificate.id} data={certificate} />
-          ))}
-        </div>
+        {formattedCertificates.length === 0 ? (
+          <div className="text-center text-gray-400 py-8">No certificates issued yet</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {formattedCertificates.map((certificate) => (
+              <CertificateCard key={certificate.id} data={certificate} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

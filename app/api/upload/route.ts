@@ -37,14 +37,14 @@ export async function POST(req: Request) {
     }
 
     const allowedTypes =
-      folder === "homework"
+      folder === "homework" || folder === "certificates"
         ? [...ALLOWED_IMAGE_TYPES, ...ALLOWED_DOC_TYPES]
         : ALLOWED_IMAGE_TYPES;
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
         {
           message:
-            folder === "homework"
+            folder === "homework" || folder === "certificates"
               ? "Invalid file type. Use JPEG, PNG, WebP, GIF, PDF, or DOC/DOCX."
               : "Invalid file type. Use JPEG, PNG, WebP or GIF.",
         },

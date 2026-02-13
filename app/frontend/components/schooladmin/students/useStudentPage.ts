@@ -365,17 +365,7 @@ export default function useStudentPage({ classes = [], reload }: Props) {
         return;
       }
 
-      const assignRes: Response = await assignStudentsToClass(
-        data.student.id,
-        form.classId
-      );
-      const assignData = await assignRes.json();
-
-      if (!assignRes.ok) {
-        toast.error(assignData.message || "Failed to assign student to class");
-        return;
-      }
-
+      // Student is already created with classId in the create API, so no need for separate assignment
       toast.success("Student added successfully");
       setShowSuccess(true);
       setForm({ ...DEFAULT_FORM, classId: form.classId });
