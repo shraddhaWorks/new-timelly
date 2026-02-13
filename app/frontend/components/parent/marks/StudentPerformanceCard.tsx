@@ -42,11 +42,17 @@ export default function StudentPerformanceCard({
 
         {/* ================= PROFILE ================= */}
         <div>
-          <div className="w-full aspect-square rounded-2xl overflow-hidden mb-4 border border-white/[0.1]">
+          <div className="w-full aspect-square rounded-2xl overflow-hidden mb-4 border border-white/[0.1] bg-white/5">
             <img
               src={imageUrl}
               alt={name}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                if (!target.src.includes('ui-avatars.com')) {
+                  target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=200&background=4ade80&color=fff`;
+                }
+              }}
             />
           </div>
 

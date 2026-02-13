@@ -155,7 +155,7 @@ export default function ParentLeavesTab() {
         />
 
         {/* Navigation Tabs - Responsive adjustment: Removed hardcoded margin */}
-        <div className="flex justify-center md:justify-start gap-8 mb-8 border-b border-white/5">
+        <div className="flex justify-center md:justify-start gap-8 md:ml-90 mb-8 border-b border-white/5">
           <button
             onClick={() => setActiveTab("NEW")}
             className={`pb-4 text-sm font-bold transition-all ${activeTab === "NEW" ? "text-[#b4f03d] border-b-2 border-[#b4f03d]" : "text-white/40"}`}

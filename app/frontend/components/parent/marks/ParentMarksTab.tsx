@@ -1,25 +1,193 @@
 'use client';
 
-import { div } from "framer-motion/client";
+import { useEffect, useState, useMemo } from "react";
 import {
   TrendingUp,
   Trophy,
   Award,
   Target,
-  BookOpen,
-  BarChart3,
-  Star,
-  Calculator,
-  Microscope,
-  Book,
-
-  Globe,
-  Laptop,
 } from "lucide-react";
 import ProgressReport from "./ProgressReport";
 import SubjectPerformance from "./SubjetPerformance";
 
+interface Mark {
+  id: string;
+  subject: string;
+  marks: number;
+  totalMarks: number;
+  grade: string | null;
+  createdAt?: string;
+}
+
+interface StudentInfo {
+  name: string;
+  class: string;
+  section: string | null;
+  photoUrl: string | null;
+  rollNo?: string;
+}
+
+function calculateGrade(percentage: number): string {
+  if (percentage >= 90) return "A+";
+  if (percentage >= 80) return "A";
+  if (percentage >= 70) return "B+";
+  if (percentage >= 60) return "B";
+  if (percentage >= 50) return "C+";
+  if (percentage >= 40) return "C";
+  return "D";
+}
+
+function getGradeLabel(percentage: number): string {
+  if (percentage >= 90) return "Excellent";
+  if (percentage >= 80) return "Very Good";
+  if (percentage >= 70) return "Good";
+  if (percentage >= 60) return "Average";
+  if (percentage >= 50) return "Below Average";
+  return "Needs Improvement";
+}
+
 export default function ParentMarksTab() {
+  const [marks, setMarks] = useState<Mark[]>([]);
+  const [studentInfo, setStudentInfo] = useState<StudentInfo | null>(null);
+  const [rank, setRank] = useState<number | null>(null);
+  const [totalStudents, setTotalStudents] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [marksRes, analyticsRes, userRes] = await Promise.all([
+          fetch("/api/marks/view", { credentials: "include" }),
+          fetch("/api/analytics/student", { credentials: "include" }),
+          fetch("/api/user/me", { credentials: "include" }),
+        ]);
+
+        if (marksRes.ok) {
+          const marksData = await marksRes.json();
+          setMarks(marksData.marks || []);
+        }
+
+        // Get student ID from user session
+        let studentId: string | null = null;
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          studentId = userData.user?.studentId || null;
+        }
+
+        if (analyticsRes.ok) {
+          const analyticsData = await analyticsRes.json();
+          const student = analyticsData.student;
+          
+          // Get rank from analytics data
+          if (analyticsData.stats?.grade?.rank !== undefined && analyticsData.stats.grade.rank !== null) {
+            setRank(analyticsData.stats.grade.rank);
+          }
+          
+          if (student) {
+            // The analytics API returns student.photoUrl directly and class as a string
+            const classParts = typeof student.class === 'string' ? student.class.split(' • ') : [];
+            const studentInfoData = {
+              name: student.name || "Student",
+              class: classParts[0] || "",
+              section: classParts[1] || null,
+              photoUrl: student.photoUrl || null,
+              rollNo: student.rollNo || undefined,
+            };
+            setStudentInfo(studentInfoData);
+          } else if (studentId) {
+            // Fallback: fetch student details directly if analytics doesn't have it
+            try {
+              const studentRes = await fetch(`/api/student/${studentId}`, { credentials: "include" });
+              if (studentRes.ok) {
+                const studentData = await studentRes.json();
+                const student = studentData.student;
+                if (student) {
+                  setStudentInfo({
+                    name: student.user?.name || "Student",
+                    class: student.class?.name || "",
+                    section: student.class?.section || null,
+                    photoUrl: student.user?.photoUrl || null,
+                    rollNo: student.rollNo || undefined,
+                  });
+                  
+                  // Try to get class students count for rank context
+                  if (student.classId) {
+                    try {
+                      const classStudentsRes = await fetch(`/api/class/students?classId=${student.classId}`, { credentials: "include" });
+                      if (classStudentsRes.ok) {
+                        const classStudentsData = await classStudentsRes.json();
+                        if (classStudentsData.students && Array.isArray(classStudentsData.students)) {
+                          setTotalStudents(classStudentsData.students.length);
+                        }
+                      }
+                    } catch (e) {
+                      // Ignore error for class count
+                    }
+                  }
+                }
+              }
+            } catch (e) {
+              console.error("Failed to fetch student details:", e);
+            }
+          }
+          
+          // Try to get total students count if we have class info
+          if (studentInfo?.class && !totalStudents) {
+            try {
+              // This would require the classId, which we might not have from analytics
+              // We'll leave this for now and can enhance later
+            } catch (e) {
+              // Ignore
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load marks:", e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const stats = useMemo(() => {
+    if (marks.length === 0) {
+      return {
+        overallScore: 0,
+        overallGrade: "N/A",
+        gradeLabel: "No Data",
+        totalMarks: 0,
+        totalMaxMarks: 0,
+      };
+    }
+
+    const totalMarks = marks.reduce((sum, m) => sum + m.marks, 0);
+    const totalMaxMarks = marks.reduce((sum, m) => sum + m.totalMarks, 0);
+    const overallScore = totalMaxMarks > 0 ? (totalMarks / totalMaxMarks) * 100 : 0;
+    const overallGrade = calculateGrade(overallScore);
+    const gradeLabel = getGradeLabel(overallScore);
+
+    return {
+      overallScore: Math.round(overallScore * 10) / 10,
+      overallGrade,
+      gradeLabel,
+      totalMarks: Math.round(totalMarks),
+      totalMaxMarks: Math.round(totalMaxMarks),
+    };
+  }, [marks]);
+
+  const studentName = studentInfo?.name || "Student";
+
+  if (loading) {
+    return (
+      <div className="p-6 lg:p-10 min-h-screen text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white/60">Loading marks...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 lg:p-10 min-h-screen text-white">
 
@@ -29,7 +197,7 @@ export default function ParentMarksTab() {
           Academic Performance
         </h1>
         <p className="text-white/60">
-          Track Aarav Kumar's marks and grades
+          Track {studentName}'s marks and grades
         </p>
       </div>
 
@@ -43,14 +211,14 @@ export default function ParentMarksTab() {
               <TrendingUp className="w-5 h-5 text-lime-400" />
             </div>
             <span className="px-3 py-1 text-xs rounded-lg bg-lime-400/10 text-lime-400 border border-lime-400/20 font-semibold">
-              Excellent
+              {stats.gradeLabel}
             </span>
           </div>
           <div className="mt-6">
             <p className="text-sm text-white/60 mb-1">Overall Score</p>
-            <h2 className="text-3xl font-bold">88.4%</h2>
+            <h2 className="text-3xl font-bold">{stats.overallScore}%</h2>
             <p className="text-sm text-white/50 mt-1">
-              Above class average
+              {stats.totalMarks > 0 ? "Based on all subjects" : "No marks available"}
             </p>
           </div>
         </div>
@@ -61,15 +229,28 @@ export default function ParentMarksTab() {
             <div className="p-3 bg-white/5 rounded-xl">
               <Trophy className="w-5 h-5 text-lime-400" />
             </div>
-            <span className="px-3 py-1 text-xs rounded-lg bg-white/5 text-gray-400 border border-white/10 font-semibold">
-              Top 3
+            <span className={`px-3 py-1 text-xs rounded-lg border font-semibold ${
+              rank && rank <= 3 
+                ? "bg-lime-400/10 text-lime-400 border-lime-400/20" 
+                : rank 
+                ? "bg-blue-400/10 text-blue-400 border-blue-400/20"
+                : "bg-white/5 text-gray-400 border-white/10"
+            }`}>
+              {rank && rank <= 3 ? "Top 3" : rank ? "Ranked" : "N/A"}
             </span>
           </div>
           <div className="mt-6">
             <p className="text-sm text-white/60 mb-1">Class Rank</p>
-            <h2 className="text-3xl font-bold text-lime-400">#3</h2>
+            <h2 className="text-3xl font-bold text-lime-400">
+              {rank ? `#${rank}` : "N/A"}
+            </h2>
             <p className="text-sm text-white/50 mt-1">
-              Out of 40 students
+              {rank 
+                ? totalStudents 
+                  ? `Out of ${totalStudents} students`
+                  : "In your class"
+                : "Not available"
+              }
             </p>
           </div>
         </div>
@@ -86,9 +267,9 @@ export default function ParentMarksTab() {
           </div>
           <div className="mt-6">
             <p className="text-sm text-white/60 mb-1">Current Grade</p>
-            <h2 className="text-3xl font-bold">A+</h2>
+            <h2 className="text-3xl font-bold">{stats.overallGrade}</h2>
             <p className="text-sm text-white/50 mt-1">
-              Highest grade achieved
+              Overall performance
             </p>
           </div>
         </div>
@@ -105,7 +286,7 @@ export default function ParentMarksTab() {
           </div>
           <div className="mt-6">
             <p className="text-sm text-white/60 mb-1">Total Marks</p>
-            <h2 className="text-3xl font-bold">531/600</h2>
+            <h2 className="text-3xl font-bold">{stats.totalMarks}/{stats.totalMaxMarks}</h2>
             <p className="text-sm text-white/50 mt-1">
               Score obtained
             </p>
@@ -114,18 +295,11 @@ export default function ParentMarksTab() {
 
       </div>
       <div>
-<ProgressReport />
+        <ProgressReport marks={marks} studentInfo={studentInfo} />
       </div>
       <div>
-        <SubjectPerformance/>
+        <SubjectPerformance marks={marks} />
       </div>
     </div>
   );
-
-
-
-
-
-
-
 }
