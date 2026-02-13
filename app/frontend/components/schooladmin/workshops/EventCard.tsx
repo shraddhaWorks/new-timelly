@@ -16,6 +16,7 @@ interface EventCardProps {
   onViewDetails?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  showActions?: boolean;
 }
 
 const modeStyles: Record<string, string> = {
@@ -64,6 +65,7 @@ export default function EventCard({
   onViewDetails,
   onEdit,
   onDelete,
+  showActions = true,
 }: EventCardProps) {
   const badgeMode = (mode || "").toLowerCase();
   const modeClass = modeStyles[badgeMode] ?? "bg-white/10 text-white/80";
@@ -95,24 +97,26 @@ export default function EventCard({
           <div className="flex-1">
             <h3 className="text-base sm:text-lg font-semibold text-white">{title}</h3>
           </div>
-          <div className="ml-auto flex items-center gap-0">
-            <button
-              type="button"
-              onClick={onEdit}
-              className="h-9 w-9 rounded-xl text-white/70 hover:text-white transition cursor-pointer"
-              aria-label="Edit"
-            >
-              <Pencil size={12} />
-            </button>
-            <button
-              type="button"
-              onClick={onDelete}
-              className="h-9 w-9 rounded-xl text-white/60 hover:text-red-400 transition cursor-pointer"
-              aria-label="Delete"
-            >
-              <Trash2 size={12} />
-            </button>
-          </div>
+          {showActions && (
+            <div className="ml-auto flex items-center gap-0">
+              <button
+                type="button"
+                onClick={onEdit}
+                className="h-9 w-9 rounded-xl text-white/70 hover:text-white transition cursor-pointer"
+                aria-label="Edit"
+              >
+                <Pencil size={12} />
+              </button>
+              <button
+                type="button"
+                onClick={onDelete}
+                className="h-9 w-9 rounded-xl text-white/60 hover:text-red-400 transition cursor-pointer"
+                aria-label="Delete"
+              >
+                <Trash2 size={12} />
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="flex-1">

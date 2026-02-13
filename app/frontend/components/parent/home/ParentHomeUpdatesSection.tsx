@@ -1,6 +1,7 @@
 "use client";
 
-import { Calendar, MessageCircle, MoreHorizontal } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Calendar, Heart, MessageCircle, MoreHorizontal } from "lucide-react";
 import { formatRelativeTime } from "../../../utils/format";
 import { ParentEvent, ParentFeed } from "./types";
 
@@ -27,7 +28,45 @@ function formatEventBadge(value?: string | null) {
 }
 
 export default function ParentHomeUpdatesSection({ feeds, events }: Props) {
-  const latestFeed = feeds[0] ?? null;
+  const latestFeed = useMemo(() => feeds[0] ?? null, [feeds]);
+  const [likedByMe, setLikedByMe] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const [isLiking, setIsLiking] = useState(false);
+
+  useEffect(() => {
+    setLikedByMe(Boolean(latestFeed?.likedByMe));
+    setLikesCount(Number(latestFeed?.likes ?? 0));
+  }, [latestFeed]);
+
+  const handleLike = async () => {
+    if (!latestFeed || isLiking) return;
+
+    setIsLiking(true);
+    const prevLiked = likedByMe;
+    const prevLikes = likesCount;
+    const nextLiked = !prevLiked;
+    const nextLikes = Math.max(0, prevLikes + (nextLiked ? 1 : -1));
+
+    setLikedByMe(nextLiked);
+    setLikesCount(nextLikes);
+
+    try {
+      const res = await fetch(`/api/newsfeed/${latestFeed.id}/like`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload?.message || "Failed to update like");
+
+      setLikedByMe(Boolean(payload?.liked));
+      setLikesCount(Number(payload?.likes ?? nextLikes));
+    } catch {
+      setLikedByMe(prevLiked);
+      setLikesCount(prevLikes);
+    } finally {
+      setIsLiking(false);
+    }
+  };
 
   return (
     <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -83,8 +122,28 @@ export default function ParentHomeUpdatesSection({ feeds, events }: Props) {
               )}
             </div>
 
-            <footer className="border-t border-white/10 px-6 py-4 text-white/70 text-xl">
-              {latestFeed.likes ?? 0} likes
+            <footer className="border-t border-white/10 px-6 py-4">
+              <div className="flex flex-wrap items-center gap-3 text-sm sm:text-base">
+                <span className="text-white/70">{likesCount} likes</span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLike();
+                  }}
+                  disabled={isLiking}
+                  aria-pressed={likedByMe}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 
+                    text-sm font-medium text-gray-400 hover:text-red-400 hover:bg-white/[0.05] ${
+                    likedByMe
+                      ? "border-red-300/40 bg-red-400/10 text-red-300"
+                      : "border-white/20 text-white/70 hover:border-white/35 hover:text-white"
+                  } ${isLiking ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
+                >
+                  <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${likedByMe ? "fill-red-400 text-red-400" : ""}`} />
+                  <span className="font-semibold">{likedByMe ? "Liked" : "Like"}</span>
+                </button>
+              </div>
             </footer>
           </article>
         )}
