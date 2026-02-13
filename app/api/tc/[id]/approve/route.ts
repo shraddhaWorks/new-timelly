@@ -102,13 +102,10 @@ export async function POST(
         },
       });
 
-      // Deactivate user account (set password to null to prevent login)
-      await tx.user.update({
-        where: { id: tc.student.userId },
-        data: {
-          password: null, // This will prevent login
-        },
-      });
+      // Note: We no longer deactivate the account by setting password to null
+      // The account remains active but the student is removed from the class
+      // This allows the student to continue accessing their account if needed
+      // Account deactivation can be handled separately if required
 
       // Remove student from class
       await tx.student.update({
@@ -119,20 +116,21 @@ export async function POST(
       });
 
       // Note: We don't delete the student record to maintain referential integrity
-      // The account is deactivated by removing password
+      // The student is removed from the class but the account remains active
 
       return updatedTC;
     });
 
-    // Invalidate TC list cache for this school
+    // Invalidate TC list cache for this school (all statuses and student-specific)
     const statuses = ["all", "PENDING", "APPROVED", "REJECTED"];
     for (const st of statuses) {
       await redis.del(`tcs:${schoolId}:all:${st}`);
+      await redis.del(`tcs:${schoolId}:${tc.student.id}:${st}`);
     }
 
     return NextResponse.json(
       {
-        message: "TC approved and student account deactivated successfully",
+        message: "TC approved successfully. Student removed from class.",
         tc: result,
       },
       { status: 200 }

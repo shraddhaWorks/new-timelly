@@ -44,18 +44,33 @@ export const authOptions: NextAuthOptions = {
             return null;
           }
 
-          if (!user.password) {
-            console.log("Auth: User has no password set");
+          // Check if password is explicitly null (deactivated account)
+          // Only block login if password is null - allow password verification for all other cases
+          if (user.password === null) {
+            console.log("Auth: User account is deactivated (password is null) for email:", credentials.email);
+            throw new Error("Account is deactivated or password not set. Please contact your administrator.");
+          }
+
+          // If password is undefined or empty string, treat as invalid credentials
+          if (user.password === undefined || user.password === "") {
+            console.log("Auth: User has no valid password for email:", credentials.email);
             return null;
           }
 
-          const isValid = await bcrypt.compare(
-            credentials.password,
-            user.password
-          );
+          // Verify the password - this will work even if password is a valid hash
+          try {
+            const isValid = await bcrypt.compare(
+              credentials.password,
+              user.password
+            );
 
-          if (!isValid) {
-            console.log("Auth: Password mismatch for user:", credentials.email);
+            if (!isValid) {
+              console.log("Auth: Password mismatch for user:", credentials.email);
+              return null;
+            }
+          } catch (bcryptError) {
+            // If bcrypt.compare fails (e.g., invalid hash format), treat as invalid password
+            console.log("Auth: Password verification failed for user:", credentials.email, bcryptError);
             return null;
           }
 
@@ -72,10 +87,14 @@ export const authOptions: NextAuthOptions = {
             allowedFeatures: user.allowedFeatures ?? [],
           };
         } catch (error: unknown) {
-          const err = error as { code?: string };
+          const err = error as { code?: string; message?: string };
           console.error("Auth error:", err);
           if (err?.code === "P2022") {
             console.error("Auth: DB schema may be out of sync. Run: npx prisma db push");
+          }
+          // If it's a custom error message, throw it so it can be displayed to user
+          if (err?.message && err.message.includes("Account is deactivated")) {
+            throw err;
           }
           return null;
         }

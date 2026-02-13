@@ -39,10 +39,10 @@ export async function GET(req: Request) {
    const cachedKey = `certificates:${schoolId}:${where.studentId ?? "all"}`;
 
    const cachedCertificates = await redis.get(cachedKey);
-     console.log("✅ Certificates served from Redis");
 
    if (cachedCertificates) {
-     return NextResponse.json({ certificates: cachedCertificates }, { status: 200 });
+     console.log("✅ Certificates served from Redis");
+     return NextResponse.json({ certificates: JSON.parse(cachedCertificates as string) }, { status: 200 });
    }
     const certificates = await prisma.certificate.findMany({
       where,
@@ -65,7 +65,7 @@ export async function GET(req: Request) {
         issuedDate: "desc",
       },
     });
-    await redis.set(cachedKey,certificates,{ex:60 * 5}); // Cache for 5 minutes
+    await redis.set(cachedKey, JSON.stringify(certificates), { ex: 60 * 5 }); // Cache for 5 minutes
 
     return NextResponse.json({ certificates }, { status: 200 });
   } catch (error: any) {

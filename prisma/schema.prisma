@@ -13,6 +13,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
         
 enum Role {
@@ -757,7 +758,8 @@ model Certificate {
 
 model TransferCertificate {
   id         String    @id @default(cuid())
-  reason     String?   @db.Text // Reason for TC request
+  // certificateType String? // Type of certificate: "TRANSFER", "BONAFIDE", "CHARACTER", "CONDUCT", "MIGRATION", "LEAVING", etc. - Temporarily commented until migration is run
+  reason     String?   @db.Text // Reason for certificate request
   status     String    @default("PENDING") // "PENDING", "APPROVED", "REJECTED", "ISSUED"
   issuedDate DateTime?
 

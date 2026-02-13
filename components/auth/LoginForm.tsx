@@ -27,7 +27,12 @@ export default function LoginForm() {
     });
 
     if (result?.error) {
-      setError("Invalid email or password");
+      // Provide more specific error messages
+      if (result.error.includes("deactivated") || result.error.includes("password not set")) {
+        setError("This account is deactivated or has no password set. Please contact your administrator.");
+      } else {
+        setError("Invalid email or password");
+      }
       setLoading(false);
       return;
     }

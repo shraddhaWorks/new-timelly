@@ -40,29 +40,12 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check if TC already exists (using select to avoid schema mismatches)
-    const existingTC = await prisma.transferCertificate.findFirst({
-      where: {
-        studentId: session.user.studentId,
-        status: {
-          in: ["PENDING", "APPROVED"],
-        },
-      },
-      select: {
-        id: true,
-        status: true,
-      },
-    });
+    // Allow multiple certificate requests - students can apply for multiple certificates
+    // They can have multiple pending requests and multiple approved certificates
+    // No restrictions - students may need multiple certificates of different or same types
 
-    if (existingTC) {
-      return NextResponse.json(
-        { message: "You already have a pending or approved TC request" },
-        { status: 400 }
-      );
-    }
-
-    // Create TC request (certificateType column doesn't exist yet in DB)
-    const tc = await prisma.transferCertificate.create({
+    // Create certificate request
+    const certificateRequest = await prisma.transferCertificate.create({
       data: {
         reason: reason || null,
         studentId: session.user.studentId,
@@ -85,15 +68,15 @@ export async function POST(req: Request) {
     });
 
     // Invalidate cache
-    const cacheKey = `tcs:${schoolId}:${session.user.studentId || "all"}:all`;
+    const cacheKey = `certificate-requests:${schoolId}:${session.user.studentId || "all"}:all`;
     await redis.del(cacheKey);
 
     return NextResponse.json(
-      { message: "TC request submitted successfully", tc },
+      { message: "Certificate request submitted successfully", certificateRequest },
       { status: 201 }
     );
   } catch (error: any) {
-    console.error("Apply TC error:", {
+    console.error("Apply certificate request error:", {
       message: error?.message,
       code: error?.code,
       meta: error?.meta,
@@ -111,7 +94,7 @@ export async function POST(req: Request) {
     } else if (error?.code) {
       switch (error.code) {
         case "P2002":
-          errorMessage = "A certificate request already exists for this student";
+          errorMessage = "Database constraint violation. Please try again.";
           break;
         case "P2003":
           errorMessage = "Invalid student or school reference";

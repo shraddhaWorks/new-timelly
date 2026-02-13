@@ -76,9 +76,13 @@ export default function CertificatesPage() {
       const data = await res.json();
       if (res.ok && data.templates) {
         setTemplates(data.templates);
+      } else {
+        console.error("Error fetching templates:", data.message);
+        setMessage(data.message || "Failed to fetch templates");
       }
     } catch (err) {
       console.error("Error fetching templates:", err);
+      setMessage("Failed to fetch templates");
     }
   };
 
@@ -88,9 +92,13 @@ export default function CertificatesPage() {
       const data = await res.json();
       if (res.ok && data.certificates) {
         setCertificates(data.certificates);
+      } else {
+        console.error("Error fetching certificates:", data.message);
+        setMessage(data.message || "Failed to fetch certificates");
       }
     } catch (err) {
       console.error("Error fetching certificates:", err);
+      setMessage("Failed to fetch certificates");
     }
   };
 
@@ -100,9 +108,13 @@ export default function CertificatesPage() {
       const data = await res.json();
       if (res.ok && data.students) {
         setStudents(data.students);
+      } else {
+        console.error("Error fetching students:", data.message);
+        setMessage(data.message || "Failed to fetch students");
       }
     } catch (err) {
       console.error("Error fetching students:", err);
+      setMessage("Failed to fetch students");
     }
   };
 
