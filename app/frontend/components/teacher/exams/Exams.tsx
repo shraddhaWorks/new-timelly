@@ -132,8 +132,8 @@ export default function TeacherExamsTab() {
             {/* EXAM CARDS GRID */}
             {loading ? (
                 <div className="flex flex-col items-center justify-center py-20">
+                    <Spinner/>
                     
-                    <p className="text-sm font-bold tracking-widest uppercase"><Spinner/></p>
                 </div>
             ) : (
                 <>
