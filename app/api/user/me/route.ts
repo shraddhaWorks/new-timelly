@@ -68,7 +68,7 @@ export async function PUT(req: Request) {
     // Email is constant and not updated from settings.
 
     if (typeof body.mobile === "string" || body.mobile === null) {
-      data.mobile = body.mobile;
+      data.mobile = body.mobile && body.mobile.trim() ? body.mobile.trim() : null;
     }
     if (typeof body.language === "string" || body.language === null) {
       data.language = body.language;

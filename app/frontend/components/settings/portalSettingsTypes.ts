@@ -10,6 +10,9 @@ export type FormState = {
   timezone: string;
   photoUrl: string;
   location: string;
+  address?: string;
+  fatherName?: string;
+  fatherPhone?: string;
 };
 
 export type PasswordState = {
