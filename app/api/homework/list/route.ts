@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { redis } from "@/lib/redis";
 
 export async function GET(req: Request) {
   try {
@@ -55,41 +54,7 @@ export async function GET(req: Request) {
     if (subject) {
       where.subject = subject;
     }
-   const cachedKey = `homeworks:${schoolId}:${session.user.studentId || "all"}:${classId || "all"}:${subject || "all"}`;
-    const cachedHomeworks = await redis.get(cachedKey);
-    if (cachedHomeworks) {
-      console.log("✅ Homeworks served from Redis");
-      const parsed = JSON.parse(cachedHomeworks as string);
-      
-      // For students, check if cached data has submission info, if not, fetch it
-      if (session.user.studentId) {
-        const hasSubmissionInfo = parsed.length > 0 && 'hasSubmitted' in parsed[0];
-        if (!hasSubmissionInfo) {
-          // Cache doesn't have submission info, fetch it
-          const homeworksWithSubmission = await Promise.all(
-            parsed.map(async (homework: any) => {
-              const submission = await prisma.homeworkSubmission.findUnique({
-                where: {
-                  homeworkId_studentId: {
-                    homeworkId: homework.id,
-                    studentId: session.user.studentId!,
-                  },
-                },
-              });
 
-              return {
-                ...homework,
-                hasSubmitted: !!submission,
-                submission: submission || null,
-              };
-            })
-          );
-          return NextResponse.json({ homeworks: homeworksWithSubmission }, { status: 200 });
-        }
-      }
-      
-      return NextResponse.json({ homeworks: parsed }, { status: 200 });
-    }
     const homeworks = await prisma.homework.findMany({
       where,
       include: {
@@ -134,11 +99,9 @@ export async function GET(req: Request) {
         })
       );
 
-      await redis.set(cachedKey, JSON.stringify(homeworksWithSubmission), { ex: 60 * 5 }); // Cache for 5 minutes
       return NextResponse.json({ homeworks: homeworksWithSubmission }, { status: 200 });
     }
 
-    await redis.set(cachedKey, JSON.stringify(homeworks), { ex: 60 * 5 }); // Cache for 5 minutes
     return NextResponse.json({ homeworks }, { status: 200 });
   } catch (error: any) {
     console.error("List homeworks error:", error);

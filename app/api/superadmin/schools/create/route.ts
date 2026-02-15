@@ -3,12 +3,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
-import { nameToSubdomain } from "@/lib/subdomain";
 
 /**
  * Single API: create school + school admin user and link them (user.schoolId = school.id).
  * POST /api/superadmin/schools/create
- * Body: { schoolName, subdomain, email, password, address?, location?, phone? }
+ * Body: { schoolName, email, password, address?, location?, phone? }
  */
 export async function POST(req: Request) {
   try {
@@ -18,8 +17,6 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const schoolName = typeof body.schoolName === "string" ? body.schoolName.trim() : "";
-    const subdomainRaw = typeof body.subdomain === "string" ? body.subdomain.trim() : "";
-    const subdomain = subdomainRaw ? nameToSubdomain(subdomainRaw) || subdomainRaw.toLowerCase().replace(/[^a-z0-9-]/g, "-") : "";
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     const password = typeof body.password === "string" ? body.password : "";
     const address = typeof body.address === "string" ? body.address.trim() : "";
@@ -29,18 +26,6 @@ export async function POST(req: Request) {
     if (!schoolName || !email || !password) {
       return NextResponse.json(
         { message: "schoolName, email and password are required" },
-        { status: 400 }
-      );
-    }
-    if (!subdomain) {
-      return NextResponse.json(
-        { message: "subdomain is required (e.g. first-school)" },
-        { status: 400 }
-      );
-    }
-    if (!/^[a-z0-9-]+$/.test(subdomain)) {
-      return NextResponse.json(
-        { message: "Subdomain must contain only lowercase letters, numbers, and hyphens" },
         { status: 400 }
       );
     }
@@ -54,14 +39,6 @@ export async function POST(req: Request) {
     });
     if (existingUser) {
       return NextResponse.json({ message: "User already exists with this email" }, { status: 400 });
-    }
-
-    const existingSubdomain = await prisma.school.findFirst({
-      where: { subdomain },
-      select: { id: true },
-    });
-    if (existingSubdomain) {
-      return NextResponse.json({ message: "Subdomain already in use" }, { status: 400 });
     }
 
     const hashedPassword = await bcrypt.hash(password, 8);
@@ -82,12 +59,11 @@ export async function POST(req: Request) {
       const school = await tx.school.create({
         data: {
           name: schoolName,
-          subdomain,
           address: address || schoolName,
           location: location || "",
           admins: { connect: { id: user.id } },
         },
-        select: { id: true, name: true, subdomain: true, address: true, location: true },
+        select: { id: true, name: true, address: true, location: true },
       });
 
       await tx.user.update({

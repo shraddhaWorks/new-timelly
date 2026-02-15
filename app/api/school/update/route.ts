@@ -2,13 +2,12 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { nameToSubdomain } from "@/lib/subdomain";
 
 export async function PUT(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     const body = await req.json();
-    const { name, address, location, subdomain } = body;
+    const { name, address, location } = body;
 
     if (!session)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -26,15 +25,10 @@ export async function PUT(req: Request) {
       );
     }
 
-    const data: { name?: string; address?: string; location?: string; subdomain?: string | null } = {};
+    const data: { name?: string; address?: string; location?: string } = {};
     if (name !== undefined) data.name = name;
     if (address !== undefined) data.address = address;
     if (location !== undefined) data.location = location;
-    if (subdomain !== undefined) {
-      data.subdomain = typeof subdomain === "string" && subdomain.trim()
-        ? nameToSubdomain(subdomain.trim())
-        : null;
-    }
 
     // ✅ UPDATE school on primary
     const updated = await prisma.school.update({

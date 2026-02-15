@@ -23,7 +23,6 @@ import PageHeader from "../common/PageHeader";
 
 type FormErrors = {
   schoolName?: string;
-  subdomain?: string;
   password?: string;
   email?: string;
   phone?: string;
@@ -35,7 +34,6 @@ export default function AddSchool() {
 
   const [form, setForm] = useState<SchoolFormState>({
     schoolName: "",
-    subdomain: "",
     password: "",
     phone: "",
     email: "",
@@ -77,14 +75,6 @@ export default function AddSchool() {
           return;
         }
 
-        /* Subdomain → lowercase, letters, numbers, hyphens only */
-        if (field === "subdomain") {
-          const slug = value.toLowerCase().replace(/[^a-z0-9-]/g, "").replace(/-+/g, "-").replace(/^-|-$/g, "");
-          setForm((prev) => ({ ...prev, subdomain: slug }));
-          setErrors((prev) => ({ ...prev, subdomain: "" }));
-          return;
-        }
-
         setForm((prev) => ({ ...prev, [field]: value }));
         setErrors((prev) => ({ ...prev, [field]: "" }));
       };
@@ -96,14 +86,6 @@ export default function AddSchool() {
 
     if (!form.schoolName.trim()) {
       newErrors.schoolName = "School name is required";
-    }
-
-    if (!form.subdomain.trim()) {
-      newErrors.subdomain = "Subdomain is required";
-    } else if (!/^[a-z0-9-]+$/.test(form.subdomain)) {
-      newErrors.subdomain = "Only lowercase letters, numbers, and hyphens";
-    } else if (form.subdomain.length < 2) {
-      newErrors.subdomain = "Subdomain must be at least 2 characters";
     }
 
     if (!form.password.trim()) {
@@ -146,7 +128,6 @@ export default function AddSchool() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           schoolName: form.schoolName,
-          subdomain: form.subdomain.trim(),
           email: form.email,
           password: form.password,
           address: [form.addressLine, form.area, form.city, form.district, form.state].filter(Boolean).join(", ") || form.schoolName,
@@ -191,7 +172,6 @@ export default function AddSchool() {
   const handleReset = () => {
     setForm({
       schoolName: "",
-      subdomain: "",
       password: "",
       phone: "",
       email: "",
@@ -261,15 +241,6 @@ return (
               onChange={handleChange("schoolName")}
               error={errors.schoolName}
               icon={School}
-            />
-
-            <SearchInput
-              label="Subdomain *"
-              placeholder="e.g. first-school (for first-school.yourdomain.com)"
-              value={form.subdomain}
-              onChange={handleChange("subdomain")}
-              error={errors.subdomain}
-              icon={Globe}
             />
 
             <SearchInput

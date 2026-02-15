@@ -202,7 +202,6 @@ model LeaveRequest {
 model School {
   id                   String                @id @default(cuid())
   name                 String
-  subdomain            String?               @unique // e.g. "first-school" for first-school.domain.com
   address              String
   location             String
   logoUrl              String? // Image URL (Supabase bucket)
