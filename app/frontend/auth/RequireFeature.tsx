@@ -18,10 +18,10 @@ interface RequireFeatureProps {
  */
 const TAB_TO_FEATURE_MAP: Record<string, FeatureId> = {
   dashboard: "dashboard",
-  attendance: "attendance-view", // Default to view, could be "attendance-mark" for marking
+  attendance: "attendance-view",
   "attendance-view": "attendance-view",
   "attendance-mark": "attendance-mark",
-  marks: "marks-view", // Default to view, could be "marks-entry" for entry
+  marks: "marks-view",
   "marks-view": "marks-view",
   "marks-entry": "marks-entry",
   homework: "homework",
@@ -30,15 +30,19 @@ const TAB_TO_FEATURE_MAP: Record<string, FeatureId> = {
   teachers: "teachers",
   leaves: "leaves",
   "student-leaves": "student-leaves",
-  circulars: "communication", // Circulars might map to communication
-  settings: "school", // Settings might map to school details
+  circulars: "communication",
+  settings: "school",
   certificates: "certificates",
   events: "events",
+  workshops: "events", // Workshops & Events tab -> events feature
+  exams: "exams",
   newsfeed: "newsfeed",
   communication: "communication",
+  chat: "communication", // Parent Chat tab -> communication feature
   payments: "payments",
   tc: "tc",
   school: "school",
+  profile: "profile",
 } as const;
 
 const ROLES_WITH_ALL_ACCESS = ["SUPERADMIN", "SCHOOLADMIN"] as const;
@@ -127,7 +131,7 @@ export default function RequireFeature({ requiredFeature, children }: RequireFea
   // If not authorized, show an inline unauthorized panel (stay in portal)
   if (isAuthorized === false) {
     return (
-      <div className="min-h-[100vh] flex items-center justify-center p-6">
+      <div className="min-h-screen flex items-center justify-center p-6">
         <div className="max-w-lg w-full bg-white/5 p-6 rounded-2xl border border-white/10 text-center">
           <h3 className="text-lg font-semibold text-white mb-2">Access Denied</h3>
           <p className="text-sm text-white/60 mb-4">You don't have permission to view this section.</p>
