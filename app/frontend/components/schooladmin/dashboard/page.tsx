@@ -62,6 +62,7 @@ type DashboardData = {
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [userName, setUserName] = useState("Rajesh");
 
   useEffect(() => {
@@ -69,8 +70,14 @@ export default function Dashboard() {
     (async () => {
       try {
         const [dashboardRes, userRes] = await Promise.all([
-          fetch("/api/school/dashboard", { credentials: "include" }),
-          fetch("/api/user/me", { credentials: "include" }),
+          fetch("/api/school/dashboard", { 
+            credentials: "include",
+            cache: "no-store"
+          }),
+          fetch("/api/user/me", { 
+            credentials: "include",
+            cache: "no-store"
+          }),
         ]);
 
         if (userRes.ok) {
@@ -79,13 +86,26 @@ export default function Dashboard() {
         }
 
         if (!dashboardRes.ok) {
-          setData(null);
+          const errorData = await dashboardRes.json().catch(() => ({}));
+          const errorMessage = errorData.message || dashboardRes.statusText || "Failed to load dashboard";
+          console.error("Dashboard API error:", errorMessage, "Status:", dashboardRes.status);
+          if (!cancelled) {
+            setError(errorMessage);
+            setData(null);
+          }
           return;
         }
         const json = await dashboardRes.json();
-        if (!cancelled) setData(json);
-      } catch {
-        if (!cancelled) setData(null);
+        if (!cancelled) {
+          setData(json);
+          setError(null);
+        }
+      } catch (error) {
+        console.error("Dashboard fetch error:", error);
+        if (!cancelled) {
+          setError(error instanceof Error ? error.message : "Unable to load dashboard data");
+          setData(null);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -233,9 +253,26 @@ export default function Dashboard() {
         </div>
       )}
 
-      {!data && (
+      {error && (
+        <div className="bg-red-500/10 backdrop-blur-xl border border-red-500/20 rounded-2xl p-8 text-center">
+          <p className="text-red-400 font-semibold mb-2">Error loading dashboard</p>
+          <p className="text-red-300/80 text-sm">{error}</p>
+          <button
+            onClick={() => {
+              setLoading(true);
+              setError(null);
+              window.location.reload();
+            }}
+            className="mt-4 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+      
+      {!data && !error && !loading && (
         <div className="bg-white/5 backdrop-blur-xl border-b border-white/10 rounded-2xl p-8 text-center text-gray-400">
-          Unable to load dashboard data.
+          No dashboard data available.
         </div>
       )}
     </div>

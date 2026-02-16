@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { redis } from "@/lib/redis";
 
 type EndParams =
   | { params: { id: string } }
@@ -56,10 +55,6 @@ export async function POST(_req: Request, context: EndParams) {
       where: { id: appointmentId },
       data: { status: "ENDED" },
     });
-
-    await redis.del(`appointments:TEACHER:${appointment.teacherId}`);
-    await redis.del(`appointments:STUDENT:${appointment.studentId}`);
-    await redis.del(`messages:${appointmentId}`);
 
     return NextResponse.json(
       { message: "Chat ended", appointment: updated },

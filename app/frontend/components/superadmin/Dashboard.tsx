@@ -35,9 +35,16 @@ export default function Dashboard() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/superadmin/dashboard")
+    fetch("/api/superadmin/dashboard", { 
+      credentials: "include",
+      cache: "no-store"
+    })
       .then((res) => {
-        if (!res.ok) throw new Error(res.status === 403 ? "Forbidden" : "Failed to load");
+        if (!res.ok) {
+          return res.json().then((errorData) => {
+            throw new Error(errorData.message || (res.status === 403 ? "Forbidden" : "Failed to load"));
+          });
+        }
         return res.json();
       })
       .then((payload) => {

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { redis } from "@/lib/redis";
 
 export async function POST(req: Request) {
   try {
@@ -92,14 +91,6 @@ export async function POST(req: Request) {
         },
       });
 
-      // Invalidate cache - delete common cache keys for this student
-      if (schoolId) {
-        // Delete the most common cache key pattern for this student
-        await redis.del(`homeworks:${schoolId}:${session.user.studentId}:all:all`);
-        // Also delete cache for all students view (in case teacher/admin views it)
-        await redis.del(`homeworks:${schoolId}:all:all:all`);
-      }
-
       return NextResponse.json(
         { message: "Homework submission updated successfully", submission: updated },
         { status: 200 }
@@ -115,14 +106,6 @@ export async function POST(req: Request) {
         fileUrl: fileUrl || null,
       },
     });
-
-    // Invalidate cache - delete common cache keys for this student
-    if (schoolId) {
-      // Delete the most common cache key pattern for this student
-      await redis.del(`homeworks:${schoolId}:${session.user.studentId}:all:all`);
-      // Also delete cache for all students view (in case teacher/admin views it)
-      await redis.del(`homeworks:${schoolId}:all:all:all`);
-    }
 
     return NextResponse.json(
       { message: "Homework submitted successfully", submission },

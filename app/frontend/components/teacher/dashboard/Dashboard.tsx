@@ -25,9 +25,13 @@ export default function TeacherDashboard() {
         let cancelled = false;
         (async () => {
             try {
-                const res = await fetch("/api/teacher/dashboard");
+                const res = await fetch("/api/teacher/dashboard", { 
+                    credentials: "include",
+                    cache: "no-store"
+                });
                 if (!res.ok) {
-                    throw new Error(res.status === 401 ? "Unauthorized" : "Failed to load dashboard");
+                    const errorData = await res.json().catch(() => ({}));
+                    throw new Error(errorData.message || (res.status === 401 ? "Unauthorized" : "Failed to load dashboard"));
                 }
                 const payload = (await res.json()) as TeacherDashboardData;
                 if (!cancelled) setData(payload);

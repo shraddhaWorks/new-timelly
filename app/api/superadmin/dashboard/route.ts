@@ -90,6 +90,23 @@ export async function GET() {
     return NextResponse.json(payload, { status: 200 });
   } catch (e: unknown) {
     console.error("Superadmin dashboard:", e);
+    
+    // Handle database connection errors
+    const err = e as { code?: string; message?: string; name?: string };
+    if (err?.code === "P1001" || err?.message?.includes("Can't reach database server") || err?.name === "PrismaClientInitializationError") {
+      return NextResponse.json(
+        { message: "Database connection failed. Please check your database configuration." },
+        { status: 503 }
+      );
+    }
+    
+    if (err?.message?.includes("statement timeout") || err?.message?.includes("Connection terminated")) {
+      return NextResponse.json(
+        { message: "Database request timed out. Please try again." },
+        { status: 408 }
+      );
+    }
+    
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

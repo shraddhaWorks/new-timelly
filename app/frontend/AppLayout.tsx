@@ -48,6 +48,7 @@ export default function AppLayout({
           <AppSidebar
             menuItems={menuItems}
             profile={profile}
+            activeTab={activeTab}
             onLogoutRequest={() => setShowLogoutConfirm(true)}
           />
         </aside>
@@ -68,6 +69,7 @@ export default function AppLayout({
         {/* MOBILE BOTTOM NAV */}
         <BottomNavBar
           menuItems={menuItems}
+          activeTab={activeTab}
           onMoreClick={() => setShowMore(true)}
         />
 

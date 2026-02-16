@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { redis } from "@/lib/redis";
 
 async function getSchoolId(session: { user: { id: string; schoolId?: string | null } }) {
   let schoolId = session.user.schoolId;
@@ -134,9 +133,6 @@ export async function POST(req: Request) {
       return created;
     });
 
-    await redis.del(`feeSummary:${schoolId}`);
-    const studentIds = await prisma.student.findMany({ where: { schoolId }, select: { id: true } });
-    for (const s of studentIds) await redis.del(`fees:${s.id}`);
     return NextResponse.json({ extraFee }, { status: 201 });
   } catch (error: any) {
     console.error("Extra fee POST error:", error);

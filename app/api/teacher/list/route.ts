@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { redis } from "@/lib/redis";
 
 export async function GET() {
   try {
@@ -43,12 +42,6 @@ export async function GET() {
         { status: 400 }
       );
     }
-   const cachedKey = `teachers:${schoolId}`;
-   const cachedTeachers = await redis.get(cachedKey);
-    if (cachedTeachers) {
-      console.log("✅ Teachers served from Redis");
-      return NextResponse.json({ teachers: cachedTeachers }, { status: 200 });
-    }
     const teachers = await prisma.user.findMany({
       where: {
         schoolId: schoolId,
@@ -67,7 +60,6 @@ export async function GET() {
         name: "asc",
       },
     });
-    await redis.set(cachedKey, teachers, { ex: 60 * 5 }); // Cache for 5 minutes
     return NextResponse.json({ teachers }, { status: 200 });
   } catch (error: any) {
     console.error("List teachers error:", error);
