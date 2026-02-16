@@ -1,31 +1,29 @@
 "use client";
 
-import { forwardRef, type HTMLAttributes } from "react";
-import { cn } from "@/lib/utils";
+import { ReactNode } from "react";
 
-interface GlassPanelProps extends HTMLAttributes<HTMLDivElement> {
-  padding?: "none" | "sm" | "md" | "lg";
+type Props = {
+  children: ReactNode;
+  className?: string;
+  padding?: "sm" | "md" | "lg";
+};
+
+const paddingMap: Record<NonNullable<Props["padding"]>, string> = {
+  sm: "p-4",
+  md: "p-6",
+  lg: "p-8",
+};
+
+export default function GlassPanel({
+  children,
+  className = "",
+  padding = "md",
+}: Props) {
+  return (
+    <div
+      className={`rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl ${paddingMap[padding]} ${className}`}
+    >
+      {children}
+    </div>
+  );
 }
-
-const GlassPanel = forwardRef<HTMLDivElement, GlassPanelProps>(
-  ({ className, padding = "md", children, ...props }, ref) => {
-    const paddingClass = {
-      none: "",
-      sm: "p-4",
-      md: "p-6",
-      lg: "p-8",
-    }[padding];
-    return (
-      <div
-        ref={ref}
-        className={cn("glass rounded-xl", paddingClass, className)}
-        {...props}
-      >
-        {children}
-      </div>
-    );
-  }
-);
-GlassPanel.displayName = "GlassPanel";
-
-export default GlassPanel;

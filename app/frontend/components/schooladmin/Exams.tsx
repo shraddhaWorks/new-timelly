@@ -3,28 +3,27 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BookOpen, Calendar, Plus } from "lucide-react";
-import RequireRole from "@/components/RequireRole";
-import GlassCard from "@/components/ui/GlassCard";
+
 import { useExamTerms, fetchExamTermDetail } from "@/hooks/useExamTerms";
 import { useClasses } from "@/hooks/useClasses";
-import ExamTermCard from "@/components/schoolAdmin/exams/ExamTermCard";
-import NewExamTermModal from "@/components/schoolAdmin/exams/NewExamTermModal";
-import ExamScheduleTab from "@/components/schoolAdmin/exams/ExamScheduleTab";
-import SyllabusTrackingTab from "@/components/schoolAdmin/exams/SyllabusTrackingTab";
+
 import type { ExamTermDetail } from "@/hooks/useExamTerms";
 import {
   EXAM_ACCENT,
   EXAM_TEXT_SECONDARY,
   EXAM_TEXT_MAIN,
 } from "@/app/frontend/constants/colors";
+import ExamTermCard from "./exams/ExamTermCard";
+import GlassCard from "./exams/GlassCard";
+import ExamScheduleTab from "./exams/ExamScheduleTab";
+import NewExamTermModal from "./exams/NewExamTermModal";
+import SyllabusTrackingTab from "./exams/SyllabusTrackingTab";
 
 type TabId = "schedule" | "syllabus";
 
 export default function ExamsPage() {
   return (
-    <RequireRole allowedRoles={["SCHOOLADMIN"]}>
       <ExamsPageInner />
-    </RequireRole>
   );
 }
 

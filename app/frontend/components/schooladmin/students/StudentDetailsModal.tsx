@@ -50,47 +50,47 @@ export default function StudentDetailsModal({ student, onClose, onEdit }: Props)
           <div>
             <p className="text-sm text-white/60 mb-3">Academic Information</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                <p className="text-xs text-white/50">Class</p>
-                <p className="mt-1 text-sm font-semibold">{className}</p>
+              <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                <p className="text-xs text-gray-500 mb-1">Class</p>
+                <p className="text-sm font-semibold text-gray-200">{className}</p>
               </div>
-              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                <p className="text-xs text-white/50">Section</p>
-                <p className="mt-1 text-sm font-semibold">{sectionName}</p>
+              <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                <p className="text-xs text-gray-500 mb-1">Section</p>
+                <p className="text-sm font-semibold text-gray-200">{sectionName}</p>
               </div>
-              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                <p className="text-xs text-white/50">Gender</p>
-                <p className="mt-1 text-sm font-semibold">{student.gender || "-"}</p>
+              <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                <p className="text-xs text-gray-500 mb-1">Gender</p>
+                <p className="text-sm font-semibold text-gray-200">{student.gender || "-"}</p>
               </div>
-              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                <p className="text-xs text-white/50">Age</p>
-                <p className="mt-1 text-sm font-semibold">{getAge(student.dob)}</p>
+              <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                <p className="text-xs text-gray-500 mb-1">Age</p>
+                <p className="text-sm font-semibold text-gray-200">{getAge(student.dob)}</p>
               </div>
-              <div className="rounded-xl border border-white/10 bg-white/5 p-4 md:col-span-2">
-                <p className="text-xs text-white/50">Previous School</p>
-                <p className="mt-1 text-sm font-semibold">{student.previousSchool || "-"}</p>
+              <div className="bg-white/5 rounded-lg p-3 border border-white/10 col-span-2">
+                <p className="text-xs text-gray-500 mb-1">Previous School</p>
+                <p className="text-sm font-semibold text-gray-200">{student.previousSchool || "-"}</p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-xl border border-lime-400/20 bg-lime-400/5 p-4">
-            <p className="text-xs text-lime-300 mb-3">Parent Information</p>
+          <div className="bg-lime-400/5 rounded-lg p-4 border border-lime-400/10 space-y-2">
+            <p className="text-xs text-lime-400 mb-1">Parent Information</p>
             <div className="space-y-2 text-sm">
               <div>
-                <span className="text-lime-300">Parent Name</span>
-                <div className="font-semibold">{student.fatherName || "-"}</div>
+                <span className="text-xs text-lime-400 mb-1">Parent Name</span>
+                <div className="text-sm font-semibold text-gray-200">{student.fatherName || "-"}</div>
               </div>
               <div>
-                <span className="text-lime-300">Email</span>
-                <div className="font-semibold">{email}</div>
+                <span className="text-xs text-lime-400 mb-1">Email</span>
+                <div className="text-sm font-semibold text-gray-200">{email}</div>
               </div>
               <div>
-                <span className="text-lime-300">Phone</span>
-                <div className="font-semibold">{student.phoneNo || "-"}</div>
+                <span className="text-xs text-lime-400 mb-1">Phone</span>
+                <div className="text-sm font-semibold text-gray-200">{student.phoneNo || "-"}</div>
               </div>
               <div>
-                <span className="text-lime-300">Address</span>
-                <div className="font-semibold">{student.address || "-"}</div>
+                <span className="text-xs text-lime-400 mb-1">Address</span>
+                <div className="text-sm font-semibold text-gray-200">{student.address || "-"}</div>
               </div>
             </div>
           </div>
@@ -98,13 +98,15 @@ export default function StudentDetailsModal({ student, onClose, onEdit }: Props)
           <div className="mt-2 flex flex-wrap items-center justify-end gap-2">
             <button
               onClick={onClose}
-              className="rounded-xl border border-white/10 bg-white/5 px-5 py-2 text-sm font-semibold text-white/70 hover:bg-white/10"
+              className="flex-1 px-4 md:px-6 py-2.5 border border-white/10
+               rounded-xl text-gray-400 font-medium hover:bg-white/5 transition-all text-sm"
             >
               Close
             </button>
             <button
               onClick={onEdit}
-              className="rounded-xl bg-lime-400 px-5 py-2 text-sm font-semibold text-black hover:bg-lime-300"
+              className="flex-1 px-4 md:px-6 py-2.5 bg-lime-400 hover:bg-lime-500 text-black rounded-xl font-medium transition-all
+               shadow-[0_0_15px_rgba(163,230,53,0.3)] text-sm flex items-center justify-center gap-2"
             >
               Edit Student
             </button>

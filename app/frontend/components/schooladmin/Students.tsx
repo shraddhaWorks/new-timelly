@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import DataTable from "../common/TableLayout";
 import PageHeader from "../common/PageHeader";
 import StudentFilters from "./students/StudentFilters";
@@ -22,6 +23,26 @@ type Props = {
 
 export default function StudentsManagementPage({ classes = [], reload }: Props) {
   const page = useStudentPage({ classes, reload });
+  const [tablePage, setTablePage] = useState(1);
+  const pageSize = 5;
+  const totalPages = Math.max(
+    1,
+    Math.ceil(page.filteredStudents.length / pageSize)
+  );
+  const safePage = Math.min(tablePage, totalPages);
+  const pagedStudents = useMemo(
+    () =>
+      page.filteredStudents.slice(
+        (safePage - 1) * pageSize,
+        safePage * pageSize
+      ),
+    [page.filteredStudents, safePage]
+  );
+
+  useEffect(() => {
+    setTablePage(1);
+  }, [page.searchQuery, page.selectedClass, page.selectedSection]);
+
   const columns = buildStudentColumns({
     onView: page.openView,
     onEdit: page.openEdit,
@@ -105,7 +126,7 @@ export default function StudentsManagementPage({ classes = [], reload }: Props) 
           </div>
 
           <div className="md:hidden space-y-4">
-            {page.filteredStudents.map((student, index) => (
+            {pagedStudents.map((student, index) => (
               <StudentMobileCard
                 key={student.id}
                 student={student}
@@ -115,9 +136,35 @@ export default function StudentsManagementPage({ classes = [], reload }: Props) 
                 onDelete={page.openDelete}
               />
             ))}
-            {page.filteredStudents.length === 0 && !page.tableLoading && (
+            {pagedStudents.length === 0 && !page.tableLoading && (
               <div className="text-center text-white/60 py-6">
                 No students found
+              </div>
+            )}
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                <span className="text-xs text-white/60">
+                  Page {safePage} of {totalPages}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTablePage((p) => Math.max(1, p - 1))}
+                    disabled={safePage <= 1}
+                    className="rounded-full px-4 py-2 text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTablePage((p) => Math.min(totalPages, p + 1))}
+                    disabled={safePage >= totalPages}
+                    className="rounded-full px-4 py-2 text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -125,7 +172,7 @@ export default function StudentsManagementPage({ classes = [], reload }: Props) 
           <div className="hidden md:block">
             <DataTable
               columns={columns}
-              data={page.filteredStudents}
+              data={pagedStudents}
               loading={page.tableLoading}
               emptyText="No students found"
               tableTitle={`All Students (${page.filteredStudents.length})`}
@@ -134,6 +181,11 @@ export default function StudentsManagementPage({ classes = [], reload }: Props) 
                   ? `Class ${page.selectedClass}${page.selectedSection ? ` ${page.selectedSection}` : ""}`
                   : undefined
               }
+              pagination={{
+                page: safePage,
+                totalPages,
+                onChange: setTablePage,
+              }}
             />
           </div>
         </div>

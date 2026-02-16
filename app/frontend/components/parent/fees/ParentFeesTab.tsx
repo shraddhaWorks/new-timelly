@@ -13,7 +13,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import PageHeader from "../../common/PageHeader";
-import PayButton from "@/components/PayButton";
+import PayButton from "@/app/frontend/components/common/PayButton";
 
 interface InstallmentItem {
   installmentNumber: number;

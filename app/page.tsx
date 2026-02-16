@@ -4,7 +4,8 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ROUTES } from "@/app/frontend/constants/routes";
-import LoginForm from "@/components/auth/LoginForm";
+import Spinner from "./frontend/components/common/Spinner";
+import LoginForm from "./frontend/auth/LoginForm";
 
 export default function Home() {
   const router = useRouter();
@@ -41,7 +42,7 @@ export default function Home() {
         <div className="text-center">
           <div className="mb-6">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20">
-              <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+              <Spinner/>
             </div>
           </div>
           <h2 className="text-2xl font-semibold text-white mb-2">Loading</h2>
@@ -58,7 +59,7 @@ export default function Home() {
         <div className="text-center">
           <div className="mb-6">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20">
-              <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+              <Spinner/>
             </div>
           </div>
           <h2 className="text-2xl font-semibold text-white mb-2">Redirecting</h2>
@@ -70,7 +71,7 @@ export default function Home() {
 
   // Show login form for everyone else (unauthenticated or authenticated without valid role)
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+    <div className="min-h-screen flex items-center justify-center px-6">
       <LoginForm />
     </div>
   );

@@ -135,6 +135,7 @@ export default function AppSidebar({ menuItems, profile, activeTab = "dashboard"
           <div className="px-4 pb-4 pt-2 space-y-3 border-t border-white/10">
             {bottomItems.map((item) => {
               const isActive = item.tab === activeTab;
+              const isLogout = item.action === "logout";
               const Icon = item.icon;
               return (
                 <motion.button
@@ -145,7 +146,9 @@ export default function AppSidebar({ menuItems, profile, activeTab = "dashboard"
                     w-full flex items-center gap-4 px-5 py-3 rounded-xl
                     transition min-w-0
                     ${
-                      isActive
+                      isLogout
+                        ? "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                        : isActive
                         ? "bg-lime-400/10 text-lime-400 border border-lime-400/20"
                         : "text-white/60 hover:bg-white/5 hover:text-white"
                     }
@@ -154,7 +157,9 @@ export default function AppSidebar({ menuItems, profile, activeTab = "dashboard"
                   <Icon
                     size={20}
                     className="flex-shrink-0"
-                    style={{ color: isActive ? PRIMARY_COLOR : "#9ca3af" }}
+                    style={{
+                      color: isLogout ? "#f87171" : isActive ? PRIMARY_COLOR : "#9ca3af",
+                    }}
                   />
                   <span className="truncate text-sm">{item.label}</span>
                 </motion.button>

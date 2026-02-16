@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import GlassCard from "@/components/ui/GlassCard";
 import { EXAM_TERM_STATUS } from "@/lib/constants";
 import type { ClassItem } from "@/hooks/useClasses";
+import GlassCard from "./GlassCard";
 
 interface NewExamTermModalProps {
   classes: ClassItem[];
