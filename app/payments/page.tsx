@@ -94,27 +94,20 @@ export default function Page() {
     }
   };
 
-  // Handle Juspay return: verify payment when redirected back with success params
+  // Handle HyperPG return: after payment user is redirected with success=1&order_id=...&amount=...
   useEffect(() => {
     if (status !== "authenticated" || !session?.user || verifiedRef.current) return;
     const success = searchParams.get("success");
     const amount = searchParams.get("amount");
-    const juspayOrder = searchParams.get("juspay_order");
-    const orderId = searchParams.get("order_id") || juspayOrder;
-    const paymentId = searchParams.get("payment_id") || searchParams.get("jp_payment_id");
-    if (success === "1" && orderId && paymentId && amount) {
-      verifiedRef.current = true;
+    const orderId = searchParams.get("order_id");
+    if (success === "1" && orderId && amount) {
       const amt = parseFloat(amount);
       if (isNaN(amt) || amt <= 0) return;
+      verifiedRef.current = true;
       fetch("/api/payment/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          gateway: "JUSPAY",
-          juspay_order_id: orderId,
-          juspay_payment_id: paymentId,
-          amount: amt,
-        }),
+        body: JSON.stringify({ order_id: orderId, amount: amt }),
       })
         .then((res) => res.json())
         .then((data) => {

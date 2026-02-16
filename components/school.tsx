@@ -10,7 +10,7 @@ export default function SchoolPage() {
 
     const [showForm, setShowForm] = useState(false);
     const [school, setSchool] = useState<any>(null);
-    const [settings, setSettings] = useState<{ admissionPrefix: string; rollNoPrefix: string } | null>(null);
+    const [settings, setSettings] = useState<{ admissionPrefix: string; rollNoPrefix: string; hyperpgSubMid?: string | null } | null>(null);
     const [settingsMsg, setSettingsMsg] = useState("");
 
     const [name, setName] = useState("");
@@ -19,6 +19,7 @@ export default function SchoolPage() {
     const [msg, setMsg] = useState("");
     const [admissionPrefix, setAdmissionPrefix] = useState("ADM");
     const [rollNoPrefix, setRollNoPrefix] = useState("");
+    const [hyperpgSubMid, setHyperpgSubMid] = useState("");
 
     useEffect(() => {
         if (!session) return;
@@ -41,6 +42,7 @@ export default function SchoolPage() {
                 setSettings(data.settings);
                 setAdmissionPrefix(data.settings.admissionPrefix ?? "ADM");
                 setRollNoPrefix(data.settings.rollNoPrefix ?? "");
+                setHyperpgSubMid(data.settings.hyperpgSubMid ?? "");
             }
         }
 
@@ -221,6 +223,16 @@ export default function SchoolPage() {
                                                 placeholder="e.g. R"
                                             />
                                         </div>
+                                        <div className="bg-[#2d2d2d]/50 border border-[#404040] rounded-lg p-4 md:col-span-2">
+                                            <p className="text-sm text-[#808080] mb-2 flex items-center gap-2"><FileText size={14} /> HyperPG Sub-Merchant ID (optional)</p>
+                                            <input
+                                                value={hyperpgSubMid}
+                                                onChange={(e) => setHyperpgSubMid(e.target.value)}
+                                                className="w-full bg-[#1a1a1a] border border-[#404040] text-white px-3 py-2 rounded-lg"
+                                                placeholder="Sub Account Id from HyperPG dashboard"
+                                            />
+                                            <p className="text-xs text-[#6b6b6b] mt-1">If set, fee payments for this school are settled to this sub-merchant.</p>
+                                        </div>
                                     </div>
                                     <motion.button
                                         type="button"
@@ -230,7 +242,7 @@ export default function SchoolPage() {
                                             const res = await fetch("/api/school/settings", {
                                                 method: "PUT",
                                                 headers: { "Content-Type": "application/json" },
-                                                body: JSON.stringify({ admissionPrefix, rollNoPrefix }),
+                                                body: JSON.stringify({ admissionPrefix, rollNoPrefix, hyperpgSubMid: hyperpgSubMid || null }),
                                             });
                                             const data = await res.json();
                                             setSettingsMsg(res.ok ? "Settings saved successfully." : (data.message || "Failed to save"));

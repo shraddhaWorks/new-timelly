@@ -1,141 +1,151 @@
-import Razorpay from "razorpay";
+/**
+ * Create Payment Order (HyperPG only)
+ *
+ * Only students can create fee payment orders. We use the student's school to decide
+ * split settlement: if the school has a HyperPG sub-merchant ID (sub_mid), the payment
+ * is split so the school receives the amount. Main merchant credentials come from env.
+ */
+
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
+import { createSession } from "@/lib/hyperpg";
 
-// Global Juspay fallback when school has no tenant credentials
-const globalJuspayMerchantId = process.env.JUSTPAY_MERCHANT_ID;
-const globalJuspayApiKey =
-  process.env.JUSTPAY_API_KEY || process.env.JUSTPAY_MERCHANT_KEY_ID;
-
-const razorpay =
-  process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET
-    ? new Razorpay({
-        key_id: process.env.RAZORPAY_KEY_ID,
-        key_secret: process.env.RAZORPAY_KEY_SECRET,
-      })
-    : null;
+// Main merchant credentials (one main merchant can have many sub-merchants = schools)
+const hyperpgMerchantId = process.env.HYPERPG_MERCHANT_ID;
+const hyperpgApiKey = process.env.HYPERPG_API_KEY;
+const hyperpgBaseUrl =
+  process.env.HYPERPG_BASE_URL || "https://sandbox.hyperpg.in";
 
 export async function POST(req: Request) {
+  // ----- 1. Auth: only logged-in users -----
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  // Only students pay fees through this flow; parents use the same API on behalf of student
   if (session.user.role !== "STUDENT" || !session.user.studentId) {
-    return NextResponse.json({ error: "Only students can create payment orders" }, { status: 403 });
+    return NextResponse.json(
+      { error: "Only students can create payment orders" },
+      { status: 403 }
+    );
   }
 
   try {
+    // ----- 2. Parse body: amount and optional return path -----
     const body = await req.json();
     const rawAmount = body.amount;
-    const returnPath = body.return_path as string | undefined; // e.g. "/frontend/pages/parent?tab=fees"
+    const returnPath = (body.return_path as string) || "/payments";
 
-    const amountNumber = typeof rawAmount === "string" ? parseFloat(rawAmount) : rawAmount;
+    const amountNumber =
+      typeof rawAmount === "string" ? parseFloat(rawAmount) : Number(rawAmount);
 
-    if (!amountNumber || isNaN(amountNumber) || amountNumber <= 0) {
+    if (
+      !amountNumber ||
+      isNaN(amountNumber) ||
+      amountNumber <= 0
+    ) {
       return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
     }
 
-    const amountPaise = Math.round(amountNumber * 100);
-    const customerId = session.user.studentId;
-
-    // Tenant: payments go to the student's school account. Use school Juspay creds or global fallback.
+    // ----- 3. Load student and school settings -----
     const student = await prisma.student.findUnique({
       where: { id: session.user.studentId },
-      select: { schoolId: true },
+      select: {
+        schoolId: true,
+        phoneNo: true,
+        user: { select: { name: true, email: true } },
+      },
     });
     if (!student) {
-      return NextResponse.json({ error: "Student not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Student not found" },
+        { status: 404 }
+      );
     }
 
     const settings = await prisma.schoolSettings.findUnique({
       where: { schoolId: student.schoolId },
     });
 
-    const useSchoolJuspay =
-      !!settings?.juspayMerchantId && !!settings?.juspayApiKey;
-    const merchantId = useSchoolJuspay
-      ? settings!.juspayMerchantId!
-      : globalJuspayMerchantId;
-    const apiKey = useSchoolJuspay
-      ? settings!.juspayApiKey!
-      : globalJuspayApiKey;
-    const useJuspay = !!merchantId && !!apiKey;
-
-    if (useJuspay) {
-      const orderId = `ord_${Date.now()}_${session.user.studentId}`;
-
-      const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-      const path = returnPath && returnPath.startsWith("/") ? returnPath : "/payments";
-      const sep = path.includes("?") ? "&" : "?";
-      const returnUrl = `${baseUrl}${path}${sep}success=1&amount=${amountNumber}&juspay_order=${orderId}`;
-      const params = new URLSearchParams({
-        order_id: orderId,
-        amount: String(amountPaise),
-        currency: "INR",
-        customer_id: customerId,
-        return_url: returnUrl,
-      });
-
-      // Juspay typically expects Basic auth: base64(api_key:)
-      const auth = Buffer.from(`${apiKey}:`).toString("base64");
-      const res = await fetch("https://payments.sandbox.juspay.in/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: `Basic ${auth}`,
-          "x-merchantid": merchantId,
-          "x-routing-id": customerId,
+    // ----- 4. HyperPG must be configured (main merchant in env) -----
+    if (!hyperpgMerchantId || !hyperpgApiKey) {
+      return NextResponse.json(
+        {
+          error:
+            "Payment not configured. Set HYPERPG_MERCHANT_ID and HYPERPG_API_KEY in .env",
         },
-        body: params.toString(),
-      });
-
-      if (!res.ok) {
-        const errText = await res.text();
-        console.error("Juspay order error:", res.status, errText);
-        const is401 = res.status === 401;
-        return NextResponse.json(
-          {
-            error: is401
-              ? "Juspay API key invalid. In .env use JUSTPAY_API_KEY with the API Key from Juspay Dashboard (not Key ID). Restart dev server after changing .env."
-              : "Juspay order failed",
-            details: errText,
-          },
-          { status: 500 }
-        );
-      }
-
-      const data = await res.json();
-      return NextResponse.json({
-        gateway: "JUSPAY",
-        id: data.order_id || orderId,
-        amount: amountPaise,
-        client_auth_token: data.client_auth_token,
-        juspay_order_id: data.order_id || orderId,
-      });
+        { status: 500 }
+      );
     }
 
-    if (razorpay) {
-      const order = await razorpay.orders.create({
-        amount: amountPaise,
-        currency: "INR",
-        receipt: `receipt_${Date.now()}`,
-      });
-      return NextResponse.json({ ...order, gateway: "RAZORPAY" });
+    // ----- 5. Build return URL so after payment user comes back with order_id and amount -----
+    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const path = returnPath.startsWith("/") ? returnPath : `/${returnPath}`;
+    const orderId = `timelly_${Date.now()}_${session.user.studentId}`;
+    const returnUrl = `${baseUrl}${path}${path.includes("?") ? "&" : "?"}success=1&order_id=${encodeURIComponent(orderId)}&amount=${amountNumber}`;
+
+    // ----- 6. Customer details for HyperPG payment page -----
+    const name = student.user?.name || "Student";
+    const parts = name.trim().split(/\s+/);
+    const firstName = parts[0] || "Student";
+    const lastName = parts.slice(1).join(" ") || "";
+
+    // ----- 7. Optional split settlement: if school has sub_mid, send full amount to school -----
+    const splitSettlementDetails =
+      settings?.hyperpgSubMid && settings.hyperpgSubMid.trim()
+        ? {
+            subMid: settings.hyperpgSubMid.trim(),
+            amount: amountNumber,
+          }
+        : undefined;
+
+    // ----- 8. Call HyperPG Session API -----
+    const result = await createSession({
+      merchantId: hyperpgMerchantId,
+      apiKey: hyperpgApiKey,
+      baseUrl: hyperpgBaseUrl,
+      amount: amountNumber,
+      currency: "INR",
+      orderId,
+      returnUrl,
+      customerId: session.user.studentId,
+      customerEmail: student.user?.email || "student@timelly.in",
+      customerPhone: student.phoneNo || "9999999999",
+      firstName,
+      lastName,
+      description: "Fee payment – Timelly",
+      splitSettlementDetails,
+    });
+
+    // ----- 9. Return payment URL to frontend (user will be redirected there) -----
+    // Session API returns payment_links.web; use it so the client can redirect the user
+    const paymentUrl =
+      result.payment_links?.web ||
+      (result as { payment_links?: { web?: string } }).payment_links?.web;
+
+    if (!paymentUrl) {
+      console.error("HyperPG session response missing payment_links.web", result);
+      return NextResponse.json(
+        { error: "Payment gateway did not return a payment URL" },
+        { status: 500 }
+      );
     }
 
+    return NextResponse.json({
+      gateway: "HYPERPG",
+      order_id: orderId,
+      hyperpg_order_id: result.id,
+      payment_url: paymentUrl,
+      amount: amountNumber,
+    });
+  } catch (err: unknown) {
+    console.error("Create order error:", err);
+    const message =
+      err instanceof Error ? err.message : "Failed to create order";
     return NextResponse.json(
-      {
-        error:
-          "Payment not configured for this school. Add Juspay credentials in School Settings, or set JUSTPAY_MERCHANT_ID and JUSTPAY_API_KEY in .env as fallback.",
-      },
-      { status: 500 }
-    );
-  } catch (err: any) {
-    console.error("Order creation error:", err);
-    return NextResponse.json(
-      { error: "Failed to create order", details: err.message },
+      { error: "Failed to create order", details: message },
       { status: 500 }
     );
   }

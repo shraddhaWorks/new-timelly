@@ -246,11 +246,8 @@ model SchoolSettings {
   rollNoPrefix     String @default("") // optional prefix for roll numbers
   admissionCounter Int    @default(0) // last used number for admission
 
-  // Tenant payment credentials - payments go to school's account. Fallback to global env if not set.
-  juspayMerchantId  String?
-  juspayApiKey      String?
-  razorpayKeyId     String?
-  razorpayKeySecret String?
+  // HyperPG: main merchant is in env; each school can have a sub-merchant ID (sub_mid) for split settlement.
+  hyperpgSubMid String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -941,7 +938,7 @@ model Payment {
 
   amount Float
 
-  gateway String @default("RAZORPAY") // RAZORPAY | JUSPAY
+  gateway String @default("HYPERPG") // HYPERPG (fee payments); RAZORPAY still used for bus/hostel
 
   razorpayOrderId   String?
   razorpayPaymentId String?
@@ -950,6 +947,10 @@ model Payment {
   juspayOrderId   String?
   juspayPaymentId String?
   juspayStatus    String?
+
+  hyperpgOrderId   String? // HyperPG internal order id (e.g. ordeh_xxx)
+  hyperpgPaymentId String? // txn_id from HyperPG
+  hyperpgStatus    String? // e.g. CHARGED
 
   status String @default("SUCCESS") // SUCCESS | FAILED | PENDING
 

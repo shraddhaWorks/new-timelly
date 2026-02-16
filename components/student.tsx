@@ -4,10 +4,8 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
-import { Newspaper, BookOpen, Award, CreditCard, MessageCircle, FileText, Calendar, User, CheckCircle2, XCircle, Clock, Send, ExternalLink, Download, LayoutDashboard, ClipboardList, Megaphone, Bus, Building2, BarChart3 } from "lucide-react";
+import { Newspaper, BookOpen, Award, CreditCard, MessageCircle, FileText, Calendar, User, CheckCircle2, XCircle, Clock, Send, ExternalLink, Download, LayoutDashboard, ClipboardList, Megaphone, BarChart3 } from "lucide-react";
 import PayButton from "./PayButton";
-import BusBooking from "./BusBooking";
-import HostelBooking from "./HostelBooking";
 import TimetableView from "./TimetableView";
 import CommunicationPage from "@/app/communication/page";
 import NotificationsBell from "./NotificationsBell";
@@ -132,7 +130,7 @@ export default function StudentDashboardPage() {
   const [fee, setFee] = useState<StudentFee | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "marks" | "attendance" | "events" | "newsfeed" | "homework" | "certificates" | "tc" | "payments" | "communication" | "bus" | "hostel" | "timetable" | "leave" | "library">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "marks" | "attendance" | "events" | "newsfeed" | "homework" | "certificates" | "tc" | "payments" | "communication" | "timetable" | "leave" | "library">("overview");
   const [libraryBooks, setLibraryBooks] = useState<LibraryBook[]>([]);
   const [studentLeaves, setStudentLeaves] = useState<{ id: string; leaveType: string; fromDate: string; toDate: string; status: string; reason: string }[]>([]);
   const [leaveForm, setLeaveForm] = useState({ leaveType: "CASUAL", reason: "", fromDate: "", toDate: "" });
@@ -503,8 +501,6 @@ export default function StudentDashboardPage() {
             { id: "tc", label: "TC", icon: FileText },
             { id: "payments", label: "Payments", icon: CreditCard },
             { id: "communication", label: "Communication", icon: MessageCircle },
-            { id: "bus", label: "Bus Booking", icon: Bus },
-            { id: "hostel", label: "Hostel Booking", icon: Building2 },
             { id: "timetable", label: "Timetable", icon: Calendar },
             { id: "leave", label: "Leave", icon: Calendar },
             { id: "library", label: "Library", icon: BookOpen },
@@ -1569,20 +1565,6 @@ export default function StudentDashboardPage() {
         {activeTab === "communication" && (
           <div className="relative -mx-4 md:-mx-6 -mb-8 h-[calc(100vh-280px)] md:h-[calc(100vh-220px)] min-h-[600px]">
             <CommunicationPage />
-          </div>
-        )}
-
-        {/* Bus Booking Tab */}
-        {activeTab === "bus" && (
-          <div className="space-y-6">
-            <BusBooking />
-          </div>
-        )}
-
-        {/* Hostel Booking Tab */}
-        {activeTab === "hostel" && (
-          <div className="space-y-6">
-            <HostelBooking />
           </div>
         )}
 

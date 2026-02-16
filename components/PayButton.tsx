@@ -1,44 +1,30 @@
 "use client";
 
-import { useEffect } from "react";
+/**
+ * PayButton – starts HyperPG fee payment flow
+ *
+ * On click: calls create-order API, then redirects the user to HyperPG's
+ * payment page. After payment, HyperPG redirects back to return_path with
+ * success=1&order_id=...&amount=... and the payments page calls verify.
+ */
+
 import { CreditCard } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface PayButtonProps {
+  /** Amount in rupees to pay */
   amount: number;
+  /** Called after payment is verified (e.g. when returning from gateway) */
   onSuccess?: () => void;
-  /** When paying from parent fees, pass "/frontend/pages/parent?tab=fees" so Juspay redirects back here */
+  /** Path to redirect to after payment, e.g. "/payments" or "/frontend/pages/parent?tab=fees" */
   returnPath?: string;
 }
 
-export default function PayButton({ amount, onSuccess, returnPath }: PayButtonProps) {
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if ((window as any).Razorpay) return;
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    script.onerror = () => console.warn("Razorpay script failed to load");
-    document.body.appendChild(script);
-  }, []);
-
-  const verifyAndComplete = async (
-    normalizedAmount: number,
-    verifyPayload: Record<string, unknown>
-  ) => {
-    const verifyRes = await fetch("/api/payment/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...verifyPayload, amount: normalizedAmount }),
-    });
-    const data = await verifyRes.json();
-    if (!verifyRes.ok) {
-      alert(data.message || "Payment verification failed");
-      return false;
-    }
-    return true;
-  };
-
+export default function PayButton({
+  amount,
+  onSuccess,
+  returnPath,
+}: PayButtonProps) {
   const payNow = async () => {
     try {
       const normalizedAmount = Number(amount.toFixed(2));
@@ -46,68 +32,35 @@ export default function PayButton({ amount, onSuccess, returnPath }: PayButtonPr
       const res = await fetch("/api/payment/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: normalizedAmount, ...(returnPath && { return_path: returnPath }) }),
+        body: JSON.stringify({
+          amount: normalizedAmount,
+          ...(returnPath && { return_path: returnPath }),
+        }),
       });
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        alert(`Failed to create order: ${errorData.error || errorData.message || "Unknown error"}`);
+        alert(
+          `Failed to create order: ${errorData.error || errorData.message || "Unknown error"}`
+        );
         return;
       }
 
       const order = await res.json();
-      const gateway = order.gateway || "RAZORPAY";
 
-      if (gateway === "JUSPAY") {
-        const paymentUrl =
-          order.payment_url ||
-          `https://payments.sandbox.juspay.in/merchant/pay?order_id=${order.juspay_order_id || order.id}`;
-        const urlWithToken = order.client_auth_token
-          ? `${paymentUrl}&client_auth_token=${order.client_auth_token}`
-          : paymentUrl;
-        window.location.href = urlWithToken;
+      if (order.gateway !== "HYPERPG") {
+        alert("Payment is configured for HyperPG only. Contact support.");
         return;
       }
 
-      if (!(window as any).Razorpay) {
-        alert("Payment SDK loading. Please try again in a moment.");
+      const paymentUrl = order.payment_url;
+      if (!paymentUrl) {
+        alert("No payment URL received. Try again.");
         return;
       }
 
-      const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-      if (!razorpayKey) {
-        alert("Razorpay is not configured. Contact support.");
-        return;
-      }
-
-      const options = {
-        key: razorpayKey,
-        amount: order.amount,
-        currency: "INR",
-        order_id: order.id,
-        name: "Timelly",
-        description: "Fee payment",
-        handler: async (response: {
-          razorpay_order_id: string;
-          razorpay_payment_id: string;
-          razorpay_signature: string;
-        }) => {
-          const ok = await verifyAndComplete(normalizedAmount, {
-            gateway: "RAZORPAY",
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-          });
-          if (ok) {
-            alert("Payment successful!");
-            onSuccess?.();
-          }
-        },
-        theme: { color: "#404040" },
-      };
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
+      onSuccess?.();
+      window.location.href = paymentUrl;
     } catch (err) {
       console.error(err);
       alert("Payment failed");
@@ -122,7 +75,11 @@ export default function PayButton({ amount, onSuccess, returnPath }: PayButtonPr
       className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-teal-600 hover:to-emerald-500 text-white py-4 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg border border-emerald-400/30 transition-all duration-300"
     >
       <CreditCard size={20} />
-      Pay ₹{Number(amount).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+      Pay ₹
+      {Number(amount).toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}
     </motion.button>
   );
 }

@@ -1,8 +1,6 @@
-;
-import axios from "axios";
 import { api } from "./api.service";
-import { IStudent } from "../interfaces/student";
-import { IUpdateStudentPayload } from "../constants/student";
+import type { IStudent } from "../interfaces/student";
+import type { IUpdateStudentPayload } from "../constants/student";
 
 export const getStudents = (classId?: string) =>
   api(`/api/students${classId ? `?classId=${classId}` : ""}`);
@@ -33,21 +31,24 @@ export const assignStudentsToClass = (studentId: string, classId: string) =>
   });
 
 
+function buildUrl(path: string, params: Record<string, string | undefined>): string {
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => { if (v != null && v !== "") search.set(k, v); });
+  const q = search.toString();
+  return q ? `${path}?${q}` : path;
+}
+
 export const studentApi = {
   getByAdmissionNo: (admissionNo: string, academicYear?: string) =>
-    axios.get("/api/school/student/by-admissionNo", {
-      params: { admissionNo, academicYear },
-    }),
+    fetch(buildUrl("/api/school/student/by-admissionNo", { admissionNo, academicYear }))
+      .then((res) => res.json()),
 
-
-  updateByAdmissionNo: (
-    admissionNo: string,
-    updates: IUpdateStudentPayload
-  ) =>
-    axios.patch<{ student: IStudent }>(
-      "/api/school/student/by-admissionNo",
-      { admissionNo, updates }
-    ),
+  updateByAdmissionNo: (admissionNo: string, updates: IUpdateStudentPayload) =>
+    fetch("/api/school/student/by-admissionNo", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ admissionNo, updates }),
+    }).then((res) => res.json() as Promise<{ student: IStudent }>),
 };
 
 
