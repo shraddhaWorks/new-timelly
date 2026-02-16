@@ -25,7 +25,7 @@ export default function EditProfileForm({
       <div className="h-px bg-white/10" />
 
       <div className="space-y-5 px-5 py-5 sm:px-6 sm:py-6">
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
           <LocalInput label="Teacher Name" value={formData.name} onChange={(value) => onChange("name", value)} />
           <LocalInput label="Teacher ID" value={formData.teacherId} onChange={(value) => onChange("teacherId", value)} />
           <LocalInput label="Subject" value={formData.subject} onChange={(value) => onChange("subject", value)} />
@@ -69,18 +69,18 @@ export default function EditProfileForm({
 
         <div className="mt-1 h-px bg-white/10" />
 
-        <div className="flex flex-wrap items-center justify-end gap-3 pb-1 pt-1">
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-end gap-3 pb-1 pt-1">
           <button
             type="button"
             onClick={onCancel}
-            className="cursor-pointer rounded-2xl border border-white/20 bg-white/10 px-7 py-2.5 text-base font-semibold text-white hover:bg-white/15"
+            className="w-full sm:w-auto cursor-pointer rounded-2xl border border-white/20 bg-white/10 px-7 py-2.5 text-base font-semibold text-white hover:bg-white/15"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={onSave}
-            className="cursor-pointer inline-flex items-center gap-2 rounded-2xl bg-lime-400 px-7 py-2.5 text-base font-bold text-black shadow-[0_6px_24px_rgba(163,230,53,0.35)] hover:bg-lime-300"
+            className="w-full sm:w-auto cursor-pointer inline-flex items-center justify-center gap-2 rounded-2xl bg-lime-400 px-7 py-2.5 text-base font-bold text-black shadow-[0_6px_24px_rgba(163,230,53,0.35)] hover:bg-lime-300"
           >
             <Save size={18} />
             Save Teacher
