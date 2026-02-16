@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { redis } from "@/lib/redis";
 
 export async function GET() {
   try {
@@ -19,13 +18,6 @@ export async function GET() {
         { message: "No student linked to this account" },
         { status: 400 }
       );
-    }
-
-    const cacheKey = `analytics:student:${studentId}`;
-    const cached = await redis.get(cacheKey);
-    if (cached) {
-      console.log("✅ Analytics served from Redis");
-      return NextResponse.json(cached);
     }
 
     // Fetch student details
@@ -296,7 +288,6 @@ export async function GET() {
       workshops,
     };
 
-    await redis.set(cacheKey, response, { ex: 60 * 5 }); // Cache for 5 minutes
     return NextResponse.json(response);
   } catch (error: any) {
     console.error("Analytics error:", error);

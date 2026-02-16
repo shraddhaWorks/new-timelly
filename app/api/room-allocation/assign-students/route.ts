@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { redis } from "@/lib/redis";
 
 export async function POST(req: Request) {
   try {
@@ -242,9 +241,6 @@ export async function POST(req: Request) {
         benchPosition: assignment.benchPosition || 1,
       })),
     });
-
-    // Invalidate cache
-    await redis.del(`room-allocations:${schoolId}`);
 
     return NextResponse.json(
       { message: "Students assigned successfully" },

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { redis } from "@/lib/redis";
 
 async function getSchoolId(session: { user: { id: string; schoolId?: string | null } }) {
   let schoolId = session.user.schoolId;
@@ -75,8 +74,6 @@ export async function POST(req: Request) {
       }),
     ]);
 
-    await redis.del(`feeSummary:${schoolId}`);
-    await redis.del(`fees:${studentId}`);
     return NextResponse.json({ payment, message: "Payment recorded successfully" }, { status: 201 });
   } catch (error: any) {
     console.error("Offline payment error:", error);

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { redis } from "@/lib/redis";
 
 export async function POST(req: Request) {
   try {
@@ -66,10 +65,6 @@ export async function POST(req: Request) {
         },
       },
     });
-
-    // Invalidate cache
-    const cacheKey = `certificate-requests:${schoolId}:${session.user.studentId || "all"}:all`;
-    await redis.del(cacheKey);
 
     return NextResponse.json(
       { message: "Certificate request submitted successfully", certificateRequest },

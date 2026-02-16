@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { SidebarItem } from "../../types/sidebar";
@@ -16,13 +16,13 @@ type Props = {
     subtitle?: string;
     image?: string | null;
   };
+  activeTab?: string;
   onLogoutRequest?: () => void;
 };
 
-export default function AppSidebar({ menuItems, profile, onLogoutRequest }: Props) {
+export default function AppSidebar({ menuItems, profile, activeTab = "dashboard", onLogoutRequest }: Props) {
   const router = useRouter();
   const { data: session } = useSession();
-  const activeTab = useSearchParams().get("tab") ?? "dashboard";
 
   const displayName = (profile?.name && profile.name.trim()) ? profile.name : (session?.user?.name ?? "User");
   const subtitle = profile?.subtitle ?? session?.user?.role ?? "";
