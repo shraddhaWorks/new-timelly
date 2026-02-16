@@ -57,6 +57,21 @@ function DataTable<T>({
   tdClassName = "",
   pagination,
 }: DataTableProps<T>) {
+  const canPaginate =
+    Boolean(pagination) &&
+    (pagination?.totalPages ?? 1) > 1 &&
+    !loading &&
+    data.length > 0;
+
+  const handlePrev = () => {
+    if (!pagination) return;
+    pagination.onChange(Math.max(1, pagination.page - 1));
+  };
+
+  const handleNext = () => {
+    if (!pagination) return;
+    pagination.onChange(Math.min(pagination.totalPages, pagination.page + 1));
+  };
 
   const getKey = (row: T, index: number) => {
     if (rowKey) return rowKey(row, index);
@@ -194,6 +209,32 @@ function DataTable<T>({
                 )}
               </div>
             ))}
+        </div>
+      )}
+
+      {canPaginate && pagination && (
+        <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+          <span className="text-xs text-white/60">
+            Page {pagination.page} of {pagination.totalPages}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handlePrev}
+              disabled={pagination.page <= 1}
+              className="rounded-full px-4 py-2 text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={pagination.page >= pagination.totalPages}
+              className="rounded-full px-4 py-2 text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
         </div>
       )}
     </div>

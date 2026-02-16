@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -11,19 +10,17 @@ import PageTabs from "../schooladmin/schooladmincomponents/PageHeaderTabs";
 import FilterBar from "../schooladmin/schooladmincomponents/AddUserFilters";
 import SearchInput from "../common/SearchInput";
 import UserForm from "./schooladmincomponents/UserForm";
-import BulkImportZone from "./schooladmincomponents/BulkImportZone";
 import DeleteConfirmation from "../common/DeleteConfirmation";
 import UserBadge from "./schooladmincomponents/UserBadge";
 import RoleBadge from "./schooladmincomponents/RoleBadge";
 import StatusBadge from "./schooladmincomponents/StatusBadge";
+import UsersMobileList from "./schooladmincomponents/UsersMobileList";
+import InlinePagination from "./schooladmincomponents/InlinePagination";
 import { IUser } from "@/app/frontend/constants/addUserTable";
-
 export default function AddUser() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  // Use "view" query param for internal tabs to avoid conflict with parent "tab" param
   const activeTab = searchParams.get("view") ?? "all";
-
   const [users, setUsers] = useState<IUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -43,11 +40,14 @@ export default function AddUser() {
     userId: "",
     userName: "",
   });
-
   const editingUserId = searchParams.get("userId");
   const editingUser = users.find((u) => u.id === editingUserId);
 
-  // Fetch users for "all" tab
+  useEffect(() => {
+    if (activeTab !== "all") return;
+    setPage(1);
+  }, [debouncedSearch, filters.role, activeTab]);
+
   useEffect(() => {
     if (activeTab !== "all") return;
 
@@ -61,9 +61,13 @@ export default function AddUser() {
     fetch(`/api/user/all?${params.toString()}`)
       .then((res) => res.json())
       .then((data) => {
-        setUsers(data.users);
-        const totalPages = Math.ceil((data.total || 0) / (data.pageSize || 5));
-        setTotalPages(totalPages);
+        setUsers(Array.isArray(data.users) ? data.users : []);
+        const computedTotalPages = Math.max(
+          1,
+          Math.ceil((data.total || 0) / (data.pageSize || 5))
+        );
+        setTotalPages(computedTotalPages);
+        setPage((prev) => Math.min(prev, computedTotalPages));
       })
       .catch((err) => console.error("Failed to fetch users:", err))
       .finally(() => setLoading(false));
@@ -72,7 +76,6 @@ export default function AddUser() {
   const handleEdit = (user: IUser) => {
     router.push(`?tab=add-user&view=add&userId=${user.id}`);
   };
-
   const handleDeleteClick = (user: IUser) => {
     setDeleteModal({
       isOpen: true,
@@ -92,7 +95,6 @@ export default function AddUser() {
         throw new Error(data.message || "Failed to delete user");
       }
 
-      // Refresh user list
       setDeleteModal({ isOpen: false, userId: "", userName: "" });
       setUsers(users.filter((u) => u.id !== deleteModal.userId));
     } catch (error) {
@@ -100,7 +102,20 @@ export default function AddUser() {
     }
   };
 
-  // Generate table columns configuration
+  const getLastActive = (row: IUser) => {
+    if (!row.createdAt) return "N/A";
+    const date = new Date(row.createdAt);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return "Now";
+    if (diffDays === 1) return "1 day ago";
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+    return date.toLocaleDateString();
+  };
+
   const tableColumns: any[] = [
     {
       header: "USER",
@@ -120,20 +135,7 @@ export default function AddUser() {
       header: "LAST ACTIVE",
       render: (row: IUser) => (
         <span className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-          {row.createdAt
-            ? (() => {
-              const date = new Date(row.createdAt);
-              const now = new Date();
-              const diffMs = now.getTime() - date.getTime();
-              const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-              if (diffDays === 0) return "Today";
-              if (diffDays === 1) return "1 day ago";
-              if (diffDays < 7) return `${diffDays} days ago`;
-              if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
-              return date.toLocaleDateString();
-            })()
-            : "N/A"}
+          {getLastActive(row)}
         </span>
       ),
     },
@@ -148,11 +150,10 @@ export default function AddUser() {
               whileTap={{ scale: row.role === "TEACHER" ? 0.95 : 1 }}
               disabled={row.role !== "TEACHER"}
               onClick={() => row.role === "TEACHER" && handleEdit(row)}
-              className={`p-2 rounded-lg transition-colors ${
-                row.role === "TEACHER"
+              className={`p-2 rounded-lg transition-colors ${row.role === "TEACHER"
                   ? "hover:bg-white/10 text-gray-400 hover:text-white"
                   : "bg-white/5 text-gray-500/70 cursor-not-allowed"
-              }`}
+                }`}
               title={
                 row.role === "TEACHER"
                   ? "Edit user"
@@ -186,29 +187,20 @@ export default function AddUser() {
             tabs={[
               { label: "All Users", value: "all" },
               { label: "Add User", value: "add" },
-              // { label: "Bulk Import", value: "bulk" },
             ]}
             queryKey="view"
           />
         }
       />
 
-      {/* ALL USERS TAB */}
       {activeTab === "all" && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
-          {/* SEARCH & FILTERS BAR */}
-          <div
-            className="
-            bg-white/5 backdrop-blur-xl rounded-2xl p-4 border border-white/10
-            "
-          >
+          <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-4 border border-white/10">
             <div className="flex flex-col md:flex-row gap-4 md:items-center">
-
-              {/* SEARCH */}
               <div className="flex-1">
                 <SearchInput
                   value={search}
@@ -219,7 +211,6 @@ export default function AddUser() {
                 />
               </div>
 
-              {/* FILTER */}
               <div className="w-full md:w-[220px]">
                 <FilterBar
                   filters={[
@@ -241,73 +232,62 @@ export default function AddUser() {
               </div>
             </div>
           </div>
+          <div className="md:hidden space-y-3">
+            <UsersMobileList
+              users={users}
+              loading={loading}
+              onEdit={handleEdit}
+              onDelete={handleDeleteClick}
+              getLastActive={getLastActive}
+            />
+            <InlinePagination page={page} totalPages={totalPages} onChange={setPage} />
+          </div>
 
-
-          {/* USER TABLE */}
-          <DataTable
-            columns={tableColumns}
-            data={users}
-            loading={loading}
-            pagination={{
-              page,
-              totalPages,
-              onChange: setPage,
-            }}
-          />
+          <div className="hidden md:block">
+            <DataTable
+              columns={tableColumns}
+              data={users}
+              loading={loading}
+              showMobile={false}
+              pagination={{
+                page,
+                totalPages,
+                onChange: setPage,
+              }}
+            />
+          </div>
         </motion.div>
       )}
 
-      {/* ADD USER TAB */}
       {activeTab === "add" && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          
         >
           <UserForm
             mode={editingUser ? "edit" : "create"}
             initialData={
               editingUser
                 ? {
-                    name: editingUser.name,
-                    email: editingUser.email,
-                    role: editingUser.role as any,
-                    designation:
-                      (editingUser as any).designation ??
-                      (editingUser as any).subject ??
-                      "",
-                    username: (editingUser as any).username ?? "",
-                    password: "",
-                    confirmPassword: "",
-                    allowedFeatures:
-                      (editingUser as any).allowedFeatures ?? [],
-                  }
+                  name: editingUser.name,
+                  email: editingUser.email,
+                  role: editingUser.role as any,
+                  designation:
+                    (editingUser as any).designation ??
+                    (editingUser as any).subject ??
+                    "",
+                  username: (editingUser as any).username ?? "",
+                  password: "",
+                  confirmPassword: "",
+                  allowedFeatures:
+                    (editingUser as any).allowedFeatures ?? [],
+                }
                 : undefined
             }
           />
         </motion.div>
       )}
 
-      {/* BULK IMPORT TAB */}
-      {activeTab === "bulk" && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8"
-        >
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-white mb-2">
-              Bulk Import Users
-            </h2>
-            <p className="text-white/60">
-              Upload a CSV or Excel file to import multiple users at once.
-            </p>
-          </div>
-          <BulkImportZone />
-        </motion.div>
-      )}
-
-      {/* DELETE CONFIRMATION MODAL */}
       <DeleteConfirmation
         isOpen={deleteModal.isOpen}
         userName={deleteModal.userName}

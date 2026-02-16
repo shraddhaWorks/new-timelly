@@ -1,7 +1,7 @@
 "use client";
 
 import { BookOpen, Calendar } from "lucide-react";
-import GlassCard from "@/components/ui/GlassCard";
+
 import type { ExamTermListItem } from "@/hooks/useExamTerms";
 import {
   EXAM_ACCENT,
@@ -10,6 +10,7 @@ import {
   EXAM_TEXT_MAIN,
   EXAM_TEXT_SECONDARY,
 } from "@/app/frontend/constants/colors";
+import GlassCard from "./GlassCard";
 
 interface ExamTermCardProps {
   term: ExamTermListItem;

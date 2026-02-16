@@ -97,6 +97,7 @@ const todayStr = () => new Date().toISOString().slice(0, 10);
 
 const SchoolAdminTeacherTab = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
   const [teachers, setTeachers] = useState<TeacherRow[]>([]);
   const [teachersLoading, setTeachersLoading] = useState(true);
   const [attendanceDate, setAttendanceDate] = useState(todayStr);
@@ -169,6 +170,18 @@ const SchoolAdminTeacherTab = () => {
       t.teacherId.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [searchTerm, teachersWithAttendance]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, teachersWithAttendance.length]);
+
+  const pageSize = 8;
+  const totalPages = Math.max(1, Math.ceil(filteredTeachers.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pagedTeachers = useMemo(
+    () => filteredTeachers.slice((safePage - 1) * pageSize, safePage * pageSize),
+    [filteredTeachers, safePage]
+  );
 
   const handleDelete = (id: string) => {
     if (confirm("Are you sure you want to remove this teacher from the list? Contact admin for permanent removal.")) {
@@ -541,9 +554,14 @@ const SchoolAdminTeacherTab = () => {
       <div className="overflow-x-auto">
         <DataTable
           columns={teacherColumns}
-          data={filteredTeachers}
+          data={pagedTeachers}
           loading={teachersLoading}
           emptyText="No teachers matching your search."
+          pagination={{
+            page: safePage,
+            totalPages,
+            onChange: setPage,
+          }}
         />
       </div>
     </div>
@@ -551,7 +569,7 @@ const SchoolAdminTeacherTab = () => {
 
   {/* ===== Mobile Cards ===== */}
   <div className="md:hidden grid grid-cols-1 gap-6">
-    {filteredTeachers.map((teacher) => (
+    {pagedTeachers.map((teacher) => (
       <MobileTeacherCard
         key={teacher.id}
         teacher={teacher}

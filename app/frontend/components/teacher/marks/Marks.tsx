@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import PageHeader from "../../common/PageHeader";
 import { SelectField } from "./MarksSelectField";
 import { Download, Save, Upload } from "lucide-react";
@@ -60,8 +60,10 @@ export default function TeacherMarksTab() {
   });
   const [activeBtn, setActiveBtn] = useState<null | "save" | "import" | "export">(null);
   const [rows, setRows] = useState<StudentRow[]>([]);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
+  const pageSize = 8;
 
   const classOptions = classes.map((c) => ({
     value: c.id,
@@ -148,6 +150,10 @@ export default function TeacherMarksTab() {
     fetchStudentsAndMarks();
   }, [fetchStudentsAndMarks]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [form.classId, form.subject, form.examType]);
+
   const handleChange = (key: string, value: string) => {
     if (key === "class") {
       if (!value || value === "Select class") {
@@ -192,6 +198,12 @@ export default function TeacherMarksTab() {
   const total = rows.length;
   const entered = rows.filter((r) => r.marks !== "").length;
   const pending = total - entered;
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pagedRows = useMemo(
+    () => rows.slice((safePage - 1) * pageSize, safePage * pageSize),
+    [rows, safePage]
+  );
 
   const handleSaveAll = async () => {
     if (pending > 0 || !form.classId) return;
@@ -372,17 +384,22 @@ export default function TeacherMarksTab() {
                 <DataTable<StudentRow>
                   columns={columns}
                   rounded={false}
-                  data={rows}
+                  data={pagedRows}
                   rowKey={(row) => row.id}
                   emptyText="No students in this class. Select a class above."
+                  pagination={{
+                    page: safePage,
+                    totalPages,
+                    onChange: setPage,
+                  }}
                 />
               </div>
 
               <div className="md:hidden space-y-4 p-4">
-                {rows.length === 0 ? (
+                {pagedRows.length === 0 ? (
                   <p className="text-white/60 text-center py-6">No students in this class.</p>
                 ) : (
-                  rows.map((student) => {
+                  pagedRows.map((student) => {
                     const percentage = getPercentage(student.marks, student.maxMarks);
                     const grade = getGrade(student.marks);
                     return (

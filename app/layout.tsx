@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Inter, Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/context/AuthContext";
-import SubdomainSchoolFetcher from "@/components/SubdomainSchoolFetcher";
+import SubdomainSchoolFetcher from "@/app/frontend/components/SubdomainSchoolFetcher";
 
 const inter = Inter({
   subsets: ["latin"],

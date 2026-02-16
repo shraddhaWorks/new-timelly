@@ -237,12 +237,12 @@ export default function ParentExamsTab() {
                         </div>
                         <div>
                           <h2 className="text-xl font-bold capitalize">{subName}</h2>
-                          <p className="text-white/40 text-xs">{activeTermData[0]?.class?.teacher?.name && (
-                            <div className="flex items-center gap-2">
+                          {activeTermData[0]?.class?.teacher?.name ? (
+                            <div className="flex items-center gap-2 text-white/40 text-xs">
                               <span className="w-1.5 h-1.5 rounded-full bg-white/40"></span>
-                              <span className="text-white/40 text-xs">{activeTermData[0].class.teacher.name}</span>
+                              <span>{activeTermData[0].class.teacher.name}</span>
                             </div>
-                          )}</p>
+                          ) : null}
                         </div>
                       </div>
 

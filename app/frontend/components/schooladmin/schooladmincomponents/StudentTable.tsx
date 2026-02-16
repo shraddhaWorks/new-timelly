@@ -1,12 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import TableLayout from "../../common/TableLayout";
 import { useStudents, StudentWithRelations } from "@/hooks/useStudents";
 
 export default function StudentTable() {
   const { students, loading, error, refetch } = useStudents();
   const [selected, setSelected] = useState<StudentWithRelations | null>(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const totalPages = Math.max(1, Math.ceil(students.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pagedStudents = useMemo(
+    () => students.slice((safePage - 1) * pageSize, safePage * pageSize),
+    [students, safePage]
+  );
 
   const columns = [
     { header: "Admission No", accessor: "admissionNumber", align: "left" },
@@ -48,9 +56,14 @@ export default function StudentTable() {
 
         <TableLayout
           columns={columns as any}
-          data={students}
+          data={pagedStudents}
           loading={loading}
           emptyText={error ? `Error: ${error}` : "No students found"}
+          pagination={{
+            page: safePage,
+            totalPages,
+            onChange: setPage,
+          }}
         />
       </div>
 
