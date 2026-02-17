@@ -221,7 +221,7 @@ export default function WorkshopsAndEventsTab() {
   };
 
   return (
-    <div className="px-3 sm:px-4 md:px-6 pb-24 lg:pb-6 text-gray-200">
+    <div className=" pb-24 lg:pb-6 text-gray-200">
       <div className="w-full space-y-6">
         <PageHeader
           title="Workshops & Events"

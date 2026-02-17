@@ -377,6 +377,7 @@ export const SUPERADMIN_SIDEBAR_ITEMS: SidebarItem[] = [
     },
     {
         label: "Add School",
+        mobileLabel: "Add",
         href: "/frontend/pages/superadmin?tab=addschool",
         tab: "addschool",
         icon: Plus,
@@ -391,6 +392,7 @@ export const SUPERADMIN_SIDEBAR_ITEMS: SidebarItem[] = [
     },
     {
         label: "Fees Transactions",
+        mobileLabel: "Fees",
         href: "/frontend/pages/superadmin?tab=transactions",
         tab: "transactions",
         icon: CreditCard,

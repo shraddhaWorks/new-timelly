@@ -204,7 +204,7 @@ const isCurrentMonth = (date: string) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Spinner size={40} />
+        <Spinner/>
       </div>
     );
   }

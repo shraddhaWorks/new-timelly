@@ -52,9 +52,9 @@ describe("LoginForm", () => {
     });
   });
 
-  it("has link to admin signup", () => {
+  it("keeps admin signup link disabled", () => {
     render(<LoginForm />);
     const link = screen.getByRole("link", { name: /School Administrator/i });
-    expect(link).toHaveAttribute("href", "/admin/signup");
+    expect(link).toHaveAttribute("href", "#");
   });
 });

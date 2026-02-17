@@ -5,6 +5,9 @@ import { StatCard } from "../dashboard/components/StatCard";
 import { AttendanceCard } from "./components/AttendanceCard";
 import { SidebarList } from "./components/SidebarList";
 import { Users, GraduationCap, UserCheck, CalendarDays, Wallet } from "lucide-react";
+import Spinner from "../../common/Spinner";
+import { useRouter } from "next/navigation";
+import { ROUTES } from "@/app/frontend/constants/routes";
 
 type DashboardData = {
   stats: {
@@ -64,6 +67,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userName, setUserName] = useState("Rajesh");
+  const router=useRouter();
 
   useEffect(() => {
     let cancelled = false;
@@ -118,7 +122,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen p-6 md:p-10 flex items-center justify-center">
-        <div className="text-white/70">Loading dashboard...</div>
+        <div className="text-white/70"><Spinner/></div>
       </div>
     );
   }
@@ -208,6 +212,7 @@ export default function Dashboard() {
                   status: t.status === "APPROVED" ? "Approved" : "Pending",
                   type: "teacher" as const,
                 }))}
+                onViewAllClick={()=>router.push(ROUTES.SCHOOLADMIN_TEACHER_LEAVE_TAB)}
               />
               <SidebarList
                 title="Recent Activities"
@@ -232,7 +237,7 @@ export default function Dashboard() {
               <h3 className="text-xl font-bold text-white">Latest News</h3>
               <p className="text-gray-400 text-sm mt-0.5">Recent announcements and updates</p>
             </div>
-            <button className="rounded-xl bg-lime-400 px-4 sm:px-5 py-2.5 text-sm font-bold text-black hover:bg-lime-300 transition-colors inline-flex items-center gap-1 min-h-[44px] touch-manipulation">
+            <button onClick={()=>router.push(ROUTES.SCHOOLADMIN_NEWSFEED_TAB)} className="rounded-xl bg-lime-400 px-4 sm:px-5 py-2.5 text-sm font-bold text-black hover:bg-lime-300 transition-colors inline-flex items-center gap-1 min-h-[44px] touch-manipulation">
               View All <span>→</span>
             </button>
           </div>
