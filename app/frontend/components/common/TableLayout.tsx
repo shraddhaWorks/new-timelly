@@ -90,8 +90,7 @@ function DataTable<T>({
 
       {/* DESKTOP TABLE */}
       <div
-        className={`hidden md:block ${
-          container
+        className={`hidden md:block ${container
             ? `
               ${rounded ? "rounded-3xl" : "rounded-none"}
               overflow-hidden
@@ -99,7 +98,7 @@ function DataTable<T>({
               bg-transparent backdrop-blur-xl shadow-2xl
             `
             : "w-full"
-        } ${containerClassName}`}
+          } ${containerClassName}`}
       >
 
         {tableTitle && (
@@ -166,7 +165,7 @@ function DataTable<T>({
                       key={colIndex}
                       className={`px-6 py-4 whitespace-nowrap ${ALIGN_CLASS[
                         col.align ?? "left"
-                      ]} ${tdClassName}`}
+                      ]} text-white ${tdClassName}`}
                     >
                       {renderCell(col, row, rowIndex)}
                     </td>
@@ -187,7 +186,7 @@ function DataTable<T>({
                 className={`
                   ${rounded ? "rounded-2xl" : "rounded-none"}
                   p-4 border border-white/10
-                  bg-gradient-to-br from-purple-600/25 via-indigo-600/20 to-pink-600/20
+                  
                   backdrop-blur-xl shadow-lg transition hover:shadow-xl
                 `}
               >

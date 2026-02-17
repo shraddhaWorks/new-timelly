@@ -1,8 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import PageHeader from "../common/PageHeader";
 import { formatAmount } from "../../utils/format";
+import SearchInput from "../common/SearchInput";
+import TableLayout from "../common/TableLayout";
+import { Column } from "../../types/superadmin";
+import Spinner from "../common/Spinner";
+import { useDebounce } from "@/app/frontend/hooks/useDebounce";
 
 interface SchoolTurnover {
   slNo: number;
@@ -13,10 +19,14 @@ interface SchoolTurnover {
 }
 
 export default function Transactions() {
+  const PAGE_SIZE = 10;
   const [schools, setSchools] = useState<SchoolTurnover[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalTransactionCount, setTotalTransactionCount] = useState(0);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 400);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     let cancelled = false;
@@ -27,13 +37,24 @@ export default function Transactions() {
       })
       .then((data) => {
         if (cancelled) return;
-        const list = (data.schools ?? []).map((s: { slNo: number; id: string; name: string; turnover: number; studentCount: number }, i: number) => ({
-          slNo: i + 1,
-          id: s.id,
-          name: s.name,
-          turnover: s.turnover ?? 0,
-          studentCount: s.studentCount ?? 0,
-        }));
+        const list = (data.schools ?? []).map(
+          (
+            s: {
+              slNo: number;
+              id: string;
+              name: string;
+              turnover: number;
+              studentCount: number;
+            },
+            i: number
+          ) => ({
+            slNo: i + 1,
+            id: s.id,
+            name: s.name,
+            turnover: s.turnover ?? 0,
+            studentCount: s.studentCount ?? 0,
+          })
+        );
         setSchools(list);
         setTotalTransactionCount(data.totalTransactionCount ?? 0);
       })
@@ -43,83 +64,110 @@ export default function Transactions() {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const totalTurnover = schools.reduce((s, r) => s + r.turnover, 0);
+  const filteredSchools = useMemo(() => {
+    const term = debouncedSearch.trim().toLowerCase();
+    if (!term) return schools;
+    return schools.filter((s) => s.name.toLowerCase().includes(term));
+  }, [schools, debouncedSearch]);
+  const totalPages = Math.max(1, Math.ceil(filteredSchools.length / PAGE_SIZE));
+  const paginatedSchools = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredSchools.slice(start, start + PAGE_SIZE);
+  }, [filteredSchools, page]);
+
+  const totalTurnover = filteredSchools.reduce((s, r) => s + r.turnover, 0);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const columns = useMemo<Column<SchoolTurnover>[]>(
+    () => [
+      {
+        header: "Sl. No",
+        align: "center",
+        render: (_row, index) => (page - 1) * PAGE_SIZE + index + 1,
+      },
+      {
+        header: "School",
+        render: (s) => s.name,
+      },
+      {
+        header: "Students",
+        align: "center",
+        render: (s) => s.studentCount.toLocaleString(),
+      },
+      {
+        header: "Turnover",
+        align: "center",
+        render: (s) => (
+          <span className="text-lime-300 font-medium">
+            {formatAmount(s.turnover)}
+          </span>
+        ),
+      },
+    ],
+    [page]
+  );
 
   return (
-    <main className="flex-1 overflow-y-auto px-3 sm:px-4 md:px-6 flex flex-col items-center">
-      <div className="w-full max-w-6xl py-4 sm:py-6 min-h-screen space-y-4 sm:space-y-6 text-center">
+    <main className="flex-1 overflow-y-auto flex flex-col items-center">
+      <div className="w-full max-w-6xl min-h-screen space-y-4 sm:space-y-6 text-center">
         <PageHeader
           center
           title="Fees Transactions"
           subtitle="Turnover (total amount) per school"
+          rightSlot={
+            <div className="w-full max-w-sm">
+              <SearchInput
+                value={search}
+                onChange={setSearch}
+                icon={Search}
+                iconPosition="right"
+                placeholder="Search school"
+                variant="glass"
+              />
+            </div>
+          }
         />
 
-        {error && (
-          <div className="text-red-400 text-sm py-2">{error}</div>
-        )}
+        {error && <div className="text-red-400 text-sm py-2">{error}</div>}
 
         {loading ? (
           <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-2 border-white/30 border-t-white" />
+            <Spinner />
           </div>
         ) : (
           <>
-            {/* Desktop/tablet: table - center aligned */}
-            <div className="hidden md:block rounded-xl border border-white/10 overflow-hidden bg-white/5 w-full">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[400px]">
-                  <thead>
-                    <tr className="border-b border-white/10">
-                      <th className="text-center px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold text-white/80 w-14">Sl. No</th>
-                      <th className="text-left px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold text-white/80">School</th>
-                      <th className="text-center px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold text-white/80">Students</th>
-                      <th className="text-center px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold text-white/80">Turnover</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {schools.length === 0 ? (
-                      <tr>
-                        <td colSpan={4} className="px-4 py-8 text-center text-white/60 text-sm">No schools</td>
-                      </tr>
-                    ) : (
-                      schools.map((s) => (
-                        <tr key={s.id} className="border-b border-white/10 hover:bg-white/5 transition">
-                          <td className="px-3 sm:px-4 py-3 text-white text-xs sm:text-sm text-center">{s.slNo}</td>
-                          <td className="px-3 sm:px-4 py-3 text-white font-medium text-xs sm:text-sm text-left">{s.name}</td>
-                          <td className="px-3 sm:px-4 py-3 text-white/90 text-xs sm:text-sm text-center">{s.studentCount.toLocaleString()}</td>
-                          <td className="px-3 sm:px-4 py-3 text-white font-medium text-xs sm:text-sm text-center">{formatAmount(s.turnover)}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <TableLayout
+              columns={columns}
+              data={paginatedSchools}
+              emptyText="No schools found"
+              rowKey={(row) => row.id}
+              pagination={{
+                page,
+                totalPages,
+                onChange: setPage,
+              }}
+            />
 
-            {/* Mobile: cards - center aligned */}
-            <div className="md:hidden space-y-3 w-full">
-              {schools.length === 0 ? (
-                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-8 text-center text-white/60 text-sm">No schools</div>
-              ) : (
-                schools.map((s) => (
-                  <div key={s.id} className="rounded-xl border border-white/10 bg-white/5 p-4 flex flex-col sm:flex-row justify-center items-center gap-2 text-center">
-                    <div className="text-left">
-                      <p className="text-white font-medium">{s.name}</p>
-                      <p className="text-white/70 text-xs">Students: {s.studentCount.toLocaleString()}</p>
-                    </div>
-                    <p className="text-white font-semibold text-sm">{formatAmount(s.turnover)}</p>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {schools.length > 0 && (
+            {filteredSchools.length > 0 && (
               <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs sm:text-sm text-white/80">
-                <span>Total transactions: <strong className="text-white">{totalTransactionCount.toLocaleString()}</strong></span>
-                <span>Total amount: <strong className="text-white">{formatAmount(totalTurnover)}</strong></span>
+                <span>
+                  Total transactions: <strong className="text-white">{totalTransactionCount.toLocaleString()}</strong>
+                </span>
+                <span>
+                  Total amount: <strong className="text-white">{formatAmount(totalTurnover)}</strong>
+                </span>
               </div>
             )}
           </>

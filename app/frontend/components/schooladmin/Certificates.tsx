@@ -59,7 +59,7 @@ export default function SchoolAdminCertificatesTab() {
   const rejected = certificateRequests.filter((t) => t.status === "REJECTED").length;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-6 text-gray-200">
+    <div className="max-w-7xl mx-auto py-4 space-y-6 text-gray-200">
       <PageHeader
         title="Certificate Requests"
         subtitle="Manage and process student certificate applications."
