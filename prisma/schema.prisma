@@ -6,13 +6,13 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../app/generated/prisma"
 }
 
 // Note: url is required for Prisma 6.x. Prisma 7+ uses a different approach.
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
@@ -78,7 +78,13 @@ model User {
   photoUrl        String?
   language        String?      @default("English")
   teacherId       String? // e.g. TCH001
-  subject         String? // e.g. Mathematics
+  subject         String? // e.g. Mathematics (primary/legacy)
+  subjects        String[]     @default([]) // multiple subjects e.g. Mathematics, Physics
+  qualification   String? // e.g. M.Sc, B.Ed
+  experience      String? // e.g. 5 Years
+  joiningDate     DateTime?    @db.Date
+  teacherStatus   String?      @default("Active") // Active, Inactive
+  address         String?      @db.Text
   leaveAprrover   Boolean      @default(false)
   assignedClasses Class[]      @relation("TeacherClass")
   attendances     Attendance[] @relation("TeacherAttendance")
@@ -247,10 +253,9 @@ model SchoolSettings {
   admissionCounter Int    @default(0) // last used number for admission
 
   // Tenant payment credentials - payments go to school's account. Fallback to global env if not set.
-  juspayMerchantId  String?
-  juspayApiKey      String?
-  razorpayKeyId     String?
-  razorpayKeySecret String?
+
+  hyperpgMerchantId  String?
+  hyperpgApiKey      String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -941,7 +946,7 @@ model Payment {
 
   amount Float
 
-  gateway String @default("RAZORPAY") // RAZORPAY | JUSPAY
+  gateway String @default("HYPERPG") // HYPERPG (Razorpay/Juspay deprecated)
 
   razorpayOrderId   String?
   razorpayPaymentId String?
@@ -950,6 +955,9 @@ model Payment {
   juspayOrderId   String?
   juspayPaymentId String?
   juspayStatus    String?
+
+  hyperpgOrderId String? // HyperPG order id (e.g. ordeh_xxx)
+  hyperpgTxnId   String? // HyperPG txn_id from order status
 
   status String @default("SUCCESS") // SUCCESS | FAILED | PENDING
 

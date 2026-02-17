@@ -18,7 +18,7 @@ export async function GET() {
   }
 
   try {
-    const studentId = session.user.studentId!;
+    const studentId = session.user.studentId;
 
     const fee = await prisma.studentFee.findUnique({
       where: { studentId },
