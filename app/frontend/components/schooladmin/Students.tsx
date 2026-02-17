@@ -13,7 +13,6 @@ import { buildStudentColumns } from "./students/studentColumns";
 import useStudentPage from "./students/useStudentPage";
 import { getAge } from "./students/utils";
 import { ClassItem } from "./students/types";
-import StudentMobileCard from "./students/StudentMobileCard";
 import SuccessPopups from "../common/SuccessPopUps";
 
 type Props = {
@@ -52,11 +51,11 @@ export default function StudentsManagementPage({ classes = [], reload }: Props) 
   return (
     <>
       <PageHeader
-        title="Students"
+        title="Students Management"
         subtitle="Manage all student records"
-        className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-white/10"
+        className="bg-white/5 backdrop-blur-xl rounded-2xl p-4 md:p-6 shadow-lg border border-white/10"
       />
-      <div className="max-w-7xl mx-auto space-y-6 text-gray-200 pb-12">
+      <div className="mx-auto w-full max-w-none xl:max-w-7xl space-y-4 md:space-y-6 text-gray-200 pb-12">
         <StudentFilters
           classOptions={page.filterClassOptions}
           sectionOptions={page.filterSectionOptions}
@@ -113,82 +112,25 @@ export default function StudentsManagementPage({ classes = [], reload }: Props) 
           />
         )}
 
-        <div>
-          <div className="md:hidden mb-4 bg-transparent backdrop-blur-lg">
-            <div className="font-bold text-gray-100 text-lg ">
-              All Students ({page.filteredStudents.length})
-            </div>
-            <div className="text-xs text-white/50">
-              {page.selectedClass
-                ? `Class ${page.selectedClass}${page.selectedSection ? ` ${page.selectedSection}` : ""}`
-                : "All Classes"}
-            </div>
-          </div>
-
-          <div className="md:hidden space-y-4">
-            {pagedStudents.map((student, index) => (
-              <StudentMobileCard
-                key={student.id}
-                student={student}
-                index={index}
-                onView={page.openView}
-                onEdit={page.openEdit}
-                onDelete={page.openDelete}
-              />
-            ))}
-            {pagedStudents.length === 0 && !page.tableLoading && (
-              <div className="text-center text-white/60 py-6">
-                No students found
-              </div>
-            )}
-
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                <span className="text-xs text-white/60">
-                  Page {safePage} of {totalPages}
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setTablePage((p) => Math.max(1, p - 1))}
-                    disabled={safePage <= 1}
-                    className="rounded-full px-4 py-2 text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTablePage((p) => Math.min(totalPages, p + 1))}
-                    disabled={safePage >= totalPages}
-                    className="rounded-full px-4 py-2 text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="hidden md:block">
-            <DataTable
-              columns={columns}
-              data={pagedStudents}
-              loading={page.tableLoading}
-              emptyText="No students found"
-              tableTitle={`All Students (${page.filteredStudents.length})`}
-              tableSubtitle={
-                page.selectedClass
-                  ? `Class ${page.selectedClass}${page.selectedSection ? ` ${page.selectedSection}` : ""}`
-                  : undefined
-              }
-              pagination={{
-                page: safePage,
-                totalPages,
-                onChange: setTablePage,
-              }}
-            />
-          </div>
-        </div>
+        <DataTable
+          columns={columns}
+          data={pagedStudents}
+          loading={page.tableLoading}
+          emptyText="No students found"
+          tableTitle={`All Students (${page.filteredStudents.length})`}
+          tableSubtitle={
+            page.selectedClass
+              ? `Class ${page.selectedClass}${page.selectedSection ? ` ${page.selectedSection}` : ""}`
+              : undefined
+          }
+          showMobile={false}
+          forceTableOnMobile
+          pagination={{
+            page: safePage,
+            totalPages,
+            onChange: setTablePage,
+          }}
+        />
       </div>
 
       {page.viewStudent && (

@@ -16,6 +16,7 @@ import {
   FileText,
 } from "lucide-react";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import Spinner from "../../common/Spinner";
 
 type StudentProfile = {
   student: {
@@ -189,7 +190,7 @@ export default function ParentProfile() {
   if (status === "loading" || loading) {
     return (
       <div className="min-h-screen p-4 sm:p-6 md:p-8 flex items-center justify-center">
-        <p className="text-white/60">Loading profile…</p>
+        <Spinner/>
       </div>
     );
   }

@@ -177,8 +177,7 @@ export default function ParentWorkshopsTab() {
       <div
         className="
           w-full max-w-none
-          px-3 sm:px-5 md:px-10 lg:px-8 xl:px-10
-          py-4 space-y-6 text-white
+         space-y-6 text-white
         "
       >
         {/* HEADER */}

@@ -76,7 +76,7 @@ export default function MobileMoreOptions({
       exit={{ y: "100%" }}
       transition={{ type: "spring", damping: 30, stiffness: 300 }}
       className="
-        fixed inset-x-0 bottom-0 z-50 md:hidden
+        fixed inset-x-0 bottom-0 z-50 xl:hidden
         bg-gradient-to-br from-[#0b1220] to-[#1a2332]/95
         backdrop-blur-xl
         rounded-t-3xl
