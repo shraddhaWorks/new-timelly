@@ -112,6 +112,7 @@ const SchoolAdminTeacherTab = () => {
       try {
         const res = await fetch("/api/teacher/list", { credentials: "include" });
         const data = await res.json();
+        console.log(data)
         if (cancelled || !res.ok) return;
         const list: TeacherRow[] = (data.teachers || []).map((t: { id: string; name: string | null; email: string | null; mobile: string | null; teacherId: string | null; subject: string | null; photoUrl: string | null }) => ({
           id: t.id,
@@ -340,7 +341,14 @@ const SchoolAdminTeacherTab = () => {
   };
 
   const teacherColumns = [
-    { key: "teacherId", header: "TEACHER ID" },
+    { key: "teacherId", header: "TEACHER ID",
+      render: (row: TeacherRow) => (
+        <div className="flex items-center gap-3 min-w-[120px]">
+          
+          <span className="font-bold text-sm">{row.teacherId}</span>
+        </div>
+      ),
+     },
     { 
       key: "name", 
       header: "NAME",
@@ -351,7 +359,14 @@ const SchoolAdminTeacherTab = () => {
         </div>
       )
     },
-    { key: "subject", header: "SUBJECT" },
+    { key: "subject", header: "SUBJECT",
+      render: (row: TeacherRow) => (
+        <div className="flex items-center gap-3 min-w-[120px]">
+          
+          <span className="text-white/50  text-sm">{row.subject}</span>
+        </div>
+      ),
+     },
     {
       key: "attendance",
       header: "ATTENDANCE",
