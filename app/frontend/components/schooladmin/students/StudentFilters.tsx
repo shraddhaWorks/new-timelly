@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Plus, Search, Upload, X } from "lucide-react";
+import { Plus, Search, Upload, X } from "lucide-react";
 import SearchInput from "../../common/SearchInput";
 import SelectInput from "../../common/SelectInput";
 import { SelectOption } from "./types";
@@ -17,7 +17,6 @@ type Props = {
   showAddForm: boolean;
   onToggleAddForm: () => void;
   onToggleUpload: () => void;
-  onDownloadReport: () => void;
 };
 
 export default function StudentFilters({
@@ -32,7 +31,6 @@ export default function StudentFilters({
   showAddForm,
   onToggleAddForm,
   onToggleUpload,
-  onDownloadReport,
 }: Props) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
@@ -86,14 +84,7 @@ export default function StudentFilters({
           className="px-3 md:px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-medium
            transition-all text-xs md:text-sm flex items-center gap-2 text-gray-300"
         >
-          <Upload size={16} /> Upload CSV
-        </button>
-        <button
-          onClick={onDownloadReport}
-          className="px-3 md:px-4 py-2 bg-white/5 hover:bg-white/10 border 
-          border-white/10 rounded-xl font-medium transition-all 
-          text-xs md:text-sm flex items-center gap-2 text-gray-300">
-          <Download size={16} /> Download Report
+          <Upload size={16} /> Upload Excel
         </button>
       </div>
     </div>
