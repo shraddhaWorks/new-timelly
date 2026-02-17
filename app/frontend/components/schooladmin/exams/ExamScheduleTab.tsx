@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus, Clock, X } from "lucide-react";
+import { createPortal } from "react-dom";
 import type { ExamScheduleItem } from "@/hooks/useExamTerms";
+import Spinner from "@/app/frontend/components/common/Spinner";
 import {
   EXAM_ACCENT,
   EXAM_ACCENT_GLOW,
@@ -27,11 +29,7 @@ function formatDuration(min: number): string {
   return `${min} min`;
 }
 
-export default function ExamScheduleTab({
-  termId,
-  schedules,
-  onScheduleChange,
-}: ExamScheduleTabProps) {
+export default function ExamScheduleTab({ termId, schedules, onScheduleChange }: ExamScheduleTabProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [subject, setSubject] = useState("");
   const [examDate, setExamDate] = useState("");
@@ -39,9 +37,20 @@ export default function ExamScheduleTab({
   const [durationMin, setDurationMin] = useState(180);
   const [saving, setSaving] = useState(false);
 
+  const orderedSchedules = useMemo(
+    () =>
+      [...schedules].sort((a, b) => {
+        const aDate = new Date(`${a.examDate}T${a.startTime || "00:00"}`).getTime();
+        const bDate = new Date(`${b.examDate}T${b.startTime || "00:00"}`).getTime();
+        return aDate - bDate;
+      }),
+    [schedules]
+  );
+
   const handleAddSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!subject.trim() || !examDate || !startTime) return;
+
     setSaving(true);
     try {
       const res = await fetch(`/api/exams/terms/${termId}/schedule`, {
@@ -54,8 +63,10 @@ export default function ExamScheduleTab({
           durationMin,
         }),
       });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to add");
+
       setSubject("");
       setExamDate("");
       setStartTime("");
@@ -70,21 +81,19 @@ export default function ExamScheduleTab({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h3
-          className="text-sm font-semibold uppercase tracking-wider"
-          style={{ color: EXAM_TEXT_MAIN }}
-        >
+    <div className="space-y-5 bg-transparent">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-sm font-bold text-gray-300 uppercase tracking-wider" style={{ color: EXAM_TEXT_MAIN }}>
           Schedule
         </h3>
         <button
           type="button"
           onClick={() => setShowAddModal(true)}
-          className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium text-black transition min-h-[44px] touch-manipulation w-full sm:w-auto"
+          className="text-xs font-bold text-lime-400 hover:text-lime-300 flex items-center gap-1 bg-lime-400/10
+           px-3 py-1.5 rounded-lg border border-lime-400/20 transition-all"
           style={{
-            backgroundColor: EXAM_ACCENT,
-            boxShadow: `0 0 12px ${EXAM_ACCENT_GLOW}`,
+            color: EXAM_ACCENT,
+            backgroundColor: "rgba(159, 255, 0, 0.12)",
           }}
         >
           <Plus size={18} />
@@ -92,57 +101,45 @@ export default function ExamScheduleTab({
         </button>
       </div>
 
-      {!schedules.length ? (
-        <div className="py-8 sm:py-12 text-center text-sm" style={{ color: EXAM_TEXT_SECONDARY }}>
-          No exam schedule added yet. Click &quot;Add Subject&quot; to add one.
+      {!orderedSchedules.length ? (
+        <div className="rounded-2xl border border-white/10 py-14 text-center" style={{ color: EXAM_TEXT_SECONDARY }}>
+          No exam schedule added yet. Click "Add Subject" to add one.
         </div>
       ) : (
         <div className="space-y-3">
-          {schedules.map((s) => {
+          {orderedSchedules.map((s) => {
             const date = new Date(s.examDate);
             const day = date.getDate();
             const month = date.toLocaleDateString("en-IN", { month: "short" }).toUpperCase();
             const durationStr = formatDuration(s.durationMin);
+
             return (
               <div
                 key={s.id}
-                className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl border border-white/10 min-h-[44px]"
-                style={{
-                  background: EXAM_CARD_BG_ALT,
-                  backdropFilter: "blur(12px)",
-                }}
+                className="bg-white/5 hover:bg-white/[0.07] rounded-xl border border-white/5 p-4 flex items-center gap-6 group transition-all"
+               
               >
-                <div className="flex-shrink-0 w-12 sm:w-14 text-center">
-                  <div
-                    className="text-xl sm:text-2xl font-bold leading-none"
-                    style={{ color: EXAM_TEXT_MAIN }}
-                  >
+                <div className="flex flex-col items-center justify-center min-w-[50px]">
+                  <div className="text-lg font-bold text-white leading-none" style={{ color: EXAM_TEXT_MAIN }}>
                     {day}
                   </div>
-                  <div
-                    className="text-xs mt-1 uppercase tracking-wider"
-                    style={{ color: EXAM_TEXT_SECONDARY }}
-                  >
+                  <div className="text-[10px] font-medium text-gray-500 uppercase mt-1" style={{ color: EXAM_TEXT_SECONDARY }}>
                     {month}
                   </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div
-                    className="font-medium text-sm sm:text-base"
-                    style={{ color: EXAM_TEXT_MAIN }}
-                  >
+
+                <div className="w-px h-10 bg-white/10" />
+
+                <div className="min-w-0 flex-1">
+                  <div className="text-base font-semibold text-gray-200" style={{ color: EXAM_TEXT_MAIN }}>
                     {s.subject}
                   </div>
-                  <div
-                    className="flex items-center gap-1.5 text-xs sm:text-sm mt-0.5"
-                    style={{ color: EXAM_TEXT_SECONDARY }}
-                  >
-                    <Clock size={14} />
-                    <span>
-                      {s.startTime}
-                      <span className="mx-1.5">•</span>
-                      {durationStr} duration
-                    </span>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-gray-500" style={{ color: EXAM_TEXT_SECONDARY }}>
+                    <span className="flex items-center gap-1"><Clock className="w-3 h-3"/>
+                    <span>{s.startTime}</span></span>
+                    
+                    <span className="mx-1">•</span>
+                    <span>{durationStr} duration</span>
                   </div>
                 </div>
               </div>
@@ -151,35 +148,32 @@ export default function ExamScheduleTab({
         </div>
       )}
 
-      {showAddModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 overflow-y-auto"
-          style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
-        >
+      {showAddModal &&
+        createPortal(
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div
-            className="w-full max-w-md rounded-t-2xl sm:rounded-2xl p-4 sm:p-6 border border-white/10 shadow-xl mt-auto sm:mt-0 max-h-[90vh] overflow-y-auto"
+            className="bg-[#0F172A] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl"
             style={{
-              background: EXAM_CARD_BG_ALT,
-              backdropFilter: "blur(16px)",
+              background: "linear-gradient(180deg, rgba(10,27,57,0.98) 0%, rgba(9,22,47,0.96) 100%)",
             }}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base sm:text-lg font-semibold" style={{ color: EXAM_TEXT_MAIN }}>
+            <div className="mb-5 flex items-center justify-between">
+              <h3 className="text-xl font-bold" style={{ color: EXAM_TEXT_MAIN }}>
                 Add Subject to Schedule
               </h3>
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className="p-2.5 rounded-lg hover:bg-white/10 transition min-h-[44px] min-w-[44px] touch-manipulation flex items-center justify-center"
-                style={{ color: EXAM_TEXT_SECONDARY }}
+                className="min-h-[40px] min-w-[40px] rounded-xl border border-white/15 p-2.5 text-white/80 hover:bg-white/10"
               >
                 <X size={18} />
               </button>
             </div>
+
             <form onSubmit={handleAddSchedule} className="space-y-4">
               <div>
-                <label className="block text-sm mb-1" style={{ color: EXAM_TEXT_SECONDARY }}>
-                  Subject
+                <label className="mb-1 block text-sm font-medium" style={{ color: EXAM_TEXT_SECONDARY }}>
+                  Subject Name
                 </label>
                 <input
                   type="text"
@@ -187,13 +181,14 @@ export default function ExamScheduleTab({
                   onChange={(e) => setSubject(e.target.value)}
                   placeholder="e.g. Mathematics"
                   required
-                  className="w-full px-3 py-3 rounded-lg border border-white/20 placeholder:opacity-70 min-h-[44px] touch-manipulation text-base"
+                  className="w-full rounded-2xl border border-white/15 px-4 py-3.5 text-base"
                   style={{ background: EXAM_INPUT_BG, color: EXAM_TEXT_MAIN }}
                 />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm mb-1" style={{ color: EXAM_TEXT_SECONDARY }}>
+                  <label className="mb-1 block text-sm font-medium" style={{ color: EXAM_TEXT_SECONDARY }}>
                     Date
                   </label>
                   <input
@@ -201,12 +196,13 @@ export default function ExamScheduleTab({
                     value={examDate}
                     onChange={(e) => setExamDate(e.target.value)}
                     required
-                    className="w-full px-3 py-3 rounded-lg border border-white/20 placeholder:opacity-70 min-h-[44px] touch-manipulation text-base"
+                    className="w-full rounded-2xl border border-white/15 px-4 py-3.5 text-base [color-scheme:dark]"
                     style={{ background: EXAM_INPUT_BG, color: EXAM_TEXT_MAIN }}
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm mb-1" style={{ color: EXAM_TEXT_SECONDARY }}>
+                  <label className="mb-1 block text-sm font-medium" style={{ color: EXAM_TEXT_SECONDARY }}>
                     Start Time
                   </label>
                   <input
@@ -214,13 +210,14 @@ export default function ExamScheduleTab({
                     value={startTime}
                     onChange={(e) => setStartTime(e.target.value)}
                     required
-                    className="w-full px-3 py-3 rounded-lg border border-white/20 placeholder:opacity-70 min-h-[44px] touch-manipulation text-base"
+                    className="w-full rounded-2xl border border-white/15 px-4 py-3.5 text-base [color-scheme:dark]"
                     style={{ background: EXAM_INPUT_BG, color: EXAM_TEXT_MAIN }}
                   />
                 </div>
               </div>
+
               <div>
-                <label className="block text-sm mb-1" style={{ color: EXAM_TEXT_SECONDARY }}>
+                <label className="mb-1 block text-sm font-medium" style={{ color: EXAM_TEXT_SECONDARY }}>
                   Duration (minutes)
                 </label>
                 <input
@@ -228,31 +225,42 @@ export default function ExamScheduleTab({
                   value={durationMin}
                   onChange={(e) => setDurationMin(Number(e.target.value) || 0)}
                   min={1}
-                  className="w-full px-3 py-3 rounded-lg border border-white/20 placeholder:opacity-70 min-h-[44px] touch-manipulation text-base"
+                  className="w-full rounded-2xl border border-white/15 px-4 py-3.5 text-base"
                   style={{ background: EXAM_INPUT_BG, color: EXAM_TEXT_MAIN }}
                 />
               </div>
-              <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
+
+              <div className="grid grid-cols-1 gap-3 pt-3 sm:grid-cols-2">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="flex-1 px-4 py-3 rounded-lg font-medium border border-white/20 transition min-h-[44px] touch-manipulation"
-                  style={{ color: EXAM_TEXT_MAIN }}
+                  className="flex-1 py-2.5 rounded-xl border border-white/10 text-gray-400 hover:bg-white/5"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 px-4 py-3 rounded-lg font-medium text-black disabled:opacity-50 transition min-h-[44px] touch-manipulation"
-                  style={{ backgroundColor: EXAM_ACCENT }}
+                  className="flex-1 py-2.5 rounded-xl bg-lime-400 text-black font-bold hover:bg-lime-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  style={{
+                    backgroundColor: EXAM_ACCENT,
+                    boxShadow: `0 0 18px ${EXAM_ACCENT_GLOW}`,
+                  }}
                 >
-                  {saving ? "Saving…" : "Add"}
+                  {saving ? (
+                    <>
+                      <Spinner size={18} />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Schedule"
+                  )}
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
