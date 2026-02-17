@@ -129,7 +129,7 @@ export default function LoginForm() {
         <div className="px-8 py-5 bg-black/40 border-t border-white/5 text-center">
           <p className="text-gray-500 text-xs">
             Don&apos;t have an account?{" "}
-            <a href="/admin/signup" className="text-lime-400 font-medium hover:underline">
+            <a href="#" className="text-lime-400 font-medium hover:underline">
               School Administrator
             </a>
           </p>

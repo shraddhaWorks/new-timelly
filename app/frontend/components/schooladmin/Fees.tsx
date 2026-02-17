@@ -8,6 +8,7 @@ import AddExtraFeeForm from "./fees/AddExtraFeeForm";
 import FeeStructureConfig from "./fees/FeeStructureConfig";
 import FeeRecordsTable from "./fees/FeeRecordsTable";
 import type { Class, Student, FeeSummary, FeeRecord, FeeStructure } from "./fees/types";
+import Spinner from "../common/Spinner";
 
 export default function FeesTab() {
   const [fees, setFees] = useState<FeeRecord[]>([]);
@@ -54,13 +55,13 @@ export default function FeesTab() {
   if (loading) {
     return (
       <div className="min-h-screen p-4 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-2 border-white/30 border-t-white" />
+        <Spinner/>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen p-3 sm:p-4 md:p-6 text-white overflow-x-hidden">
+    <div className="min-h-screen text-white overflow-x-hidden">
       <div className="max-w-6xl mx-auto space-y-6">
         <PageHeader
           title="Fees Management"

@@ -192,8 +192,8 @@ export default function AddSchool() {
 
 return (
   <>
-  <main className="flex-1 overflow-y-auto px-3 sm:px-4">
-    <div className="py-4 sm:p-6 bg-transparent min-h-screen">
+  <main className="flex-1 overflow-y-auto">
+    <div className=" bg-transparent min-h-screen">
       <div className="w-full space-y-6">
         <PageHeader
           title="Add New School"

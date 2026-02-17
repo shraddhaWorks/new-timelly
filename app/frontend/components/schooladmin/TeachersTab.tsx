@@ -390,7 +390,7 @@ const SchoolAdminTeacherTab = () => {
   ];
 
   return (
-    <div className="p-4 sm:p-6 space-y-8 bg-transparent min-h-screen">
+    <div className=" space-y-8 bg-transparent min-h-screen">
       
       <PageHeader
         title="Teachers"

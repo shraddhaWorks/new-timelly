@@ -31,7 +31,7 @@ export async function GET(req: Request) {
         admins: {
           take: 1,
           orderBy: { name: "asc" },
-          select: { id: true, name: true, email: true, mobile: true, role: true },
+          select: { id: true, name: true, email: true, mobile: true, role: true, photoUrl: true },
         },
       },
     });
@@ -63,10 +63,11 @@ export async function GET(req: Request) {
       admin: s.admins[0]
         ? {
             id: s.admins[0].id,
-            name: s.admins[0].name ?? "—",
-            email: s.admins[0].email ?? "—",
-            mobile: s.admins[0].mobile ?? "—",
+            name: s.admins[0].name ?? "-",
+            email: s.admins[0].email ?? "-",
+            mobile: s.admins[0].mobile ?? "-",
             role: s.admins[0].role,
+            photoUrl: s.admins[0].photoUrl ?? null,
           }
         : null,
     }));

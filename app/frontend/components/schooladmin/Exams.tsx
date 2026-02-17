@@ -18,6 +18,7 @@ import GlassCard from "./exams/GlassCard";
 import ExamScheduleTab from "./exams/ExamScheduleTab";
 import NewExamTermModal from "./exams/NewExamTermModal";
 import SyllabusTrackingTab from "./exams/SyllabusTrackingTab";
+import Spinner from "../common/Spinner";
 
 type TabId = "schedule" | "syllabus";
 
@@ -81,7 +82,7 @@ export function ExamsPageInner() {
     : null;
 
   return (
-    <div className="min-h-screen p-3 sm:p-4 md:p-6 pb-8">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -128,10 +129,7 @@ export function ExamsPageInner() {
             )}
             {loading ? (
               <div className="flex justify-center py-12">
-                <div
-                  className="animate-spin rounded-full h-10 w-10 border-2 border-white/30"
-                  style={{ borderTopColor: EXAM_ACCENT }}
-                />
+                  <Spinner/>
               </div>
             ) : (
               <>
