@@ -24,14 +24,22 @@ export default function ExamTermCard({ term, isSelected, onClick, onEdit }: Exam
     : "-";
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       className={`group relative flex h-[230px] w-full flex-col overflow-hidden rounded-2xl border p-5 text-left transition-all ${
         isSelected
           ? "bg-white/10 border-lime-400/50 shadow-xl"
           : "border-white/10 bg-white/[0.04] hover:bg-white/[0.08]"
       }`}
+      aria-pressed={isSelected}
     >
       <span
         className="absolute left-0 top-0 h-full w-1"
@@ -86,6 +94,6 @@ export default function ExamTermCard({ term, isSelected, onClick, onEdit }: Exam
           {classLabel}
         </span>
       </div>
-    </button>
+    </div>
   );
 }

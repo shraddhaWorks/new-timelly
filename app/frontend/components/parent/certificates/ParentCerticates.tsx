@@ -142,8 +142,8 @@ export default function ParentCertificatesTab() {
   const totalIssued = certificates.length + approvedRequests.length;
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 min-h-[calc(100vh-80px)]">
-      <div className="space-y-6 md:space-y-8 animate-fadeIn p-8">
+    <div className="min-h-[calc(100vh-80px)]">
+      <div className="space-y-6 md:space-y-8 animate-fadeIn">
 
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg w-full md:w-auto p-4 md:p-6 lg:p-8">

@@ -476,6 +476,10 @@ export default function useStudentPage({ classes = [], reload }: Props) {
     closeDelete();
   };
 
+  const handleDownloadReport = () => {
+    toast.info("Downloading report...");
+  };
+
   return {
     filterClassOptions,
     filterSectionOptions,
@@ -520,6 +524,7 @@ export default function useStudentPage({ classes = [], reload }: Props) {
     closeDelete,
     handleEditSave,
     handleDelete,
+    handleDownloadReport,
     showSuccess,
     setShowSuccess,
   };
