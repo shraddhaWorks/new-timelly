@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { ExamTermStatus } from "@prisma/client";
+import { ExamTermStatus } from "@/app/generated/prisma";
 
 async function resolveSchoolId(session: {
   user: { id: string; schoolId?: string | null; role: string };
@@ -99,10 +99,10 @@ export async function GET(req: Request) {
           : { id: "", name: "", section: "" };
 
         for (const s of term.schedules) {
-          const tracking = term.syllabus.find((sy) => sy.subject === s.subject);
+          const tracking = term.syllabus.find((sy: { subject: any; }) => sy.subject === s.subject);
           const syllabus = tracking
             ? tracking.units.length > 0
-              ? tracking.units.map((u) => ({ completedPercent: u.completedPercent }))
+              ? tracking.units.map((u: { completedPercent: any; }) => ({ completedPercent: u.completedPercent }))
               : [{ completedPercent: tracking.completedPercent }]
             : [];
 

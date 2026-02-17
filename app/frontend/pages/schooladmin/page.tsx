@@ -83,6 +83,7 @@ function SchoolAdminContent() {
         return <Certificates />;
       case "exams":
         return <ExamsPage />;
+        
       case "analysis":
         return <SchoolAdminAnalysisTab />;
       case "fees":
