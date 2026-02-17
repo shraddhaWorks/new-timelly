@@ -137,10 +137,7 @@ export function ExamsPageInner() {
               <>
                 {upcoming.length > 0 && (
                   <div>
-                    <h3 className="text-xs font-medium uppercase tracking-wider mb-2" style={{ color: EXAM_TEXT_SECONDARY }}>
-                      Upcoming
-                    </h3>
-                    <div className="space-y-2">
+                    <div className="lg:col-span-1 space-y-4">
                       {upcoming.map((t) => (
                         <ExamTermCard
                           key={t.id}
@@ -270,10 +267,10 @@ export function ExamsPageInner() {
                 </AnimatePresence>
               </GlassCard>
             ) : (
-              <GlassCard variant="card" className="p-6 sm:p-12 text-center" style={{ color: EXAM_TEXT_SECONDARY }}>
+              <div className="p-6 sm:p-12 text-center bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden min-h-[600px] flex flex-col" style={{ color: EXAM_TEXT_SECONDARY }}>
                 <Calendar className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 opacity-60" style={{ color: EXAM_TEXT_MAIN }} />
                 <p className="text-sm sm:text-base">Select an exam term below to view schedule and syllabus tracking</p>
-              </GlassCard>
+              </div>
             )}
           </div>
         </div>
