@@ -24,9 +24,18 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
         email: true,
         role: true,
         subject: true,
+        subjects: true,
         schoolId: true,
         allowedFeatures: true,
         createdAt: true,
+        teacherId: true,
+        qualification: true,
+        experience: true,
+        joiningDate: true,
+        teacherStatus: true,
+        mobile: true,
+        address: true,
+        assignedClasses: { select: { id: true, name: true, section: true } },
       },
     });
 
@@ -42,9 +51,14 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
       );
     }
 
+    const assignedClassIds = "assignedClasses" in user
+      ? (user.assignedClasses as { id: string }[]).map((c) => c.id)
+      : [];
+    const { assignedClasses, ...rest } = user;
     return NextResponse.json({
-      ...user,
+      ...rest,
       designation: user.subject,
+      assignedClassIds,
     });
   } catch (error: any) {
     console.error("User fetch error:", error);
@@ -64,15 +78,31 @@ export async function PUT(req: NextRequest, { params }: { params: Params }) {
     }
 
     const { id } = await params;
-    const { name, email, role, designation, password, allowedFeatures } =
-      await req.json();
+    const body = await req.json();
+    const {
+      name,
+      email,
+      role,
+      designation,
+      password,
+      allowedFeatures,
+      teacherId,
+      subjects,
+      assignedClassIds,
+      qualification,
+      experience,
+      joiningDate,
+      teacherStatus,
+      mobile,
+      address,
+    } = body;
 
     console.log(`[PUT] /api/user/${id} called by ${session.user?.id} (role=${session.user?.role})`);
-    console.log("Payload:", { name, email, role, designation, allowedFeatures });
 
     // Check if user exists and belongs to same school
     const user = await prisma.user.findUnique({
       where: { id },
+      select: { id: true, email: true, schoolId: true, role: true },
     });
 
     if (!user) {
@@ -100,16 +130,45 @@ export async function PUT(req: NextRequest, { params }: { params: Params }) {
       }
     }
 
-    const updateData: any = {};
-
-    if (name) updateData.name = name;
-    if (email) updateData.email = email;
-    if (role) updateData.role = role;
-    if (designation) updateData.subject = designation;
+    const updateData: Record<string, unknown> = {};
+    if (name !== undefined) updateData.name = name;
+    if (email !== undefined) updateData.email = email;
+    if (role !== undefined) updateData.role = role;
+    if (designation !== undefined) updateData.subject = designation;
     if (allowedFeatures !== undefined) updateData.allowedFeatures = allowedFeatures;
     if (password) {
       updateData.password = await bcrypt.hash(password, 10);
     }
+
+    // Teacher-specific fields
+    if (user.role === "TEACHER") {
+      if (teacherId !== undefined) updateData.teacherId = teacherId && String(teacherId).trim() ? String(teacherId).trim() : null;
+      if (subjects !== undefined) {
+        const arr = Array.isArray(subjects) && subjects.every((s: unknown) => typeof s === "string") ? (subjects as string[]).filter(Boolean) : [];
+        updateData.subjects = arr;
+        if (arr[0]) updateData.subject = arr[0];
+      }
+      if (qualification !== undefined) updateData.qualification = qualification && String(qualification).trim() ? String(qualification).trim() : null;
+      if (experience !== undefined) updateData.experience = experience && String(experience).trim() ? String(experience).trim() : null;
+      if (joiningDate !== undefined) {
+        if (joiningDate && typeof joiningDate === "string") {
+          const ddmmyyyy = joiningDate.trim().match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+          if (ddmmyyyy) {
+            const [, d, m, y] = ddmmyyyy;
+            updateData.joiningDate = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
+          } else {
+            updateData.joiningDate = new Date(joiningDate);
+          }
+        } else {
+          updateData.joiningDate = null;
+        }
+      }
+      if (teacherStatus !== undefined) updateData.teacherStatus = teacherStatus && String(teacherStatus).trim() ? String(teacherStatus).trim() : "Active";
+      if (mobile !== undefined) updateData.mobile = mobile && String(mobile).trim() ? String(mobile).trim() : null;
+      if (address !== undefined) updateData.address = address && String(address).trim() ? String(address).trim() : null;
+    }
+
+    const schoolId = session.user.schoolId as string;
 
     const updatedUser = await prisma.user.update({
       where: { id },
@@ -120,9 +179,34 @@ export async function PUT(req: NextRequest, { params }: { params: Params }) {
         email: true,
         role: true,
         subject: true,
+        subjects: true,
         allowedFeatures: true,
+        teacherId: true,
+        qualification: true,
+        experience: true,
+        joiningDate: true,
+        teacherStatus: true,
+        mobile: true,
+        address: true,
       },
     });
+
+    // Update assigned classes for teachers
+    if (user.role === "TEACHER" && schoolId && Array.isArray(assignedClassIds)) {
+      const classIds = assignedClassIds.filter((c: unknown) => typeof c === "string") as string[];
+      // Unassign this teacher from all classes they currently have
+      await prisma.class.updateMany({
+        where: { teacherId: id },
+        data: { teacherId: null },
+      });
+      // Assign to new set of classes (only in same school)
+      if (classIds.length > 0) {
+        await prisma.class.updateMany({
+          where: { id: { in: classIds }, schoolId },
+          data: { teacherId: id },
+        });
+      }
+    }
 
     return NextResponse.json({
       message: "User updated successfully",

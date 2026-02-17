@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { TeacherAuditCategory } from "@/app/generated/prisma";
+import { TeacherAuditCategory } from "@prisma/client";
 
 /* ================= HELPERS ================= */
 const clampScore = (value: number) => Math.max(0, Math.min(100, value));
