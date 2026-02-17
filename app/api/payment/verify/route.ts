@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import crypto from "crypto";
+
+const hyperpgBaseUrl = process.env.HYPERPG_BASE_URL || "https://sandbox.hyperpg.in";
+const globalHyperpgMerchantId = process.env.HYPERPG_MERCHANT_ID;
+const globalHyperpgApiKey = process.env.HYPERPG_API_KEY;
+const hyperpgAuthStyle = process.env.HYPERPG_AUTH_STYLE || "merchant_key";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -19,19 +23,15 @@ export async function POST(req: Request) {
   }
 
   try {
+    const studentId = session.user.studentId;
     const body = await req.json();
-
     const {
-      razorpay_order_id,
-      razorpay_signature,
-      razorpay_payment_id,
-      juspay_order_id,
-      juspay_payment_id,
-      amount,
       gateway: gw,
+      order_id: orderId,
+      amount,
     } = body;
 
-    const gateway = gw || (razorpay_order_id ? "RAZORPAY" : "JUSPAY");
+    const gateway = gw || "HYPERPG";
 
     const amountNum = typeof amount === "string" ? parseFloat(amount) : amount;
     if (typeof amountNum !== "number" || isNaN(amountNum) || amountNum <= 0) {
@@ -41,46 +41,109 @@ export async function POST(req: Request) {
       );
     }
 
-    if (gateway === "RAZORPAY") {
-      if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-        return NextResponse.json(
-          { message: "Missing razorpay_order_id, razorpay_payment_id, or razorpay_signature" },
-          { status: 400 }
-        );
-      }
-      const keySecret = process.env.RAZORPAY_KEY_SECRET;
-      if (!keySecret) {
-        return NextResponse.json(
-          { message: "Razorpay secret not configured" },
-          { status: 500 }
-        );
-      }
-      const bodyString = `${razorpay_order_id}|${razorpay_payment_id}`;
-      const expectedSignature = crypto
-        .createHmac("sha256", keySecret)
-        .update(bodyString)
-        .digest("hex");
-      if (expectedSignature !== razorpay_signature) {
-        return NextResponse.json(
-          { message: "Invalid payment signature" },
-          { status: 400 }
-        );
-      }
-    } else if (gateway === "JUSPAY") {
-      if (!juspay_order_id || !juspay_payment_id) {
-        return NextResponse.json(
-          { message: "Missing juspay_order_id or juspay_payment_id" },
-          { status: 400 }
-        );
-      }
-    } else {
-      return NextResponse.json({ message: "Unknown gateway" }, { status: 400 });
+    if (gateway !== "HYPERPG") {
+      return NextResponse.json(
+        { message: "Only HyperPG payments are supported" },
+        { status: 400 }
+      );
     }
 
-    const studentId = session.user.studentId!;
+    if (!orderId || typeof orderId !== "string") {
+      return NextResponse.json(
+        { message: "Missing order_id for verification" },
+        { status: 400 }
+      );
+    }
+    const student = await prisma.student.findUnique({
+      where: { id: studentId },
+      select: { schoolId: true },
+    });
+    if (!student) {
+      return NextResponse.json(
+        { message: "Student not found" },
+        { status: 404 }
+      );
+    }
 
-    // NOTE: Avoid long-running DB transactions (can fail with Accelerate / serverless limits)
-    // Do the two operations sequentially instead.
+    const settings = await prisma.schoolSettings.findUnique({
+      where: { schoolId: student.schoolId },
+    });
+    const merchantId =
+      settings?.hyperpgMerchantId?.trim() || globalHyperpgMerchantId?.trim();
+    const apiKey =
+      settings?.hyperpgApiKey?.trim() || globalHyperpgApiKey?.trim();
+
+    if (!merchantId || !apiKey) {
+      return NextResponse.json(
+        { message: "Payment gateway not configured for this school" },
+        { status: 500 }
+      );
+    }
+
+    const authCredentials =
+      hyperpgAuthStyle === "merchant_key"
+        ? `${merchantId}:${apiKey}`
+        : `${apiKey}:`;
+    const auth = Buffer.from(authCredentials).toString("base64");
+    const statusRes = await fetch(
+      `${hyperpgBaseUrl}/orders/${encodeURIComponent(orderId)}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "x-merchantid": merchantId,
+          Authorization: `Basic ${auth}`,
+        },
+      }
+    );
+
+    if (!statusRes.ok) {
+      const errText = await statusRes.text();
+      console.error("HyperPG order status error:", statusRes.status, errText);
+      return NextResponse.json(
+        { message: "Could not verify order status with payment gateway" },
+        { status: 502 }
+      );
+    }
+
+    const orderStatus = await statusRes.json();
+
+    if (orderStatus.status !== "CHARGED") {
+      return NextResponse.json(
+        {
+          message:
+            orderStatus.status === "NEW"
+              ? "Payment not completed yet"
+              : `Payment status: ${orderStatus.status || "unknown"}`,
+        },
+        { status: 400 }
+      );
+    }
+
+    const orderAmount = Number(orderStatus.amount);
+    if (orderAmount > 0 && Math.abs(orderAmount - amountNum) > 0.01) {
+      return NextResponse.json(
+        { message: "Amount mismatch with order" },
+        { status: 400 }
+      );
+    }
+
+    const hyperpgId = orderStatus.id || null;
+
+    const existing = hyperpgId
+      ? await prisma.payment.findFirst({
+          where: { hyperpgOrderId: hyperpgId, studentId },
+        })
+      : null;
+    if (existing) {
+      const fee = await prisma.studentFee.findUnique({
+        where: { studentId },
+      });
+      return NextResponse.json(
+        { payment: existing, fee: fee ?? undefined },
+        { status: 200 }
+      );
+    }
 
     const fee = await prisma.studentFee.findUnique({
       where: { studentId },
@@ -100,13 +163,9 @@ export async function POST(req: Request) {
       data: {
         studentId,
         amount: amountNum,
-        gateway,
-        razorpayOrderId: gateway === "RAZORPAY" ? razorpay_order_id : null,
-        razorpayPaymentId: gateway === "RAZORPAY" ? razorpay_payment_id : null,
-        razorpaySignature: gateway === "RAZORPAY" ? razorpay_signature : null,
-        juspayOrderId: gateway === "JUSPAY" ? juspay_order_id : null,
-        juspayPaymentId: gateway === "JUSPAY" ? juspay_payment_id : null,
-        juspayStatus: gateway === "JUSPAY" ? "CHARGED" : null,
+        gateway: "HYPERPG",
+        hyperpgOrderId: orderStatus.id || null,
+        hyperpgTxnId: orderStatus.txn_id || null,
         status: "SUCCESS",
       },
     });
@@ -119,13 +178,18 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({ payment, fee: updatedFee }, { status: 200 });
-  } catch (error: any) {
+    return NextResponse.json(
+      { payment, fee: updatedFee },
+      { status: 200 }
+    );
+  } catch (error: unknown) {
     console.error("Verify payment error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      {
+        message:
+          error instanceof Error ? error.message : "Internal server error",
+      },
       { status: 500 }
     );
   }
 }
-

@@ -779,10 +779,10 @@ All fields optional
 ## Payment
 
 ### `POST /api/payment/create-order`
-**Purpose**: Create Razorpay order
+**Purpose**: Create HyperPG payment session; returns `payment_url` for redirect.
 
 ### `POST /api/payment/verify`
-**Purpose**: Verify payment + create payment + update fees
+**Purpose**: Verify HyperPG order status (Order Status API) + create payment + update fees
 
 ---
 

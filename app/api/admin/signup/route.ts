@@ -1,7 +1,7 @@
 import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
-import { Role } from "@/app/generated/prisma";
+import { Role } from "@prisma/client";
 
 const VALID_ROLES: Role[] = [
   Role.SUPERADMIN,
