@@ -1,35 +1,64 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { EXAM_TERM_STATUS } from "@/lib/constants";
 import type { ClassItem } from "@/hooks/useClasses";
-import GlassCard from "./GlassCard";
+import Spinner from "@/app/frontend/components/common/Spinner";
+
+type ExamTermStatus = "UPCOMING" | "COMPLETED";
+
+interface ExamTermFormValues {
+  name: string;
+  description: string;
+  classId: string;
+  status: ExamTermStatus;
+}
 
 interface NewExamTermModalProps {
   classes: ClassItem[];
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (savedId?: string) => void;
+  mode?: "create" | "edit";
+  termId?: string;
+  initialValues?: Partial<ExamTermFormValues>;
 }
 
 export default function NewExamTermModal({
   classes,
   onClose,
   onSaved,
+  mode = "create",
+  termId,
+  initialValues,
 }: NewExamTermModalProps) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [classId, setClassId] = useState("");
-  const [status, setStatus] = useState<"UPCOMING" | "COMPLETED">("UPCOMING");
+  const [name, setName] = useState(initialValues?.name ?? "");
+  const [description, setDescription] = useState(initialValues?.description ?? "");
+  const [classId, setClassId] = useState(initialValues?.classId ?? "");
+  const [status, setStatus] = useState<ExamTermStatus>(initialValues?.status ?? "UPCOMING");
   const [saving, setSaving] = useState(false);
+
+  const isEdit = mode === "edit";
+
+  useEffect(() => {
+    setName(initialValues?.name ?? "");
+    setDescription(initialValues?.description ?? "");
+    setClassId(initialValues?.classId ?? "");
+    setStatus((initialValues?.status as ExamTermStatus) ?? "UPCOMING");
+  }, [initialValues, mode, termId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !classId) return;
+    if (isEdit && !termId) return;
+
     setSaving(true);
     try {
-      const res = await fetch("/api/exams/terms", {
-        method: "POST",
+      const endpoint = isEdit ? `/api/exams/terms/${termId}` : "/api/exams/terms";
+      const method = isEdit ? "PUT" : "POST";
+
+      const res = await fetch(endpoint, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
@@ -38,9 +67,11 @@ export default function NewExamTermModal({
           status,
         }),
       });
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to create term");
-      onSaved();
+      if (!res.ok) throw new Error(data.message || "Failed to save term");
+
+      onSaved(data?.term?.id);
       onClose();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to save");
@@ -50,21 +81,22 @@ export default function NewExamTermModal({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
-      style={{ background: "rgba(2, 6, 23, 0.7)", backdropFilter: "blur(4px)" }}
-    >
-      <GlassCard
-        variant="strong"
-        className="w-full max-w-lg p-4 sm:p-6 border border-[#333333] shadow-xl rounded-t-2xl sm:rounded-2xl mt-auto sm:mt-0 max-h-[90vh] overflow-y-auto"
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 ">
+      <div
+        className="bg-[#0F172A] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl"
+        style={{
+          background: "linear-gradient(180deg, rgba(10,27,57,0.98) 0%, rgba(9,22,47,0.96) 100%)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-3 mb-4 sm:mb-6">
-          <h2 className="text-lg sm:text-xl font-bold text-white">New Exam Term</h2>
+        <div className="mb-6 flex items-start justify-between gap-3">
+          <h2 className="text-xl font-bold text-white mb-6">
+            {isEdit ? "Edit Exam Term" : "New Exam Term"}
+          </h2>
           <button
             type="button"
             onClick={onClose}
-            className="p-2.5 rounded-lg hover:bg-white/10 text-white/80 min-h-[44px] min-w-[44px] touch-manipulation flex items-center justify-center"
+            className="min-h-[40px] min-w-[40px] rounded-xl border border-white/15 p-2.5 text-white/80 hover:bg-white/10"
           >
             <X size={18} />
           </button>
@@ -72,33 +104,35 @@ export default function NewExamTermModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm text-[#808080] mb-1">Term Name</label>
+            <label className="mb-1 block text-sm font-medium text-white/60">Term Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Term 2 Examination"
-              className="w-full bg-[#2d2d2d] border border-[#404040] rounded-lg px-3 py-3 text-white placeholder:text-[#6b6b6b] min-h-[44px] touch-manipulation text-base"
+              className="w-full rounded-2xl border border-white/15 bg-white/8 px-4 py-3.5 text-base text-white placeholder:text-white/45"
               required
             />
           </div>
+
           <div>
-            <label className="block text-sm text-[#808080] mb-1">Description</label>
+            <label className="mb-1 block text-sm font-medium text-white/60">Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Brief description..."
-              rows={3}
-              className="w-full bg-[#2d2d2d] border border-[#404040] rounded-lg px-3 py-2.5 text-white placeholder:text-[#6b6b6b] resize-none touch-manipulation text-base min-h-[80px]"
+              rows={4}
+              className="w-full resize-none rounded-2xl border border-white/15 bg-white/8 px-4 py-3.5 text-base text-white placeholder:text-white/45"
             />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm text-[#808080] mb-1">Class</label>
+              <label className="mb-1 block text-sm font-medium text-white/60">Class</label>
               <select
                 value={classId}
                 onChange={(e) => setClassId(e.target.value)}
-                className="w-full bg-[#2d2d2d] border border-[#404040] rounded-lg px-3 py-3 text-white min-h-[44px] touch-manipulation text-base"
+                className="w-full rounded-2xl border border-white/15 bg-white/8 px-4 py-3.5 text-base text-white"
                 required
               >
                 <option value="">Select class</option>
@@ -109,12 +143,13 @@ export default function NewExamTermModal({
                 ))}
               </select>
             </div>
+
             <div>
-              <label className="block text-sm text-[#808080] mb-1">Status</label>
+              <label className="mb-1 block text-sm font-medium text-white/60">Status</label>
               <select
                 value={status}
-                onChange={(e) => setStatus(e.target.value as "UPCOMING" | "COMPLETED")}
-                className="w-full bg-[#2d2d2d] border border-[#404040] rounded-lg px-3 py-3 text-white min-h-[44px] touch-manipulation text-base"
+                onChange={(e) => setStatus(e.target.value as ExamTermStatus)}
+                className="w-full rounded-2xl border border-white/15 bg-white/8 px-4 py-3.5 text-base text-white"
               >
                 {EXAM_TERM_STATUS.map((s: { value: string; label: string }) => (
                   <option key={s.value} value={s.value}>
@@ -124,24 +159,34 @@ export default function NewExamTermModal({
               </select>
             </div>
           </div>
-          <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
+
+          <div className="grid grid-cols-1 gap-3 pt-3 sm:grid-cols-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-3 rounded-lg bg-[#404040] border border-[#333333] text-white font-medium min-h-[44px] touch-manipulation"
+              className="flex-1 py-2.5 rounded-xl border border-white/10 text-gray-400
+               hover:bg-white/5"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 px-4 py-3 rounded-lg bg-gradient-to-r from-green-500/80 to-green-600/80 border border-green-500/30 text-white font-medium disabled:opacity-50 min-h-[44px] touch-manipulation"
+              className=" flex-1 py-2.5 rounded-xl bg-lime-400 text-black font-bold 
+              hover:bg-lime-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {saving ? "Saving…" : "Save Term"}
+              {saving ? (
+                <>
+                  <Spinner size={18} />
+                  Saving...
+                </>
+              ) : (
+                "Save Term"
+              )}
             </button>
           </div>
         </form>
-      </GlassCard>
+      </div>
     </div>
   );
 }

@@ -88,11 +88,19 @@ export async function PUT(
     });
     if (!existing) return NextResponse.json({ message: "Exam term not found" }, { status: 404 });
     const body = await req.json();
-    const data: { name?: string; description?: string | null; status?: ExamTermStatus } = {};
+    const data: { name?: string; description?: string | null; status?: ExamTermStatus; classId?: string } = {};
     if (typeof body.name === "string") data.name = body.name.trim();
     if (typeof body.description === "string") data.description = body.description.trim();
     if (body.description === null) data.description = null;
     if (body.status === "UPCOMING" || body.status === "COMPLETED") data.status = body.status;
+    if (typeof body.classId === "string" && body.classId.trim()) {
+      const cls = await prisma.class.findFirst({
+        where: { id: body.classId.trim(), schoolId },
+        select: { id: true },
+      });
+      if (!cls) return NextResponse.json({ message: "Class not found" }, { status: 404 });
+      data.classId = cls.id;
+    }
 
     const term = await prisma.examTerm.update({
       where: { id },
