@@ -52,22 +52,38 @@ export async function PUT(req: Request) {
     if (!schoolId) return NextResponse.json({ message: "School not found" }, { status: 400 });
 
     const body = await req.json();
-    const { admissionPrefix, rollNoPrefix, juspayMerchantId, juspayApiKey } = body;
+    const {
+      admissionPrefix,
+      rollNoPrefix,
+
+      hyperpgMerchantId,
+      hyperpgApiKey,
+    } = body;
 
     const data: {
       admissionPrefix?: string;
       rollNoPrefix?: string;
       juspayMerchantId?: string | null;
       juspayApiKey?: string | null;
+      hyperpgMerchantId?: string | null;
+      hyperpgApiKey?: string | null;
     } = {};
     if (typeof admissionPrefix === "string") data.admissionPrefix = admissionPrefix;
     if (typeof rollNoPrefix === "string") data.rollNoPrefix = rollNoPrefix;
-    if (juspayMerchantId !== undefined) data.juspayMerchantId = juspayMerchantId === "" ? null : String(juspayMerchantId);
-    if (juspayApiKey !== undefined) data.juspayApiKey = juspayApiKey === "" ? null : String(juspayApiKey);
 
+    if (hyperpgMerchantId !== undefined) data.hyperpgMerchantId = hyperpgMerchantId === "" ? null : String(hyperpgMerchantId);
+    if (hyperpgApiKey !== undefined) data.hyperpgApiKey = hyperpgApiKey === "" ? null : String(hyperpgApiKey);
+
+    const createData = {
+      schoolId,
+      admissionPrefix: "ADM",
+      rollNoPrefix: "",
+      admissionCounter: 0,
+      ...data,
+    };
     const settings = await prisma.schoolSettings.upsert({
       where: { schoolId },
-      create: { schoolId, admissionPrefix: "ADM", rollNoPrefix: "", admissionCounter: 0, ...data },
+      create: createData,
       update: data,
     });
     return NextResponse.json({ settings }, { status: 200 });

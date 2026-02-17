@@ -76,35 +76,45 @@ export default function ParentFeesTab() {
     }
   }, []);
 
-  // Handle Juspay return when redirected to parent?tab=fees with success params
+  // Handle HyperPG return: verify from URL params or cookie (return_url has no query params)
   useEffect(() => {
     if (verifiedRef.current) return;
     const success = searchParams.get("success");
     const amount = searchParams.get("amount");
-    const orderId = searchParams.get("juspay_order") || searchParams.get("order_id");
-    const paymentId = searchParams.get("payment_id") || searchParams.get("jp_payment_id");
-    if (success === "1" && orderId && paymentId && amount) {
-      verifiedRef.current = true;
-      const amt = parseFloat(amount);
-      if (!isNaN(amt) && amt > 0) {
-        fetch("/api/payment/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            gateway: "JUSPAY",
-            juspay_order_id: orderId,
-            juspay_payment_id: paymentId,
-            amount: amt,
-          }),
-        })
-          .then(async (res) => {
-            const d = await res.json();
-            if (!res.ok) alert(d.message || "Payment verification failed");
-            else fetchFee();
-          })
-          .catch(console.error);
-        window.history.replaceState({}, "", "/frontend/pages/parent?tab=fees");
+    const orderId = searchParams.get("order_id");
+    let orderIdToVerify = orderId;
+    let amountToVerify = amount ? parseFloat(amount) : NaN;
+    if ((success !== "1" || !orderIdToVerify || !amount) && typeof document !== "undefined") {
+      const match = document.cookie.match(/hyperpg_pending=([^;]+)/);
+      if (match) {
+        try {
+          const [oid, amt] = decodeURIComponent(match[1]).split("|");
+          if (oid && amt) {
+            orderIdToVerify = oid;
+            amountToVerify = parseFloat(amt);
+            document.cookie = "hyperpg_pending=; path=/; max-age=0";
+          }
+        } catch (_) {}
+        }
       }
+    if (orderIdToVerify && !isNaN(amountToVerify) && amountToVerify > 0) {
+      verifiedRef.current = true;
+      fetch("/api/payment/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gateway: "HYPERPG",
+          order_id: orderIdToVerify,
+          amount: amountToVerify,
+        }),
+      })
+        .then(async (res) => {
+          const d = await res.json();
+          if (!res.ok) alert(d.message || "Payment verification failed");
+          else fetchFee();
+        })
+        .catch(console.error);
+      window.history.replaceState({}, "", "/frontend/pages/parent?tab=fees");
     }
   }, [searchParams, fetchFee]);
 
@@ -239,7 +249,7 @@ export default function ParentFeesTab() {
               </div>
               <p className="text-xs text-gray-500 flex items-center gap-1">
                 <Shield className="w-3.5 h-3.5" />
-                Secure payment via Juspay • Instant receipt
+                Secure payment via HyperPG • Instant receipt
               </p>
               <a
                 href="/payments"
