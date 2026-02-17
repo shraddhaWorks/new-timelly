@@ -28,7 +28,6 @@ export default function StatCard({
   iconVariant = "boxed",
   showBgIcon = false,
   variant = "default",
-  gradient = "from-purple-800 via-purple-700 to-purple-600",
 }: StatCardProps) {
   const isCentered = variant === "gradientCentered";
 

@@ -4,8 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import type { TeacherRow, AuditRecord } from "./teacheraudit/types";
 import TeacherAuditHeader from "./teacheraudit/TeacherAuditHeader";
 import TeacherAuditCard from "./teacheraudit/TeacherAuditCard";
-import LoadingSpinner from "./teacheraudit/LoadingSpinner";
+
 import PageHeader from "../common/PageHeader";
+import Spinner from "../common/Spinner";
 
 export default function TeacherAuditTab() {
   const [q, setQ] = useState("");
@@ -132,7 +133,7 @@ const saveRecord = async () => {
 
 
           {loading ? (
-            <LoadingSpinner />
+            <Spinner />
           ) : (
             <div className="space-y-4">
               {teachers.length === 0 ? (

@@ -5,8 +5,9 @@ import { motion } from "framer-motion";
 
 interface TeacherStatCardProps {
   avatar: string; name: string; code: string; percentage: number;
-  stats: { label: string; value: any; color?: string }[];
+ stats: { label: string; value: number; color: string }[];
   statuses: { label: string; active?: boolean }[];
+
   onStatusChange?: (label: string) => void;
 }
 
