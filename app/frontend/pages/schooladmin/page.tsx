@@ -16,7 +16,8 @@ import SchoolAdminFeesTab from "../../components/schooladmin/Fees";
 import SchoolAdminDashboard from "../../components/schooladmin/dashboard/page";
 import StudentDetails from "../../components/schooladmin/StudentDetails";
 import Certificates from "../../components/schooladmin/Certificates";
-import { ExamsPageInner } from "../../components/schooladmin/Exams";
+//import { ExamsPageInner } from "../../components/schooladmin/Exams";
+import ExamsPage from "../../components/schooladmin/exams/exams";
 import SchoolAdminAnalysisTab from "../../components/schooladmin/Analysis";
 import SchoolAdminSettingsTab from "../../components/schooladmin/Settings";
 import SchoolAdminTeacherTab from "../../components/schooladmin/TeachersTab";
@@ -81,7 +82,7 @@ function SchoolAdminContent() {
       case "certificates":
         return <Certificates />;
       case "exams":
-        return <ExamsPageInner />;
+        return <ExamsPage />;
       case "analysis":
         return <SchoolAdminAnalysisTab />;
       case "fees":
