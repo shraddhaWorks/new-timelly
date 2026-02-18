@@ -133,7 +133,7 @@ export default function TeachersList({
 
         {/* ===== Table ===== */}
         <div className="border-t border-white/10">
-          <div className="w-full overflow-x-auto">
+          <div className="w-full overflow-x-auto no-scrollbar">
             <table className="min-w-[900px] w-full table-fixed text-sm">
               {/* Column widths */}
               <colgroup>

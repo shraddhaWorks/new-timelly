@@ -12,6 +12,7 @@ import DataTable from "../common/TableLayout";
 import TeacherStatCard from "./teachersTab/teacherStatCard";
 import AppointTeacher from "./teachersTab/AppointTeacher";
 import TeachersList from "./teachersTab/TeachersList";
+import Spinner from "../common/Spinner";
 
 const DEFAULT_AVATAR = "https://randomuser.me/api/portraits/lego/1.jpg";
 const ATTENDANCE_STATUSES = ["PRESENT", "ABSENT", "LATE", "ON_LEAVE"] as const;
@@ -407,9 +408,6 @@ const SchoolAdminTeacherTab = () => {
     <div className="  w-full
   max-w-screen-2xl
   mx-auto
-  px-4
-  sm:px-6
-  lg:px-8
   space-y-6
   min-w-0">
 
@@ -499,7 +497,7 @@ const SchoolAdminTeacherTab = () => {
 
         <div className="p-4 md:p-5">
           {attendanceLoading ? (
-            <div className="text-center py-8 text-gray-400">Loading attendance...</div>
+            <div className="text-center py-8 text-gray-400"><Spinner/></div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {teachers.map((t) => {
