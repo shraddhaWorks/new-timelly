@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { AlertTriangle, X } from "lucide-react";
 
 type ClassRow = {
@@ -22,6 +23,30 @@ export default function DeleteClassPanel({
   onCancel,
   onConfirm,
 }: DeleteClassPanelProps) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleDelete = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/class/${row.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data?.message || "Failed to delete class.");
+        return;
+      }
+      onConfirm?.();
+    } catch {
+      setError("Failed to delete class.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="relative bg-[#0F172A] p-4 shadow-inner animate-fadeIn border-y border-white/10">
       <div className="p-4 sm:p-5">
@@ -51,20 +76,28 @@ export default function DeleteClassPanel({
           </p>
         </div>
 
+        {error && (
+          <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300 text-center">
+            {error}
+          </div>
+        )}
+
         <div className="mt-4 flex items-center justify-center gap-2.5">
           <button
             type="button"
             onClick={onCancel}
+            disabled={loading}
             className="px-4 py-2 rounded-lg border border-white/15 bg-white/5 text-white/80 hover:bg-white/10 transition cursor-pointer text-sm"
           >
             Cancel
           </button>
           <button
             type="button"
-            onClick={onConfirm}
+            onClick={handleDelete}
+            disabled={loading}
             className="px-4 py-2 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-400 transition cursor-pointer text-sm"
           >
-            Delete Class
+            {loading ? "Deleting..." : "Delete Class"}
           </button>
         </div>
       </div>
