@@ -8,6 +8,8 @@ import { AttendanceTrends } from "./components/AttendanceTrends";
 import { Certificates } from "./components/Certificates";
 import { Calendar, BookOpen, Activity, Clock } from "lucide-react";
 import PageHeader from "../../common/PageHeader";
+import Spinner from "../../common/Spinner";
+import SelectInput from "../../common/SelectInput";
 
 type StudentDetail = {
   student: {
@@ -144,7 +146,7 @@ export default function StudentDetailsPage() {
   const sectionOptions = [{ label: "All Sections", value: "" }, ...sections.map((s) => ({ label: s, value: s }))];
 
   return (
-    <div className=" space-y-6 md:space-y-8 max-w-[1600px] mx-auto min-h-0 overflow-y-auto overflow-x-hidden pb-8">
+    <div className="space-y-6 md:space-y-8 max-w-[1600px] mx-auto min-h-0 overflow-y-auto overflow-x-hidden pb-8">
       <PageHeader
         title="Student Details"
         subtitle="View comprehensive academic and personal records."
@@ -154,8 +156,6 @@ export default function StudentDetailsPage() {
           </div>
         }
       />
-
-
       <div className="bg-white/5 backdrop-blur-xl border-b border-white/10 rounded-2xl p-4 sm:p-6 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
         <div>
           <label className="text-xs text-gray-500 mb-2 block">Search Student</label>
@@ -172,46 +172,38 @@ export default function StudentDetailsPage() {
         </div>
         <div>
           <label className="text-xs text-gray-500 mb-2 block">Filter by Class</label>
-          <select
+          <SelectInput
             value={filterClass}
-            onChange={(e) => setFilterClass(e.target.value)}
-            className="w-full bg-[#0F172A]/40 border border-white/10 rounded-xl px-4 py-2.5 sm:py-2 text-sm outline-none text-gray-200 min-h-[44px] touch-manipulation"
-          >
-            {classOptions.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
+            onChange={setFilterClass}
+            options={classOptions}
+            bgColor="black"
+          />
         </div>
         <div>
           <label className="text-xs text-gray-500 mb-2 block">Filter by Section</label>
-          <select
+          <SelectInput
             value={filterSection}
-            onChange={(e) => setFilterSection(e.target.value)}
-            className="w-full bg-[#0F172A]/40 border border-white/10 rounded-xl px-4 py-2.5 sm:py-2 text-sm outline-none text-gray-200 min-h-[44px] touch-manipulation"
-          >
-            {sectionOptions.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
+            onChange={setFilterSection}
+            options={sectionOptions}
+            bgColor="black"
+          />
         </div>
         <div className="md:col-span-3">
           <label className="text-xs text-gray-500 mb-2 block">Select Student Profile</label>
-          <select
+          <SelectInput
             value={selectedId ?? ""}
-            onChange={(e) => setSelectedId(e.target.value || null)}
-            className="w-full bg-lime-400/10 border border-lime-400/40 rounded-xl px-4 py-2.5 sm:py-2 text-sm outline-none text-gray-200 min-h-[44px] touch-manipulation"
-          >
-            {filtered.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name} ({s.admissionNumber}) - Class {s.classDisplay}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => setSelectedId(value || null)}
+            options={filtered.map((s) => ({
+              label: `${s.name} (${s.admissionNumber}) - Class ${s.classDisplay}`,
+              value: s.id,
+            }))}
+            bgColor="black"
+          />
         </div>
       </div>
 
       {loading && (
-        <div className="text-center py-12 text-gray-400">Loading student details...</div>
+        <div className="text-center py-12 text-gray-400"><Spinner/></div>
       )}
 
       {!loading && detail && (
