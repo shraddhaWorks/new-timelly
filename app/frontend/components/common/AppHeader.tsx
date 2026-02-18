@@ -1,7 +1,7 @@
 "use client";
 
 import { Bell, Search, Settings } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import SectionHeader from "./SectionHeader";
@@ -36,6 +36,7 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [modalProfile, setModalProfile] = useState<HeaderProfile | undefined>(profile);
 
   const { data: session } = useSession();
   const displayName = (profile?.name && profile.name.trim()) ? profile.name : (session?.user?.name ?? "User");
@@ -83,6 +84,68 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
       handleSearchSubmit(inputValue);
     }
   };
+
+  useEffect(() => {
+    if (!showProfile) return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await fetch("/api/user/me", { credentials: "include" });
+        const data = await res.json();
+        if (cancelled || !res.ok || !data?.user) return;
+
+        const user = data.user as {
+          id?: string;
+          name?: string;
+          photoUrl?: string | null;
+          role?: string;
+          email?: string;
+          mobile?: string;
+          address?: string | null;
+        };
+
+        let address = user.address ?? profile?.address ?? undefined;
+        const role = user.role ?? profile?.subtitle ?? session?.user?.role ?? "";
+        if (!address && role === "STUDENT") {
+          try {
+            const parentRes = await fetch("/api/student/parent-details", { credentials: "include" });
+            const parentData = await parentRes.json();
+            if (parentRes.ok && parentData?.address) {
+              address = parentData.address;
+            }
+          } catch {
+            // keep fallback
+          }
+        }
+
+        setModalProfile({
+          name: user.name ?? profile?.name ?? session?.user?.name ?? "User",
+          subtitle: profile?.subtitle ?? role,
+          image: user.photoUrl ?? profile?.image ?? session?.user?.image ?? AVATAR_URL,
+          email: user.email ?? profile?.email ?? session?.user?.email ?? "",
+          phone: user.mobile ?? profile?.phone ?? session?.user?.mobile ?? "",
+          userId: user.id ?? profile?.userId,
+          address,
+          status: profile?.status,
+        });
+      } catch {
+        setModalProfile(profile);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    showProfile,
+    profile,
+    session?.user?.email,
+    session?.user?.image,
+    session?.user?.mobile,
+    session?.user?.name,
+    session?.user?.role,
+  ]);
 
   return (
     <>
@@ -176,20 +239,16 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
 
       {showProfile && (
         <ProfileModal
-          profile={
-            profile
-              ? {
-                  name: profile.name,
-                  image: profile.image,
-                  role: profile.subtitle,
-                  email: profile.email,
-                  phone: profile.phone,
-                  userId: profile.userId,
-                  address: profile.address,
-                  status: profile.status,
-                }
-              : undefined
-          }
+          profile={modalProfile ? {
+            name: modalProfile.name,
+            image: modalProfile.image,
+            role: modalProfile.subtitle,
+            email: modalProfile.email,
+            phone: modalProfile.phone,
+            userId: modalProfile.userId,
+            address: modalProfile.address,
+            status: modalProfile.status,
+          } : undefined}
           onClose={() => setShowProfile(false)}
           onOpenSettings={() => {
             setShowProfile(false);
