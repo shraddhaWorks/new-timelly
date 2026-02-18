@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { X, Pencil } from "lucide-react";
 import { TeacherRow } from "./TeachersList";
 
@@ -10,13 +10,66 @@ interface Props {
     onEdit: (teacher: TeacherRow) => void;
 }
 
+type TeacherDetails = {
+    id: string;
+    name: string | null;
+    email: string | null;
+    teacherId: string | null;
+    subject: string | null;
+    subjects: string[] | null;
+    qualification: string | null;
+    experience: string | null;
+    joiningDate: string | null;
+    teacherStatus: string | null;
+    mobile: string | null;
+    address: string | null;
+    assignedClasses?: { id: string; name: string; section: string | null }[];
+};
+
 const ShowTeacher = ({ teacher, onClose, onEdit }: Props) => {
+    const [details, setDetails] = useState<TeacherDetails | null>(null);
+    const [loading, setLoading] = useState(false);
+
     useEffect(() => {
         document.documentElement.style.overflow = "hidden";
         return () => {
             document.documentElement.style.overflow = "auto";
         };
     }, []);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        (async () => {
+            setLoading(true);
+            try {
+                const res = await fetch(`/api/teacher/${teacher.id}`, {
+                    credentials: "include",
+                });
+                const data = await res.json();
+                if (!cancelled && res.ok) {
+                    setDetails(data.teacher || null);
+                }
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [teacher.id]);
+
+    const assignedClasses = details?.assignedClasses?.length
+        ? details.assignedClasses
+              .map((c) => [c.name, c.section].filter(Boolean).join(c.section ? " - " : ""))
+              .join(", ")
+        : "-";
+
+    const joiningDate =
+        details?.joiningDate && !Number.isNaN(Date.parse(details.joiningDate))
+            ? new Date(details.joiningDate).toISOString().slice(0, 10)
+            : "-";
 
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6">
@@ -84,15 +137,15 @@ const ShowTeacher = ({ teacher, onClose, onEdit }: Props) => {
 
                             <InfoCard label="Subject" value={teacher.subject} />
 
-                            <InfoCard label="Assigned Classes" value="10-A, 10-B" />
+                            <InfoCard label="Assigned Classes" value={assignedClasses} />
 
-                            <InfoCard label="Qualification" value="M.Sc Mathematics, B.Ed" />
+                            <InfoCard label="Qualification" value={details?.qualification || "-"} />
 
-                            <InfoCard label="Experience" value="8 years" />
+                            <InfoCard label="Experience" value={details?.experience || "-"} />
 
                             {/* Full width Joining Date */}
                             <div className="md:col-span-2">
-                                <InfoCard label="Joining Date" value="2018-06-15" />
+                                <InfoCard label="Joining Date" value={joiningDate} />
                             </div>
 
                         </div>
@@ -109,7 +162,7 @@ const ShowTeacher = ({ teacher, onClose, onEdit }: Props) => {
                             <div>
                                 <p className="text-lime-400 text-sm">Email</p>
                                 <p className="text-white font-semibold">
-                                    priya.sharma@school.com
+                                    {details?.email || "-"}
                                 </p>
                             </div>
 
@@ -123,7 +176,7 @@ const ShowTeacher = ({ teacher, onClose, onEdit }: Props) => {
                             <div>
                                 <p className="text-lime-400 text-sm">Address</p>
                                 <p className="text-white">
-                                    123 MG Road, Mumbai, Maharashtra
+                                    {details?.address || "-"}
                                 </p>
                             </div>
 
