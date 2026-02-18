@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { redis } from "@/lib/redis";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -19,12 +18,7 @@ export async function GET() {
   }
 
   try {
-    const studentId = session.user.studentId!;
-    const cachedKey = `fees:${studentId}`;
-    const cached = await redis.get(cachedKey);
-    if (cached && typeof cached === "object" && cached !== null && "fee" in cached) {
-      return NextResponse.json(cached as { fee: unknown });
-    }
+    const studentId = session.user.studentId;
 
     const fee = await prisma.studentFee.findUnique({
       where: { studentId },
@@ -114,7 +108,6 @@ export async function GET() {
         installmentsList: installments,
       },
     };
-    await redis.set(cachedKey, payload, { ex: 60 * 5 });
     return NextResponse.json(payload);
   } catch (error: any) {
     console.error("Fetch student fee error:", error);

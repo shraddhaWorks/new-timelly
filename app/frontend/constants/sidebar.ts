@@ -38,6 +38,7 @@ import { Permission } from "../enums/permissions";
 export const PARENT_MENU_ITEMS: SidebarItem[] = [
     {
         label: "Analytics",
+        description: "Performance Insights",
         tab: "analytics",
         href: "/frontend/pages/parent?tab=analytics",
         icon: ChartColumn,
@@ -377,6 +378,7 @@ export const SUPERADMIN_SIDEBAR_ITEMS: SidebarItem[] = [
     },
     {
         label: "Add School",
+        mobileLabel: "Add",
         href: "/frontend/pages/superadmin?tab=addschool",
         tab: "addschool",
         icon: Plus,
@@ -391,6 +393,7 @@ export const SUPERADMIN_SIDEBAR_ITEMS: SidebarItem[] = [
     },
     {
         label: "Fees Transactions",
+        mobileLabel: "Fees",
         href: "/frontend/pages/superadmin?tab=transactions",
         tab: "transactions",
         icon: CreditCard,

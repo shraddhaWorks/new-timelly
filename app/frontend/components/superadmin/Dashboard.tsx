@@ -6,6 +6,8 @@ import PageHeader from "../common/PageHeader";
 import { Users, School, GraduationCap } from "lucide-react";
 import { formatNumber as fmtNum } from "../../utils/format";
 import StatCard from "../common/statCard";
+import Spinner from "../common/Spinner";
+import { AVATAR_URL } from "../../constants/images";
 
 export interface SuperadminDashboardData {
   stats: { totalSchools: number; totalStudents: number; totalTeachers: number };
@@ -13,6 +15,7 @@ export interface SuperadminDashboardData {
     id: string;
     name: string;
     location: string;
+    photoUrl?: string | null;
     studentCount: number;
     teacherCount: number;
     classCount: number;
@@ -35,9 +38,16 @@ export default function Dashboard() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/superadmin/dashboard")
+    fetch("/api/superadmin/dashboard", {
+      credentials: "include",
+      cache: "no-store"
+    })
       .then((res) => {
-        if (!res.ok) throw new Error(res.status === 403 ? "Forbidden" : "Failed to load");
+        if (!res.ok) {
+          return res.json().then((errorData) => {
+            throw new Error(errorData.message || (res.status === 403 ? "Forbidden" : "Failed to load"));
+          });
+        }
         return res.json();
       })
       .then((payload) => {
@@ -56,7 +66,7 @@ export default function Dashboard() {
     return (
       <main className="flex-1 overflow-y-auto px-3 sm:px-4">
         <div className="py-4 sm:p-6 flex items-center justify-center min-h-[40vh]">
-          <div className="animate-spin rounded-full h-10 w-10 border-2 border-white/30 border-t-white" />
+          <Spinner />
         </div>
       </main>
     );
@@ -75,8 +85,8 @@ export default function Dashboard() {
   const feeTransactions = data?.feeTransactions ?? [];
 
   return (
-    <main className="flex-1 overflow-y-auto px-3 sm:px-4">
-      <div className="py-4 sm:p-6 bg-transparent min-h-screen space-y-6">
+    <main className="flex-1 overflow-y-auto">
+      <div className="bg-transparent min-h-screen space-y-6">
         <PageHeader
           title="Superadmin Dashboard"
           subtitle="Manage everything from here"
@@ -87,19 +97,19 @@ export default function Dashboard() {
             <StatCard
               title="Total Schools"
               value={fmtNum(stats.totalSchools)}
-              icon={<School size={22} className="sm:w-6 sm:h-6" />}
+              icon={<School size={22} className="sm:w-10 sm:h-10 text-lime-300" />}
               footer="Active institutions"
             />
             <StatCard
               title="Total Students"
               value={fmtNum(stats.totalStudents)}
-              icon={<Users size={22} className="sm:w-6 sm:h-6" />}
+              icon={<Users size={22} className="sm:w-10 sm:h-10 text-lime-300" />}
               footer="Across all schools"
             />
             <StatCard
               title="Total Teachers"
               value={fmtNum(stats.totalTeachers)}
-              icon={<GraduationCap size={22} className="sm:w-6 sm:h-6" />}
+              icon={<GraduationCap size={22} className="sm:w-10 sm:h-10 text-lime-300" />}
               footer="Across all schools"
             />
             <StatCard title="Schools" className="w-full">
@@ -116,7 +126,15 @@ export default function Dashboard() {
                     <div key={s.id} className="grid grid-cols-3 gap-2 items-center px-3 sm:px-4 py-3 border-t border-white/10 text-xs sm:text-sm">
                       <span className="text-white text-center">{i + 1}</span>
                       <div className="flex items-center gap-2 min-w-0 text-left">
-                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/20 flex-shrink-0" />
+                        <img
+                          src={s.photoUrl?.trim() ? s.photoUrl : AVATAR_URL}
+                          alt={`${s.name} profile`}
+                          className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-white/20 flex-shrink-0"
+                          loading="lazy"
+                          onError={(e) => {
+                            e.currentTarget.src = AVATAR_URL;
+                          }}
+                        />
                         <span className="text-white font-medium truncate">{s.name}</span>
                       </div>
                       <span className="text-white/80 text-center">{fmtNum(s.studentCount)}</span>

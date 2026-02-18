@@ -16,6 +16,7 @@ import BestQualities from "./BestQualities";
 import HomeworkTasks from "./HomeworkTasks";
 import RecentUpdates from "./RecentUpdates";
 import UpcomingWorkshops from "./UpcomingWorkshops";
+import Spinner from "../../common/Spinner";
 
 interface AnalyticsData {
   student: {
@@ -105,8 +106,7 @@ export default function ParentAnalyticsTab() {
     return (
       <div className="flex items-center justify-center min-h-[400px] text-white">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p className="text-white/60">Loading analytics...</p>
+          <Spinner />
         </div>
       </div>
     );
@@ -141,7 +141,7 @@ export default function ParentAnalyticsTab() {
   };
 
   return (
-    <div className="p-6 space-y-6 text-white">
+    <div className="space-y-6 text-white">
       {/* Header */}
       <AnalyticsHeader />
 

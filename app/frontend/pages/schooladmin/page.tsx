@@ -16,12 +16,12 @@ import SchoolAdminFeesTab from "../../components/schooladmin/Fees";
 import SchoolAdminDashboard from "../../components/schooladmin/dashboard/page";
 import StudentDetails from "../../components/schooladmin/StudentDetails";
 import Certificates from "../../components/schooladmin/Certificates";
-import { ExamsPageInner } from "../../components/schooladmin/Exams";
+//import { ExamsPageInner } from "../../components/schooladmin/Exams";
+import ExamsPage from "../../components/schooladmin/exams/exams";
 import SchoolAdminAnalysisTab from "../../components/schooladmin/Analysis";
 import SchoolAdminSettingsTab from "../../components/schooladmin/Settings";
 import SchoolAdminTeacherTab from "../../components/schooladmin/TeachersTab";
 import SchoolAdminCircularsTab from "../../components/schooladmin/circularTab";
-
 
 function SchoolAdminContent() {
   const tab = useSearchParams().get("tab") ?? "dashboard";
@@ -41,7 +41,7 @@ function SchoolAdminContent() {
         const u = data.user;
         if (u) {
           setProfile({
-            name: u.name ?? "School Admin", 
+            name: u.name ?? "School Admin",
             subtitle: "School Admin",
             image: u.photoUrl ?? null,
           });
@@ -62,33 +62,34 @@ function SchoolAdminContent() {
       case "students":
         return <SchoolAdminStudentsTab />;
       case "add-user":
-        return <AddUser/>
+        return <AddUser />
       case "classes":
-        return <SchoolAdminClassesTab/>;
+        return <SchoolAdminClassesTab />;
       case "student-details":
-        return <StudentDetails/>;
+        return <StudentDetails />;
       case "teachers":
-        return <SchoolAdminTeacherTab/>
+        return <SchoolAdminTeacherTab />
       case "teacher-leaves":
-        return <SchoolTeacherLeavesTab/>;
+        return <SchoolTeacherLeavesTab />;
       case "teacher-audit":
         return <TeacherAuditTab />;
       case "workshops":
-        return <WorkshopsAndEventsTab/>;
+        return <WorkshopsAndEventsTab />;
       case "newsfeed":
-        return <NewsFeed/>;
-        case "circulars":
-        return <SchoolAdminCircularsTab/>;
+        return <NewsFeed />;
+      case "circulars":
+        return <SchoolAdminCircularsTab />;
       case "certificates":
-        return <Certificates/>;
+        return <Certificates />;
       case "exams":
-        return <ExamsPageInner />;
+        return <ExamsPage />;
+        
       case "analysis":
-        return <SchoolAdminAnalysisTab/>;
+        return <SchoolAdminAnalysisTab />;
       case "fees":
-        return <SchoolAdminFeesTab/>;;
+        return <SchoolAdminFeesTab />;;
       case "settings":
-        return <SchoolAdminSettingsTab/>;
+        return <SchoolAdminSettingsTab />;
       default:
         return <div>Not found</div>;
     }

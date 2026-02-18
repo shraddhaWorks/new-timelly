@@ -23,7 +23,6 @@ This document covers all backend API routes in the Next.js App Router applicatio
 
 ### Caching
 
-Many routes use Redis caching with a 5-minute TTL (`ex: 60 * 5`). Cache keys are prefixed by resource type and school ID.
 
 ---
 
@@ -366,7 +365,7 @@ All fields optional
 { "school": {} | null }
 ```
 
-**Notes**: Uses Redis caching (`school:${schoolId}`) with 5-minute TTL; blocks when `schoolIsActive === false`
+**Notes**: Blocks when `schoolIsActive === false`
 
 ---
 
@@ -449,7 +448,6 @@ All fields optional
 
 **Authentication**: Required
 
-**Notes**: Redis caching (`classes:${schoolId}`) 5 min TTL
 
 ---
 
@@ -566,7 +564,6 @@ All fields optional
 
 **Authentication**: Required
 
-**Notes**: Redis caching (`teachers:${schoolId}`) 5 min TTL
 
 ---
 
@@ -782,10 +779,10 @@ All fields optional
 ## Payment
 
 ### `POST /api/payment/create-order`
-**Purpose**: Create Razorpay order
+**Purpose**: Create HyperPG payment session; returns `payment_url` for redirect.
 
 ### `POST /api/payment/verify`
-**Purpose**: Verify payment + create payment + update fees
+**Purpose**: Verify HyperPG order status (Order Status API) + create payment + update fees
 
 ---
 

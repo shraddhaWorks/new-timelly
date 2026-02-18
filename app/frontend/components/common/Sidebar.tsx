@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { SidebarItem } from "../../types/sidebar";
@@ -16,13 +16,13 @@ type Props = {
     subtitle?: string;
     image?: string | null;
   };
+  activeTab?: string;
   onLogoutRequest?: () => void;
 };
 
-export default function AppSidebar({ menuItems, profile, onLogoutRequest }: Props) {
+export default function AppSidebar({ menuItems, profile, activeTab = "dashboard", onLogoutRequest }: Props) {
   const router = useRouter();
   const { data: session } = useSession();
-  const activeTab = useSearchParams().get("tab") ?? "dashboard";
 
   const displayName = (profile?.name && profile.name.trim()) ? profile.name : (session?.user?.name ?? "User");
   const subtitle = profile?.subtitle ?? session?.user?.role ?? "";
@@ -67,7 +67,7 @@ export default function AppSidebar({ menuItems, profile, onLogoutRequest }: Prop
   return (
     <aside
       className="
-        hidden md:flex
+        hidden lg:flex
         w-64 h-full flex-col
         bg-white/10 backdrop-blur-2xl
         border-r border-white/10
@@ -115,7 +115,7 @@ export default function AppSidebar({ menuItems, profile, onLogoutRequest }: Prop
                   transition min-w-0
                   ${
                     isActive
-                      ? "bg-lime-400/10 text-lime-400 border border-lime-400/20"
+                      ? "bg-lime-400/10 text-lime-400 border border-lime-400/20 shadow-[0_0_22px_rgba(163,230,53,0.18)]"
                       : "text-white/60 hover:bg-white/5 hover:text-white"
                   }
                 `}
@@ -125,7 +125,12 @@ export default function AppSidebar({ menuItems, profile, onLogoutRequest }: Prop
                   className="flex-shrink-0"
                   style={{ color: isActive ? PRIMARY_COLOR : "#9ca3af" }}
                 />
-                <span className="truncate text-sm">{item.label}</span>
+                <div className="min-w-0 text-left">
+                  <span className="block truncate text-sm ">{item.label}</span>
+                  {item.description && (
+                    <span className="block truncate text-xs text-white/55">{item.description}</span>
+                  )}
+                </div>
               </motion.button>
             );
           })}
@@ -135,6 +140,7 @@ export default function AppSidebar({ menuItems, profile, onLogoutRequest }: Prop
           <div className="px-4 pb-4 pt-2 space-y-3 border-t border-white/10">
             {bottomItems.map((item) => {
               const isActive = item.tab === activeTab;
+              const isLogout = item.action === "logout";
               const Icon = item.icon;
               return (
                 <motion.button
@@ -145,7 +151,9 @@ export default function AppSidebar({ menuItems, profile, onLogoutRequest }: Prop
                     w-full flex items-center gap-4 px-5 py-3 rounded-xl
                     transition min-w-0
                     ${
-                      isActive
+                      isLogout
+                        ? "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                        : isActive
                         ? "bg-lime-400/10 text-lime-400 border border-lime-400/20"
                         : "text-white/60 hover:bg-white/5 hover:text-white"
                     }
@@ -154,7 +162,9 @@ export default function AppSidebar({ menuItems, profile, onLogoutRequest }: Prop
                   <Icon
                     size={20}
                     className="flex-shrink-0"
-                    style={{ color: isActive ? PRIMARY_COLOR : "#9ca3af" }}
+                    style={{
+                      color: isLogout ? "#f87171" : isActive ? PRIMARY_COLOR : "#9ca3af",
+                    }}
                   />
                   <span className="truncate text-sm">{item.label}</span>
                 </motion.button>

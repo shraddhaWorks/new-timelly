@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { Award, ChevronDown, ChevronUp, Mail, Phone } from "lucide-react";
 import TableLayout from "../../../common/TableLayout";
 import SectionHeaderWithSearch from "../../../common/SectionHeaderWithSearch";
@@ -59,6 +60,19 @@ export default function StudentsSection({
   onToggleExpanded,
 }: StudentsSectionProps) {
   const router = useRouter();
+  const [page, setPage] = useState(1);
+  const pageSize = 8;
+  const totalPages = Math.max(1, Math.ceil(students.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pagedStudents = useMemo(
+    () => students.slice((safePage - 1) * pageSize, safePage * pageSize),
+    [students, safePage]
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, students.length]);
+
   const expandedStudent = students.find((s) => s.id === expandedId) ?? null;
   const columns: Column<StudentWithMetrics>[] = [
     {
@@ -180,7 +194,7 @@ export default function StudentsSection({
       <div className="hidden md:block">
         <TableLayout
           columns={columns}
-          data={students}
+          data={pagedStudents}
           emptyText="No students found."
           showMobile={false}
           container={false}
@@ -188,6 +202,11 @@ export default function StudentsSection({
           thClassName="text-white/50 tracking-[0.18em]"
           rowClassName="hover:bg-white/5"
           tdClassName="py-5"
+          pagination={{
+            page: safePage,
+            totalPages,
+            onChange: setPage,
+          }}
         />
       </div>
 
@@ -246,12 +265,12 @@ export default function StudentsSection({
       )}
 
       <div className="mt-4 md:hidden space-y-3 px-5 pb-5 sm:px-6 sm:pb-6">
-        {students.length === 0 ? (
+        {pagedStudents.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-white/60 text-center">
             No students found.
           </div>
         ) : (
-          students.map((student) => (
+          pagedStudents.map((student) => (
             <div
               key={student.id}
               className="rounded-2xl border border-white/10 bg-white/5 p-4"

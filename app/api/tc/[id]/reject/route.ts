@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { redis } from "@/lib/redis";
 
 export async function POST(
   req: Request,
@@ -60,13 +59,6 @@ export async function POST(
         approvedById: session.user.id,
       },
     });
-
-    // Invalidate TC list cache for this school (all statuses and student-specific)
-    const statuses = ["all", "PENDING", "APPROVED", "REJECTED"];
-    for (const st of statuses) {
-      await redis.del(`tcs:${schoolId}:all:${st}`);
-      await redis.del(`tcs:${schoolId}:${tc.studentId}:${st}`);
-    }
 
     return NextResponse.json(
       { message: "TC request rejected", tc: updatedTC },

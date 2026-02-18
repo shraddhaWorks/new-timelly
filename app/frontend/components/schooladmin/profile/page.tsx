@@ -144,7 +144,7 @@ export default function StudentDetailsPage() {
   const sectionOptions = [{ label: "All Sections", value: "" }, ...sections.map((s) => ({ label: s, value: s }))];
 
   return (
-    <div className="p-2 sm:p-6 md:p-8 space-y-6 md:space-y-8 max-w-[1600px] mx-auto min-h-0 overflow-y-auto overflow-x-hidden pb-8">
+    <div className=" space-y-6 md:space-y-8 max-w-[1600px] mx-auto min-h-0 overflow-y-auto overflow-x-hidden pb-8">
       <PageHeader
         title="Student Details"
         subtitle="View comprehensive academic and personal records."

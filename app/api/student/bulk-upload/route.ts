@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
-import { Role } from "@/app/generated/prisma";
+import { Role } from "@prisma/client";
 import * as XLSX from "xlsx";
 
 export async function POST(req: Request) {

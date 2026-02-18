@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CreditCard, CheckCircle, Receipt } from "lucide-react";
-import PayButton from "@/components/PayButton";
+import PayButton from "@/app/frontend/components/common/PayButton";
 
 interface Installment {
   installmentNumber: number;

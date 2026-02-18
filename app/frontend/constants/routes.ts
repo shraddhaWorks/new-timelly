@@ -4,6 +4,8 @@ export const ROUTES = {
     SUPERADMIN: '/frontend/pages/superadmin',
     SCHOOLADMIN: '/frontend/pages/schooladmin',
     TEACHER: '/frontend/pages/teacher',
-    PARENT: '/frontend/pages/parent',  
-    UNAUTHORIZED: '/unauthorized', 
+    PARENT: '/frontend/pages/parent',
+    UNAUTHORIZED: '/unauthorized',
+    SCHOOLADMIN_TEACHER_LEAVE_TAB: '/frontend/pages/schooladmin?tab=teacher-leaves',
+    SCHOOLADMIN_NEWSFEED_TAB: '/frontend/pages/schooladmin?tab=newsfeed',
 };

@@ -5,6 +5,9 @@ import { StatCard } from "../dashboard/components/StatCard";
 import { AttendanceCard } from "./components/AttendanceCard";
 import { SidebarList } from "./components/SidebarList";
 import { Users, GraduationCap, UserCheck, CalendarDays, Wallet } from "lucide-react";
+import Spinner from "../../common/Spinner";
+import { useRouter } from "next/navigation";
+import { ROUTES } from "@/app/frontend/constants/routes";
 
 type DashboardData = {
   stats: {
@@ -62,15 +65,23 @@ type DashboardData = {
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [userName, setUserName] = useState("Rajesh");
+  const router=useRouter();
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const [dashboardRes, userRes] = await Promise.all([
-          fetch("/api/school/dashboard", { credentials: "include" }),
-          fetch("/api/user/me", { credentials: "include" }),
+          fetch("/api/school/dashboard", { 
+            credentials: "include",
+            cache: "no-store"
+          }),
+          fetch("/api/user/me", { 
+            credentials: "include",
+            cache: "no-store"
+          }),
         ]);
 
         if (userRes.ok) {
@@ -79,13 +90,26 @@ export default function Dashboard() {
         }
 
         if (!dashboardRes.ok) {
-          setData(null);
+          const errorData = await dashboardRes.json().catch(() => ({}));
+          const errorMessage = errorData.message || dashboardRes.statusText || "Failed to load dashboard";
+          console.error("Dashboard API error:", errorMessage, "Status:", dashboardRes.status);
+          if (!cancelled) {
+            setError(errorMessage);
+            setData(null);
+          }
           return;
         }
         const json = await dashboardRes.json();
-        if (!cancelled) setData(json);
-      } catch {
-        if (!cancelled) setData(null);
+        if (!cancelled) {
+          setData(json);
+          setError(null);
+        }
+      } catch (error) {
+        console.error("Dashboard fetch error:", error);
+        if (!cancelled) {
+          setError(error instanceof Error ? error.message : "Unable to load dashboard data");
+          setData(null);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -98,7 +122,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen p-6 md:p-10 flex items-center justify-center">
-        <div className="text-white/70">Loading dashboard...</div>
+        <div className="text-white/70"><Spinner/></div>
       </div>
     );
   }
@@ -188,6 +212,7 @@ export default function Dashboard() {
                   status: t.status === "APPROVED" ? "Approved" : "Pending",
                   type: "teacher" as const,
                 }))}
+                onViewAllClick={()=>router.push(ROUTES.SCHOOLADMIN_TEACHER_LEAVE_TAB)}
               />
               <SidebarList
                 title="Recent Activities"
@@ -212,7 +237,7 @@ export default function Dashboard() {
               <h3 className="text-xl font-bold text-white">Latest News</h3>
               <p className="text-gray-400 text-sm mt-0.5">Recent announcements and updates</p>
             </div>
-            <button className="rounded-xl bg-lime-400 px-4 sm:px-5 py-2.5 text-sm font-bold text-black hover:bg-lime-300 transition-colors inline-flex items-center gap-1 min-h-[44px] touch-manipulation">
+            <button onClick={()=>router.push(ROUTES.SCHOOLADMIN_NEWSFEED_TAB)} className="rounded-xl bg-lime-400 px-4 sm:px-5 py-2.5 text-sm font-bold text-black hover:bg-lime-300 transition-colors inline-flex items-center gap-1 min-h-[44px] touch-manipulation">
               View All <span>→</span>
             </button>
           </div>
@@ -233,9 +258,26 @@ export default function Dashboard() {
         </div>
       )}
 
-      {!data && (
+      {error && (
+        <div className="bg-red-500/10 backdrop-blur-xl border border-red-500/20 rounded-2xl p-8 text-center">
+          <p className="text-red-400 font-semibold mb-2">Error loading dashboard</p>
+          <p className="text-red-300/80 text-sm">{error}</p>
+          <button
+            onClick={() => {
+              setLoading(true);
+              setError(null);
+              window.location.reload();
+            }}
+            className="mt-4 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+      
+      {!data && !error && !loading && (
         <div className="bg-white/5 backdrop-blur-xl border-b border-white/10 rounded-2xl p-8 text-center text-gray-400">
-          Unable to load dashboard data.
+          No dashboard data available.
         </div>
       )}
     </div>

@@ -11,6 +11,7 @@ export const FEATURES = [
   { id: "attendance-view", label: "Attendance View", description: "View attendance records" },
   { id: "certificates", label: "Certificates", description: "Issue and manage certificates" },
   { id: "events", label: "Events", description: "Workshops and events" },
+  { id: "exams", label: "Exams & Syllabus", description: "Exams and syllabus tracking" },
   { id: "homework", label: "Homework", description: "Create and manage homework" },
   { id: "newsfeed", label: "News Feed", description: "School news and updates" },
   { id: "communication", label: "Communication", description: "Appointments and messages" },
@@ -42,6 +43,7 @@ export function getDefaultFeaturesForRole(role: "TEACHER" | "SCHOOLADMIN"): Feat
     "homework",
     "newsfeed",
     "events",
+    "exams",
     "communication",
     "leaves",
     "student-leaves",
@@ -49,6 +51,5 @@ export function getDefaultFeaturesForRole(role: "TEACHER" | "SCHOOLADMIN"): Feat
     "students",
     "teachers",
     "tc",
-  
   ];
 }

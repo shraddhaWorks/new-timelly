@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { 
-  Eye, Pencil, Trash2, Download, UserCheck, 
-  Coffee, Clock, XCircle, Search, Save, Calendar 
+import {
+  Eye, Pencil, Trash2, Download, UserCheck,
+  Coffee, Clock, XCircle, Search, Save, Calendar
 } from "lucide-react";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import PageHeader from "../common/PageHeader";
@@ -11,6 +11,7 @@ import StatCard from "../common/statCard";
 import DataTable from "../common/TableLayout";
 import TeacherStatCard from "./teachersTab/teacherStatCard";
 import AppointTeacher from "./teachersTab/AppointTeacher";
+import TeachersList from "./teachersTab/TeachersList";
 
 const DEFAULT_AVATAR = "https://randomuser.me/api/portraits/lego/1.jpg";
 const ATTENDANCE_STATUSES = ["PRESENT", "ABSENT", "LATE", "ON_LEAVE"] as const;
@@ -31,10 +32,10 @@ interface TeacherRow {
 
 /* ================= Mobile Card Component ================= */
 
-const MobileTeacherCard = ({ teacher, onEdit, onDelete }: { 
-  teacher: TeacherRow; 
-  onEdit: (t: TeacherRow) => void; 
-  onDelete: (id: string) => void; 
+const MobileTeacherCard = ({ teacher, onEdit, onDelete }: {
+  teacher: TeacherRow;
+  onEdit: (t: TeacherRow) => void;
+  onDelete: (id: string) => void;
 }) => (
   <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-[2rem] p-5 space-y-4 shadow-xl">
     <div className="flex items-center gap-4">
@@ -42,9 +43,8 @@ const MobileTeacherCard = ({ teacher, onEdit, onDelete }: {
       <div className="flex-1">
         <h4 className="font-bold text-gray-100 text-lg leading-tight">{teacher.name}</h4>
         <p className="text-xs text-gray-500 font-mono">{teacher.teacherId}</p>
-        <span className={`inline-block mt-1 px-3 py-0.5 rounded-full text-[10px] font-bold border ${
-            teacher.status === "Active" ? "bg-lime-400/10 text-lime-400 border-lime-400/20" : "bg-orange-400/10 text-orange-400 border-orange-400/20"
-        }`}>
+        <span className={`inline-block mt-1 px-3 py-0.5 rounded-full text-[10px] font-bold border ${teacher.status === "Active" ? "bg-lime-400/10 text-lime-400 border-lime-400/20" : "bg-orange-400/10 text-orange-400 border-orange-400/20"
+          }`}>
           {teacher.status.toUpperCase()}
         </span>
       </div>
@@ -75,13 +75,13 @@ const MobileTeacherCard = ({ teacher, onEdit, onDelete }: {
       <button className="flex-1 bg-white/5 hover:bg-white/10 py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-medium text-gray-300 transition-colors">
         <Eye size={18} /> View
       </button>
-      <button 
+      <button
         onClick={() => onEdit(teacher)}
         className="flex-[1.5] bg-white/5 hover:bg-lime-400/10 py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-medium text-lime-400 transition-colors border border-white/5"
       >
         <Pencil size={18} /> Edit
       </button>
-      <button 
+      <button
         onClick={() => onDelete(teacher.id)}
         className="bg-red-500/10 hover:bg-red-500/20 p-3 rounded-xl text-red-400 transition-colors border border-red-500/20"
       >
@@ -97,6 +97,7 @@ const todayStr = () => new Date().toISOString().slice(0, 10);
 
 const SchoolAdminTeacherTab = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
   const [teachers, setTeachers] = useState<TeacherRow[]>([]);
   const [teachersLoading, setTeachersLoading] = useState(true);
   const [attendanceDate, setAttendanceDate] = useState(todayStr);
@@ -111,6 +112,7 @@ const SchoolAdminTeacherTab = () => {
       try {
         const res = await fetch("/api/teacher/list", { credentials: "include" });
         const data = await res.json();
+        console.log(data)
         if (cancelled || !res.ok) return;
         const list: TeacherRow[] = (data.teachers || []).map((t: { id: string; name: string | null; email: string | null; mobile: string | null; teacherId: string | null; subject: string | null; photoUrl: string | null }) => ({
           id: t.id,
@@ -169,6 +171,18 @@ const SchoolAdminTeacherTab = () => {
       t.teacherId.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [searchTerm, teachersWithAttendance]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, teachersWithAttendance.length]);
+
+  const pageSize = 8;
+  const totalPages = Math.max(1, Math.ceil(filteredTeachers.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pagedTeachers = useMemo(
+    () => filteredTeachers.slice((safePage - 1) * pageSize, safePage * pageSize),
+    [filteredTeachers, safePage]
+  );
 
   const handleDelete = (id: string) => {
     if (confirm("Are you sure you want to remove this teacher from the list? Contact admin for permanent removal.")) {
@@ -327,7 +341,14 @@ const SchoolAdminTeacherTab = () => {
   };
 
   const teacherColumns = [
-    { key: "teacherId", header: "TEACHER ID" },
+    { key: "teacherId", header: "TEACHER ID",
+      render: (row: TeacherRow) => (
+        <div className="flex items-center gap-3 min-w-[120px]">
+          
+          <span className="font-bold text-sm">{row.teacherId}</span>
+        </div>
+      ),
+     },
     { 
       key: "name", 
       header: "NAME",
@@ -338,7 +359,14 @@ const SchoolAdminTeacherTab = () => {
         </div>
       )
     },
-    { key: "subject", header: "SUBJECT" },
+    { key: "subject", header: "SUBJECT",
+      render: (row: TeacherRow) => (
+        <div className="flex items-center gap-3 min-w-[120px]">
+          
+          <span className="text-white/50  text-sm">{row.subject}</span>
+        </div>
+      ),
+     },
     {
       key: "attendance",
       header: "ATTENDANCE",
@@ -356,9 +384,8 @@ const SchoolAdminTeacherTab = () => {
       key: "status",
       header: "STATUS",
       render: (row: TeacherRow) => (
-        <span className={`px-4 py-1 rounded-full text-[10px] font-bold border ${
-            row.status === "Active" ? "bg-lime-400/10 text-lime-400 border-lime-400/20" : "bg-orange-400/10 text-orange-400 border-orange-400/20"
-        }`}>
+        <span className={`px-4 py-1 rounded-full text-[10px] font-bold border ${row.status === "Active" ? "bg-lime-400/10 text-lime-400 border-lime-400/20" : "bg-orange-400/10 text-orange-400 border-orange-400/20"
+          }`}>
           {row.status.toUpperCase()}
         </span>
       ),
@@ -377,8 +404,15 @@ const SchoolAdminTeacherTab = () => {
   ];
 
   return (
-    <div className="p-4 sm:p-6 space-y-8 bg-transparent min-h-screen">
-      
+    <div className="  w-full
+  max-w-screen-2xl
+  mx-auto
+  px-4
+  sm:px-6
+  lg:px-8
+  space-y-6
+  min-w-0">
+
       <PageHeader
         title="Teachers"
         subtitle="Overview of teaching staff, attendance, and assignments"
@@ -396,37 +430,46 @@ const SchoolAdminTeacherTab = () => {
       />
 
       {/* ===== Stats Cards ===== */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <StatCard
-                title="Total Present"
-                value={<>{presentCount} <span className="text-sm text-lime-400">/ {teachers.length}</span></>}
-                icon={<UserCheck size={70} className="text-white/30" />}
-                iconVariant="plain"
-              />
-              <StatCard
-                title="On Leave"
-                value={<>{onLeaveCount} <span className="text-yellow-400 text-sm">Teacher{onLeaveCount !== 1 ? "s" : ""}</span></>}
-                icon={<Coffee size={70} className="text-white/30" />}
-                iconVariant="plain"
-/>
-              <StatCard
-                title="Late Arrival"
-                value={<>{lateCount} <span className="text-sky-400 text-sm">Teacher{lateCount !== 1 ? "s" : ""}</span></>}
-                icon={<Clock size={70} className="text-white/30" />}
-                iconVariant="plain"
-            />
-              <StatCard
-                title="Absent"
-                value={<>{absentCount} <span className="text-red-400 text-sm">Unplanned</span></>}
-                icon={<XCircle size={70} className="text-white/30" />}
-                iconVariant="plain"
-              />
-            </div>
-     
-      {/* Attendance Card */}
-       <div className="bg-white/5 backdrop-blur-xl rounded-2xl shadow-lg border border-white/10 overflow-hidden">
+      <div className="  grid
+    gap-4
+    grid-cols-1
+    sm:grid-cols-2
+    lg:grid-cols-4">
+        <StatCard
+          title="Total Present"
+          value={<>{presentCount} <span className="text-sm text-lime-400">/ {teachers.length}</span></>}
+          icon={<UserCheck size={70} className="text-white/30" />}
+          iconVariant="plain"
+        />
+        <StatCard
+          title="On Leave"
+          value={<>{onLeaveCount} <span className="text-yellow-400 text-sm">Teacher{onLeaveCount !== 1 ? "s" : ""}</span></>}
+          icon={<Coffee size={70} className="text-white/30" />}
+          iconVariant="plain"
+        />
+        <StatCard
+          title="Late Arrival"
+          value={<>{lateCount} <span className="text-sky-400 text-sm">Teacher{lateCount !== 1 ? "s" : ""}</span></>}
+          icon={<Clock size={70} className="text-white/30" />}
+          iconVariant="plain"
+        />
+        <StatCard
+          title="Absent"
+          value={<>{absentCount} <span className="text-red-400 text-sm">Unplanned</span></>}
+          icon={<XCircle size={70} className="text-white/30" />}
+          iconVariant="plain"
+        />
+      </div>
 
-        <div className="p-4 md:p-5 border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Attendance Card */}
+      <div className=" bg-white/[0.04]
+  backdrop-blur-2xl
+  rounded-3xl
+  border border-white/10
+  shadow-[0_20px_60px_rgba(0,0,0,0.45)]
+  overflow-hidden">
+
+        <div className="px-4 md:p-5 border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h3 className="text-lg font-bold text-gray-100 flex items-center gap-2">
               <Calendar size={18} />
@@ -506,70 +549,43 @@ const SchoolAdminTeacherTab = () => {
       </div>
 
       {/* Main Table & Mobile Card Section */}
-     {/* ================= Teachers List ================= */}
-<div className="space-y-6">
-
-  {/* ===== Header ===== */}
-  <div className="bg-white/5 backdrop-blur-xl rounded-2xl shadow-lg border border-white/10">
-    <div className="p-4 md:p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-      <div>
-        <h3 className="text-xl font-bold text-white">
-          All Teachers ({filteredTeachers.length})
-        </h3>
-        <p className="text-sm text-gray-400 mt-0.5">
-          Today: {attendanceDate} • Overall attendance: <span className="text-lime-400 font-semibold">{overallPct}%</span> ({presentCount}/{teachers.length} present)
-        </p>
-      </div>
-
-      <div className="relative w-full md:w-64">
-        <Search
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
-          size={16}
-        />
-        <input
-          type="text"
-          placeholder="Search list..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full bg-black/20 border border-white/10 rounded-xl py-2 pl-9 pr-4 text-sm text-gray-200 focus:border-lime-400/50 outline-none transition-all"
+      <div className="grid gap-10
+      ">
+      <div className="w-full min-w-0 overflow-hidden">
+        <TeachersList
+          teachersLoading={teachersLoading}
+          filteredTeachers={filteredTeachers}
+          pagedTeachers={pagedTeachers}
+          attendanceDate={attendanceDate}
+          overallPct={overallPct}
+          presentCount={presentCount}
+          teachersCount={teachers.length}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          page={safePage}
+          totalPages={totalPages}
+          setPage={setPage}
+          onDelete={handleDelete}
         />
       </div>
-    </div>
 
-    {/* ===== Desktop Table ===== */}
-    <div className="hidden md:block border-t border-white/10">
-      <div className="overflow-x-auto">
-        <DataTable
-          columns={teacherColumns}
-          data={filteredTeachers}
-          loading={teachersLoading}
-          emptyText="No teachers matching your search."
-        />
+
+      {/* ================= Teachers List ================= */}
+
+      <div className="flex justify-end pt-2">
+      
       </div>
-    </div>
-  </div>
-
-  {/* ===== Mobile Cards ===== */}
-  <div className="md:hidden grid grid-cols-1 gap-6">
-    {filteredTeachers.map((teacher) => (
-      <MobileTeacherCard
-        key={teacher.id}
-        teacher={teacher}
-        onEdit={(t) => alert(`Edit ${t.name}`)}
-        onDelete={(id) => handleDelete(id)}
-      />
-    ))}
-  </div>
-
-</div>
-
-      <div className="flex justify-end pt-4">
-        <button className="bg-lime-400 hover:bg-lime-500 text-black px-8 py-3 rounded-2xl font-bold flex items-center gap-2 transition-transform active:scale-95 shadow-lg shadow-lime-400/20">
-          <Save size={20} /> Save Changes
-        </button>
-      </div>
+     <div className="w-full min-w-0">
+  <div className="w-full overflow-x-auto">
+    <div className="min-w-[900px]">
       <AppointTeacher />
+    </div>
+  </div>
+</div>
+      </div>
     </div>
   );
 };
 export default SchoolAdminTeacherTab;
+
+

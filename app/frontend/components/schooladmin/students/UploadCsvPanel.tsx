@@ -1,13 +1,15 @@
 "use client";
 
-import { Upload, X } from "lucide-react";
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { CheckCircle2, FileSpreadsheet, Loader2, Upload, X, XCircle } from "lucide-react";
 
 type Props = {
   uploadFile: File | null;
   onFileChange: (file: File | null) => void;
   uploading: boolean;
   onCancel: () => void;
-  onUpload: () => void;
+  onUpload: () => Promise<{ createdCount?: number; failedCount?: number } | void>;
 };
 
 export default function UploadCsvPanel({
@@ -17,58 +19,147 @@ export default function UploadCsvPanel({
   onCancel,
   onUpload,
 }: Props) {
+  const [result, setResult] = useState<{
+    createdCount?: number;
+    failedCount?: number;
+  } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleUpload = async () => {
+    setError(null);
+    setResult(null);
+    try {
+      const uploadResult = await onUpload();
+      if (uploadResult) {
+        setResult(uploadResult);
+      }
+    } catch (e) {
+      const message =
+        e instanceof Error && e.message
+          ? e.message
+          : "Something went wrong. Please try again.";
+      setError(message);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#0F172A] shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] animate-fadeIn p-4">
+      <div className="bg-[#0F172A] rounded-2xl shadow-2xl max-w-lg w-full animate-scaleIn border border-white/10">
         <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
-          <div className="text-lg font-semibold text-white">Upload CSV File</div>
+          <div className="text-lg md:text-xl font-bold text-gray-100">Upload CSV File</div>
           <button onClick={onCancel} className="text-white/60 hover:text-white">
             <X size={18} />
           </button>
         </div>
 
         <div className="p-6 space-y-4">
-          <label className="block w-full rounded-2xl border border-dashed border-lime-400/70 bg-white/5 p-8 text-center cursor-pointer hover:bg-white/10 transition-all shadow-[0_0_0_1px_rgba(163,230,53,0.15)]">
+          <label className="block w-full rounded-2xl border border-dashed border-white/20 bg-[#1a2a46] hover:bg-[#223150] p-9 text-center cursor-pointer transition-all">
             <input
               type="file"
-              accept=".csv,.xlsx"
+              accept=".csv,.xlsx,.xls"
               className="hidden"
-              onChange={(e) => onFileChange(e.target.files?.[0] || null)}
+              onChange={(e) => {
+                onFileChange(e.target.files?.[0] || null);
+                setError(null);
+                setResult(null);
+              }}
             />
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5">
-              <Upload size={20} className="text-white/70" />
-            </div>
-            <div className="text-sm text-white/80">
-              Click to upload or drag and drop
-            </div>
-            <div className="text-xs text-white/40 mt-1">
-              CSV file (max. 10MB)
-            </div>
             {uploadFile && (
-              <div className="mt-2 text-xs text-lime-300">{uploadFile.name}</div>
+              <div className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center hover:border-lime-400 transition-all cursor-pointer bg-white/5">
+                <FileSpreadsheet className="w-6 h-6 " />
+                <div className="text-left">
+                  <p className="font-medium">{uploadFile.name}</p>
+                  <p className="text-xs text-[#808080]">
+                    {(uploadFile.size / 1024).toFixed(2)} KB
+                  </p>
+                </div>
+              </div>
+            )}
+            {!uploadFile && (
+              <div className="flex flex-col items-center gap-2 text-[#8b9ab3]">
+                <Upload className="w-9 h-9" />
+                <div className="text-center">
+                  <p className="font-semibold text-white">Click to upload or drag and drop</p>
+                  <p className="text-xs mt-1">CSV file (max. 10MB)</p>
+                </div>
+              </div>
             )}
           </label>
 
-          <div className="rounded-2xl border border-sky-300/30 bg-sky-900/10 p-4 text-xs text-sky-200/80">
-            <div className="text-xs font-semibold text-sky-200 mb-2">Note:</div>
-            CSV should include: Student ID, Name, Class, Section, Date of Birth,
-            Parent Name, Parent Email, Parent Phone, Address, Status.
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+            <p className="text-xs text-blue-300">
+              <strong className="text-[#8fd3ff]">Note:</strong> CSV should include: Student ID,
+              Name, Class, Section, Date of Birth, Parent Name, Parent Email, Parent Phone,
+              Address, Status.
+            </p>
           </div>
 
-          <div className="flex items-center justify-end gap-3">
+          {result && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-green-500/20 border border-green-500/30 rounded-xl p-4 space-y-2"
+            >
+              <div className="flex items-center gap-2 text-green-400">
+                <CheckCircle2 className="w-5 h-5" />
+                <span className="font-semibold">Upload Complete!</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-3">
+                <div>
+                  <p className="text-xs text-[#808080] mb-1">Successfully Created</p>
+                  <p className="text-lg font-bold text-green-400">{result.createdCount || 0}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-[#808080] mb-1">Failed</p>
+                  <p
+                    className={`text-lg font-bold ${
+                      result.failedCount ? "text-yellow-400" : "text-[#808080]"
+                    }`}
+                  >
+                    {result.failedCount || 0}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-red-500/20 border border-red-500/30 rounded-xl p-4 flex items-center gap-2 text-red-400"
+            >
+              <XCircle className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm">{error}</span>
+            </motion.div>
+          )}
+
+          <div className="flex items-center justify-end gap-3 pt-1">
             <button
               onClick={onCancel}
-              className="rounded-xl border border-white/10 bg-white/5 px-5 py-2 text-sm font-semibold text-white/70 hover:bg-white/10"
+              className="flex-1 px-4 md:px-6 py-2.5 border border-white/10 rounded-xl 
+              text-gray-400 font-medium hover:bg-white/5 transition-all text-sm"
             >
               Cancel
             </button>
-            <button
-              onClick={onUpload}
-              disabled={uploading}
-              className="rounded-xl bg-lime-400 px-6 py-2 text-sm font-semibold text-black hover:bg-lime-300 disabled:opacity-60"
+            <motion.button
+              onClick={handleUpload}
+              disabled={uploading || !uploadFile}
+              whileHover={{ scale: uploadFile && !uploading ? 1.02 : 1 }}
+              whileTap={{ scale: uploadFile && !uploading ? 0.98 : 1 }}
+              className="flex-1 rounded-xl bg-lime-400 px-5 py-2.5 text-sm font-semibold
+               text-black hover:bg-lime-300 disabled:opacity-60 disabled:cursor-not-allowed
+                shadow-[0_0_18px_rgba(163,230,53,0.25)] flex items-center justify-center gap-2"
             >
-              {uploading ? "Uploading..." : "Upload"}
-            </button>
+              {uploading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                "Upload"
+              )}
+            </motion.button>
           </div>
         </div>
       </div>

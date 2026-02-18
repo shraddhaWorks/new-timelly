@@ -4,31 +4,36 @@ import { ReactNode, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
-// Allowed roles from your schema
-type UserRoles = "SUPERADMIN" | "SCHOOLADMIN" | "TEACHER" | "STUDENT";
+type UserRole = "SUPERADMIN" | "SCHOOLADMIN" | "TEACHER" | "STUDENT";
 
-interface RequireRoleProps {
+type Props = {
   children: ReactNode;
-  allowedRoles: UserRoles[];
-}
+  allowedRoles: UserRole[];
+};
 
-export default function RequireRole({ children, allowedRoles }: RequireRoleProps) {
+export default function RequireRole({ children, allowedRoles }: Props) {
   const { data: session, status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === "loading") return; // Wait for session
-
-    const role = session?.user?.role as UserRoles | undefined;
-
-    // If user is not logged in OR role doesn't match
+    if (status !== "authenticated") return;
+    const role = session?.user?.role as UserRole | undefined;
     if (!role || !allowedRoles.includes(role)) {
       router.replace("/unauthorized");
     }
-  }, [session, status, router, allowedRoles]);
+  }, [status, session?.user?.role, router, allowedRoles]);
 
   if (status === "loading") {
-    return <p>Loading...</p>;
+    return <div>Loading...</div>;
+  }
+
+  if (status !== "authenticated") {
+    return null;
+  }
+
+  const role = session?.user?.role as UserRole | undefined;
+  if (!role || !allowedRoles.includes(role)) {
+    return null;
   }
 
   return <>{children}</>;

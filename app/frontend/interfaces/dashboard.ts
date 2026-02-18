@@ -11,7 +11,6 @@ export interface IMenuItem {
 
 type SchoolFormState = {
   schoolName: string;
-  subdomain: string;
   password: string;
   phone: string;
   email: string;

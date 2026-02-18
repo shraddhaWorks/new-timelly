@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { CheckCircle, Users } from "lucide-react";
 import { useSession } from "next-auth/react";
-import PayButton from "@/components/PayButton";
+import PayButton from "@/app/frontend/components/common/PayButton";
 
 interface StudentFee {
   id: string;
@@ -94,35 +94,49 @@ export default function Page() {
     }
   };
 
-  // Handle Juspay return: verify payment when redirected back with success params
+  // Handle HyperPG return: verify from URL params (if PG adds them) or from cookie (return_url has no query params)
   useEffect(() => {
     if (status !== "authenticated" || !session?.user || verifiedRef.current) return;
     const success = searchParams.get("success");
     const amount = searchParams.get("amount");
-    const juspayOrder = searchParams.get("juspay_order");
-    const orderId = searchParams.get("order_id") || juspayOrder;
-    const paymentId = searchParams.get("payment_id") || searchParams.get("jp_payment_id");
-    if (success === "1" && orderId && paymentId && amount) {
+    const orderId = searchParams.get("order_id");
+    let orderIdToVerify = orderId;
+    let amountToVerify = amount ? parseFloat(amount) : NaN;
+    if ((success !== "1" || !orderIdToVerify || !amount) && typeof document !== "undefined") {
+      const match = document.cookie.match(/hyperpg_pending=([^;]+)/);
+      if (match) {
+        try {
+          const [oid, amt] = decodeURIComponent(match[1]).split("|");
+          if (oid && amt) {
+            orderIdToVerify = oid;
+            amountToVerify = parseFloat(amt);
+            document.cookie = "hyperpg_pending=; path=/; max-age=0";
+          }
+        } catch (_) {}
+      }
+    }
+    if (orderIdToVerify && !isNaN(amountToVerify) && amountToVerify > 0) {
       verifiedRef.current = true;
-      const amt = parseFloat(amount);
-      if (isNaN(amt) || amt <= 0) return;
       fetch("/api/payment/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          gateway: "JUSPAY",
-          juspay_order_id: orderId,
-          juspay_payment_id: paymentId,
-          amount: amt,
+          gateway: "HYPERPG",
+          order_id: orderIdToVerify,
+          amount: amountToVerify,
         }),
       })
-        .then((res) => res.json())
-        .then((data) => {
+        .then(async (res) => {
+          const data = await res.json();
           if (data.fee) setFee(data.fee);
           if (session?.user?.role === "STUDENT") fetchFee();
+          if (!res.ok && data.message) alert(data.message);
           window.history.replaceState({}, "", "/payments");
         })
-        .catch(console.error);
+        .catch((e) => {
+          console.error(e);
+          alert("Verification failed. Your payment may still have gone through; check fee status.");
+        });
     }
   }, [status, session?.user, searchParams]);
 

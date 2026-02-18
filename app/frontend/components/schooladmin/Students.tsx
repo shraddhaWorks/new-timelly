@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import DataTable from "../common/TableLayout";
 import PageHeader from "../common/PageHeader";
 import StudentFilters from "./students/StudentFilters";
@@ -12,7 +13,6 @@ import { buildStudentColumns } from "./students/studentColumns";
 import useStudentPage from "./students/useStudentPage";
 import { getAge } from "./students/utils";
 import { ClassItem } from "./students/types";
-import StudentMobileCard from "./students/StudentMobileCard";
 import SuccessPopups from "../common/SuccessPopUps";
 
 type Props = {
@@ -22,6 +22,26 @@ type Props = {
 
 export default function StudentsManagementPage({ classes = [], reload }: Props) {
   const page = useStudentPage({ classes, reload });
+  const [tablePage, setTablePage] = useState(1);
+  const pageSize = 5;
+  const totalPages = Math.max(
+    1,
+    Math.ceil(page.filteredStudents.length / pageSize)
+  );
+  const safePage = Math.min(tablePage, totalPages);
+  const pagedStudents = useMemo(
+    () =>
+      page.filteredStudents.slice(
+        (safePage - 1) * pageSize,
+        safePage * pageSize
+      ),
+    [page.filteredStudents, safePage]
+  );
+
+  useEffect(() => {
+    setTablePage(1);
+  }, [page.searchQuery, page.selectedClass, page.selectedSection]);
+
   const columns = buildStudentColumns({
     onView: page.openView,
     onEdit: page.openEdit,
@@ -31,11 +51,11 @@ export default function StudentsManagementPage({ classes = [], reload }: Props) 
   return (
     <>
       <PageHeader
-        title="Students"
+        title="Students Management"
         subtitle="Manage all student records"
-        className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-white/10"
+        className="bg-white/5 backdrop-blur-xl rounded-2xl p-4 md:p-6 shadow-lg border border-white/10"
       />
-      <div className="max-w-7xl mx-auto space-y-6 text-gray-200 pb-12">
+      <div className="mx-auto w-full max-w-none xl:max-w-7xl space-y-4 md:space-y-6 text-gray-200 pb-12">
         <StudentFilters
           classOptions={page.filterClassOptions}
           sectionOptions={page.filterSectionOptions}
@@ -92,51 +112,25 @@ export default function StudentsManagementPage({ classes = [], reload }: Props) 
           />
         )}
 
-        <div>
-          <div className="md:hidden mb-4 bg-transparent backdrop-blur-lg">
-            <div className="font-bold text-gray-100 text-lg ">
-              All Students ({page.filteredStudents.length})
-            </div>
-            <div className="text-xs text-white/50">
-              {page.selectedClass
-                ? `Class ${page.selectedClass}${page.selectedSection ? ` ${page.selectedSection}` : ""}`
-                : "All Classes"}
-            </div>
-          </div>
-
-          <div className="md:hidden space-y-4">
-            {page.filteredStudents.map((student, index) => (
-              <StudentMobileCard
-                key={student.id}
-                student={student}
-                index={index}
-                onView={page.openView}
-                onEdit={page.openEdit}
-                onDelete={page.openDelete}
-              />
-            ))}
-            {page.filteredStudents.length === 0 && !page.tableLoading && (
-              <div className="text-center text-white/60 py-6">
-                No students found
-              </div>
-            )}
-          </div>
-
-          <div className="hidden md:block">
-            <DataTable
-              columns={columns}
-              data={page.filteredStudents}
-              loading={page.tableLoading}
-              emptyText="No students found"
-              tableTitle={`All Students (${page.filteredStudents.length})`}
-              tableSubtitle={
-                page.selectedClass
-                  ? `Class ${page.selectedClass}${page.selectedSection ? ` ${page.selectedSection}` : ""}`
-                  : undefined
-              }
-            />
-          </div>
-        </div>
+        <DataTable
+          columns={columns}
+          data={pagedStudents}
+          loading={page.tableLoading}
+          emptyText="No students found"
+          tableTitle={`All Students (${page.filteredStudents.length})`}
+          tableSubtitle={
+            page.selectedClass
+              ? `Class ${page.selectedClass}${page.selectedSection ? ` ${page.selectedSection}` : ""}`
+              : undefined
+          }
+          showMobile={false}
+          forceTableOnMobile
+          pagination={{
+            page: safePage,
+            totalPages,
+            onChange: setTablePage,
+          }}
+        />
       </div>
 
       {page.viewStudent && (

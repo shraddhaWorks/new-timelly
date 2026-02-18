@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { redis } from "@/lib/redis";
 
 export async function POST(
   req: Request,
@@ -181,13 +180,6 @@ export async function POST(
 
       return updatedRequest;
     });
-
-    // Invalidate certificate request list cache for this school (all statuses and student-specific)
-    const statuses = ["all", "PENDING", "APPROVED", "REJECTED"];
-    for (const st of statuses) {
-      await redis.del(`certificate-requests:${schoolId}:all:${st}`);
-      await redis.del(`certificate-requests:${schoolId}:${certificateRequest.student.id}:${st}`);
-    }
 
     const successMessage = isTransferCertificate
       ? "Transfer Certificate approved successfully. Student removed from class."

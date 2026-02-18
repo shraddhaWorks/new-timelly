@@ -54,7 +54,7 @@ export default function SchoolAdminCircularsTab() {
   }, [circulars, search, importance]);
 
   return (
-    <div className="min-h-screen text-white px-3 sm:px-6 lg:px-8 py-4">
+    <div className="min-h-screen text-white">
       {/* HEADER */}
      
       <PageHeader

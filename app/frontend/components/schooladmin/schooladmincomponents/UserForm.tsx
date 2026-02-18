@@ -3,13 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { AlertCircle, CheckCircle, Loader, User, Mail, Briefcase, Lock, Shield, User2 } from "lucide-react";
+import { AlertCircle, CheckCircle, Loader, User, Mail, Briefcase, Lock, Shield, User2, Phone, MapPin, Calendar, BookOpen } from "lucide-react";
 import InputField from "./InputField";
 import AllowedFeatureToggle from "./AllowedFeatureToggle";
 import RoleSelector from "./RoleSelector";
 import { Permission } from "@/app/frontend/enums/permissions";
 import Spinner from "../../common/Spinner";
-import { label } from "framer-motion/client";
 
 interface UserFormData {
   name: string;
@@ -20,6 +19,16 @@ interface UserFormData {
   password?: string;
   confirmPassword?: string;
   allowedFeatures: string[];
+  // Teacher-specific
+  teacherId?: string;
+  subjects?: string[];
+  assignedClassIds?: string[];
+  qualification?: string;
+  experience?: string;
+  joiningDate?: string;
+  teacherStatus?: string;
+  mobile?: string;
+  address?: string;
 }
 
 interface UserFormProps {
@@ -62,8 +71,20 @@ export default function UserForm({ mode = "create", initialData }: UserFormProps
       password: "",
       confirmPassword: "",
       allowedFeatures: [],
+      teacherId: "",
+      subjects: [],
+      assignedClassIds: [],
+      qualification: "",
+      experience: "",
+      joiningDate: "",
+      teacherStatus: "Active",
+      mobile: "",
+      address: "",
     }
   );
+
+  const [classesList, setClassesList] = useState<{ id: string; name: string; section: string | null }[]>([]);
+  const [subjectInput, setSubjectInput] = useState("");
 
   // Keep local form state in sync when parent passes initialData (edit from list)
   useEffect(() => {
@@ -81,6 +102,9 @@ export default function UserForm({ mode = "create", initialData }: UserFormProps
           const res = await fetch(`/api/user/${userId}`);
           if (!res.ok) throw new Error("Failed to fetch user");
           const userData = await res.json();
+          const joinDate = userData.joiningDate
+            ? new Date(userData.joiningDate).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "-")
+            : "";
           setFormData({
             name: userData.name || "",
             email: userData.email || "",
@@ -90,6 +114,15 @@ export default function UserForm({ mode = "create", initialData }: UserFormProps
             password: "",
             confirmPassword: "",
             allowedFeatures: userData.allowedFeatures || [],
+            teacherId: userData.teacherId || "",
+            subjects: userData.subjects?.length ? userData.subjects : [],
+            assignedClassIds: userData.assignedClassIds || [],
+            qualification: userData.qualification || "",
+            experience: userData.experience || "",
+            joiningDate: joinDate,
+            teacherStatus: userData.teacherStatus || "Active",
+            mobile: userData.mobile || "",
+            address: userData.address || "",
           });
         } catch (err) {
           setError(err instanceof Error ? err.message : "Failed to load user data");
@@ -100,6 +133,20 @@ export default function UserForm({ mode = "create", initialData }: UserFormProps
       fetchUser();
     }
   }, [userId, initialData]);
+
+  // Fetch classes for teacher assigned classes
+  useEffect(() => {
+    if (formData.role !== "TEACHER") return;
+    const fetchClasses = async () => {
+      try {
+        const res = await fetch("/api/class/list");
+        if (!res.ok) return;
+        const data = await res.json();
+        setClassesList(Array.isArray(data.classes) ? data.classes : []);
+      } catch (_) {}
+    };
+    fetchClasses();
+  }, [formData.role]);
 
   const handleChange = (field: keyof UserFormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -163,7 +210,7 @@ export default function UserForm({ mode = "create", initialData }: UserFormProps
       const endpoint = userId ? `/api/user/${userId}` : "/api/user/create";
       const method = userId ? "PUT" : "POST";
 
-      const payload = {
+      const payload: Record<string, unknown> = {
         name: formData.name,
         email: formData.email,
         role: formData.role,
@@ -172,6 +219,17 @@ export default function UserForm({ mode = "create", initialData }: UserFormProps
         allowedFeatures: formData.allowedFeatures,
         ...(formData.password && { password: formData.password }),
       };
+      if (formData.role === "TEACHER") {
+        payload.teacherId = formData.teacherId || undefined;
+        payload.subjects = formData.subjects || [];
+        payload.assignedClassIds = formData.assignedClassIds || [];
+        payload.qualification = formData.qualification || undefined;
+        payload.experience = formData.experience || undefined;
+        payload.joiningDate = formData.joiningDate || undefined;
+        payload.teacherStatus = formData.teacherStatus || "Active";
+        payload.mobile = formData.mobile || undefined;
+        payload.address = formData.address || undefined;
+      }
 
       const res = await fetch(endpoint, {
         method,
@@ -296,6 +354,175 @@ export default function UserForm({ mode = "create", initialData }: UserFormProps
               />
             )}
           </div>
+
+          {/* Teacher-specific fields */}
+          {formData.role === "TEACHER" && (
+            <div className="space-y-4 pt-4 border-t border-white/10">
+              <div className="flex items-center gap-2">
+                <div className="h-9 w-9 rounded-full bg-lime-400/20 flex items-center justify-center">
+                  <Briefcase className="w-5 h-5 text-lime-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Teacher Details</h3>
+                  <p className="text-xs text-white/50">Fill in teacher-specific information.</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <InputField
+                  label="Teacher ID"
+                  value={formData.teacherId || ""}
+                  onChange={(v) => handleChange("teacherId", v)}
+                  placeholder="e.g. TCH005"
+                  icon={<User2 className="w-4 h-4" />}
+                />
+                <div>
+                  <label className="block text-xs font-medium text-white/70 mb-1.5">Subject(s)</label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {(formData.subjects || []).map((s) => (
+                      <span
+                        key={s}
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-lime-400/20 border border-lime-400/30 text-lime-300 text-sm"
+                      >
+                        {s}
+                        <button
+                          type="button"
+                          onClick={() => handleChange("subjects", (formData.subjects || []).filter((x) => x !== s))}
+                          className="hover:text-white"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={subjectInput}
+                      onChange={(e) => setSubjectInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          const v = subjectInput.trim();
+                          if (v && !(formData.subjects || []).includes(v)) {
+                            handleChange("subjects", [...(formData.subjects || []), v]);
+                            setSubjectInput("");
+                          }
+                        }
+                      }}
+                      placeholder="e.g. Mathematics (press Enter to add)"
+                      className="flex-1 pl-4 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-1 focus:ring-lime-400/50 text-gray-400 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const v = subjectInput.trim();
+                        if (v && !(formData.subjects || []).includes(v)) {
+                          handleChange("subjects", [...(formData.subjects || []), v]);
+                          setSubjectInput("");
+                        }
+                      }}
+                      className="px-4 py-2 rounded-xl bg-lime-400/20 border border-lime-400/30 text-lime-300 text-sm font-medium hover:bg-lime-400/30"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-medium text-white/70 mb-1.5">Assigned Classes</label>
+                  <div className="flex flex-wrap gap-2 p-3 bg-black/20 border border-white/10 rounded-xl min-h-[48px]">
+                    {classesList.map((c) => {
+                      const id = c.id;
+                      const label = c.section ? `${c.name}-${c.section}` : c.name;
+                      const selected = (formData.assignedClassIds || []).includes(id);
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => {
+                            const current = formData.assignedClassIds || [];
+                            handleChange(
+                              "assignedClassIds",
+                              selected ? current.filter((x) => x !== id) : [...current, id]
+                            );
+                          }}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                            selected
+                              ? "bg-lime-400/30 border-lime-400/50 text-lime-200"
+                              : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                    {classesList.length === 0 && (
+                      <span className="text-white/40 text-sm">No classes found. Create classes first.</span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-white/50 mt-1">e.g. 10-A, 10-B — click to toggle</p>
+                </div>
+                <InputField
+                  label="Qualification"
+                  value={formData.qualification || ""}
+                  onChange={(v) => handleChange("qualification", v)}
+                  placeholder="e.g. M.Sc, B.Ed"
+                  icon={<BookOpen className="w-4 h-4" />}
+                />
+                <InputField
+                  label="Experience"
+                  value={formData.experience || ""}
+                  onChange={(v) => handleChange("experience", v)}
+                  placeholder="e.g. 5 Years"
+                  icon={<Briefcase className="w-4 h-4" />}
+                />
+                <InputField
+                  label="Joining Date"
+                  value={formData.joiningDate || ""}
+                  onChange={(v) => handleChange("joiningDate", v)}
+                  placeholder="dd-mm-yyyy"
+                  icon={<Calendar className="w-4 h-4" />}
+                />
+                <div>
+                  <label className="block text-xs font-medium text-white/70 mb-1.5">Status</label>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-white/40">
+                      <CheckCircle className="w-4 h-4" />
+                    </span>
+                    <select
+                      value={formData.teacherStatus || "Active"}
+                      onChange={(e) => handleChange("teacherStatus", e.target.value)}
+                      className="w-full pl-11 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-1 focus:ring-lime-400/50 text-gray-400"
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+                <InputField
+                  label="Phone Number"
+                  value={formData.mobile || ""}
+                  onChange={(v) => handleChange("mobile", v)}
+                  placeholder="+91..."
+                  icon={<Phone className="w-4 h-4" />}
+                />
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-medium text-white/70 mb-1.5">Address</label>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-3 top-3 text-white/40">
+                      <MapPin className="w-4 h-4" />
+                    </span>
+                    <textarea
+                      value={formData.address || ""}
+                      onChange={(e) => handleChange("address", e.target.value)}
+                      placeholder="Full Address"
+                      rows={2}
+                      className="w-full pl-11 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-1 focus:ring-lime-400/50 text-gray-400 resize-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right: Access Control Toggles (1/3 width) */}

@@ -86,10 +86,7 @@ export async function GET(req: Request) {
         include: {
           class: { select: { id: true, name: true, section: true } },
           schedules: { orderBy: { examDate: "asc" } },
-          syllabus: {
-            orderBy: { subject: "asc" },
-            include: { units: { orderBy: { order: "asc" } } },
-          },
+          syllabus: { orderBy: { subject: "asc" }, include: { units: { orderBy: { order: "asc" } } } },
         },
         orderBy: { createdAt: "desc" },
       });
@@ -98,23 +95,14 @@ export async function GET(req: Request) {
 
       for (const term of terms) {
         const classInfo = term.class
-          ? {
-              id: term.class.id,
-              name: term.class.name,
-              section: term.class.section ?? "",
-            }
+          ? { id: term.class.id, name: term.class.name, section: term.class.section ?? "" }
           : { id: "", name: "", section: "" };
 
         for (const s of term.schedules) {
-          const tracking = term.syllabus.find(
-            (sy) => sy.subject === s.subject
-          );
-
+          const tracking = term.syllabus.find((sy: { subject: any; }) => sy.subject === s.subject);
           const syllabus = tracking
             ? tracking.units.length > 0
-              ? tracking.units.map((u) => ({
-                  completedPercent: u.completedPercent,
-                }))
+              ? tracking.units.map((u: { completedPercent: any; }) => ({ completedPercent: u.completedPercent }))
               : [{ completedPercent: tracking.completedPercent }]
             : [];
 
@@ -137,65 +125,62 @@ export async function GET(req: Request) {
     }
 
     /* ======================================================
-   STUDENT – FIXED (classId comes from Student table)
-====================================================== */
-if (role === "STUDENT") {
-  const student = await prisma.student.findUnique({
-    where: { userId: session.user.id },
-    select: { classId: true },
-  });
+       STUDENT
+    ====================================================== */
+    if (role === "STUDENT") {
+      const student = await prisma.student.findUnique({
+        where: { userId: session.user.id },
+        select: { classId: true },
+      });
 
-  if (!student?.classId) {
-    return NextResponse.json(
-      { message: "Student class not assigned" },
-      { status: 400 }
-    );
-  }
+      if (!student?.classId) {
+        return NextResponse.json({ message: "Student class not assigned" }, { status: 400 });
+      }
 
- const terms = await prisma.examTerm.findMany({
-    where: {
-      schoolId,
-      classId: student.classId,
-      ...(status ? { status: status as ExamTermStatus } : {}),
-    },
-    include: {
-      class: { 
-        include: { 
-          teacher: { // Fetch the class teacher
-            select: { name: true } 
-          } 
-        } 
-      },
-      schedules: { orderBy: { examDate: "asc" } },
-      syllabus: {
-        orderBy: { subject: "asc" },
-        include: { units: { orderBy: { order: "asc" } } },
-      },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+      const terms = await prisma.examTerm.findMany({
+        where: {
+          schoolId,
+          classId: student.classId,
+          ...(status ? { status: status as ExamTermStatus } : {}),
+        },
+        include: {
+          class: { include: { teacher: { select: { name: true } } } },
+          schedules: { orderBy: { examDate: "asc" } },
+          syllabus: { orderBy: { subject: "asc" }, include: { units: { orderBy: { order: "asc" } } } },
+        },
+        orderBy: { createdAt: "desc" },
+      });
 
-  return NextResponse.json({ terms }, { status: 200 });
-}
-
+      return NextResponse.json({ terms }, { status: 200 });
+    }
 
     /* ======================================================
-       SCHOOL ADMIN – OLD LOGIC (UNCHANGED)
+       SCHOOL ADMIN – UPDATED
     ====================================================== */
-    const terms = await prisma.examTerm.findMany({
-      where: {
-        schoolId,
-        ...(classIdParam ? { classId: classIdParam } : {}),
-        ...(status ? { status: status as ExamTermStatus } : {}),
-      },
-      include: {
-        class: { select: { id: true, name: true, section: true } },
-        _count: { select: { schedules: true, syllabus: true } },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    if (role === "SCHOOLADMIN") {
+      const classes = await prisma.class.findMany({
+        where: { schoolId },
+        select: { id: true, name: true, section: true },
+        orderBy: { name: "asc" },
+      });
 
-    return NextResponse.json({ terms }, { status: 200 });
+      const terms = await prisma.examTerm.findMany({
+        where: {
+          schoolId,
+          ...(classIdParam ? { classId: classIdParam } : {}),
+          ...(status ? { status: status as ExamTermStatus } : {}),
+        },
+        include: {
+          class: { include: { teacher: { select: { name: true } } } },
+          schedules: { orderBy: { examDate: "asc" } },
+          syllabus: { orderBy: { subject: "asc" }, include: { units: { orderBy: { order: "asc" } } } },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      return NextResponse.json({ terms, classes }, { status: 200 });
+    }
+
   } catch (e: unknown) {
     console.error("Exams terms GET:", e);
     return NextResponse.json(
@@ -204,6 +189,8 @@ if (role === "STUDENT") {
     );
   }
 }
+
+
 
 /* ======================================================
    POST – UNCHANGED

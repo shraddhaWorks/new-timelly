@@ -10,16 +10,19 @@ if (!base) {
 }
 
 function withParam(url: string, key: string, value: string) {
+  if (!url) return url;
   const hasQuery = url.includes("?");
   const encodedKey = `${key}=`;
   if (url.includes(encodedKey)) return url;
   return `${url}${hasQuery ? "&" : "?"}${key}=${value}`;
 }
 
-let connectionString = base;
-connectionString = withParam(connectionString, "statement_timeout", "120000");
-connectionString = withParam(connectionString, "connection_limit", "1");
-connectionString = withParam(connectionString, "pool_timeout", "20");
+let connectionString = base || "";
+if (connectionString) {
+  connectionString = withParam(connectionString, "statement_timeout", "120000");
+  connectionString = withParam(connectionString, "connection_limit", "1");
+  connectionString = withParam(connectionString, "pool_timeout", "20");
+}
 
 const prismaClientSingleton = () => {
   const pool = new Pool({
@@ -42,6 +45,8 @@ const prisma = globalThis.prismaGlobal ?? prismaClientSingleton();
 
 export default prisma;
 
-if (process.env.NODE_ENV !== "production") {
+// In serverless environments (like Vercel), we still want to reuse the connection
+// but we need to handle it differently. The globalThis check works in both dev and production.
+if (!globalThis.prismaGlobal) {
   globalThis.prismaGlobal = prisma;
 }

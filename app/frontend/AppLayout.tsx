@@ -44,16 +44,17 @@ export default function AppLayout({
     <ToastProvider>
       <div className="flex h-screen overflow-hidden">
         {/* DESKTOP SIDEBAR - profile from layout (sidebar + header show same) */}
-        <aside className="hidden md:block">
+        <aside className="hidden lg:block">
           <AppSidebar
             menuItems={menuItems}
             profile={profile}
+            activeTab={activeTab}
             onLogoutRequest={() => setShowLogoutConfirm(true)}
           />
         </aside>
 
         {/* MAIN */}
-        <div className="flex-1 flex flex-col pb-16 md:pb-0">
+        <div className="flex-1 flex flex-col pb-16 xl:pb-0">
           <AppHeader
             title={title}
             profile={profile}
@@ -68,6 +69,7 @@ export default function AppLayout({
         {/* MOBILE BOTTOM NAV */}
         <BottomNavBar
           menuItems={menuItems}
+          activeTab={activeTab}
           onMoreClick={() => setShowMore(true)}
         />
 

@@ -44,6 +44,9 @@ function ParentDashboardInner() {
     name: "Parent",
     subtitle: "Parent",
     image: null as string | null,
+    email: "",
+    phone: "",
+    address: "",
   });
 
   const renderTabContent = () => {
@@ -84,18 +87,25 @@ function ParentDashboardInner() {
 
     (async () => {
       try {
-        const res = await fetch("/api/user/me");
-        const data = await res.json();
-        if (cancelled || !res.ok) return;
+        const [userRes, parentDetailsRes] = await Promise.all([
+          fetch("/api/user/me"),
+          fetch("/api/student/parent-details"),
+        ]);
+        const userData = await userRes.json();
+        const parentData = await parentDetailsRes.json();
+        if (cancelled || !userRes.ok) return;
 
-        const u = data.user;
-        if (u) {
-          setProfile({
-            name: u.name ?? "Parent",
-            subtitle: "Parent",
-            image: u.photoUrl ?? null,
-          });
-        }
+        const u = userData.user;
+        if (!u) return;
+
+        setProfile({
+          name: u.name ?? "Parent",
+          subtitle: "Parent",
+          image: u.photoUrl ?? null,
+          email: u.email ?? "",
+          phone: u.mobile ?? parentData?.fatherPhone ?? "",
+          address: parentData?.address ?? "",
+        });
       } catch {
         // fallback default
       }

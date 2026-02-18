@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { redis } from "@/lib/redis";
 
 export async function GET(req: Request) {
   try {
@@ -42,12 +41,6 @@ export async function GET(req: Request) {
     if (status) {
       where.status = status;
     }
-   const cachedKey = `certificate-requests:${schoolId}:${session.user.studentId || "all"}:${status || "all"}`;
-   const cachedRequests = await redis.get(cachedKey);
-    if (cachedRequests) {
-      console.log("✅ Certificate requests served from Redis");
-      return NextResponse.json({ certificateRequests: JSON.parse(cachedRequests as string) }, { status: 200 });
-    }
     const certificateRequests = await prisma.transferCertificate.findMany({
       where,
       include: {
@@ -72,7 +65,6 @@ export async function GET(req: Request) {
         createdAt: "desc",
       },
     });
-    await redis.set(cachedKey, JSON.stringify(certificateRequests), { ex: 60 * 5 }); // Cache for 5 minutes
     return NextResponse.json({ certificateRequests }, { status: 200 });
   } catch (error: any) {
     console.error("List certificate requests error:", error);

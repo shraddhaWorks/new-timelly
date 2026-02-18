@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { redis } from "@/lib/redis";
 
 type ApproveParams =
   | { params: { id: string } }
@@ -49,10 +48,6 @@ export async function POST(_req: Request, context: ApproveParams) {
       where: { id: appointmentId },
       data: { status: "APPROVED" },
     });
-
-    // Invalidate appointments cache for teacher and student
-    await redis.del(`appointments:TEACHER:${appointment.teacherId}`);
-    await redis.del(`appointments:STUDENT:${appointment.studentId}`);
 
     return NextResponse.json(
       { message: "Appointment approved", appointment: updated },

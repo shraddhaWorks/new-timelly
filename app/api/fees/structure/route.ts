@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
-import { redis } from "@/lib/redis";
 
 async function getSchoolId(session: { user: { id: string; schoolId?: string | null } }) {
   let schoolId = session.user.schoolId;
@@ -35,12 +34,6 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const classId = searchParams.get("classId");
 
-    const cachedKey = classId ? `feeStructure:${schoolId}:${classId}` : `feeStructures:${schoolId}`;
-    const cached = await redis.get(cachedKey);
-    if (cached) {
-      return NextResponse.json(cached);
-    }
-
     const where: { schoolId: string; classId?: string } = { schoolId };
     if (classId) where.classId = classId;
 
@@ -49,7 +42,6 @@ export async function GET(req: Request) {
       include: { class: { select: { id: true, name: true, section: true } } },
     });
 
-    await redis.set(cachedKey, { structures }, { ex: 60 * 5 });
     return NextResponse.json({ structures });
   } catch (error: any) {
     console.error("Fee structure GET error:", error);
@@ -104,8 +96,6 @@ export async function PUT(req: Request) {
       include: { class: { select: { id: true, name: true, section: true } } },
     });
 
-    await redis.del(`feeStructure:${schoolId}:${classId}`);
-    await redis.del(`feeStructures:${schoolId}`);
     return NextResponse.json({ structure });
   } catch (error: any) {
     console.error("Fee structure PUT error:", error);
