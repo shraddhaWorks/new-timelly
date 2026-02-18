@@ -6,6 +6,7 @@ import PageHeader from "../../common/PageHeader";
 import SearchInput from "../../common/SearchInput";
 import ChatWindow from "./ChatWindow";
 import { Chat, Status } from "./ChatList";
+import Spinner from "../../common/Spinner";
 
 const DEFAULT_AVATAR =
   "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100";
@@ -128,10 +129,9 @@ export default function TeacherParentChatTab() {
                   key={tab}
                   onClick={() => setActiveTab(tab)}
                   className={`px-3 py-1.5 rounded-lg text-xs capitalize
-                    ${
-                      activeTab === tab
-                        ? "bg-lime-500 text-black"
-                        : "bg-white/5 text-gray-400 hover:bg-white/10"
+                    ${activeTab === tab
+                      ? "bg-lime-500 text-black"
+                      : "bg-white/5 text-gray-400 hover:bg-white/10"
                     }`}
                 >
                   {tab}
@@ -146,10 +146,10 @@ export default function TeacherParentChatTab() {
           </div>
 
           {/* Chat List */}
-          <div className="flex-1 overflow-y-auto p-2 space-y-2">
+          <div className="flex-1 overflow-y-auto p-2 space-y-2 no-scrollbar">
             {loading ? (
               <div className="p-4 text-center text-gray-400 text-sm">
-                Loading...
+                <Spinner />
               </div>
             ) : error ? (
               <div className="p-4 text-center text-red-400 text-sm">

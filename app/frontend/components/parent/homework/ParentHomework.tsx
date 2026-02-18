@@ -6,6 +6,7 @@ import HomeworkHeader from './HomeworkHeader';
 import HomeworkStats from './HomeworkStats';
 import HomeworkFilters from './HomeworkFilters';
 import HomeworkCard from './HomeworkCard';
+import Spinner from '../../common/Spinner';
 
 interface Homework {
   id: string;
@@ -213,6 +214,8 @@ export default function Page() {
     return (
       <main className="min-w-0 w-full min-h-screen overflow-x-hidden p-4 sm:p-5 md:p-5 lg:p-6 xl:p-8 flex items-center justify-center">
         <div className="animate-spin rounded-full h-10 w-10 border-2 border-white/30 border-t-white" />
+      <main className="min-h-screen p-8 flex items-center justify-center">
+        <Spinner/>
       </main>
     );
   }

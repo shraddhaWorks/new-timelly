@@ -95,7 +95,7 @@ export default function TeacherParentChatTab() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br p-4 lg:p-6">
+    <div className="min-h-screen bg-gradient-to-br">
       <div className="flex flex-1 gap-6 overflow-hidden h-[90vh]">
 
         {/* ================= Sidebar ================= */}

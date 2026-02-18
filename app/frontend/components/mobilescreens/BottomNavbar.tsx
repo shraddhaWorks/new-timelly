@@ -45,19 +45,19 @@ export default function BottomNavBar({
   const tabItems = filteredMenu.filter(item => item.tab);
   const displayedItems = tabItems.slice(0, 4);
 
-  // 🔥 KEY FIX
+  // KEY FIX
   const hasLogout = menuItems.some(item => item.action === "logout");
   const hasMoreItems = tabItems.length > 4 || hasLogout;
 
   return (
     <nav
       className="
-        fixed bottom-0 inset-x-0 z-40 md:hidden
+        fixed bottom-0 inset-x-0 z-40 xl:hidden
         bg-[#0b1220]/95 backdrop-blur-xl
         border-t border-white/10
       "
     >
-      <div className="flex justify-around items-end py-3 px-2">
+      <div className="flex items-end py-3 px-2">
         {displayedItems.map(item => {
           const Icon = item.icon;
           const isActive = item.tab === activeTab;
@@ -69,8 +69,8 @@ export default function BottomNavBar({
               className={`
                 flex flex-col items-center
                 gap-1
-                w-[64px]
-                px-1
+                flex-1 min-w-0
+                px-1.5
                 transition-all
                 ${isActive ? "text-lime-400" : "text-white/60"}
               `}
@@ -78,32 +78,32 @@ export default function BottomNavBar({
               <Icon size={20} />
               <span
                 className="
-                  text-[11px]
+                  w-full
+                  text-[10px]
                   text-center
                   leading-tight
-                  break-words
-                  whitespace-normal
+                  truncate
                 "
               >
-                {item.label}
+                {item.mobileLabel ?? item.label}
               </span>
             </button>
           );
         })}
 
-        {/* ✅ ALWAYS SHOW MORE IF LOGOUT EXISTS */}
+        {/* ALWAYS SHOW MORE IF LOGOUT EXISTS */}
         {hasMoreItems && (
           <button
             onClick={onMoreClick}
             className="
               flex flex-col items-center
               gap-1
-              w-[64px]
+              flex-1 min-w-0
               text-white/60
             "
           >
             <MoreHorizontal size={20} />
-            <span className="text-[11px] text-center leading-tight">
+            <span className="w-full text-[10px] text-center leading-tight truncate">
               More
             </span>
           </button>

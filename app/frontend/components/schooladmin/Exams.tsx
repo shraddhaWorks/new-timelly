@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Calendar, Plus } from "lucide-react";
+import { Calendar, Plus } from "lucide-react";
 
 import { useExamTerms, fetchExamTermDetail } from "@/hooks/useExamTerms";
 import { useClasses } from "@/hooks/useClasses";
 
-import type { ExamTermDetail } from "@/hooks/useExamTerms";
+import type { ExamTermDetail, ExamTermListItem } from "@/hooks/useExamTerms";
 import {
   EXAM_ACCENT,
   EXAM_TEXT_SECONDARY,
@@ -18,13 +18,13 @@ import GlassCard from "./exams/GlassCard";
 import ExamScheduleTab from "./exams/ExamScheduleTab";
 import NewExamTermModal from "./exams/NewExamTermModal";
 import SyllabusTrackingTab from "./exams/SyllabusTrackingTab";
+import Spinner from "../common/Spinner";
+import PageHeader from "../common/PageHeader";
 
 type TabId = "schedule" | "syllabus";
 
 export default function ExamsPage() {
-  return (
-      <ExamsPageInner />
-  );
+  return <ExamsPageInner />;
 }
 
 export function ExamsPageInner() {
@@ -32,255 +32,266 @@ export function ExamsPageInner() {
   const { classes } = useClasses();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [termDetail, setTermDetail] = useState<ExamTermDetail | null>(null);
-  const [tab, setTab] = useState<TabId>("syllabus");
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [tab, setTab] = useState<TabId>("schedule");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingTerm, setEditingTerm] = useState<ExamTermListItem | null>(null);
 
   const upcoming = terms.filter((t) => t.status === "UPCOMING");
   const completed = terms.filter((t) => t.status === "COMPLETED");
+
+  useEffect(() => {
+    if (!terms.length) {
+      setSelectedId(null);
+      setTermDetail(null);
+      return;
+    }
+
+    if (!selectedId || !terms.some((t) => t.id === selectedId)) {
+      setSelectedId(upcoming[0]?.id ?? terms[0].id);
+    }
+  }, [terms, selectedId, upcoming]);
 
   useEffect(() => {
     if (!selectedId) {
       setTermDetail(null);
       return;
     }
+
     let cancelled = false;
-    fetchExamTermDetail(selectedId).then((detail) => {
-      if (!cancelled) setTermDetail(detail);
-    });
+    setDetailLoading(true);
+
+    fetchExamTermDetail(selectedId)
+      .then((detail) => {
+        if (!cancelled) setTermDetail(detail);
+      })
+      .finally(() => {
+        if (!cancelled) setDetailLoading(false);
+      });
+
     return () => {
       cancelled = true;
     };
   }, [selectedId]);
 
-  const handleTermSaved = () => {
+  const handleTermSaved = (savedId?: string) => {
     refetch();
+    if (savedId) setSelectedId(savedId);
+    if (selectedId) {
+      setDetailLoading(true);
+      fetchExamTermDetail(savedId ?? selectedId)
+        .then(setTermDetail)
+        .finally(() => setDetailLoading(false));
+    }
   };
 
   const handleSyllabusChange = () => {
     if (selectedId) {
-      fetchExamTermDetail(selectedId).then(setTermDetail);
+      setDetailLoading(true);
+      fetchExamTermDetail(selectedId)
+        .then(setTermDetail)
+        .finally(() => setDetailLoading(false));
     }
   };
 
   const handleScheduleChange = () => {
     if (selectedId) {
-      fetchExamTermDetail(selectedId).then(setTermDetail);
+      setDetailLoading(true);
+      fetchExamTermDetail(selectedId)
+        .then(setTermDetail)
+        .finally(() => setDetailLoading(false));
     }
   };
 
-  const startsInDays = termDetail?.status === "UPCOMING" && termDetail?.schedules?.length
-    ? (() => {
-        const first = termDetail.schedules[0];
-        const d = new Date(first.examDate);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        d.setHours(0, 0, 0, 0);
-        const diff = Math.ceil((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        return diff > 0 ? diff : 0;
-      })()
-    : null;
+  const startsInDays = useMemo(() => {
+    if (termDetail?.status !== "UPCOMING" || !termDetail.schedules?.length) return null;
+
+    const firstDate = [...termDetail.schedules]
+      .map((s) => new Date(s.examDate))
+      .sort((a, b) => a.getTime() - b.getTime())[0];
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    firstDate.setHours(0, 0, 0, 0);
+
+    const diff = Math.ceil((firstDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? diff : 0;
+  }, [termDetail]);
 
   return (
-    <div className="min-h-screen p-3 sm:p-4 md:p-6 pb-8">
-      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col gap-4"
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div
-                className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center border border-white/10 flex-shrink-0"
-                style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)" }}
-              >
-                <BookOpen className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: EXAM_TEXT_MAIN }} />
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate" style={{ color: EXAM_TEXT_MAIN }}>
-                  Exams & Syllabus
-                </h1>
-                <p className="text-xs sm:text-sm" style={{ color: EXAM_TEXT_SECONDARY }}>
-                  Manage examination schedules and syllabus tracking
-                </p>
-              </div>
-            </div>
+    <div className="min-h-screen">
+      <div className="mx-auto max-w-7xl space-y-4 sm:space-y-6">
+        <PageHeader
+          title="Exams & Syllabus"
+          subtitle="Manage examination schedules and syllabus tracking"
+          className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-6 backdrop-blur-xl mb-0"
+          rightSlot={
             <button
               type="button"
               onClick={() => setShowAddModal(true)}
-              className="flex items-center justify-center gap-2 px-4 py-3 sm:py-2.5 rounded-xl font-medium transition hover:opacity-90 w-full sm:w-auto min-h-[44px] touch-manipulation"
+              className="px-4 py-2 bg-lime-400 hover:bg-lime-500 text-black font-bold rounded-xl
+               shadow-lg shadow-lime-400/20 transition-all flex items-center gap-2 text-sm"
               style={{
                 backgroundColor: EXAM_ACCENT,
-                color: "#0b0616",
-                boxShadow: `0 0 12px ${EXAM_ACCENT}40`,
+                boxShadow: `0 0 22px ${EXAM_ACCENT}44`,
               }}
             >
-              <Plus size={18} /> Add Exam Term
+              <Plus size={18} />
+              Add Exam Term
             </button>
-          </div>
-        </motion.div>
+          }
+        />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-          {/* Left: Exam terms list */}
-          <div className="lg:col-span-1 space-y-3 sm:space-y-4 order-2 lg:order-1">
-            {error && (
-              <p className="text-red-400 text-sm">{error}</p>
-            )}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-6 lg:h-[calc(100vh-180px)] lg:overflow-hidden">
+          <aside className="order-2 lg:order-1 lg:col-span-4 space-y-3 lg:h-full lg:overflow-y-auto lg:pr-2 no-scrollbar">
+            {error && <p className="text-sm text-red-400">{error}</p>}
+
             {loading ? (
-              <div className="flex justify-center py-12">
-                <div
-                  className="animate-spin rounded-full h-10 w-10 border-2 border-white/30"
-                  style={{ borderTopColor: EXAM_ACCENT }}
-                />
-              </div>
+              <GlassCard className="p-10 flex justify-center">
+                <Spinner />
+              </GlassCard>
             ) : (
               <>
-                {upcoming.length > 0 && (
-                  <div>
-                    <div className="lg:col-span-1 space-y-4">
-                      {upcoming.map((t) => (
-                        <ExamTermCard
-                          key={t.id}
-                          term={t}
-                          isSelected={selectedId === t.id}
-                          onClick={() => setSelectedId(t.id)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {completed.length > 0 && (
-                  <div>
-                    <h3 className="text-xs font-medium uppercase tracking-wider mb-2 mt-4" style={{ color: EXAM_TEXT_SECONDARY }}>
-                      Completed
-                    </h3>
-                    <div className="space-y-2">
-                      {completed.map((t) => (
-                        <ExamTermCard
-                          key={t.id}
-                          term={t}
-                          isSelected={selectedId === t.id}
-                          onClick={() => setSelectedId(t.id)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {terms.length === 0 && (
+                {upcoming.map((t) => (
+                  <ExamTermCard
+                    key={t.id}
+                    term={t}
+                    isSelected={selectedId === t.id}
+                    onClick={() => setSelectedId(t.id)}
+                    onEdit={setEditingTerm}
+                  />
+                ))}
+
+                {completed.map((t) => (
+                  <ExamTermCard
+                    key={t.id}
+                    term={t}
+                    isSelected={selectedId === t.id}
+                    onClick={() => setSelectedId(t.id)}
+                    onEdit={setEditingTerm}
+                  />
+                ))}
+
+                {!terms.length && (
                   <GlassCard variant="default" className="p-8 text-center" style={{ color: EXAM_TEXT_SECONDARY }}>
-                    No exam terms. Click &quot;Add Exam Term&quot; to create one.
+                    No exam terms. Click "Add Exam Term" to create one.
                   </GlassCard>
                 )}
               </>
             )}
-          </div>
+          </aside>
 
-          {/* Right: Term detail + tabs - show first on mobile so user sees selection prompt */}
-          <div className="lg:col-span-2 order-1 lg:order-2">
-            {termDetail ? (
-              <GlassCard variant="card" className="p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-start sm:justify-between gap-3 mb-4">
-                  <div className="min-w-0">
-                    <h2 className="text-lg sm:text-xl font-bold break-words" style={{ color: EXAM_TEXT_MAIN }}>{termDetail.name}</h2>
-                    {termDetail.description && (
-                      <p className="text-xs sm:text-sm mt-1" style={{ color: EXAM_TEXT_SECONDARY }}>{termDetail.description}</p>
+          <section className="order-1 lg:order-2 lg:col-span-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden min-h-[600px] flex flex-col lg:h-full lg:min-h-0">
+            {!selectedId ? (
+              <GlassCard className="min-h-[420px] p-8 sm:p-12 flex items-center justify-center" style={{ color: EXAM_TEXT_SECONDARY }}>
+                <Calendar className="mb-3 h-11 w-11 opacity-70" style={{ color: EXAM_TEXT_MAIN }} />
+                <p>Select an exam term to view schedule and syllabus.</p>
+              </GlassCard>
+            ) : detailLoading ? (
+              <GlassCard className="min-h-[420px] p-8 sm:p-12 flex items-center justify-center">
+                <Spinner />
+              </GlassCard>
+            ) : termDetail ? (
+              <GlassCard variant="card" className="h-full flex flex-col border-b border-white/10 bg-black/20">
+                <div className="p-6 border-b border-white/10 bg-black/20">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <h2 className="text-2xl font-bold text-white mb-2" style={{ color: EXAM_TEXT_MAIN }}>
+                        {termDetail.name}
+                      </h2>
+                      {termDetail.description && (
+                        <p className="text-gray-400 text-sm max-w-xl" style={{ color: EXAM_TEXT_SECONDARY }}>
+                          {termDetail.description}
+                        </p>
+                      )}
+                    </div>
+
+                    {startsInDays !== null && (
+                      <div className="shrink-0 text-left sm:text-right">
+                        <p className="text-xs text-gray-500 mb-1" style={{ color: EXAM_TEXT_SECONDARY }}>Starts in</p>
+                        <div className="text-3xl font-bold text-lime-400" style={{ color: EXAM_ACCENT }}>
+                          {startsInDays}
+                        </div>
+                        <p className="text-sm font-normal text-gray-400" style={{ color: EXAM_TEXT_SECONDARY }}>days</p>
+                      </div>
                     )}
                   </div>
-                  {startsInDays !== null && (
-                    <div className="text-left sm:text-right flex-shrink-0">
-                      <span className="text-xs sm:text-sm" style={{ color: EXAM_TEXT_SECONDARY }}>
-                        Starts in
-                      </span>
-                      <div
-                        className="text-xl sm:text-2xl font-bold"
-                        style={{ color: EXAM_ACCENT }}
-                      >
-                        {startsInDays}
-                      </div>
-                      <span className="text-xs sm:text-sm" style={{ color: EXAM_TEXT_SECONDARY }}>
-                        days
-                      </span>
-                    </div>
-                  )}
+
+                  <div className="mt-5 flex gap-2 sm:gap-6 border-b border-white/10 overflow-x-auto no-scrollbar">
+                    <button
+                      type="button"
+                      onClick={() => setTab("schedule")}
+                      className="min-h-[44px] border-b-2 px-1 pb-3 text-base font-semibold whitespace-nowrap pb-3 text-sm font-medium transition-all relative text-lime-400"
+                      style={tab === "schedule" ? { color: EXAM_ACCENT, borderBottomColor: EXAM_ACCENT } : { color: EXAM_TEXT_SECONDARY, borderBottomColor: "transparent" }}
+                    >
+                      Exam Schedule
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTab("syllabus")}
+                      className="min-h-[44px] border-b-2 px-1 pb-3 text-base font-semibold whitespace-nowrap pb-3 text-sm font-medium transition-all relative text-gray-400 hover:text-gray-200"
+                      style={tab === "syllabus" ? { color: EXAM_ACCENT, borderBottomColor: EXAM_ACCENT } : { color: EXAM_TEXT_SECONDARY, borderBottomColor: "transparent" }}
+                    >
+                      Syllabus Tracking
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex gap-2 sm:gap-4 border-b mb-4 -mx-1 overflow-x-auto no-scrollbar" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-                  <button
-                    type="button"
-                    onClick={() => setTab("schedule")}
-                    className={`pb-2 px-2 sm:px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap min-h-[44px] touch-manipulation flex items-end ${
-                      tab === "schedule" ? "border-b-2" : ""
-                    }`}
-                    style={
-                      tab === "schedule"
-                        ? { color: EXAM_ACCENT, borderBottomColor: EXAM_ACCENT }
-                        : { color: EXAM_TEXT_SECONDARY }
-                    }
-                  >
-                    Exam Schedule
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTab("syllabus")}
-                    className={`pb-2 px-2 sm:px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap min-h-[44px] touch-manipulation flex items-end hover:text-white ${
-                      tab === "syllabus" ? "border-b-2" : ""
-                    }`}
-                    style={
-                      tab === "syllabus"
-                        ? { color: EXAM_ACCENT, borderBottomColor: EXAM_ACCENT }
-                        : { color: EXAM_TEXT_SECONDARY }
-                    }
-                  >
-                    Syllabus Tracking
-                  </button>
-                </div>
+                <div className="p-6 flex-1 bg-black/10 overflow-y-auto no-scrollbar">
+                  <AnimatePresence mode="wait">
+                    {tab === "schedule" && (
+                      <motion.div key="schedule" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        <ExamScheduleTab
+                          termId={termDetail.id}
+                          schedules={termDetail.schedules ?? []}
+                          onScheduleChange={handleScheduleChange}
+                        />
+                      </motion.div>
+                    )}
 
-                <AnimatePresence mode="wait">
-                  {tab === "schedule" && (
-                    <motion.div
-                      key="schedule"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                    >
-                      <ExamScheduleTab
-                        termId={termDetail.id}
-                        schedules={termDetail.schedules ?? []}
-                        onScheduleChange={handleScheduleChange}
-                      />
-                    </motion.div>
-                  )}
-                  {tab === "syllabus" && (
-                    <motion.div
-                      key="syllabus"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                    >
-                      <SyllabusTrackingTab
-                        termId={termDetail.id}
-                        syllabus={termDetail.syllabus ?? []}
-                        onSyllabusChange={handleSyllabusChange}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                    {tab === "syllabus" && (
+                      <motion.div key="syllabus" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        <SyllabusTrackingTab
+                          termId={termDetail.id}
+                          syllabus={termDetail.syllabus ?? []}
+                          onSyllabusChange={handleSyllabusChange}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </GlassCard>
             ) : (
-              <div className="p-6 sm:p-12 text-center bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden min-h-[600px] flex flex-col" style={{ color: EXAM_TEXT_SECONDARY }}>
-                <Calendar className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 opacity-60" style={{ color: EXAM_TEXT_MAIN }} />
-                <p className="text-sm sm:text-base">Select an exam term below to view schedule and syllabus tracking</p>
-              </div>
+              <GlassCard className="min-h-[420px] p-8 sm:p-12 flex items-center justify-center" style={{ color: EXAM_TEXT_SECONDARY }}>
+                Unable to load selected term details.
+              </GlassCard>
             )}
-          </div>
+          </section>
         </div>
       </div>
 
       <AnimatePresence>
         {showAddModal && (
           <NewExamTermModal
+            key="create-exam-term-modal"
             classes={classes}
             onClose={() => setShowAddModal(false)}
+            onSaved={handleTermSaved}
+          />
+        )}
+        {editingTerm && (
+          <NewExamTermModal
+            key={`edit-exam-term-${editingTerm.id}`}
+            mode="edit"
+            termId={editingTerm.id}
+            classes={classes}
+            initialValues={{
+              name: editingTerm.name,
+              description: editingTerm.description ?? "",
+              classId: editingTerm.classId,
+              status: editingTerm.status as "UPCOMING" | "COMPLETED",
+            }}
+            onClose={() => setEditingTerm(null)}
             onSaved={handleTermSaved}
           />
         )}

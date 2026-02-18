@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import type { SyllabusItem } from "@/hooks/useExamTerms";
+import Spinner from "@/app/frontend/components/common/Spinner";
 import {
   EXAM_ACCENT,
   EXAM_TEXT_MAIN,
@@ -111,7 +112,12 @@ export default function SyllabusTrackingTab({
                 color: "#1A1A1A",
               }}
             >
-              <Plus size={16} className="flex-shrink-0" /> Add subject
+              {addingNewSubject ? (
+                <Spinner size={16} />
+              ) : (
+                <Plus size={16} className="flex-shrink-0" />
+              )}{" "}
+              Add subject
             </button>
           </div>
         </div>
@@ -233,7 +239,7 @@ export default function SyllabusTrackingTab({
                     style={{ backgroundColor: EXAM_ACCENT, color: "#1A1A1A" }}
                   >
                     {addingUnitForSubject === s.subject ? (
-                      <span className="text-sm font-medium">Adding...</span>
+                      <Spinner size={16} />
                     ) : (
                       <Plus size={18} />
                     )}

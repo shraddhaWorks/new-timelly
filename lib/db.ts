@@ -1,4 +1,4 @@
-import { PrismaClient } from "@/app/generated/prisma";
+import { PrismaClient } from "@prisma/client";
 
 // Keep Prisma connection count low in dev/serverless to avoid exhausting pooled sessions.
 // Also append statement timeout for heavier operations.

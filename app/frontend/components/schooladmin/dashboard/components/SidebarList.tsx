@@ -30,11 +30,13 @@ export const SidebarList = ({
   items,
   subtitle,
   showViewAll = true,
+  onViewAllClick
 }: {
   title: string;
   items: ListItemProps[];
   subtitle?: string;
   showViewAll?: boolean;
+  onViewAllClick?:()=>void
 }) => (
   <div className="bg-white/5 backdrop-blur-xl border-b border-white/10 rounded-2xl p-4 sm:p-6 md:p-8">
     <div className="flex justify-between items-start gap-4 mb-4 sm:mb-6">
@@ -43,7 +45,7 @@ export const SidebarList = ({
         {subtitle && <p className="text-gray-400 text-sm mt-0.5">{subtitle}</p>}
       </div>
       {showViewAll && (
-        <button className="text-lime-400 text-xs font-bold hover:text-white transition-colors py-2 px-3 min-h-[44px] touch-manipulation -my-1">
+        <button onClick={onViewAllClick} className="text-lime-400 text-xs font-bold hover:text-white transition-colors py-2 px-3 min-h-[44px] touch-manipulation -my-1">
           View All
         </button>
       )}

@@ -146,7 +146,7 @@ export default function ParentLeavesTab() {
   const pendingRequests = myLeaves.filter(l => l.status === "PENDING").length;
 
   return (
-    <div className="min-h-screen p-4 text-white">
+    <div className="min-h-screen text-white">
       <div className="max-w-7xl mx-auto">
         <PageHeader
           title="Leave Application"
