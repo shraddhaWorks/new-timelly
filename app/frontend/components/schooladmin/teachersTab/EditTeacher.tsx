@@ -155,29 +155,16 @@
 
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
-
-interface Teacher {
-  name: string;
-  id: string;
-  subject: string;
-  classes: string;
-  phone: string;
-  email: string;
-  qualification: string;
-  experience: string;
-  joiningDate: string;
-  status: string;
-  address: string;
-}
+import type { TeacherRow } from "./TeachersList";
 
 interface Props {
-  teacher: Teacher;
+  teacher: TeacherRow;
   onClose: () => void;
-  onSave: (updatedTeacher: Teacher) => void;
+  onSave: (updatedTeacher: TeacherRow) => void;
 }
 
 const EditTeacher = ({ teacher, onClose, onSave }: Props) => {
-  const [formData, setFormData] = useState<Teacher>(teacher);
+  const [formData, setFormData] = useState<TeacherRow>(teacher);
 
   useEffect(() => {
     document.documentElement.style.overflow = "hidden";
@@ -186,13 +173,15 @@ const EditTeacher = ({ teacher, onClose, onSave }: Props) => {
     };
   }, []);
 
+  useEffect(() => {
+    setFormData(teacher);
+  }, [teacher]);
+
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value } as TeacherRow));
   };
 
   const handleSave = () => {
@@ -222,54 +211,39 @@ const EditTeacher = ({ teacher, onClose, onSave }: Props) => {
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-8 py-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-
-            <Input label="Teacher Name" name="name" value={formData.name} onChange={handleChange} />
-            <Input label="Teacher ID" name="id" value={formData.id} onChange={handleChange} />
-            <Input label="Subject" name="subject" value={formData.subject} onChange={handleChange} />
-            <Input label="Classes" name="classes" value={formData.classes} onChange={handleChange} />
-            <Input label="Phone" name="phone" value={formData.phone} onChange={handleChange} />
-            <Input label="Email" name="email" value={formData.email} onChange={handleChange} />
-            <Input label="Qualification" name="qualification" value={formData.qualification} onChange={handleChange} />
-            <Input label="Experience" name="experience" value={formData.experience} onChange={handleChange} />
-
-            {/* Joining Date */}
-            <div>
-              <label className="text-sm text-gray-400">Joining Date</label>
-              <input
-                type="date"
-                name="joiningDate"
-                value={formData.joiningDate}
-                onChange={handleChange}
-                className="mt-2 w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-white"
-              />
-            </div>
-
-            {/* Status */}
-            <div>
-              <label className="text-sm text-gray-400">Status</label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="mt-2 w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-white"
-              >
-                <option value="Active">Active</option>
-                <option value="On Leave">On Leave</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
-
-          </div>
-
-          {/* Address */}
-          <div className="mt-8">
-            <label className="text-sm text-gray-400">Address</label>
-            <textarea
-              name="address"
-              value={formData.address}
+            <Input
+              label="Teacher Name"
+              name="name"
+              value={formData.name}
               onChange={handleChange}
-              rows={4}
-              className="mt-2 w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-white resize-none"
+            />
+
+            <Input
+              label="Teacher Code"
+              name="teacherId"
+              value={formData.teacherId}
+              onChange={handleChange}
+            />
+
+            <Input
+              label="Subject"
+              name="subject"
+              value={formData.subject}
+              onChange={handleChange}
+            />
+
+            <Input
+              label="Phone"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+            />
+
+            <Input
+              label="Avatar URL"
+              name="avatar"
+              value={formData.avatar}
+              onChange={handleChange}
             />
           </div>
         </div>
@@ -308,7 +282,7 @@ const Input = ({
   label: string;
   name: string;
   value: string;
-  onChange: any;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) => (
   <div>
     <label className="text-sm text-gray-400">{label}</label>

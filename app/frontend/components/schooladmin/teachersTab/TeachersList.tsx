@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Eye, Pencil, Trash2, Search } from "lucide-react";
 import ShowTeacher from "./ShowTeacher";
-import EditTeacher from "./EditTeacher";
 
 /* ================= Types ================= */
 
@@ -75,97 +74,102 @@ export default function TeachersList({
         </div>
       </div>
 
-        {/* ===== Table ===== */}
-        <div className="border-t border-white/10">
-          <div className="w-full overflow-x-auto">
-            <table className="min-w-[900px] w-full table-fixed text-sm">
-              {/* Column widths */}
-              <colgroup>
-                <col className="w-[260px]" />
-                <col className="w-[160px]" />
-                <col className="w-[180px]" />
-                <col className="w-[160px]" />
-                <col className="w-[140px]" />
-                <col className="w-[120px]" />
-              </colgroup>
+      {/* ===== Table ===== */}
+      <div className="border-t border-white/10">
+        <div className="w-full overflow-x-auto">
+          <table className="min-w-[900px] w-full table-fixed text-sm">
+            {/* Column widths */}
+            <colgroup>
+              <col className="w-[260px]" />
+              <col className="w-[160px]" />
+              <col className="w-[180px]" />
+              <col className="w-[160px]" />
+              <col className="w-[140px]" />
+              <col className="w-[120px]" />
+            </colgroup>
 
-              <thead className="text-gray-400">
-                <tr className="border-b border-white/10 text-left">
-                  <th className="px-6 py-4">Teacher</th>
-                  <th className="px-6 py-4">Subject</th>
-                  <th className="px-6 py-4 text-center">Attendance</th>
-                  <th className="px-6 py-4">Phone</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-
-          <tbody>
-            {pagedTeachers.map((teacher) => (
-              <tr
-                key={teacher.id}
-                className="border-t border-white/5 hover:bg-white/5"
-              >
-                <td className="px-6 py-4 flex items-center gap-3">
-                  <img
-                    src={teacher.avatar}
-                    className="w-10 h-10 rounded-xl object-cover"
-                  />
-                  <div>
-                    <p className="font-semibold text-white">
-                      {teacher.name}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {teacher.teacherId}
-                    </p>
-                  </div>
-                </td>
-
-                <td className="px-6 py-4">{teacher.subject}</td>
-                <td className="px-6 py-4">{teacher.attendance}%</td>
-                <td className="px-6 py-4">{teacher.phone}</td>
-
-                <td className="px-6 py-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold
-                      ${
-                        teacher.status === "Active"
-                          ? "bg-lime-400/10 text-lime-400"
-                          : "bg-orange-400/10 text-orange-400"
-                      }`}
-                  >
-                    {teacher.status}
-                  </span>
-                </td>
-
-                <td className="px-6 py-4 text-center">
-                  <div className="flex items-center justify-center gap-3">
-                    <button
-                      onClick={() => setViewTeacher(teacher)}
-                      className="hover:text-lime-400"
-                    >
-                      <Eye size={18} />
-                    </button>
-
-                    <button
-                      onClick={() => onEditTeacher(teacher)}
-                      className="hover:text-yellow-400"
-                    >
-                      <Pencil size={18} />
-                    </button>
-
-                    <button
-                      onClick={() => onDelete(teacher.id)}
-                      className="hover:text-red-400"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </td>
+            <thead className="text-gray-400">
+              <tr className="border-b border-white/10 text-left">
+                <th className="px-6 py-4">Teacher</th>
+                <th className="px-6 py-4">Subject</th>
+                <th className="px-6 py-4 text-center">Attendance</th>
+                <th className="px-6 py-4">Phone</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody>
+              {pagedTeachers.map((teacher) => (
+                <tr
+                  key={teacher.id}
+                  className="border-t border-white/5 hover:bg-white/5"
+                >
+                  <td className="px-6 py-4 flex items-center gap-3">
+                    <img
+                      src={teacher.avatar}
+                      alt=""
+                      className="w-10 h-10 rounded-xl object-cover"
+                    />
+                    <div>
+                      <p className="font-semibold text-white">
+                        {teacher.name}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {teacher.teacherId}
+                      </p>
+                    </div>
+                  </td>
+
+                  <td className="px-6 py-4">{teacher.subject}</td>
+                  <td className="px-6 py-4">{teacher.attendance}%</td>
+                  <td className="px-6 py-4">{teacher.phone}</td>
+
+                  <td className="px-6 py-4">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold
+                        ${
+                          teacher.status === "Active"
+                            ? "bg-lime-400/10 text-lime-400"
+                            : "bg-orange-400/10 text-orange-400"
+                        }`}
+                    >
+                      {teacher.status}
+                    </span>
+                  </td>
+
+                  <td className="px-6 py-4 text-center">
+                    <div className="flex items-center justify-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setViewTeacher(teacher)}
+                        className="hover:text-lime-400"
+                      >
+                        <Eye size={18} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => onEditTeacher(teacher)}
+                        className="hover:text-yellow-400"
+                      >
+                        <Pencil size={18} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => onDelete(teacher.id)}
+                        className="hover:text-red-400"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* 👁 Show Modal */}
@@ -176,11 +180,6 @@ export default function TeachersList({
           onEdit={(teacher) => {
             setViewTeacher(null);
             onEditTeacher(teacher);
-          }}
-
-          {{
-            <EditTeacher
-            teacher ={EditTeacher}/>
           }}
         />
       )}
