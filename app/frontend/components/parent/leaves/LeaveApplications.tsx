@@ -72,6 +72,7 @@ export default function ParentLeavesTab() {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [approvalAuthority, setApprovalAuthority] = useState<ApprovalAuthority | null>(null);
+  const [approvalAuthorityLoaded, setApprovalAuthorityLoaded] = useState(false);
 
   const fetchMyLeaves = useCallback(async () => {
     try {
@@ -88,20 +89,28 @@ export default function ParentLeavesTab() {
 
   const fetchApprovalAuthority = useCallback(async () => {
     try {
-      const res = await fetch("/api/student-leaves/approval-authority");
+      const res = await fetch("/api/student-leaves/approval-authority", {
+        credentials: "include",
+      });
       const data = await res.json();
-      if (res.ok) {
+      if (res.ok && data && (data.teacherId != null || data.teacherName != null)) {
         setApprovalAuthority({
-          teacherName: data.teacherName,
-          photoUrl: data.photoUrl,
-          className: data.className,
-          section: data.section,
+          teacherName: data.teacherName ?? "Class Teacher",
+          photoUrl: data.photoUrl ?? "",
+          className: data.className ?? "-",
+          section: data.section ?? "",
         });
+      } else {
+        setApprovalAuthority(null);
       }
     } catch {
       setApprovalAuthority(null);
+    } finally {
+      setApprovalAuthorityLoaded(true);
     }
   }, []);
+
+
 
   useEffect(() => {
     fetchMyLeaves();
@@ -197,25 +206,35 @@ export default function ParentLeavesTab() {
                 <File size={18} className="text-[#b4f03d]" />
                 <h3 className="text-sm font-bold uppercase tracking-wider">Approval Authority</h3>
               </div>
-              {approvalAuthority ? (
+              {!approvalAuthorityLoaded ? (
+                <div className="flex justify-center p-4"><Spinner /></div>
+              ) : approvalAuthority ? (
                 <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5">
-                  <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#b4f03d]/30 shrink-0">
-                    <img
-                      src={approvalAuthority.photoUrl}
-                      alt={approvalAuthority.teacherName}
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#b4f03d]/30 shrink-0 bg-white/10">
+                    {approvalAuthority.photoUrl ? (
+                      <img
+                        src={approvalAuthority.photoUrl}
+                        alt={approvalAuthority.teacherName}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-[#b4f03d] text-xl font-bold">
+                        {approvalAuthority.teacherName.charAt(0)}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <div className="font-bold text-base">{approvalAuthority.teacherName}</div>
-                    <div className="text-xs text-white/40">Class Teacher ({approvalAuthority.className}-{approvalAuthority.section})</div>
+                    <div className="text-xs text-white/40">Class Teacher ({approvalAuthority.className}{approvalAuthority.section ? `-${approvalAuthority.section}` : ""})</div>
                     <div className="mt-2 text-[10px] bg-[#b4f03d]/10 text-[#b4f03d] px-2 py-1 rounded-full font-bold inline-block">
                       Usually replies in 24 hrs
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="flex justify-center p-4"><Spinner /></div>
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/10 text-center text-sm text-white/50">
+                  Approval authority not available. Your class teacher may not be assigned yet—contact the school office.
+                </div>
               )}
             </div>
 

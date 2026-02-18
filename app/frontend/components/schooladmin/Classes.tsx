@@ -607,7 +607,7 @@ export default function SchoolAdminClassesTab() {
                       <EditClassPanel
                         row={row}
                         onClose={closePanel}
-                        onSaved={loadClasses}
+                        onSuccess={loadClasses}
                       />
                     );
                   }
@@ -616,7 +616,10 @@ export default function SchoolAdminClassesTab() {
                       <DeleteClassPanel
                         row={row}
                         onCancel={closePanel}
-                        onConfirm={closePanel}
+                        onConfirm={() => {
+                          closePanel();
+                          loadClasses();
+                        }}
                       />
                     );
                   }

@@ -17,13 +17,13 @@ type ClassRow = {
 interface EditClassPanelProps {
   row: ClassRow;
   onClose: () => void;
-  onSaved?: () => void;
+  onSuccess?: () => void;
 }
 
 export default function EditClassPanel({
   row,
   onClose,
-  onSaved,
+  onSuccess,
 }: EditClassPanelProps) {
   const [className, setClassName] = useState(row.name);
   const [section, setSection] = useState(row.section.replace("Section ", ""));
@@ -32,7 +32,8 @@ export default function EditClassPanel({
   const [teachers, setTeachers] = useState<{ id: string; name: string }[]>([]);
   const [isLoadingTeachers, setIsLoadingTeachers] = useState(false);
   const [isLoadingClass, setIsLoadingClass] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -46,7 +47,15 @@ export default function EditClassPanel({
         }
         const data = await response.json();
         if (isActive) {
-          setTeachers(Array.isArray(data?.teachers) ? data.teachers : []);
+          const list = Array.isArray(data?.teachers) ? data.teachers : [];
+          setTeachers(
+            list
+              .map((t: any) => ({
+                id: String(t?.id ?? ""),
+                name: String(t?.name ?? "Teacher"),
+              }))
+              .filter((t: { id: string }) => t.id)
+          );
         }
       } catch {
         if (isActive) {
@@ -116,32 +125,40 @@ export default function EditClassPanel({
   }, [row.id]);
 
   const handleSave = async () => {
-    setIsSaving(true);
+    const name = className.trim();
+    if (!name) {
+      setSaveError("Class name is required.");
+      return;
+    }
+    if (!section || section === "__no_sections__") {
+      setSaveError("Please select a valid section.");
+      return;
+    }
+
+    setSaveError(null);
+    setSaveLoading(true);
     try {
-      const response = await fetch(`/api/class/${row.id}`, {
+      const res = await fetch(`/api/class/${row.id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
-          name: className,
+          name,
           section,
-          teacherId,
+          teacherId: teacherId === "" ? null : teacherId,
         }),
       });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data?.message || "Failed to update class.");
+      const data = await res.json();
+      if (!res.ok) {
+        setSaveError(data?.message || "Failed to update class.");
+        return;
       }
-
-      window.alert("Class updated successfully");
-      onSaved?.();
+      onSuccess?.();
       onClose();
-    } catch (error: any) {
-      window.alert(error?.message || "Failed to update class.");
+    } catch {
+      setSaveError("Failed to update class.");
     } finally {
-      setIsSaving(false);
+      setSaveLoading(false);
     }
   };
 
@@ -167,6 +184,12 @@ export default function EditClassPanel({
             <X size={16} className="mx-auto" />
           </button>
         </div>
+
+        {saveError && (
+          <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+            {saveError}
+          </div>
+        )}
 
         <div className="mt-4 grid grid-cols-1 lg:grid-cols-[1.1fr_1fr_1.2fr_auto] gap-3 items-end">
           <SearchInput
@@ -211,7 +234,7 @@ export default function EditClassPanel({
                   ? "Loading teachers..."
                   : "Select Teacher",
                 value: "",
-                disabled: true,
+                disabled: false,
               },
               ...(teachers.length > 0
                 ? teachers.map((teacher) => ({
@@ -231,11 +254,11 @@ export default function EditClassPanel({
           <button
             type="button"
             onClick={handleSave}
-            disabled={isSaving || isLoadingClass}
-            className="h-[40px] lg:h-[46px] px-5 rounded-lg bg-lime-400 text-black font-semibold flex items-center justify-center gap-2 hover:bg-lime-300 transition text-sm"
+            disabled={saveLoading || isLoadingClass || isLoadingTeachers}
+            className="h-[40px] lg:h-[46px] px-5 rounded-lg bg-lime-400 text-black font-semibold flex items-center justify-center gap-2 hover:bg-lime-300 transition text-sm disabled:opacity-50"
           >
             <Save size={16} />
-            {isSaving ? "Saving..." : "Save"}
+            {saveLoading ? "Saving..." : "Save"}
           </button>
         </div>
       </div>
