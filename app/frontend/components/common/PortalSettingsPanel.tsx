@@ -25,6 +25,7 @@ type UserMe = {
   name: string | null;
   email: string | null;
   mobile: string | null;
+  address: string | null;
   language: string | null;
   photoUrl: string | null;
 };
@@ -111,7 +112,7 @@ export default function PortalSettingsPanel({ portal }: { portal: PortalVariant 
         timezone: "Asia/Kolkata",
         photoUrl: u.photoUrl ?? session?.user?.image ?? "",
         location: "New Delhi, India",
-        address: parentDetails.address ?? "",
+        address: portal === "parent" ? (parentDetails.address ?? "") : (u.address ?? ""),
         fatherName: parentDetails.fatherName ?? "",
         fatherPhone: parentDetails.fatherPhone ?? "",
       };
@@ -189,6 +190,7 @@ export default function PortalSettingsPanel({ portal }: { portal: PortalVariant 
           body: JSON.stringify({
             name: form.name.trim(),
             mobile: form.mobile.trim() || null,
+            address: form.address?.trim() || null,
             language: form.language,
             photoUrl: photoUrl || null,
           }),
@@ -334,6 +336,7 @@ async function saveProfile(form: FormState, portal: PortalVariant) {
       body: JSON.stringify({
         name: form.name?.trim() || "",
         mobile: mobile || null,
+        address: form.address?.trim() || null,
         language: form.language || "English",
         photoUrl: form.photoUrl || null,
       }),

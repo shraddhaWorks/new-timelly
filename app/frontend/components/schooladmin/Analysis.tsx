@@ -18,7 +18,6 @@ import {
   Users,
   Star,
   Award,
-  ChevronDown,
   CalendarCheck,
   TrendingUp,
   BookOpen,
@@ -46,6 +45,7 @@ type AnalysisResponse = {
 
 import Spinner from "../common/Spinner";
 import PageHeader from "../common/PageHeader";
+import SelectInput from "../common/SelectInput";
 /* ---------------- Component ---------------- */
 
 export default function AnalysisDashboard() {
@@ -181,32 +181,16 @@ export default function AnalysisDashboard() {
         className="border"
         transparent={false}
         rightSlot={
-          <div className="relative self-center">
-            <select
-              value={year}
-              onChange={(e) => setYear(Number(e.target.value))}
-              className="
-                appearance-none
-                bg-black/40
-                text-white
-                px-6 sm:px-7 py-2 pl-2
-                rounded-xl
-                text-sm
-                border border-white/10
-                focus:outline-none
-                focus:ring-1 focus:ring-white/20
-                cursor-pointer
-                text-center
-                min-w-[100px]
-              "
-            >
-              {(data.availableYears ?? []).map((y) => (
-                <option key={y} value={y} className="text-black">
-                  {y}-{y + 1}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60 pointer-events-none" />
+          <div className="self-center min-w-[120px]">
+            <SelectInput
+              value={String(year)}
+              onChange={(value) => setYear(Number(value))}
+              options={(data.availableYears ?? []).map((y) => ({
+                label: `${y}-${y + 1}`,
+                value: String(y),
+              }))}
+              bgColor="black"
+            />
           </div>
         }
       />
