@@ -418,7 +418,13 @@ export default function SchoolAdminClassesTab() {
                     return <ClassDetailsPanel row={row} onClose={closePanel} />;
                   }
                   if (panelMode === "edit") {
-                    return <EditClassPanel row={row} onClose={closePanel} />;
+                    return (
+                      <EditClassPanel
+                        row={row}
+                        onClose={closePanel}
+                        onSaved={loadClasses}
+                      />
+                    );
                   }
                   if (panelMode === "delete") {
                     return (

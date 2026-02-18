@@ -17,11 +17,13 @@ type ClassRow = {
 interface EditClassPanelProps {
   row: ClassRow;
   onClose: () => void;
+  onSaved?: () => void;
 }
 
 export default function EditClassPanel({
   row,
   onClose,
+  onSaved,
 }: EditClassPanelProps) {
   const [className, setClassName] = useState(row.name);
   const [section, setSection] = useState(row.section.replace("Section ", ""));
@@ -30,6 +32,7 @@ export default function EditClassPanel({
   const [teachers, setTeachers] = useState<{ id: string; name: string }[]>([]);
   const [isLoadingTeachers, setIsLoadingTeachers] = useState(false);
   const [isLoadingClass, setIsLoadingClass] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     let isActive = true;
@@ -111,6 +114,36 @@ export default function EditClassPanel({
       isActive = false;
     };
   }, [row.id]);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/class/${row.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: className,
+          section,
+          teacherId,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.message || "Failed to update class.");
+      }
+
+      window.alert("Class updated successfully");
+      onSaved?.();
+      onClose();
+    } catch (error: any) {
+      window.alert(error?.message || "Failed to update class.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="bg-[#0F172A] p-4 shadow-inner animate-fadeIn border-y border-white/10">
@@ -197,10 +230,12 @@ export default function EditClassPanel({
 
           <button
             type="button"
+            onClick={handleSave}
+            disabled={isSaving || isLoadingClass}
             className="h-[40px] lg:h-[46px] px-5 rounded-lg bg-lime-400 text-black font-semibold flex items-center justify-center gap-2 hover:bg-lime-300 transition text-sm"
           >
             <Save size={16} />
-            Save
+            {isSaving ? "Saving..." : "Save"}
           </button>
         </div>
       </div>
