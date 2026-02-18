@@ -118,7 +118,7 @@ export default function AppSidebar({ menuItems, profile, activeTab = "dashboard"
   return (
     <aside
       className="
-        hidden md:flex
+        hidden lg:flex
         w-64 h-full flex-col
         bg-white/10 backdrop-blur-2xl
         border-r border-white/10
@@ -225,7 +225,7 @@ export default function AppSidebar({ menuItems, profile, activeTab = "dashboard"
                   transition min-w-0
                   ${
                     isActive
-                      ? "bg-lime-400/10 text-lime-400 border border-lime-400/20"
+                      ? "bg-lime-400/10 text-lime-400 border border-lime-400/20 shadow-[0_0_22px_rgba(163,230,53,0.18)]"
                       : "text-white/60 hover:bg-white/5 hover:text-white"
                   }
                 `}
@@ -235,7 +235,12 @@ export default function AppSidebar({ menuItems, profile, activeTab = "dashboard"
                   className="flex-shrink-0"
                   style={{ color: isActive ? PRIMARY_COLOR : "#9ca3af" }}
                 />
-                <span className="truncate text-sm">{item.label}</span>
+                <div className="min-w-0 text-left">
+                  <span className="block truncate text-sm ">{item.label}</span>
+                  {item.description && (
+                    <span className="block truncate text-xs text-white/55">{item.description}</span>
+                  )}
+                </div>
               </motion.button>
             );
           })}

@@ -52,7 +52,7 @@ export default function BottomNavBar({
   return (
     <nav
       className="
-        fixed bottom-0 inset-x-0 z-40 md:hidden
+        fixed bottom-0 inset-x-0 z-40 lg:hidden
         bg-[#0b1220]/95 backdrop-blur-xl
         border-t border-white/10
       "

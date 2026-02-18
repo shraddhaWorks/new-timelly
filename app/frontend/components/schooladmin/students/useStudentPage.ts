@@ -391,14 +391,10 @@ export default function useStudentPage({ classes = [], reload }: Props) {
   };
 
   const handleUpload = async () => {
-    if (!selectedClass) {
-      toast.error("Please select a class first");
-      return;
-    }
-
     if (!uploadFile) {
-      toast.error("Please select a CSV file");
-      return;
+      const message = "Please select an Excel file";
+      toast.error(message);
+      throw new Error(message);
     }
 
     try {
@@ -415,47 +411,29 @@ export default function useStudentPage({ classes = [], reload }: Props) {
       const uploadData = await uploadRes.json();
 
       if (!uploadRes.ok) {
-        toast.error(uploadData.message || "Bulk upload failed");
-        return;
-      }
-
-      const studentsRes = await fetch("/api/student/list");
-      const studentsData: StudentsListResponse = await studentsRes.json();
-
-      if (!studentsRes.ok || !Array.isArray(studentsData.students)) {
-        toast.error("Failed to fetch students");
-        return;
-      }
-
-      const unassignedStudents = studentsData.students.filter(
-        (student) => !student.class
-      );
-
-      for (const student of unassignedStudents) {
-        const assignRes = await assignStudentsToClass(
-          student.id,
-          selectedClass
-        );
-        const assignData = await assignRes.json();
-        if (!assignRes.ok) {
-          const name = student.user?.name || student.name || "";
-          toast.error(assignData.message || `Failed to assign student ${name}`);
-          return;
-        }
+        const message = uploadData.message || "Upload failed";
+        toast.error(message);
+        throw new Error(message);
       }
 
       toast.success(
-        `${uploadData.createdCount} students added & assigned successfully`
+        `${uploadData.createdCount || 0} students added successfully`
       );
       setUploadFile(null);
-      setShowUploadPanel(false);
       refresh();
       if (!selectedClass) {
         fetchAllStudents();
       }
       reload?.();
-    } catch {
-      toast.error("Something went wrong during bulk upload");
+      return {
+        createdCount: uploadData.createdCount || 0,
+        failedCount: uploadData.failedCount || 0,
+      };
+    } catch (e) {
+      if (e instanceof Error) {
+        throw e;
+      }
+      throw new Error("Something went wrong. Please try again.");
     } finally {
       setUploading(false);
     }
@@ -536,6 +514,10 @@ export default function useStudentPage({ classes = [], reload }: Props) {
     }
   };
 
+  const handleDownloadReport = () => {
+    toast.info("Downloading report...");
+  };
+
   return {
     filterClassOptions,
     filterSectionOptions,
@@ -580,7 +562,7 @@ export default function useStudentPage({ classes = [], reload }: Props) {
     closeDelete,
     handleEditSave,
     handleDelete,
-    handleDownloadReport: () => toast.info("Downloading report..."),
+    handleDownloadReport,
     showSuccess,
     setShowSuccess,
   };

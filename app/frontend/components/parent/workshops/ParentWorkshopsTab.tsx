@@ -1,3 +1,5 @@
+
+
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -6,6 +8,8 @@ import PageHeader from "../../common/PageHeader";
 import EventCard from "../../schooladmin/workshops/EventCard";
 import EventDetailsModal from "../../schooladmin/workshops/EventDetailsModal";
 import Spinner from "../../common/Spinner";
+
+/* ================= TYPES ================= */
 
 interface EventItem {
   id: string;
@@ -22,6 +26,8 @@ interface EventItem {
   _count?: { registrations: number };
 }
 
+/* ================= STAT TILE ================= */
+
 function StatTile({
   title,
   value,
@@ -32,19 +38,26 @@ function StatTile({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="min-w-0 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow backdrop-blur-xl">
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="h-10 w-10 shrink-0 rounded-xl bg-white/10 flex items-center justify-center text-lime-300">
+    <div className="min-w-0 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow p-3 sm:p-4">
+      <div className="flex items-center gap-3">
+        <div className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 rounded-xl bg-white/10 flex items-center justify-center text-lime-300">
           {icon}
         </div>
+
         <div className="min-w-0">
-          <div className="text-[11px] uppercase tracking-wide text-white/60">{title}</div>
-          <div className="text-lg font-semibold text-white truncate">{value}</div>
+          <div className="text-[10px] sm:text-[11px] uppercase tracking-wide text-white/60">
+            {title}
+          </div>
+          <div className="text-base sm:text-lg font-semibold text-white truncate">
+            {value}
+          </div>
         </div>
       </div>
     </div>
   );
 }
+
+/* ================= MAIN ================= */
 
 export default function ParentWorkshopsTab() {
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -58,13 +71,18 @@ export default function ParentWorkshopsTab() {
   const [detailsError, setDetailsError] = useState<string | null>(null);
   const [eventDetails, setEventDetails] = useState<EventItem | null>(null);
 
+  /* ================= FETCH EVENTS ================= */
+
   const fetchEvents = async () => {
     try {
       setLoadingEvents(true);
       setEventsError(null);
+
       const res = await fetch("/api/events/list");
       const data = await res.json();
+
       if (!res.ok) throw new Error(data?.message || "Failed to load workshops");
+
       setEvents(Array.isArray(data?.events) ? data.events : []);
     } catch (err: any) {
       setEventsError(err?.message || "Failed to load workshops");
@@ -77,19 +95,27 @@ export default function ParentWorkshopsTab() {
     fetchEvents();
   }, []);
 
+  /* ================= FETCH DETAILS ================= */
+
   useEffect(() => {
     if (!detailsOpen || !selectedEventId) return;
 
     const controller = new AbortController();
+
     const fetchDetails = async () => {
       try {
         setDetailsLoading(true);
         setDetailsError(null);
+
         const res = await fetch(`/api/events/create/${selectedEventId}`, {
           signal: controller.signal,
         });
+
         const data = await res.json();
-        if (!res.ok) throw new Error(data?.message || "Failed to load event details");
+
+        if (!res.ok)
+          throw new Error(data?.message || "Failed to load event details");
+
         setEventDetails(data?.event ?? null);
       } catch (err: any) {
         if (err?.name === "AbortError") return;
@@ -103,46 +129,61 @@ export default function ParentWorkshopsTab() {
     return () => controller.abort();
   }, [detailsOpen, selectedEventId]);
 
+  /* ================= FILTER ================= */
+
   const filteredEvents = useMemo(() => {
     const term = query.trim().toLowerCase();
     if (!term) return events;
+
     return events.filter((event) =>
       [event.title, event.description, event.teacher?.name, event.location, event.mode]
         .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(term))
+        .some((v) => String(v).toLowerCase().includes(term))
     );
   }, [events, query]);
 
+  /* ================= STATS ================= */
+
   const stats = useMemo(() => {
     const now = Date.now();
-    const upcoming = events.filter((event) => {
-      if (!event.eventDate) return false;
-      const time = new Date(event.eventDate).getTime();
-      return !Number.isNaN(time) && time >= now;
+
+    const upcoming = events.filter((e) => {
+      if (!e.eventDate) return false;
+      const t = new Date(e.eventDate).getTime();
+      return !Number.isNaN(t) && t >= now;
     }).length;
 
-    const completed = events.filter((event) => {
-      if (!event.eventDate) return false;
-      const time = new Date(event.eventDate).getTime();
-      return !Number.isNaN(time) && time < now;
+    const completed = events.filter((e) => {
+      if (!e.eventDate) return false;
+      const t = new Date(e.eventDate).getTime();
+      return !Number.isNaN(t) && t < now;
     }).length;
 
     const participants = events.reduce(
-      (sum, event) => sum + (event._count?.registrations ?? 0),
+      (sum, e) => sum + (e._count?.registrations ?? 0),
       0
     );
 
     return { total: events.length, upcoming, completed, participants };
   }, [events]);
 
+  /* ================= UI ================= */
+
   return (
-    <div className="overflow-x-hidden">
-      <div className="relative px-3 sm:px-4 lg:px-8 py-4 max-w-7xl mx-auto space-y-6 pb-8 text-white">
+    <div className="w-full overflow-x-hidden">
+      {/* ✅ LEFT-ALIGNED DASHBOARD CONTAINER */}
+      <div
+        className="
+          w-full max-w-none
+         space-y-6 text-white
+        "
+      >
+        {/* HEADER */}
         <PageHeader
           title="Workshops & Events"
           subtitle="Manage and conduct workshops for students"
           rightSlot={
-            <div className="relative w-full md:w-[320px] min-w-0">
+            <div className="relative w-full max-w-[clamp(220px,30vw,360px)]">
               <Search
                 size={16}
                 className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40"
@@ -157,15 +198,17 @@ export default function ParentWorkshopsTab() {
           }
         />
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 min-w-0">
+        {/* STATS GRID */}
+        <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(180px,1fr))]">
           <StatTile title="TOTAL" value={`${stats.total}`} icon={<List size={20} />} />
           <StatTile title="UPCOMING" value={`${stats.upcoming}`} icon={<CalendarDays size={20} />} />
           <StatTile title="PARTICIPANTS" value={`${stats.participants}`} icon={<Users size={20} />} />
           <StatTile title="COMPLETED" value={`${stats.completed}`} icon={<CheckCircle size={20} />} />
         </div>
 
+        {/* STATES */}
         {loadingEvents && (
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-white/70 text-center">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
             <Spinner />
           </div>
         )}
@@ -182,11 +225,17 @@ export default function ParentWorkshopsTab() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 min-w-0">
+        {/* EVENTS GRID (AUTO RESPONSIVE) */}
+        <div className="grid gap-5 grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
           {filteredEvents.map((event) => {
-            const dateValue = event.eventDate ? new Date(event.eventDate) : null;
+            const dateValue = event.eventDate
+              ? new Date(event.eventDate)
+              : null;
+
             const status =
-              dateValue && !Number.isNaN(dateValue.getTime()) && dateValue.getTime() < Date.now()
+              dateValue &&
+              !Number.isNaN(dateValue.getTime()) &&
+              dateValue.getTime() < Date.now()
                 ? "completed"
                 : "upcoming";
 
@@ -215,6 +264,7 @@ export default function ParentWorkshopsTab() {
           })}
         </div>
 
+        {/* MODAL */}
         <EventDetailsModal
           open={detailsOpen}
           onClose={() => {

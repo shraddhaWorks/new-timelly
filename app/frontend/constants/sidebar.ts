@@ -38,6 +38,7 @@ import { Permission } from "../enums/permissions";
 export const PARENT_MENU_ITEMS: SidebarItem[] = [
     {
         label: "Analytics",
+        description: "Performance Insights",
         tab: "analytics",
         href: "/frontend/pages/parent?tab=analytics",
         icon: ChartColumn,

@@ -85,9 +85,13 @@ function ParentDashboardInner() {
 
     (async () => {
       try {
-        const res = await fetch("/api/user/me");
-        const data = await res.json();
-        if (cancelled || !res.ok) return;
+        const [userRes, parentDetailsRes] = await Promise.all([
+          fetch("/api/user/me"),
+          fetch("/api/student/parent-details"),
+        ]);
+        const userData = await userRes.json();
+        const parentData = await parentDetailsRes.json();
+        if (cancelled || !userRes.ok) return;
 
         const u = data.user;
         if (u) {
