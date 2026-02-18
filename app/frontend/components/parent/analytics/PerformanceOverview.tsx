@@ -42,10 +42,12 @@ export default function PerformanceOverview({ data, average }: PerformanceOvervi
             >
               {/* Extra Info Box */}
               {hovered === idx && (
-                <div className="absolute -top-24 w-40 bg-white/95 text-black p-3 rounded-lg shadow-lg z-20">
+                <div className="absolute -top-24 w-40 p-3 rounded-lg shadow-lg z-20
+                  bg-white/20 backdrop-blur-md border border-white/30
+                  text-black">
                   <div className="font-semibold text-sm">{d.m}</div>
                   <div className="text-xs mt-1">Avg Score: {d.v}%</div>
-                  <div className="text-[10px] mt-1 text-gray-600">{d.info}</div>
+                  <div className="text-[10px] mt-1 text-white/60">{d.info}</div>
                 </div>
               )}
 

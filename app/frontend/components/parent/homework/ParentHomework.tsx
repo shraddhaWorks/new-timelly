@@ -212,6 +212,8 @@ export default function Page() {
 
   if (loading) {
     return (
+      <main className="min-w-0 w-full min-h-screen overflow-x-hidden p-4 sm:p-5 md:p-5 lg:p-6 xl:p-8 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-white/30 border-t-white" />
       <main className="min-h-screen p-8 flex items-center justify-center">
         <Spinner/>
       </main>
@@ -220,12 +222,12 @@ export default function Page() {
 
   if (error) {
     return (
-      <main className="min-h-screen p-8">
-        <div className="somu rounded-2xl p-7 text-center">
-          <p className="text-red-400">{error}</p>
+      <main className="min-w-0 w-full min-h-screen overflow-x-hidden p-4 sm:p-5 md:p-5 lg:p-6 xl:p-8">
+        <div className="somu rounded-2xl p-4 sm:p-6 md:p-6 lg:p-7 text-center min-w-0">
+          <p className="text-red-400 break-words">{error}</p>
           <button
             onClick={() => fetchHomeworks()}
-            className="mt-4 px-6 py-2 rounded-xl border border-lime-400 text-lime-300 hover:bg-lime-400/10 transition"
+            className="mt-4 min-h-[44px] px-6 py-3 rounded-xl border border-lime-400 text-lime-300 hover:bg-lime-400/10 transition touch-manipulation"
           >
             Retry
           </button>
@@ -235,7 +237,7 @@ export default function Page() {
   }
 
   return (
-    <main className="min-h-screen space-y-8 text-white">
+    <main className="min-w-0 w-full min-h-screen overflow-x-hidden p-4 sm:p-5 md:p-5 lg:p-6 xl:p-8 space-y-5 sm:space-y-5 md:space-y-6 lg:space-y-8 text-white">
       <HomeworkHeader studentName={studentName} />
 
       <HomeworkStats
@@ -254,9 +256,9 @@ export default function Page() {
         availableSubjects={availableSubjects}
       />
 
-      <div className="space-y-6">
+      <div className="min-w-0 space-y-4 sm:space-y-5 md:space-y-6">
         {filteredHomeworks.length === 0 ? (
-          <div className="somu rounded-2xl p-7 text-center">
+          <div className="somu rounded-2xl p-4 sm:p-6 md:p-6 lg:p-7 text-center min-w-0">
             <p className="text-white/70">No homework found</p>
           </div>
         ) : (

@@ -72,33 +72,34 @@ export default function HomeworkCard({
       : 'border-red-400 text-red-300';
 
   return (
-    <div className="somu rounded-2xl p-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <p className="text-sm text-lime-300">{homework.subject}</p>
-          <h3 className="text-lg font-semibold">{homework.title}</h3>
-          <p className="text-sm text-white/70">
+    <div className="min-w-0 w-full max-w-full somu rounded-2xl p-4 sm:p-5 md:p-5 lg:p-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start sm:gap-4 flex-wrap">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs sm:text-sm text-lime-300">{homework.subject}</p>
+          <h3 className="text-base sm:text-lg font-semibold break-words">{homework.title}</h3>
+          <p className="text-xs sm:text-sm text-white/70 mt-0.5 break-words">
             {homework.teacher.name} • Due: {formatDate(homework.dueDate)}
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
-          <span className={`px-4 py-1 rounded-full text-xs border ${statusColor}`}>
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+          <span className={`px-3 py-1 sm:px-4 rounded-full text-xs border ${statusColor}`}>
             {status}
           </span>
 
           <button
             onClick={() => setIsOpen(!isOpen)}
             aria-label={isOpen ? 'Collapse' : 'Expand'}
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center p-1 -m-1 touch-manipulation"
           >
-            {isOpen ? <ChevronUp /> : <ChevronDown />}
+            {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
           </button>
         </div>
       </div>
 
       {isOpen && (
-        <div className="mt-6 space-y-4 border-t border-white/20 pt-4">
-          <p className="text-sm text-white/70">
+        <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4 border-t border-white/20 pt-3 sm:pt-4">
+          <p className="text-xs sm:text-sm text-white/70 break-words">
             {homework.description}
           </p>
 
@@ -122,7 +123,7 @@ export default function HomeworkCard({
             <button
               onClick={() => onUpload(homework.id)}
               disabled={isUploading}
-              className="w-full flex justify-center items-center gap-2 py-3 rounded-xl border border-lime-400 text-lime-300 hover:bg-lime-400/10 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full min-h-[44px] flex justify-center items-center gap-2 py-3 sm:py-3 rounded-xl border border-lime-400 text-lime-300 hover:bg-lime-400/10 transition disabled:opacity-50 disabled:cursor-not-allowed text-base sm:text-base touch-manipulation"
             >
               <Upload size={18} />
               {isUploading ? 'Uploading...' : 'Upload Submission'}
