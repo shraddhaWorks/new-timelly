@@ -15,8 +15,21 @@ export async function PUT(
     }
 
     const { id } = await params;
-    const schoolId = session.user.schoolId;
-
+    let schoolId = session.user.schoolId;
+    if (!schoolId) {
+      const adminSchool = await prisma.school.findFirst({
+        where: { admins: { some: { id: session.user.id } } },
+        select: { id: true },
+      });
+      schoolId = adminSchool?.id ?? null;
+      if (!schoolId && session.user.role === "TEACHER") {
+        const teacherSchool = await prisma.school.findFirst({
+          where: { teachers: { some: { id: session.user.id } } },
+          select: { id: true },
+        });
+        schoolId = teacherSchool?.id ?? null;
+      }
+    }
     if (!schoolId) {
       return NextResponse.json(
         { message: "School not found in session" },
@@ -127,8 +140,21 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const schoolId = session.user.schoolId;
-
+    let schoolId = session.user.schoolId;
+    if (!schoolId) {
+      const adminSchool = await prisma.school.findFirst({
+        where: { admins: { some: { id: session.user.id } } },
+        select: { id: true },
+      });
+      schoolId = adminSchool?.id ?? null;
+      if (!schoolId && session.user.role === "TEACHER") {
+        const teacherSchool = await prisma.school.findFirst({
+          where: { teachers: { some: { id: session.user.id } } },
+          select: { id: true },
+        });
+        schoolId = teacherSchool?.id ?? null;
+      }
+    }
     if (!schoolId) {
       return NextResponse.json(
         { message: "School not found in session" },

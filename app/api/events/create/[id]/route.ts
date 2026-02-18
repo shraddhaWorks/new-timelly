@@ -29,6 +29,13 @@ export async function GET(
         select: { id: true },
       });
       schoolId = adminSchool?.id ?? null;
+      if (!schoolId && session.user.role === "TEACHER") {
+        const teacherSchool = await prisma.school.findFirst({
+          where: { teachers: { some: { id: session.user.id } } },
+          select: { id: true },
+        });
+        schoolId = teacherSchool?.id ?? null;
+      }
     }
     if (!schoolId) {
       return NextResponse.json(

@@ -14,6 +14,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const classId = searchParams.get("classId");
     const teacherId = searchParams.get("teacherId");
+    const scope = searchParams.get("scope"); // "teacher" = only events created/assigned to current teacher
 
     let schoolId = session.user.schoolId;
     if (!schoolId && session.user.studentId) {
@@ -29,6 +30,13 @@ export async function GET(req: Request) {
         select: { id: true },
       });
       schoolId = adminSchool?.id ?? null;
+      if (!schoolId && session.user.role === "TEACHER") {
+        const teacherSchool = await prisma.school.findFirst({
+          where: { teachers: { some: { id: session.user.id } } },
+          select: { id: true },
+        });
+        schoolId = teacherSchool?.id ?? null;
+      }
     }
     if (!schoolId) {
       return NextResponse.json(
@@ -41,29 +49,15 @@ export async function GET(req: Request) {
       schoolId: schoolId,
     };
 
-    // For students: show events for their class
-    if (session.user.studentId) {
-      const student = await prisma.student.findUnique({
-        where: { id: session.user.studentId },
-        select: { classId: true },
-      });
-
-      if (student?.classId) {
-        where.OR = [
-          { classId: student.classId },
-          { classId: null }, // School-wide events
-        ];
-      } else {
-        where.classId = null; // Only school-wide events
-      }
-    } else {
-      // For teachers/admins: can filter by class or teacher
-      if (classId) {
-        where.classId = classId;
-      }
-      if (teacherId) {
-        where.teacherId = teacherId;
-      }
+    // Show all workshops for everyone (teachers, admins, parents, students)
+    // Optional filters: classId, teacherId, scope=teacher
+    if (scope === "teacher" && session.user.role === "TEACHER") {
+      where.teacherId = session.user.id;
+    } else if (teacherId) {
+      where.teacherId = teacherId;
+    }
+    if (classId) {
+      where.classId = classId;
     }
     const events = await prisma.event.findMany({
       where,

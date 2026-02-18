@@ -32,6 +32,30 @@ export const assignStudentsToClass = (studentId: string, classId: string) =>
     body: JSON.stringify({ studentId, classId }),
   });
 
+export const updateStudent = (studentId: string, payload: {
+  name?: string;
+  fatherName?: string;
+  classId?: string;
+  rollNo?: string;
+  phoneNo?: string;
+  email?: string;
+  address?: string;
+  gender?: string;
+  previousSchool?: string;
+}) =>
+  fetch(`/api/student/${studentId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+
+export const deleteStudent = (studentId: string) =>
+  fetch(`/api/student/${studentId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+
 
 export const studentApi = {
   getByAdmissionNo: (admissionNo: string, academicYear?: string) =>

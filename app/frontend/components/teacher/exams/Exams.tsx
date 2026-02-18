@@ -149,10 +149,21 @@ export default function TeacherExamsTab() {
                                     exam={exam}
                                     onView={() => setView({ mode: "view", examId: exam.id })}
                                     onEdit={() => setView({ mode: "edit", examId: exam.id })}
-                                    onDelete={() => {
-                                        if(confirm("Are you sure you want to delete this exam?")) {
-                                            // Add your delete API logic here
-                                            console.log("Delete exam", exam.id);
+                                    onDelete={async () => {
+                                        if (!confirm("Are you sure you want to delete this exam?")) return;
+                                        try {
+                                            const res = await fetch(`/api/exams/schedules/${exam.id}`, {
+                                                method: "DELETE",
+                                                credentials: "include",
+                                            });
+                                            if (res.ok) {
+                                                loadExams();
+                                            } else {
+                                                const data = await res.json().catch(() => ({}));
+                                                alert(data.message || "Failed to delete exam");
+                                            }
+                                        } catch {
+                                            alert("Failed to delete exam");
                                         }
                                     }}
                                 />
