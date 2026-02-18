@@ -87,21 +87,32 @@ export default function ParentLeavesTab() {
   }, []);
 
   const fetchApprovalAuthority = useCallback(async () => {
-    try {
-      const res = await fetch("/api/student-leaves/approval-authority");
-      const data = await res.json();
-      if (res.ok) {
-        setApprovalAuthority({
-          teacherName: data.teacherName,
-          photoUrl: data.photoUrl,
-          className: data.className,
-          section: data.section,
-        });
-      }
-    } catch {
-      setApprovalAuthority(null);
+  try {
+    const res = await fetch("/api/student-leaves/approval-authority");
+
+    if (!res.ok) {
+      console.log("API Error Status:", res.status);
+      return;
     }
-  }, []);
+
+    const data = await res.json();
+
+    console.log("API Response:", data); // ✅ log actual API data
+
+    setApprovalAuthority({
+      teacherName: data.teacherName,
+      photoUrl: data.photoUrl,
+      className: data.className,
+      section: data.section,
+    });
+
+  } catch (error) {
+    console.error("Fetch Error:", error);
+    setApprovalAuthority(null);
+  }
+}, []);
+
+
 
   useEffect(() => {
     fetchMyLeaves();
@@ -208,6 +219,8 @@ export default function ParentLeavesTab() {
                   </div>
                   <div>
                     <div className="font-bold text-base">{approvalAuthority.teacherName}</div>
+                    console.log(approvalAuthority)
+
                     <div className="text-xs text-white/40">Class Teacher ({approvalAuthority.className}-{approvalAuthority.section})</div>
                     <div className="mt-2 text-[10px] bg-[#b4f03d]/10 text-[#b4f03d] px-2 py-1 rounded-full font-bold inline-block">
                       Usually replies in 24 hrs
