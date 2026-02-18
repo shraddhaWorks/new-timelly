@@ -93,7 +93,7 @@ function ParentDashboardInner() {
         const parentData = await parentDetailsRes.json();
         if (cancelled || !userRes.ok) return;
 
-        const u = data.user;
+        const u = userData.user;
         if (u) {
           setProfile({
             name: u.name ?? "Parent",
