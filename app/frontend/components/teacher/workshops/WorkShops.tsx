@@ -7,15 +7,7 @@ import CreateEventForm from "../../schooladmin/workshops/CreateEventForm";
 import EventCard from "../../schooladmin/workshops/EventCard";
 import EventDetailsModal from "../../schooladmin/workshops/EventDetailsModal";
 import DeleteEventModal from "../../schooladmin/workshops/DeleteEventModal";
-import {
-  CalendarDays,
-  CheckCircle,
-  List,
-  Plus,
-  Users,
-  X,
-  LucideIcon,
-} from "lucide-react";
+import { CalendarDays, CheckCircle, List, LucideIcon, Plus, Users, X } from "lucide-react";
 import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 interface EventItem {
