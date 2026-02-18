@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   CalendarDays,
   Clock,
@@ -7,6 +8,11 @@ import {
   Users,
   Info,
   X,
+  Loader2,
+  CheckCircle,
+  UserPlus,
+  Award,
+  Download,
 } from "lucide-react";
 import { AVATAR_URL } from "../../../constants/images";
 
@@ -26,9 +32,19 @@ interface EventDetailsModalProps {
     level?: string | null;
     additionalInfo?: string | null;
     photo?: string | null;
+    maxSeats?: number | null;
+    isRegistered?: boolean;
     teacher?: { name?: string | null; email?: string | null; photoUrl?: string | null } | null;
     _count?: { registrations: number };
+    workshopCertificate?: {
+      id: string;
+      title: string;
+      certificateUrl: string | null;
+      issuedDate: string;
+    } | null;
   } | null;
+  showEnrollAction?: boolean;
+  onEnrollSuccess?: () => void;
 }
 
 function formatDate(dateString?: string | null) {
@@ -58,13 +74,47 @@ export default function EventDetailsModal({
   loading,
   error,
   event,
+  showEnrollAction = false,
+  onEnrollSuccess,
 }: EventDetailsModalProps) {
+  const [enrollLoading, setEnrollLoading] = useState(false);
+  const [enrollError, setEnrollError] = useState<string | null>(null);
+  const [enrolled, setEnrolled] = useState(false);
+
   if (!open) return null;
 
   const isUpcoming = event?.eventDate
     ? new Date(event.eventDate).getTime() >= Date.now()
     : true;
   const statusLabel = isUpcoming ? "Upcoming" : "Completed";
+
+  const isRegistered = event?.isRegistered ?? enrolled;
+  const enrolledCount = event?._count?.registrations ?? 0;
+  const maxSeats = event?.maxSeats ?? null;
+  const isFull = maxSeats != null && maxSeats > 0 && enrolledCount >= maxSeats;
+  const canEnroll = showEnrollAction && isUpcoming && !isRegistered && !isFull;
+
+  const handleEnroll = async () => {
+    if (!event?.id || !canEnroll) return;
+    setEnrollLoading(true);
+    setEnrollError(null);
+    try {
+      const res = await fetch("/api/events/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ eventId: event.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || "Enrollment failed");
+      setEnrolled(true);
+      onEnrollSuccess?.();
+    } catch (err) {
+      setEnrollError(err instanceof Error ? err.message : "Failed to enroll");
+    } finally {
+      setEnrollLoading(false);
+    }
+  };
   const instructorImage =
     event?.teacher?.photoUrl && event.teacher.photoUrl.trim() !== ""
       ? event.teacher.photoUrl
@@ -182,21 +232,90 @@ export default function EventDetailsModal({
                     <div className="mt-3 space-y-3 text-sm text-white/70">
                       <div className="flex items-center justify-between">
                         <span>Total Seats</span>
-                        <span className="text-white">50</span>
+                        <span className="text-white">
+                          {maxSeats != null ? maxSeats : "Unlimited"}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span>Enrolled</span>
-                        <span className="text-lime-300">45</span>
+                        <span className="text-lime-300">{enrolledCount}</span>
                       </div>
-                      <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                        <div className="h-full w-[90%] rounded-full bg-lime-400" />
-                      </div>
+                      {maxSeats != null && maxSeats > 0 && (
+                        <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-lime-400 transition-all"
+                            style={{
+                              width: `${Math.min(100, (enrolledCount / maxSeats) * 100)}%`,
+                            }}
+                          />
+                        </div>
+                      )}
                       <div className="flex items-center justify-between pt-1">
                         <span>Fee</span>
                         <span className="text-white">Free</span>
                       </div>
                     </div>
                   </div>
+
+                  {showEnrollAction && event?.workshopCertificate && (
+                    <div className="rounded-2xl border border-lime-400/20 bg-lime-400/5 px-4 py-3 sm:px-5 sm:py-4">
+                      <div className="flex items-center gap-2 text-lime-400 font-semibold mb-2">
+                        <Award size={18} />
+                        Your Certificate
+                      </div>
+                      <p className="text-sm text-white/70 mb-3">{event.workshopCertificate.title}</p>
+                      {event.workshopCertificate.certificateUrl ? (
+                        <a
+                          href={event.workshopCertificate.certificateUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 rounded-xl bg-lime-400 px-4 py-2.5 text-sm font-semibold text-black hover:bg-lime-300 transition"
+                        >
+                          <Download size={16} />
+                          Download Certificate
+                        </a>
+                      ) : (
+                        <span className="text-sm text-white/50">Certificate is being prepared</span>
+                      )}
+                    </div>
+                  )}
+
+                  {showEnrollAction && (
+                    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 sm:px-5 sm:py-4">
+                      {enrollError && (
+                        <div className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+                          {enrollError}
+                        </div>
+                      )}
+                      {isRegistered ? (
+                        <div className="flex items-center gap-2 text-lime-400">
+                          <CheckCircle size={18} />
+                          <span className="text-sm font-medium">You are enrolled</span>
+                        </div>
+                      ) : isFull ? (
+                        <div className="text-sm text-white/60">Workshop is full</div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleEnroll}
+                          disabled={enrollLoading}
+                          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-lime-400 px-4 py-3 text-sm font-semibold text-black hover:bg-lime-300 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {enrollLoading ? (
+                            <>
+                              <Loader2 size={18} className="animate-spin" />
+                              Enrolling...
+                            </>
+                          ) : (
+                            <>
+                              <UserPlus size={18} />
+                              Enroll in Workshop
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </>

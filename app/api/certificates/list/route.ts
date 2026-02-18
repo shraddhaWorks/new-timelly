@@ -14,8 +14,21 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const studentId = searchParams.get("studentId");
 
-    const schoolId = session.user.schoolId;
-
+    let schoolId = session.user.schoolId;
+    if (!schoolId && session.user.studentId) {
+      const student = await prisma.student.findUnique({
+        where: { id: session.user.studentId },
+        select: { schoolId: true },
+      });
+      schoolId = student?.schoolId ?? null;
+    }
+    if (!schoolId) {
+      const adminSchool = await prisma.school.findFirst({
+        where: { admins: { some: { id: session.user.id } } },
+        select: { id: true },
+      });
+      schoolId = adminSchool?.id ?? null;
+    }
     if (!schoolId) {
       return NextResponse.json(
         { message: "School not found in session" },

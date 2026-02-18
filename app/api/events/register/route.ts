@@ -43,6 +43,9 @@ export async function POST(req: Request) {
         id: eventId,
         schoolId: schoolId,
       },
+      include: {
+        _count: { select: { registrations: true } },
+      },
     });
 
     if (!event) {
@@ -50,6 +53,17 @@ export async function POST(req: Request) {
         { message: "Event not found or doesn't belong to your school" },
         { status: 404 }
       );
+    }
+
+    // Check max seats if set
+    if (event.maxSeats != null && event.maxSeats > 0) {
+      const enrolled = event._count?.registrations ?? 0;
+      if (enrolled >= event.maxSeats) {
+        return NextResponse.json(
+          { message: "This workshop is full. No seats available." },
+          { status: 400 }
+        );
+      }
     }
 
     // Verify student can register (event must be for their class or school-wide)

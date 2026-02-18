@@ -34,6 +34,7 @@ export async function PUT(
       additionalInfo,
       photo,
       eventDate,
+      maxSeats,
     } = await req.json();
 
     if (
@@ -86,6 +87,7 @@ export async function PUT(
         additionalInfo,
         eventDate: parsedEventDate,
         photo: photo ?? null,
+        maxSeats: maxSeats != null && typeof maxSeats === "number" ? maxSeats : null,
       },
       include: {
         class: {

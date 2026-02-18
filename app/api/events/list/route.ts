@@ -15,8 +15,21 @@ export async function GET(req: Request) {
     const classId = searchParams.get("classId");
     const teacherId = searchParams.get("teacherId");
 
-    const schoolId = session.user.schoolId;
-
+    let schoolId = session.user.schoolId;
+    if (!schoolId && session.user.studentId) {
+      const student = await prisma.student.findUnique({
+        where: { id: session.user.studentId },
+        select: { schoolId: true },
+      });
+      schoolId = student?.schoolId ?? null;
+    }
+    if (!schoolId) {
+      const adminSchool = await prisma.school.findFirst({
+        where: { admins: { some: { id: session.user.id } } },
+        select: { id: true },
+      });
+      schoolId = adminSchool?.id ?? null;
+    }
     if (!schoolId) {
       return NextResponse.json(
         { message: "School not found in session" },
@@ -69,8 +82,19 @@ export async function GET(req: Request) {
         createdAt: "desc",
       },
     });
-    // For students, also include registration status
+    // For students, also include registration status and workshop certificate
     if (session.user.studentId) {
+      const workshopCerts = await prisma.certificate.findMany({
+        where: {
+          studentId: session.user.studentId!,
+          title: { endsWith: " - Participation" },
+        },
+        select: { title: true },
+      });
+      const eventTitlesWithCert = new Set(
+        workshopCerts.map((c) => c.title.replace(/ - Participation$/, ""))
+      );
+
       const eventsWithRegistration = await Promise.all(
         events.map(async (event) => {
           const registration = await prisma.eventRegistration.findUnique({
@@ -86,6 +110,7 @@ export async function GET(req: Request) {
             ...event,
             isRegistered: !!registration,
             registrationStatus: registration?.paymentStatus || null,
+            hasCertificate: eventTitlesWithCert.has(event.title),
           };
         })
       );

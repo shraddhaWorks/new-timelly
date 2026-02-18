@@ -16,6 +16,8 @@ interface EventItem {
   mode?: string | null;
   additionalInfo?: string | null;
   photo?: string | null;
+  maxSeats?: number | null;
+  hasCertificate?: boolean;
   teacher?: { name?: string | null; email?: string | null; photoUrl?: string | null } | null;
   _count?: { registrations: number };
 }
@@ -197,6 +199,8 @@ export default function ParentWorkshopsTab() {
                 location={event.location}
                 mode={event.mode}
                 registrations={event._count?.registrations ?? 0}
+                maxSeats={event.maxSeats}
+                hasCertificate={event.hasCertificate}
                 teacherName={event.teacher?.name ?? ""}
                 status={status}
                 photo={event.photo}
@@ -222,6 +226,16 @@ export default function ParentWorkshopsTab() {
           loading={detailsLoading}
           error={detailsError}
           event={eventDetails}
+          showEnrollAction
+          onEnrollSuccess={() => {
+            fetchEvents();
+            if (selectedEventId) {
+              fetch(`/api/events/create/${selectedEventId}`, { credentials: "include" })
+                .then((r) => r.json())
+                .then((d) => d?.event && setEventDetails(d.event))
+                .catch(() => {});
+            }
+          }}
         />
       </div>
     </div>

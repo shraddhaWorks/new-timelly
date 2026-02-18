@@ -11,7 +11,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const { title, description, type, level,location,mode,additionalInfo,photo, eventDate, classId , } = await req.json();
+    const { title, description, type, level, location, mode, additionalInfo, photo, eventDate, classId, maxSeats } = await req.json();
 
     if (!title || !description || !type || !level || !location || !mode || !additionalInfo) {
       return NextResponse.json(
@@ -73,6 +73,7 @@ export async function POST(req: Request) {
         classId: classId || null,
         teacherId,
         schoolId,
+        maxSeats: maxSeats != null && typeof maxSeats === "number" ? maxSeats : null,
       },
       include: {
         class: {
