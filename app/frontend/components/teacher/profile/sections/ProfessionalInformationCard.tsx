@@ -14,14 +14,14 @@ export default function ProfessionalInformationCard({
   const isInactive = profile.status === "Inactive";
 
   return (
-    <section className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl height-82%">
+    <section className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl">
       <div className="flex items-center gap-3 p-5 sm:px-8">
         <BriefcaseBusiness size={22} className="text-lime-400" />
         <h3 className="text-lg font-bold text-white">Professional Information</h3>
       </div>
       <div className="h-px bg-white/10" />
 
-      <div className="grid grid-cols-1 gap-5 px-6 py-5 sm:grid-cols-2 sm:px-8 sm:py-6">
+      <div className="grid grid-cols-1 gap-5 px-5 py-5 sm:grid-cols-2 sm:px-8 sm:py-6">
         <InfoItem label="Teacher Name" value={profile.name} />
         <InfoItem label="Teacher ID" value={profile.teacherId} />
         <InfoItem label="Subject" value={profile.subject} />
@@ -51,8 +51,8 @@ export default function ProfessionalInformationCard({
 function InfoItem({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="space-y-2">
-      <p className="text-[10px] uppercase tracking-wider text-white/35">{label}</p>
-      <div className="text-[14px] font-semibold text-white">{value}</div>
+      <p className="text-[10px] sm:text-[11px] uppercase tracking-wider text-white/35">{label}</p>
+      <div className="text-[13px] sm:text-[14px] font-semibold text-white">{value}</div>
     </div>
   );
 }

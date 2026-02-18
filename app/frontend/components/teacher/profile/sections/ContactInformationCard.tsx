@@ -40,12 +40,12 @@ function ContactItem({
 }) {
   return (
     <div className={className}>
-      <p className="text-[10px] uppercase tracking-wider text-white/35">{label}</p>
-      <div className="mt-3 flex items-center gap-4">
+      <p className="text-[10px] sm:text-[11px] uppercase tracking-wider text-white/35">{label}</p>
+      <div className="mt-3 flex items-start sm:items-center gap-4">
         <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 text-white/60">
           <Icon size={16} />
         </span>
-        <p className="text-[14px] font-semibold text-white">{value}</p>
+        <p className="text-[13px] sm:text-[14px] font-semibold text-white break-words">{value}</p>
       </div>
     </div>
   );
