@@ -422,11 +422,7 @@ export default function SchoolAdminClassesTab() {
                       <EditClassPanel
                         row={row}
                         onClose={closePanel}
-<<<<<<< HEAD
                         onSuccess={loadClasses}
-=======
-                        onSaved={loadClasses}
->>>>>>> 3cec6fb7725c5f659d0a643f57d62b48199c9a63
                       />
                     );
                   }

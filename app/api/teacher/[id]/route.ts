@@ -19,9 +19,10 @@ const resolveSchoolId = async (session: {
     schoolId = adminSchool?.id ?? null;
 
     // For students: get school from student record
-    if (!schoolId && (session.user as { studentId?: string }).studentId) {
+    const studentId = (session.user as { studentId?: string }).studentId;
+    if (!schoolId && studentId) {
       const student = await prisma.student.findUnique({
-        where: { id: (session.user as { studentId: string }).studentId },
+        where: { id: studentId },
         select: { schoolId: true },
       });
       schoolId = student?.schoolId ?? null;

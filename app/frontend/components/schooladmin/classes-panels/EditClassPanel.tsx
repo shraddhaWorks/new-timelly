@@ -17,11 +17,13 @@ type ClassRow = {
 interface EditClassPanelProps {
   row: ClassRow;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
 export default function EditClassPanel({
   row,
   onClose,
+  onSuccess,
 }: EditClassPanelProps) {
   const [className, setClassName] = useState(row.name);
   const [section, setSection] = useState(row.section.replace("Section ", ""));
@@ -30,6 +32,8 @@ export default function EditClassPanel({
   const [teachers, setTeachers] = useState<{ id: string; name: string }[]>([]);
   const [isLoadingTeachers, setIsLoadingTeachers] = useState(false);
   const [isLoadingClass, setIsLoadingClass] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -119,6 +123,44 @@ export default function EditClassPanel({
       isActive = false;
     };
   }, [row.id]);
+
+  const handleSave = async () => {
+    const name = className.trim();
+    if (!name) {
+      setSaveError("Class name is required.");
+      return;
+    }
+    if (!section || section === "__no_sections__") {
+      setSaveError("Please select a valid section.");
+      return;
+    }
+
+    setSaveError(null);
+    setSaveLoading(true);
+    try {
+      const res = await fetch(`/api/class/${row.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          name,
+          section,
+          teacherId: teacherId === "" ? null : teacherId,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSaveError(data?.message || "Failed to update class.");
+        return;
+      }
+      onSuccess?.();
+      onClose();
+    } catch {
+      setSaveError("Failed to update class.");
+    } finally {
+      setSaveLoading(false);
+    }
+  };
 
   return (
     <div className="bg-[#0F172A] p-4 shadow-inner animate-fadeIn border-y border-white/10">
@@ -211,10 +253,12 @@ export default function EditClassPanel({
 
           <button
             type="button"
-            className="h-[40px] lg:h-[46px] px-5 rounded-lg bg-lime-400 text-black font-semibold flex items-center justify-center gap-2 hover:bg-lime-300 transition text-sm"
+            onClick={handleSave}
+            disabled={saveLoading || isLoadingClass || isLoadingTeachers}
+            className="h-[40px] lg:h-[46px] px-5 rounded-lg bg-lime-400 text-black font-semibold flex items-center justify-center gap-2 hover:bg-lime-300 transition text-sm disabled:opacity-50"
           >
             <Save size={16} />
-            Save
+            {saveLoading ? "Saving..." : "Save"}
           </button>
         </div>
       </div>
