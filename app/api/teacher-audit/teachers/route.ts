@@ -7,6 +7,16 @@ function clampScore(score: number) {
   return Math.max(0, Math.min(100, score));
 }
 
+/** Academic year "2024-2025" -> { start: Sep 1 2024, end: Aug 31 2025 } */
+function academicYearRange(academicYear: string): { start: Date; end: Date } | null {
+  const m = academicYear.match(/^(\d{4})-(\d{4})$/);
+  if (!m) return null;
+  const startYear = parseInt(m[1], 10);
+  const start = new Date(startYear, 8, 1, 0, 0, 0); // Sep 1
+  const end = new Date(startYear + 1, 7, 31, 23, 59, 59); // Aug 31 next year
+  return { start, end };
+}
+
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -27,6 +37,9 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const q = searchParams.get("q")?.trim() ?? "";
+    const academicYear = searchParams.get("academicYear")?.trim() ?? "";
+
+    const yearRange = academicYear ? academicYearRange(academicYear) : null;
 
     const teachers = await prisma.user.findMany({
       where: {
@@ -56,10 +69,14 @@ export async function GET(req: Request) {
     });
 
     // Compute performance scores (baseline 50 + sum impacts, clamped 0..100)
+    // Optionally filter by academic year
     const scores = await Promise.all(
       teachers.map(async (t) => {
+        const where = yearRange
+          ? { teacherId: t.id, createdAt: { gte: yearRange.start, lte: yearRange.end } }
+          : { teacherId: t.id };
         const agg = await prisma.teacherAuditRecord.aggregate({
-          where: { teacherId: t.id },
+          where,
           _sum: { scoreImpact: true },
           _count: { _all: true },
         });

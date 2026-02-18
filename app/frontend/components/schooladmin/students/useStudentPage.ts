@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useStudents } from "../../../hooks/useStudents";
-import { addStudent } from "../../../services/student.service";
+import { addStudent, assignStudentsToClass, updateStudent, deleteStudent as deleteStudentApi } from "../../../services/student.service";
 import { toast } from "../../../services/toast.service";
 import {
   ClassItem,
@@ -455,7 +455,8 @@ export default function useStudentPage({ classes = [], reload }: Props) {
   const closeEdit = () => setEditStudent(null);
   const closeDelete = () => setDeleteStudent(null);
 
-  const handleEditSave = () => {
+  const handleEditSave = async () => {
+    if (!editStudent) return;
     const nextErrors = validateForm(editForm, {
       requireFees: false,
       requireAadhaar: false,
@@ -464,16 +465,53 @@ export default function useStudentPage({ classes = [], reload }: Props) {
     setEditErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
     setEditSaving(true);
-    setTimeout(() => {
-      toast.success("Student updated (UI only)");
-      setEditSaving(false);
+    try {
+      const res = await updateStudent(editStudent.id, {
+        name: editForm.name.trim(),
+        fatherName: editForm.fatherName.trim(),
+        classId: editForm.classId || undefined,
+        rollNo: editForm.rollNo.trim() || undefined,
+        phoneNo: editForm.phoneNo.trim() || undefined,
+        email: editForm.email.trim() || undefined,
+        address: editForm.address.trim() || undefined,
+        gender: editForm.gender.trim() || undefined,
+        previousSchool: editForm.previousSchool.trim() || undefined,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message || "Failed to update student");
+        return;
+      }
+      toast.success("Student updated successfully");
       closeEdit();
-    }, 300);
+      refresh();
+      if (!selectedClassIdForFetch) fetchAllStudents();
+      reload?.();
+    } catch {
+      toast.error("Failed to update student");
+    } finally {
+      setEditSaving(false);
+    }
   };
 
-  const handleDelete = () => {
-    toast.success("Student deleted (UI only)");
-    closeDelete();
+  const handleDelete = async () => {
+    if (!deleteStudent) return;
+    const student = deleteStudent;
+    try {
+      const res = await deleteStudentApi(student.id);
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message || "Failed to delete student");
+        return;
+      }
+      toast.success("Student deleted successfully");
+      closeDelete();
+      refresh();
+      if (!selectedClassIdForFetch) fetchAllStudents();
+      reload?.();
+    } catch {
+      toast.error("Failed to delete student");
+    }
   };
 
   const handleDownloadReport = () => {

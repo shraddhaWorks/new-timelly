@@ -20,6 +20,7 @@ interface EventItem {
   additionalInfo?: string | null;
   teacher?: { name?: string | null } | null;
   photo?: string | null;
+  maxSeats?: number | null;
   _count?: { registrations: number };
   type?: string | null;
   level?: string | null;
@@ -189,7 +190,7 @@ export default function WorkshopsAndEventsTab() {
     return (
       <>
         {/* MOBILE */}
-        <div className="xl:hidden w-full">
+        <div className="lg:hidden w-full">
           {isActive ? (
             <div className="w-full">{cancelButton}</div>
           ) : (
@@ -204,7 +205,7 @@ export default function WorkshopsAndEventsTab() {
         </div>
 
         {/* DESKTOP */}
-        <div className="hidden xl:block">
+        <div className="hidden lg:block">
           {isActive ? (
             cancelButton
           ) : (
@@ -226,10 +227,10 @@ export default function WorkshopsAndEventsTab() {
         <PageHeader
           title="Workshops & Events"
           subtitle="Plan, manage, and issue certificates for workshops and events"
-          className="bg-white/5 backdrop-blur-xl rounded-2xl p-4 sm:p-5 md:p-6 border border-white/10 shadow-lg flex flex-col xl:flex-row xl:items-center justify-between gap-4"
+          className="bg-white/5 backdrop-blur-xl rounded-2xl p-4 sm:p-5 md:p-6 border border-white/10 shadow-lg flex flex-col lg:flex-row lg:items-center justify-between gap-4"
           rightSlot={
-            <div className="w-full xl:w-auto">
-              <div className="flex flex-wrap gap-2 sm:gap-3 xl:justify-end">
+            <div className="w-full lg:w-auto">
+              <div className="flex flex-wrap gap-2 sm:gap-3 lg:justify-end">
                 {renderButton(
                   "workshop",
                   Plus,
@@ -245,7 +246,7 @@ export default function WorkshopsAndEventsTab() {
           }
         />
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <StatTile title="TOTAL" value={`${stats.total}`} icon={<List size={24} />} />
           <StatTile title="UPCOMING" value={`${stats.upcoming}`} icon={<CalendarDays size={24} />} />
           <StatTile title="PARTICIPANTS" value={`${stats.participants}`} icon={<Users size={24} />} />
@@ -343,6 +344,7 @@ export default function WorkshopsAndEventsTab() {
                   location={event.location}
                   mode={event.mode}
                   registrations={event._count?.registrations ?? 0}
+                  maxSeats={event.maxSeats}
                   teacherName={event.teacher?.name ?? ""}
                   status={status}
                   photo={event.photo}

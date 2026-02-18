@@ -22,3 +22,13 @@ export async function uploadImage(file: File, folder = "images"): Promise<string
   }
   return data.url;
 }
+
+/** Upload a Blob (e.g. from canvas) as a file. */
+export async function uploadBlob(
+  blob: Blob,
+  filename: string,
+  folder = "certificates"
+): Promise<string> {
+  const file = new File([blob], filename, { type: blob.type || "image/png" });
+  return uploadImage(file, folder);
+}

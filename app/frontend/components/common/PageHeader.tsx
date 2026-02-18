@@ -27,7 +27,7 @@ export default function PageHeader({
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       className={`
-        rounded-3xl p-6 mb-8
+        rounded-3xl p-5 sm:p-6 mb-6 sm:mb-8
         flex flex-col md:flex-row
         md:items-center md:justify-between gap-4
         ${transparent ? "bg-transparent" : "bg-white/5 backdrop-blur-xl border-b border-white/10"}
@@ -58,7 +58,7 @@ export default function PageHeader({
 
       {/* RIGHT */}
       {rightSlot && (
-        <div className={center ? "flex justify-center" : "shrink-0"}>
+        <div className={center ? "flex justify-center" : "w-full md:w-auto shrink-0"}>
           {rightSlot}
         </div>
       )}

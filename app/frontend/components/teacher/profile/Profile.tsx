@@ -227,10 +227,10 @@ export default function TeacherProfileTab() {
   };
 
   return (
-    <div className="w-full min-h-screen text-white px-3 sm:px-6 lg:px-8 py-4 space-y-6">
+    <div className="w-full min-h-screen text-white px-3 sm:px-6 lg:px-8 2xl:px-12 py-4 space-y-6">
       {/* <PageHeader title="Profile" subtitle={welcomeSubtitle} className="mb-6" /> */}
 
-      <div className="mx-auto max-w-[1360px] space-y-5">
+      <div className="w-full space-y-5">
         <ProfileBanner isEditMode={isEditMode} onToggleEdit={handleToggleEdit} />
 
         {isEditMode ? (
@@ -244,7 +244,7 @@ export default function TeacherProfileTab() {
           <>
             <TeacherHeroCard profile={profileData} />
 
-            <section className="grid grid-cols-1 gap-5 xl:grid-cols-[2.1fr_1fr]">
+            <section className="grid grid-cols-1 gap-5 lg:grid-cols-[2fr_1fr] xl:grid-cols-[2.1fr_1fr]">
               <div className="space-y-5">
                 <ProfessionalInformationCard profile={profileData} />
                 <ContactInformationCard profile={profileData} />

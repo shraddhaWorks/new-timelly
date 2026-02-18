@@ -563,6 +563,7 @@ model Event {
   additionalInfo String?   @db.Text
   photo          String? // URL or file path
   eventDate      DateTime?
+  maxSeats       Int?      // null = unlimited
 
   // Relations
   classId String?
@@ -575,6 +576,7 @@ model Event {
   school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
   registrations EventRegistration[]
+  certificates  Certificate[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -743,6 +745,9 @@ model Certificate {
   schoolId String
   school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
+  eventId String?
+  event   Event?  @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
   certificateUrl String? // Generated certificate PDF/image URL
 
   createdAt DateTime @default(now())
@@ -751,6 +756,7 @@ model Certificate {
   @@index([studentId])
   @@index([templateId])
   @@index([schoolId])
+  @@index([eventId])
 }
 
 // =====================
