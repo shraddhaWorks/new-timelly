@@ -1,12 +1,12 @@
 "use client";
 
-import { Clock, CalendarDays, CheckCircle, Download } from "lucide-react";
+import { Clock, CalendarDays, CheckCircle, Download, XCircle } from "lucide-react";
 
 interface CertificateRequestCardProps {
   title: string;
   purpose: string;
   requestId: string;
-  status: "processing" | "ready";
+  status: "processing" | "ready" | "rejected";
   requestDate: string;
   secondDateLabel: string;
   secondDate: string;
@@ -30,6 +30,7 @@ const CertificateRequestCard = ({
   downloadUrl,
 }: CertificateRequestCardProps) => {
   const isProcessing = status === "processing";
+  const isRejected = status === "rejected";
 
   return (
     <div className="w-full max-w-5xl mx-auto ">
@@ -72,6 +73,12 @@ const CertificateRequestCard = ({
               <Clock className="w-3 h-3" />
               Processing
             </span>
+          ) : isRejected ? (
+            <span className="flex items-center gap-1 text-xs px-3 py-1 rounded-full 
+                             bg-red-500/20 text-red-400 border border-red-500/30">
+              <XCircle className="w-3 h-3" />
+              Rejected
+            </span>
           ) : (
             <span className="flex items-center gap-1 text-xs px-3 py-1 rounded-full 
                              bg-lime-400/20 text-lime-400 border border-lime-400/30">
@@ -100,6 +107,8 @@ const CertificateRequestCard = ({
             <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
               {isProcessing ? (
                 <Clock className="w-4 h-4 text-orange-400" />
+              ) : isRejected ? (
+                <XCircle className="w-4 h-4 text-red-400" />
               ) : (
                 <CheckCircle className="w-4 h-4 text-lime-400" />
               )}
@@ -143,7 +152,7 @@ const CertificateRequestCard = ({
         )}
 
         {/* ================= DOWNLOAD BUTTON ================= */}
-        {!isProcessing && (
+        {!isProcessing && !isRejected && (
           downloadUrl ? (
             <a
               href={downloadUrl}
