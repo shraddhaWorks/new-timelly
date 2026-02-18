@@ -1,13 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 const LOGO_SRC = "/timelylogo.webp";
 
+function getEmailFromUrl(): string {
+  if (typeof window === "undefined") return "";
+  const params = new URLSearchParams(window.location.search);
+  return params.get("email") ?? "";
+}
+
 export default function LoginForm() {
+  const searchParams = useSearchParams();
+  const emailFromParams = searchParams.get("email") ?? "";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const emailParam = emailFromParams || getEmailFromUrl();
+  const isSwitchAccount = Boolean(emailParam?.trim());
+
+  useEffect(() => {
+    const fromUrl = getEmailFromUrl() || emailFromParams;
+    if (fromUrl) setEmail(fromUrl);
+  }, [emailFromParams]);
+
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,11 +41,10 @@ export default function LoginForm() {
     });
 
     if (result?.error) {
-      // Provide more specific error messages
       if (result.error.includes("deactivated") || result.error.includes("password not set")) {
         setError("This account is deactivated or has no password set. Please contact your administrator.");
       } else {
-        setError("Invalid email or password");
+        setError(isSwitchAccount ? "Incorrect password" : "Invalid email or password");
       }
       setLoading(false);
       return;
@@ -47,11 +63,18 @@ export default function LoginForm() {
             className="h-12 w-40 mb-6 drop-shadow-[0_0_15px_rgba(163,230,53,0.3)] object-contain"
           />
           <h1 className="text-2xl font-bold text-white mb-2">
-            Welcome Back
+            {isSwitchAccount ? "Switch Account" : "Welcome Back"}
           </h1>
           <p className="text-gray-400 text-sm">
-            Sign in to access your dashboard
+            {isSwitchAccount
+              ? "Enter your password to continue"
+              : "Sign in to access your dashboard"}
           </p>
+          {isSwitchAccount && email && (
+            <p className="text-lime-400/90 text-sm font-medium mt-2 truncate max-w-full px-4">
+              {email}
+            </p>
+          )}
         </div>
 
         {/* Form */}
@@ -61,22 +84,24 @@ export default function LoginForm() {
               <p className="text-sm text-red-500">{error}</p>
             )}
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
-                Email Address
-              </label>
-              <div className="relative group">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 group-focus-within:text-lime-400 pointer-events-none" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your school email"
-                  className="w-full pl-11 pr-4 py-3.5 bg-black/40 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-lime-400/50 focus:bg-black/60 text-sm"
-                />
+            {!isSwitchAccount && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
+                  Email Address
+                </label>
+                <div className="relative group">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 group-focus-within:text-lime-400 pointer-events-none" />
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your school email"
+                    className="w-full pl-11 pr-4 py-3.5 bg-black/40 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-lime-400/50 focus:bg-black/60 text-sm"
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="space-y-1.5">
               <div className="flex justify-between ml-1">
@@ -91,7 +116,8 @@ export default function LoginForm() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder={isSwitchAccount ? "Enter password" : "••••••••"}
+                  autoFocus={isSwitchAccount}
                   className="w-full pl-11 pr-12 py-3.5 bg-black/40 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-lime-400/50 focus:bg-black/60 text-sm"
                 />
                 <button
@@ -110,18 +136,27 @@ export default function LoginForm() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (isSwitchAccount && !email)}
               className="group w-full py-3.5 bg-lime-400 hover:bg-lime-500 text-black font-bold rounded-xl shadow-[0_0_20px_rgba(163,230,53,0.3)] hover:shadow-[0_0_30px_rgba(163,230,53,0.5)] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <span className="h-5 w-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
               ) : (
                 <>
-                  Sign In
+                  {isSwitchAccount ? "Continue" : "Sign In"}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </>
               )}
             </button>
+
+            {isSwitchAccount && (
+              <a
+                href="/admin/login"
+                className="block text-center text-sm text-white/50 hover:text-white/70 transition-colors"
+              >
+                Use a different account
+              </a>
+            )}
           </form>
         </div>
 

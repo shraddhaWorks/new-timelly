@@ -44,6 +44,7 @@ function ParentDashboardInner() {
     name: "Parent",
     subtitle: "Parent",
     image: null as string | null,
+    email: undefined as string | undefined,
   });
 
   const renderTabContent = () => {
@@ -94,6 +95,7 @@ function ParentDashboardInner() {
             name: u.name ?? "Parent",
             subtitle: "Parent",
             image: u.photoUrl ?? null,
+            email: u.email ?? undefined,
           });
         }
       } catch {
@@ -113,6 +115,7 @@ function ParentDashboardInner() {
         title={title}
         menuItems={PARENT_MENU_ITEMS}
         profile={profile}
+        enableSwitchAccounts
       >
         {renderTabContent()}
       </AppLayout>
