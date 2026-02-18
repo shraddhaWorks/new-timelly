@@ -68,7 +68,7 @@ export default function SelectInput({
               key={`${option.label}-${option.value ?? option.label}`}
               value={option.value ?? option.label}
               disabled={option.disabled}
-              className="bg-[#1e1b2e] text-white"
+              className="bg-gray-800 text-white hover:bg-gray-600 focus:bg-gray-600"
             >
               {option.label}
             </option>

@@ -7,6 +7,7 @@ import ExamCard from "./examComponents/ExamCard";
 import ScheduleExamView from "./examComponents/ScheduleExamView";
 import ExamDetailsView from "./examComponents/ExamDetailsView";
 import Spinner from "../../common/Spinner";
+import DeleteConfirmation from "../../common/DeleteConfirmation";
 
 type ViewState =
     | { mode: "list" }
@@ -19,6 +20,7 @@ export default function TeacherExamsTab() {
     const [exams, setExams] = useState<any[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [loading, setLoading] = useState(true);
+    const [examToDelete, setExamToDelete] = useState<any | null>(null);
 
     useEffect(() => {
         loadExams();
@@ -99,11 +101,13 @@ export default function TeacherExamsTab() {
             <PageHeader
                 title="Exams & Syllabus"
                 subtitle="Manage schedules and track syllabus coverage"
-                icon={<BookOpen className="text-[#b4ff39] w-8 h-8" strokeWidth={2.5} />}
                 rightSlot={
                     <button
                         onClick={() => setView({ mode: "create" })}
-                        className="bg-[#b4ff39] text-black px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-transform shadow-lg shadow-lime-500/20"
+                        className="px-4 py-2.5 bg-lime-400 hover:bg-lime-500
+                          text-black font-bold rounded-xl transition-all
+                          shadow-[0_0_15px_rgba(163,230,53,0.3)] 
+                          hover:shadow-[0_0_20px_rgba(163,230,53,0.4)] flex items-center gap-2"
                     >
                         <Plus size={18} strokeWidth={3} /> Schedule Exam
                     </button>
@@ -111,19 +115,21 @@ export default function TeacherExamsTab() {
             />
 
             {/* REFINED SEARCH BAR SECTION */}
-            <div className="relative mb-8  px-6 py-4 rounded-2xl  border border-white/10">
+            <div className="relative mb-8  px-6 py-4 rounded-2xl  border border-white/10 rounded-2xl p-4 flex items-center gap-4">
 
-                <Search className="absolute h-4 w-6 left-10 top-1/2 -translate-y-1/2 text-white/50" />
+                <Search className="absolute h-4 w-6 left-10 top-1/2 -translate-y-1/2 text-white/50 " />
 
                 <input
 
-                    placeholder="    Search exams by class or subject..."
+                    placeholder="Search exams by class or subject..."
 
                     value={searchQuery}
 
                     onChange={(e) => setSearchQuery(e.target.value)}
 
-                    className="w-full pl-6 py-2 rounded-3xl bg-black/10 border border-lime-500/50 focus:outline-none "
+                    className="w-full pl-9 pr-4 py-2 bg-black/20 
+                    border border-white/10 rounded-xl focus:outline-none
+                    focus:border-lime-400/50 text-sm text-white placeholder-gray-500 transition-all"
 
                 />
 
@@ -142,36 +148,43 @@ export default function TeacherExamsTab() {
                             <p className="text-white/40">No exams found matching your search.</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {filtered.map((exam) => (
                                 <ExamCard
                                     key={exam.id}
                                     exam={exam}
                                     onView={() => setView({ mode: "view", examId: exam.id })}
                                     onEdit={() => setView({ mode: "edit", examId: exam.id })}
-                                    onDelete={async () => {
-                                        if (!confirm("Are you sure you want to delete this exam?")) return;
-                                        try {
-                                            const res = await fetch(`/api/exams/schedules/${exam.id}`, {
-                                                method: "DELETE",
-                                                credentials: "include",
-                                            });
-                                            if (res.ok) {
-                                                loadExams();
-                                            } else {
-                                                const data = await res.json().catch(() => ({}));
-                                                alert(data.message || "Failed to delete exam");
-                                            }
-                                        } catch {
-                                            alert("Failed to delete exam");
-                                        }
-                                    }}
+                                    onDelete={() => setExamToDelete(exam)}
                                 />
                             ))}
                         </div>
                     )}
                 </>
             )}
+
+            <DeleteConfirmation
+                isOpen={!!examToDelete}
+                userName={examToDelete?.name ?? "this exam"}
+                title="Delete Exam"
+                message="Are you sure you want to delete this exam schedule?"
+                confirmLabel="Delete Exam"
+                cancelLabel="Cancel"
+                onCancel={() => setExamToDelete(null)}
+                onConfirm={async () => {
+                    if (!examToDelete) return;
+                    const res = await fetch(`/api/exams/schedules/${examToDelete.id}`, {
+                        method: "DELETE",
+                        credentials: "include",
+                    });
+                    if (!res.ok) {
+                        const data = await res.json().catch(() => ({}));
+                        throw new Error(data.message || "Failed to delete exam");
+                    }
+                    setExamToDelete(null);
+                    await loadExams();
+                }}
+            />
         </div>
     );
 }
