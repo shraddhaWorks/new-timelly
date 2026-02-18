@@ -103,24 +103,36 @@ function DataTable<T>({
       >
         {tableTitle && (
           <div className="p-4 lg:p-5 border-b border-white/10">
-            <div className="text-base lg:text-lg font-semibold text-white">{tableTitle}</div>
-            {tableSubtitle && <div className="text-xs text-white/60 mt-1">{tableSubtitle}</div>}
+            <div className="text-base lg:text-lg font-semibold text-white">
+              {tableTitle}
+            </div>
+            {tableSubtitle && (
+              <div className="text-xs text-white/60 mt-1">
+                {tableSubtitle}
+              </div>
+            )}
           </div>
         )}
 
+        {/* 🔥 FIXED TABLE WRAPPER */}
         <div className="w-full overflow-x-auto">
-          <table className={`w-full min-w-[760px] text-sm border-collapse ${tableClassName}`} aria-busy={loading}>
+          <table
+            className={`w-full table-fixed text-sm border-collapse ${tableClassName}`}
+            aria-busy={loading}
+          >
             {caption && <caption className="sr-only">{caption}</caption>}
 
-            <thead className={`bg-white/5 border-b border-white/10 ${theadClassName}`}>
+            <thead
+              className={`bg-white/5 border-b border-white/10 ${theadClassName}`}
+            >
               <tr>
                 {columns.map((col, i) => (
                   <th
                     key={i}
                     scope="col"
-                    className={`px-3 md:px-4 lg:px-6 py-3 md:py-4 text-[11px] md:text-xs font-semibold text-gray-400 uppercase tracking-wider ${ALIGN_CLASS[
-                      col.align ?? "left"
-                    ]} ${thClassName}`}
+                    className={`px-3 md:px-4 lg:px-6 py-3 md:py-4 text-[11px] md:text-xs font-semibold text-gray-400 uppercase tracking-wider ${
+                      ALIGN_CLASS[col.align ?? "left"]
+                    } ${thClassName}`}
                   >
                     {col.header}
                   </th>
@@ -128,10 +140,15 @@ function DataTable<T>({
               </tr>
             </thead>
 
-            <tbody className={`divide-y divide-white/10 ${tbodyClassName}`}>
+            <tbody
+              className={`divide-y divide-white/10 ${tbodyClassName}`}
+            >
               {loading && (
                 <tr>
-                  <td colSpan={columns.length} className="p-8 text-center text-white/60">
+                  <td
+                    colSpan={columns.length}
+                    className="p-8 text-center text-white/60"
+                  >
                     <Spinner size={26} label="Loading..." />
                   </td>
                 </tr>
@@ -139,7 +156,10 @@ function DataTable<T>({
 
               {!loading && data.length === 0 && (
                 <tr>
-                  <td colSpan={columns.length} className="p-8 text-center text-white/60">
+                  <td
+                    colSpan={columns.length}
+                    className="p-8 text-center text-white/60"
+                  >
                     {emptyText}
                   </td>
                 </tr>
@@ -147,13 +167,16 @@ function DataTable<T>({
 
               {!loading &&
                 data.map((row, rowIndex) => (
-                  <tr key={getKey(row, rowIndex)} className={`hover:bg-white/5 transition-colors duration-200 ${rowClassName}`}>
+                  <tr
+                    key={getKey(row, rowIndex)}
+                    className={`hover:bg-white/5 transition-colors duration-200 ${rowClassName}`}
+                  >
                     {columns.map((col, colIndex) => (
                       <td
                         key={colIndex}
-                        className={`px-3 md:px-4 lg:px-6 py-3 md:py-4 whitespace-nowrap text-sm ${ALIGN_CLASS[
-                          col.align ?? "left"
-                        ]} text-white ${tdClassName}`}
+                        className={`px-3 md:px-4 lg:px-6 py-3 md:py-4 text-sm text-white truncate ${
+                          ALIGN_CLASS[col.align ?? "left"]
+                        } ${tdClassName}`}
                       >
                         {renderCell(col, row, rowIndex)}
                       </td>
@@ -165,32 +188,7 @@ function DataTable<T>({
         </div>
       </div>
 
-      {showMobile && !forceTableOnMobile && (
-        <div className="sm:hidden space-y-4">
-          {!loading &&
-            data.map((row, index) => (
-              <div
-                key={getKey(row, index)}
-                className={`
-                  ${rounded ? "rounded-2xl" : "rounded-none"}
-                  p-4 border border-white/10
-                  backdrop-blur-xl shadow-lg transition hover:shadow-xl
-                `}
-              >
-                {columns.map(
-                  (col, colIndex) =>
-                    !col.hideOnMobile && (
-                      <div key={colIndex} className="flex justify-between text-sm py-1">
-                        <span className="text-white/60">{col.header}</span>
-                        <span className="text-white text-right">{renderCell(col, row, index)}</span>
-                      </div>
-                    )
-                )}
-              </div>
-            ))}
-        </div>
-      )}
-
+      {/* PAGINATION */}
       {canPaginate && pagination && (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
           <span className="text-xs text-white/60">
