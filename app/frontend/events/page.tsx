@@ -1,10 +1,10 @@
-import EventsPage from "@/components/Events";
-import RequireRole from "@/components/RequireRole";
+import WorkshopsAndEventsTab from "../components/schooladmin/workshopsandevents";
+import RequiredRoles from "../auth/RequiredRoles";
 
 export default function EventsPages() {
   return (
-    <RequireRole allowedRoles={["TEACHER","SCHOOLADMIN"]}>
-          <EventsPage />
-    </RequireRole>
+    <RequiredRoles allowedRoles={["TEACHER", "SCHOOLADMIN"]}>
+      <WorkshopsAndEventsTab />
+    </RequiredRoles>
   );
 }
