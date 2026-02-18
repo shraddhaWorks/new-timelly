@@ -44,9 +44,7 @@ function ParentDashboardInner() {
     name: "Parent",
     subtitle: "Parent",
     image: null as string | null,
-    email: "",
-    phone: "",
-    address: "",
+    email: undefined as string | undefined,
   });
 
   const renderTabContent = () => {
@@ -95,17 +93,15 @@ function ParentDashboardInner() {
         const parentData = await parentDetailsRes.json();
         if (cancelled || !userRes.ok) return;
 
-        const u = userData.user;
-        if (!u) return;
-
-        setProfile({
-          name: u.name ?? "Parent",
-          subtitle: "Parent",
-          image: u.photoUrl ?? null,
-          email: u.email ?? "",
-          phone: u.mobile ?? parentData?.fatherPhone ?? "",
-          address: parentData?.address ?? "",
-        });
+        const u = data.user;
+        if (u) {
+          setProfile({
+            name: u.name ?? "Parent",
+            subtitle: "Parent",
+            image: u.photoUrl ?? null,
+            email: u.email ?? undefined,
+          });
+        }
       } catch {
         // fallback default
       }
@@ -123,6 +119,7 @@ function ParentDashboardInner() {
         title={title}
         menuItems={PARENT_MENU_ITEMS}
         profile={profile}
+        enableSwitchAccounts
       >
         {renderTabContent()}
       </AppLayout>

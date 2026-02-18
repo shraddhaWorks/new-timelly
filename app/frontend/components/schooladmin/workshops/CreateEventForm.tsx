@@ -42,6 +42,7 @@ interface CreateEventFormProps {
     level?: string | null;
     additionalInfo?: string | null;
     photo?: string | null;
+    maxSeats?: number | null;
   } | null;
   className?: string;
 }
@@ -61,6 +62,7 @@ export default function CreateEventForm({
   const [mode, setMode] = useState("");
   const [description, setDescription] = useState("");
   const [additionalInfo, setAdditionalInfo] = useState("");
+  const [maxSeats, setMaxSeats] = useState<string>("");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [photoUploading, setPhotoUploading] = useState(false);
@@ -98,6 +100,7 @@ export default function CreateEventForm({
     setLocation(initialEvent.location ?? "");
     setMode(initialEvent.mode ?? "");
     setAdditionalInfo(initialEvent.additionalInfo ?? "");
+    setMaxSeats(initialEvent.maxSeats != null ? String(initialEvent.maxSeats) : "");
     setDate(toDateInputValue(initialEvent.eventDate));
     setTime(toTimeInputValue(initialEvent.eventDate));
     setPhotoFile(null);
@@ -143,6 +146,7 @@ export default function CreateEventForm({
           additionalInfo,
           eventDate,
           photo: photoDataUrl || null,
+          maxSeats: maxSeats ? parseInt(maxSeats, 10) : null,
         }),
       });
 
@@ -161,6 +165,7 @@ export default function CreateEventForm({
         setMode("");
         setDescription("");
         setAdditionalInfo("");
+        setMaxSeats("");
         setPhotoFile(null);
         setPhotoDataUrl(null);
       }
@@ -321,6 +326,19 @@ export default function CreateEventForm({
               options={modeOptions}
               placeholder="Select mode"
             />
+            <div>
+              <label className="block text-xs sm:text-sm mb-1 text-white/70">
+                Max Seats (optional)
+              </label>
+              <input
+                type="number"
+                min={1}
+                placeholder="Unlimited if empty"
+                value={maxSeats}
+                onChange={(e) => setMaxSeats(e.target.value.replace(/\D/g, ""))}
+                className="w-full rounded-xl bg-black/30 border border-white/20 text-sm text-white placeholder-white/40 px-4 py-3 focus:outline-none focus:ring-0 focus:border-lime-400/60"
+              />
+            </div>
           </div>
 
           <div>

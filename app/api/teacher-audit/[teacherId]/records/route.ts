@@ -24,9 +24,27 @@ export async function GET(
 
     const { searchParams } = new URL(req.url);
     const take = Math.min(100, Number(searchParams.get("take") || 50));
+    const academicYear = searchParams.get("academicYear")?.trim() ?? "";
+
+    // Academic year "2024-2025" -> Sep 1 2024 - Aug 31 2025
+    let dateRange: { gte: Date; lte: Date } | undefined;
+    if (academicYear) {
+      const m = academicYear.match(/^(\d{4})-(\d{4})$/);
+      if (m) {
+        const startYear = parseInt(m[1], 10);
+        dateRange = {
+          gte: new Date(startYear, 8, 1, 0, 0, 0),
+          lte: new Date(startYear + 1, 7, 31, 23, 59, 59),
+        };
+      }
+    }
+
+    const where = dateRange
+      ? { teacherId, createdAt: dateRange }
+      : { teacherId };
 
     const records = await prisma.teacherAuditRecord.findMany({
-      where: { teacherId },
+      where,
       include: {
         createdBy: { select: { id: true, name: true } },
       },
@@ -35,7 +53,7 @@ export async function GET(
     });
 
     const agg = await prisma.teacherAuditRecord.aggregate({
-      where: { teacherId },
+      where,
       _sum: { scoreImpact: true },
       _count: { _all: true },
     });

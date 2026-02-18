@@ -3,11 +3,16 @@
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { motion } from "framer-motion";
+import { useState, useRef, useEffect } from "react";
+import { ChevronDown, User, ChevronRight } from "lucide-react";
 import { SidebarItem } from "../../types/sidebar";
 import BrandLogo from "./TimellyLogo";
 import { PRIMARY_COLOR } from "../../constants/colors";
 import { AVATAR_URL } from "../../constants/images";
 import { useMemo } from "react";
+import { addRecentLogin, getRecentLogins } from "../../utils/recentLogins";
+
+const LOGIN_URL = "/admin/login";
 
 type Props = {
   menuItems: SidebarItem[];
@@ -15,14 +20,60 @@ type Props = {
     name: string;
     subtitle?: string;
     image?: string | null;
+    email?: string;
   };
   activeTab?: string;
   onLogoutRequest?: () => void;
+  enableSwitchAccounts?: boolean;
 };
 
-export default function AppSidebar({ menuItems, profile, activeTab = "dashboard", onLogoutRequest }: Props) {
+export default function AppSidebar({ menuItems, profile, activeTab = "dashboard", onLogoutRequest, enableSwitchAccounts }: Props) {
   const router = useRouter();
   const { data: session } = useSession();
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [accounts, setAccounts] = useState<{ email: string; name: string; userId: string }[]>([]);
+  const profileRef = useRef<HTMLDivElement>(null);
+  const currentEmail = (session?.user as { email?: string })?.email ?? profile?.email;
+
+  // Save current user to recent logins when in student portal
+  useEffect(() => {
+    if (enableSwitchAccounts && session?.user) {
+      const u = session.user as { email?: string; name?: string; id?: string };
+      const email = u.email || profile?.email;
+      if (email && u.id) {
+        addRecentLogin({
+          email,
+          name: u.name || profile?.name || "User",
+          userId: u.id,
+        });
+      }
+    }
+  }, [enableSwitchAccounts, session?.user, profile?.email, profile?.name]);
+
+  useEffect(() => {
+    if (profileOpen && enableSwitchAccounts) {
+      setAccounts(getRecentLogins());
+    }
+  }, [profileOpen, enableSwitchAccounts]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSwitchAccount = (account: { email: string }) => {
+    if (account.email === currentEmail) return;
+    setProfileOpen(false);
+    const url = `${LOGIN_URL}?email=${encodeURIComponent(account.email)}`;
+    signOut({ redirect: false }).then(() => {
+      window.location.href = url;
+    });
+  };
 
   const displayName = (profile?.name && profile.name.trim()) ? profile.name : (session?.user?.name ?? "User");
   const subtitle = profile?.subtitle ?? session?.user?.role ?? "";
@@ -80,21 +131,80 @@ export default function AppSidebar({ menuItems, profile, activeTab = "dashboard"
       </div>
 
       {/* Profile */}
-      <div className="px-4 py-4 border-b border-white/10">
-        <div className="bg-white/5 rounded-xl p-3 border border-white/10">
-          <div className="flex items-center gap-3">
-            <img
-              src={avatarUrl}
-              alt=""
-              className="w-10 h-10 rounded-xl border border-white/20 object-cover"
-            />
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-white break-words line-clamp-2">
-                {displayName}
-              </p>
-              <p className="text-xs text-white/60 break-words line-clamp-2">{subtitle}</p>
+      <div className="px-4 py-4 border-b border-white/10" ref={profileRef}>
+        <div className="relative">
+          <button
+            onClick={() => enableSwitchAccounts && setProfileOpen((o) => !o)}
+            className={`w-full bg-white/5 rounded-xl p-3 border border-white/10 text-left transition-all ${enableSwitchAccounts ? "hover:bg-white/10 cursor-pointer" : "cursor-default"}`}
+          >
+            <div className="flex items-center gap-3">
+              <img
+                src={avatarUrl}
+                alt=""
+                className="w-10 h-10 rounded-xl border border-white/20 object-cover shrink-0"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white break-words line-clamp-2">
+                  {displayName}
+                </p>
+                <p className="text-xs text-white/60 break-words line-clamp-2">{subtitle}</p>
+              </div>
+              {enableSwitchAccounts && (
+                <ChevronDown
+                  size={18}
+                  className={`text-white/50 shrink-0 transition-transform ${profileOpen ? "rotate-180" : ""}`}
+                />
+              )}
             </div>
-          </div>
+          </button>
+
+          {enableSwitchAccounts && profileOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="absolute left-0 right-0 mt-2 bg-[#0F172A] rounded-xl border border-white/10 shadow-xl py-2 z-20 max-h-[280px] overflow-y-auto"
+            >
+              {accounts.length === 0 ? (
+                <p className="px-4 py-3 text-xs text-white/50">No other accounts</p>
+              ) : (
+                accounts.map((account) => {
+                  const isCurrent = account.email === currentEmail;
+                  return (
+                    <button
+                      key={account.email}
+                      onClick={() => handleSwitchAccount(account)}
+                      disabled={isCurrent}
+                      className={`
+                        w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all
+                        ${isCurrent
+                          ? "opacity-70 cursor-default"
+                          : "hover:bg-white/10"
+                        }
+                      `}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                        <User size={16} className="text-white/70" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white truncate">
+                          {account.name || account.email}
+                        </p>
+                        <p className="text-[11px] text-white/50 truncate">{account.email}</p>
+                      </div>
+                      {!isCurrent && (
+                        <ChevronRight size={16} className="text-white/40 shrink-0" />
+                      )}
+                      {isCurrent && (
+                        <span className="text-[10px] text-lime-400 font-medium shrink-0">
+                          Current
+                        </span>
+                      )}
+                    </button>
+                  );
+                })
+              )}
+            </motion.div>
+          )}
         </div>
       </div>
 

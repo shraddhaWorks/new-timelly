@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Clock, MapPin, Users, Pencil, Trash2, Info, User } from "lucide-react";
+import { CalendarDays, Clock, MapPin, Users, Pencil, Trash2, Info, User, Award } from "lucide-react";
 
 interface EventCardProps {
   title: string;
@@ -9,6 +9,8 @@ interface EventCardProps {
   location?: string | null;
   mode?: string | null;
   registrations?: number;
+  maxSeats?: number | null;
+  hasCertificate?: boolean;
   teacherName?: string | null;
   status?: "upcoming" | "completed";
   photo?: string | null;
@@ -58,6 +60,8 @@ export default function EventCard({
   location,
   mode,
   registrations,
+  maxSeats,
+  hasCertificate,
   teacherName,
   status,
   photo,
@@ -85,7 +89,13 @@ export default function EventCard({
             {mode || "Mode"}
           </span>
         </div>
-        <div className="absolute right-4 top-4">
+        <div className="absolute right-4 top-4 flex flex-col items-end gap-1">
+          {hasCertificate && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-lime-400/20 border border-lime-400/40 px-2.5 py-1 text-xs font-semibold text-lime-300">
+              <Award size={12} />
+              Certificate
+            </span>
+          )}
           <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusClass}`}>
             {status === "completed" ? "Completed" : "Upcoming"}
           </span>
@@ -142,7 +152,10 @@ export default function EventCard({
           </div>
           <div className="flex items-center gap-2">
             <Users size={14} className="text-lime-300" />
-            <span>{registrations ?? 0} Enrolled</span>
+            <span>
+              {registrations ?? 0}
+              {maxSeats != null ? ` / ${maxSeats}` : ""} Enrolled
+            </span>
           </div>
         </div>
 

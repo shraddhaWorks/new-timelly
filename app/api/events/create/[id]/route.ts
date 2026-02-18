@@ -15,8 +15,28 @@ export async function GET(
     }
 
     const { id } = await params;
-    const schoolId = session.user.schoolId;
-
+    let schoolId = session.user.schoolId;
+    if (!schoolId && session.user.studentId) {
+      const student = await prisma.student.findUnique({
+        where: { id: session.user.studentId },
+        select: { schoolId: true },
+      });
+      schoolId = student?.schoolId ?? null;
+    }
+    if (!schoolId) {
+      const adminSchool = await prisma.school.findFirst({
+        where: { admins: { some: { id: session.user.id } } },
+        select: { id: true },
+      });
+      schoolId = adminSchool?.id ?? null;
+      if (!schoolId && session.user.role === "TEACHER") {
+        const teacherSchool = await prisma.school.findFirst({
+          where: { teachers: { some: { id: session.user.id } } },
+          select: { id: true },
+        });
+        schoolId = teacherSchool?.id ?? null;
+      }
+    }
     if (!schoolId) {
       return NextResponse.json(
         { message: "School not found in session" },
@@ -46,7 +66,40 @@ export async function GET(
       return NextResponse.json({ message: "Event not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ event }, { status: 200 });
+    let isRegistered = false;
+    let workshopCertificate: { id: string; title: string; certificateUrl: string | null; issuedDate: string } | null = null;
+    if (session.user.studentId) {
+      const [reg, cert] = await Promise.all([
+        prisma.eventRegistration.findUnique({
+          where: {
+            eventId_studentId: {
+              eventId: id,
+              studentId: session.user.studentId,
+            },
+          },
+        }),
+        prisma.certificate.findFirst({
+          where: {
+            studentId: session.user.studentId,
+            title: `${event.title} - Participation`,
+          },
+          select: { id: true, title: true, certificateUrl: true, issuedDate: true },
+        }),
+      ]);
+      isRegistered = !!reg;
+      if (cert) {
+        workshopCertificate = {
+          id: cert.id,
+          title: cert.title,
+          certificateUrl: cert.certificateUrl,
+          issuedDate: cert.issuedDate instanceof Date ? cert.issuedDate.toISOString() : String(cert.issuedDate),
+        };
+      }
+    }
+
+    return NextResponse.json({
+      event: { ...event, isRegistered, workshopCertificate },
+    }, { status: 200 });
   } catch (error: any) {
     console.error("Get event error:", error);
     return NextResponse.json(
