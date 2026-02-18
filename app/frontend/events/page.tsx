@@ -1,10 +1,10 @@
-import WorkshopsAndEventsTab from "../components/schooladmin/workshopsandevents";
-import RequiredRoles from "../auth/RequiredRoles";
+import RequireRole from "@/app/frontend/auth/RequiredRoles";
+import WorkshopsAndEventsTab from "@/app/frontend/components/schooladmin/workshopsandevents";
 
 export default function EventsPages() {
   return (
-    <RequiredRoles allowedRoles={["TEACHER", "SCHOOLADMIN"]}>
+    <RequireRole allowedRoles={["TEACHER", "SCHOOLADMIN"]}>
       <WorkshopsAndEventsTab />
-    </RequiredRoles>
+    </RequireRole>
   );
 }
