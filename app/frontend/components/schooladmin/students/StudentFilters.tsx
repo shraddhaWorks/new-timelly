@@ -36,7 +36,7 @@ export default function StudentFilters({
 }: Props) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-4 md:p-5">
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[1.1fr_1.1fr_1.4fr_auto] gap-3 items-end">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1.1fr_1.1fr_1.4fr_auto] gap-3 items-end">
         <SelectInput
           label="Class"
           value={selectedClass}
@@ -60,11 +60,12 @@ export default function StudentFilters({
           onChange={onSearchChange}
           icon={Search}
           variant="glass"
+          className="w-full md:col-span-2 lg:col-span-1"
         />
 
         <button
           onClick={onToggleAddForm}
-          className="w-full xl:w-auto px-3 md:px-4 py-2 border rounded-xl font-medium 
+          className="w-full lg:w-auto md:col-span-2 lg:col-span-1 px-3 md:px-4 py-2 border rounded-xl font-medium 
           transition-all shadow-[0_0_15px_rgba(163,230,53,0.15)] text-xs md:text-sm flex items-center justify-center
            gap-2 bg-lime-400/10 text-lime-400 border-lime-400/20 hover:bg-lime-400/20"
         >
@@ -88,13 +89,13 @@ export default function StudentFilters({
         >
           <Upload size={16} /> Upload CSV
         </button>
-        <button
+        {/* <button
           onClick={onDownloadReport}
           className="px-3 md:px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-medium
            transition-all text-xs md:text-sm flex items-center gap-2 text-gray-300"
         >
           <Download size={16} /> Download Report
-        </button>
+        </button> */}
       </div>
     </div>
   );
