@@ -186,7 +186,6 @@ export default function AppointTeacher() {
 
   return (
     <div className="w-full max-w-6xl mx-auto bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 text-white">
-
       {/* HEADER */}
       <div className="p-6">
         <h2 className="text-lg font-bold flex items-center gap-2">
@@ -204,7 +203,6 @@ export default function AppointTeacher() {
           <p className="text-white/50">Loading...</p>
         ) : (
           <div className="flex flex-col md:flex-row gap-4">
-
             <select
               value={selectedClassId}
               onChange={(e) => setSelectedClassId(e.target.value)}
@@ -234,7 +232,7 @@ export default function AppointTeacher() {
             <button
               onClick={handleAssign}
               disabled={!selectedClassId || !selectedTeacherId || assigning}
-              className="px-6 py-3 rounded-xl font-semibold flex items-center gap-2 bg-lime-500 text-black hover:bg-lime-400 disabled:opacity-40"
+              className="px-6 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 bg-lime-500 text-black hover:bg-lime-400 disabled:opacity-40"
             >
               <UserPlus size={18} />
               {assigning
@@ -263,9 +261,9 @@ export default function AppointTeacher() {
         )}
       </div>
 
-      {/* TABLE */}
-      <div className="p-6 overflow-x-auto">
-        <table className="w-full min-w-[560px] text-sm">
+      {/* TABLE (md+) */}
+      <div className="hidden p-6 md:block">
+        <table className="w-full text-sm">
           <thead className="text-gray-400">
             <tr>
               <th className="text-left py-2">Class</th>
@@ -294,7 +292,6 @@ export default function AppointTeacher() {
 
                 <td className="py-3 text-right">
                   <div className="flex justify-end gap-3">
-
                     <button onClick={() => handleEdit(item)}>
                       <Pencil
                         size={16}
@@ -306,18 +303,59 @@ export default function AppointTeacher() {
                       disabled={removingId === item.classId}
                       onClick={() => handleRemove(item.classId)}
                     >
-                      <Trash2
-                        size={16}
-                        className="text-red-400"
-                      />
+                      <Trash2 size={16} className="text-red-400" />
                     </button>
-
                   </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* CARDS (sm) */}
+      <div className="space-y-3 p-4 md:hidden">
+        {appointments.map((item) => (
+          <div
+            key={item.classId}
+            className="rounded-xl border border-white/10 bg-white/5 p-4"
+          >
+            <div className="flex items-start gap-3">
+              <img
+                src={item.avatar}
+                className="h-9 w-9 rounded-full"
+              />
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold text-white">
+                  {item.className}
+                </div>
+                <div className="mt-1 text-xs text-white/60">
+                  {item.teacherEmail}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3 text-sm text-white/80">
+              {item.teacherName}
+            </div>
+
+            <div className="mt-4 flex items-center justify-end gap-3">
+              <button onClick={() => handleEdit(item)}>
+                <Pencil
+                  size={16}
+                  className="text-lime-400 hover:text-lime-300"
+                />
+              </button>
+
+              <button
+                disabled={removingId === item.classId}
+                onClick={() => handleRemove(item.classId)}
+              >
+                <Trash2 size={16} className="text-red-400" />
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

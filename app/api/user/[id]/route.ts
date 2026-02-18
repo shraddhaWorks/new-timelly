@@ -95,6 +95,7 @@ export async function PUT(req: NextRequest, { params }: { params: Params }) {
       teacherStatus,
       mobile,
       address,
+      photoUrl,
     } = body;
 
     console.log(`[PUT] /api/user/${id} called by ${session.user?.id} (role=${session.user?.role})`);
@@ -168,6 +169,10 @@ export async function PUT(req: NextRequest, { params }: { params: Params }) {
       if (address !== undefined) updateData.address = address && String(address).trim() ? String(address).trim() : null;
     }
 
+    if (photoUrl !== undefined) {
+      updateData.photoUrl = photoUrl && String(photoUrl).trim() ? String(photoUrl).trim() : null;
+    }
+
     const schoolId = session.user.schoolId as string;
 
     const updatedUser = await prisma.user.update({
@@ -188,6 +193,7 @@ export async function PUT(req: NextRequest, { params }: { params: Params }) {
         teacherStatus: true,
         mobile: true,
         address: true,
+        photoUrl: true,
       },
     });
 

@@ -11,7 +11,8 @@ import StatCard from "../common/statCard";
 import DataTable from "../common/TableLayout";
 import TeacherStatCard from "./teachersTab/teacherStatCard";
 import AppointTeacher from "./teachersTab/AppointTeacher";
-import TeachersList from "./teachersTab/TeachersList";
+import TeachersList, { TeacherRow } from "./teachersTab/TeachersList";
+import EditTeacher from "./teachersTab/EditTeacher";
 import Spinner from "../common/Spinner";
 
 const DEFAULT_AVATAR = "https://randomuser.me/api/portraits/lego/1.jpg";
@@ -19,17 +20,6 @@ const ATTENDANCE_STATUSES = ["PRESENT", "ABSENT", "LATE", "ON_LEAVE"] as const;
 type AttendanceStatus = typeof ATTENDANCE_STATUSES[number];
 
 /* ================= Types ================= */
-
-interface TeacherRow {
-  id: string;
-  teacherId: string;
-  name: string;
-  avatar: string;
-  subject: string;
-  attendance: number;
-  phone: string;
-  status: "Active" | "On Leave";
-}
 
 /* ================= Mobile Card Component ================= */
 
@@ -101,6 +91,7 @@ const SchoolAdminTeacherTab = () => {
   const [page, setPage] = useState(1);
   const [teachers, setTeachers] = useState<TeacherRow[]>([]);
   const [teachersLoading, setTeachersLoading] = useState(true);
+  const [editingTeacher, setEditingTeacher] = useState<TeacherRow | null>(null);
   const [attendanceDate, setAttendanceDate] = useState(todayStr);
   const [attendanceMap, setAttendanceMap] = useState<Record<string, AttendanceStatus>>({});
   const [attendanceLoading, setAttendanceLoading] = useState(false);
@@ -189,6 +180,16 @@ const SchoolAdminTeacherTab = () => {
     if (confirm("Are you sure you want to remove this teacher from the list? Contact admin for permanent removal.")) {
       setTeachers((prev) => prev.filter((t) => t.id !== id));
     }
+  };
+
+  const handleEditTeacher = (teacher: TeacherRow) => {
+    setEditingTeacher(teacher);
+  };
+
+  const handleSaveTeacher = (updatedTeacher: TeacherRow) => {
+    setTeachers((prev) =>
+      prev.map((t) => (t.id === updatedTeacher.id ? { ...t, ...updatedTeacher } : t))
+    );
   };
 
   const setTeacherAttendance = (teacherId: string, status: AttendanceStatus) => {
@@ -564,8 +565,20 @@ const SchoolAdminTeacherTab = () => {
           totalPages={totalPages}
           setPage={setPage}
           onDelete={handleDelete}
+          onEditTeacher={handleEditTeacher}
         />
       </div>
+
+      {editingTeacher && (
+        <EditTeacher
+          teacher={editingTeacher}
+          onClose={() => setEditingTeacher(null)}
+          onSave={(t) => {
+            handleSaveTeacher(t);
+            setEditingTeacher(null);
+          }}
+        />
+      )}
 
 
       {/* ================= Teachers List ================= */}

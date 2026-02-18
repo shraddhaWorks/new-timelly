@@ -9,7 +9,6 @@ import {
   ChevronDown,
   Download,
   Plus,
-  Upload,
   User,
   Users,
   Search,
@@ -17,8 +16,10 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import type { PDFPage } from "pdf-lib";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import AddClassPanel from "./classes-panels/AddClassPanel";
 import AddSectionPanel from "./classes-panels/AddSectionPanel";
 import UploadCsvPanel from "./classes-panels/UploadCsvPanel";
@@ -33,6 +34,14 @@ import StatCard from "./StatCard";
 
 
 export default function SchoolAdminClassesTab() {
+  type ApiClassRow = {
+    id: string;
+    name?: string | null;
+    section?: string | null;
+    _count?: { students?: number } | null;
+    teacher?: { name?: string | null; email?: string | null } | null;
+  };
+
   const [activeAction, setActiveAction] = useState<
     "class" | "section" | "csv" | "none"
   >("class");
@@ -55,11 +64,12 @@ export default function SchoolAdminClassesTab() {
   const [totalTeachers, setTotalTeachers] = useState(0);
   const [avgSize, setAvgSize] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isReportDownloading, setIsReportDownloading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 6;
 
-  const loadClasses = async () => {
+  const loadClasses = useCallback(async () => {
     setIsLoading(true);
     setLoadError(null);
     try {
@@ -79,7 +89,7 @@ export default function SchoolAdminClassesTab() {
         teachersRes.ok ? teachersRes.json() : Promise.resolve(null),
       ]);
 
-      const rows = Array.isArray(classesData?.classes)
+      const rows: ApiClassRow[] = Array.isArray(classesData?.classes)
         ? classesData.classes
         : [];
       const studentCount = Array.isArray(studentsData?.students)
@@ -90,7 +100,7 @@ export default function SchoolAdminClassesTab() {
         : 0;
 
       setClassRows(
-        rows.map((row: any) => ({
+        rows.map((row) => ({
           id: row.id,
           name: row.name ?? "Untitled",
           section: row.section ? `Section ${row.section}` : "—",
@@ -103,9 +113,11 @@ export default function SchoolAdminClassesTab() {
       setTotalStudents(studentCount);
       setTotalTeachers(teacherCount);
       setAvgSize(rows.length > 0 ? Math.round(studentCount / rows.length) : 0);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to load classes.";
       setClassRows([]);
-      setLoadError(err?.message || "Failed to load classes.");
+      setLoadError(message);
       setTotalClasses(0);
       setTotalStudents(0);
       setTotalTeachers(0);
@@ -113,7 +125,7 @@ export default function SchoolAdminClassesTab() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     let isActive = true;
@@ -122,7 +134,7 @@ export default function SchoolAdminClassesTab() {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [loadClasses]);
 
   const filteredRows = classRows.filter((row) => {
     if (!search.trim()) return true;
@@ -231,13 +243,176 @@ export default function SchoolAdminClassesTab() {
     },
   ];
 
-  const handleReportClick = () => {
-    window.alert("Downloading Classes Report...");
-  };
+  const handleReportClick = async () => {
+    if (isReportDownloading) return;
+    setIsReportDownloading(true);
+    try {
+      const rowsToExport = filteredRows;
+      if (rowsToExport.length === 0) {
+        window.alert("No classes available to export.");
+        setIsReportDownloading(false);
+        return;
+      }
 
-  const activeRow = activeRowId
-    ? classRows.find((row) => row.id === activeRowId) ?? null
-    : null;
+      window.alert("Report is downloading...");
+
+      const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
+      const pdfDoc = await PDFDocument.create();
+      const pageWidth = 842;
+      const pageHeight = 595;
+      const marginX = 40;
+      const topMargin = 44;
+      const bottomMargin = 40;
+      const titleSize = 18;
+      const metaSize = 10;
+      const headerSize = 10;
+      const cellSize = 10;
+      const rowHeight = 22;
+
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+      const columns = [
+        { header: "CLASS NAME", width: 220, key: "name" as const },
+        { header: "SECTION", width: 120, key: "section" as const },
+        { header: "STUDENTS", width: 90, key: "students" as const },
+        { header: "CLASS TEACHER", width: 190, key: "teacher" as const },
+        { header: "EMAIL", width: 170, key: "subject" as const },
+      ];
+
+      const truncateText = (
+        value: string,
+        maxWidth: number,
+        useBold = false
+      ) => {
+        const currentFont = useBold ? boldFont : font;
+        let text = value ?? "";
+        while (
+          text.length > 0 &&
+          currentFont.widthOfTextAtSize(text, cellSize) > maxWidth
+        ) {
+          text = `${text.slice(0, -1)}`;
+        }
+        if (text !== value) {
+          const dots = "...";
+          while (
+            text.length > 0 &&
+            currentFont.widthOfTextAtSize(`${text}${dots}`, cellSize) > maxWidth
+          ) {
+            text = `${text.slice(0, -1)}`;
+          }
+          return `${text}${dots}`;
+        }
+        return text;
+      };
+
+      const drawHeaderRow = (page: PDFPage, y: number) => {
+        let x = marginX;
+        page.drawLine({
+          start: { x: marginX, y: y + 5 },
+          end: { x: pageWidth - marginX, y: y + 5 },
+          thickness: 1,
+          color: rgb(0.82, 0.82, 0.82),
+        });
+        columns.forEach((column) => {
+          page.drawText(column.header, {
+            x: x + 2,
+            y,
+            size: headerSize,
+            font: boldFont,
+            color: rgb(0.15, 0.15, 0.15),
+          });
+          x += column.width;
+        });
+        page.drawLine({
+          start: { x: marginX, y: y - 6 },
+          end: { x: pageWidth - marginX, y: y - 6 },
+          thickness: 1,
+          color: rgb(0.82, 0.82, 0.82),
+        });
+      };
+
+      const makePage = () => {
+        const page = pdfDoc.addPage([pageWidth, pageHeight]);
+        page.drawText("Classes Report", {
+          x: marginX,
+          y: pageHeight - topMargin,
+          size: titleSize,
+          font: boldFont,
+          color: rgb(0.05, 0.05, 0.05),
+        });
+        page.drawText(
+          `Generated on ${new Date().toLocaleString()} | Total Classes: ${rowsToExport.length}`,
+          {
+            x: marginX,
+            y: pageHeight - topMargin - 16,
+            size: metaSize,
+            font,
+            color: rgb(0.35, 0.35, 0.35),
+          }
+        );
+        const startY = pageHeight - topMargin - 40;
+        drawHeaderRow(page, startY);
+        return { page, y: startY - 18 };
+      };
+
+      let { page, y } = makePage();
+
+      rowsToExport.forEach((row) => {
+        if (y < bottomMargin + rowHeight) {
+          const next = makePage();
+          page = next.page;
+          y = next.y;
+        }
+
+        let x = marginX;
+        const values = [
+          row.name,
+          row.section,
+          String(row.students),
+          row.teacher,
+          row.subject || "-",
+        ];
+
+        values.forEach((value, idx) => {
+          page.drawText(truncateText(String(value ?? ""), columns[idx].width - 6), {
+            x: x + 2,
+            y,
+            size: cellSize,
+            font,
+            color: rgb(0.1, 0.1, 0.1),
+          });
+          x += columns[idx].width;
+        });
+
+        page.drawLine({
+          start: { x: marginX, y: y - 6 },
+          end: { x: pageWidth - marginX, y: y - 6 },
+          thickness: 0.5,
+          color: rgb(0.9, 0.9, 0.9),
+        });
+        y -= rowHeight;
+      });
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([Uint8Array.from(pdfBytes)], {
+        type: "application/pdf",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const date = new Date().toISOString().slice(0, 10);
+      link.href = url;
+      link.download = `classes-report-${date}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      window.alert("Failed to generate report.");
+    } finally {
+      setIsReportDownloading(false);
+    }
+  };
 
   const closePanel = () => {
     setPanelMode(null);
@@ -247,10 +422,11 @@ export default function SchoolAdminClassesTab() {
 
   const renderButton = (
     type: "class" | "section" | "csv" | "report",
-    Icon: any,
+    Icon: LucideIcon,
     label: string,
     onClick: () => void,
-    primary?: boolean
+    primary?: boolean,
+    disabled?: boolean
   ) => {
     const isActive =
       (type === "class" && activeAction === "class") ||
@@ -270,8 +446,13 @@ export default function SchoolAdminClassesTab() {
             />
           ) : (
             <button
-              onClick={onClick}
-              className="h-10 w-10 flex items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
+              onClick={() => {
+                if (!disabled) onClick();
+              }}
+              disabled={disabled}
+              className={`h-10 w-10 flex items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 ${
+                disabled ? "opacity-60 cursor-not-allowed" : ""
+              }`}
             >
               <Icon size={18} />
             </button>
@@ -284,7 +465,9 @@ export default function SchoolAdminClassesTab() {
             icon={Icon}
             label={label}
             primary={primary}
-            onClick={onClick}
+            onClick={() => {
+              if (!disabled) onClick();
+            }}
           />
         </div>
       </>
@@ -317,18 +500,20 @@ export default function SchoolAdminClassesTab() {
                   () => setActiveAction("section")
                 )}
 
-                {renderButton(
+                {/* {renderButton(
                   "csv",
                   Upload,
                   "Upload CSV",
                   () => setActiveAction("csv")
-                )}
+                )} */}
 
                 {renderButton(
                   "report",
                   Download,
-                  "Report",
-                  handleReportClick
+                  isReportDownloading ? "Downloading..." : "Report",
+                  handleReportClick,
+                  false,
+                  isReportDownloading
                 )}
               </div>
             </div>
@@ -418,14 +603,23 @@ export default function SchoolAdminClassesTab() {
                     return <ClassDetailsPanel row={row} onClose={closePanel} />;
                   }
                   if (panelMode === "edit") {
-                    return <EditClassPanel row={row} onClose={closePanel} />;
+                    return (
+                      <EditClassPanel
+                        row={row}
+                        onClose={closePanel}
+                        onSuccess={loadClasses}
+                      />
+                    );
                   }
                   if (panelMode === "delete") {
                     return (
                       <DeleteClassPanel
                         row={row}
                         onCancel={closePanel}
-                        onConfirm={closePanel}
+                        onConfirm={() => {
+                          closePanel();
+                          loadClasses();
+                        }}
                       />
                     );
                   }

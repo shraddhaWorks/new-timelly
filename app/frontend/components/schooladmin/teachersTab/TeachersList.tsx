@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { Eye, Pencil, Trash2, Search } from "lucide-react";
+import ShowTeacher from "./ShowTeacher";
 
 /* ================= Types ================= */
 
@@ -29,218 +31,176 @@ interface Props {
   totalPages: number;
   setPage: (p: number) => void;
   onDelete: (id: string) => void;
+  onEditTeacher: (teacher: TeacherRow) => void;
 }
 
-/* ================= Status Badge ================= */
-
-const StatusBadge = ({ status }: { status: TeacherRow["status"] }) => (
-  <span
-    className={`px-3 py-1 rounded-full text-[10px] font-bold border whitespace-nowrap
-    ${
-      status === "Active"
-        ? "bg-lime-400/10 text-lime-400 border-lime-400/20"
-        : "bg-orange-400/10 text-orange-400 border-orange-400/20"
-    }`}
-  >
-    {status.toUpperCase()}
-  </span>
-);
-
-/* ================= Pagination ================= */
-
-const Pagination = ({
-  page,
-  totalPages,
-  setPage,
-}: {
-  page: number;
-  totalPages: number;
-  setPage: (p: number) => void;
-}) => (
-  <div className="flex justify-end gap-2 p-4 border-t border-white/10">
-    <button
-      disabled={page === 1}
-      onClick={() => setPage(page - 1)}
-      className="px-3 py-1 bg-white/5 rounded-lg disabled:opacity-40"
-    >
-      Prev
-    </button>
-
-    <span className="px-3 py-1 text-sm text-gray-300">
-      {page} / {totalPages}
-    </span>
-
-    <button
-      disabled={page === totalPages}
-      onClick={() => setPage(page + 1)}
-      className="px-3 py-1 bg-white/5 rounded-lg disabled:opacity-40"
-    >
-      Next
-    </button>
-  </div>
-);
-
-/* ================= Main ================= */
+/* ================= Component ================= */
 
 export default function TeachersList({
   teachersLoading,
   filteredTeachers,
   pagedTeachers,
-  attendanceDate,
-  overallPct,
-  presentCount,
-  teachersCount,
   searchTerm,
   setSearchTerm,
-  page,
-  totalPages,
-  setPage,
   onDelete,
+  onEditTeacher,
 }: Props) {
+  const [viewTeacher, setViewTeacher] =
+    useState<TeacherRow | null>(null);
+
   return (
-    <div className="w-full min-w-0 overflow-hidden">
-      <div className="bg-white/[0.04] backdrop-blur-2xl rounded-3xl border border-white/10 overflow-hidden">
+    <div className="w-full">
+      <div className="rounded-3xl overflow-hidden border shadow-2xl bg-white/5 backdrop-blur-xl rounded-2xl shadow-lg border border-white/10 overflow-hidden hidden md:block">
 
         {/* ===== Header ===== */}
-        <div className="px-6 py-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div>
-            <h3 className="text-xl font-bold text-white">
-              All Teachers ({filteredTeachers.length})
-            </h3>
+        <div className="flex items-center justify-between px-8 py-6 border-b border-white/10">
+          <h2 className="text-xl font-semibold text-white">
+            All Teachers ({filteredTeachers.length})
+          </h2>
 
-            <p className="text-sm text-gray-400">
-              Today: {attendanceDate} • Overall:
-              <span className="text-lime-400 font-semibold ml-1">
-                {overallPct}%
-              </span>{" "}
-              ({presentCount}/{teachersCount})
-            </p>
-          </div>
-
-          <div className="relative w-full sm:w-72">
-            <Search
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
-            />
+          <div className="relative w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
+              type="text"
+              placeholder="Search list..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search teachers..."
-              className="w-full bg-black/20 border border-white/10 rounded-xl py-2 pl-9 pr-4 text-sm text-gray-200 focus:border-lime-400/50 outline-none"
+              className="w-full pl-9 pr-4 py-2 rounded-xl 
+                bg-black/20 border border-white/10 
+                text-sm text-white placeholder-gray-400 
+                focus:outline-none focus:ring-2 focus:ring-lime-400"
             />
           </div>
         </div>
 
         {/* ===== Table ===== */}
-        <div className="border-t border-white/10">
-          <div className="w-full overflow-x-auto no-scrollbar">
-            <table className="min-w-[900px] w-full table-fixed text-sm">
-              {/* Column widths */}
-              <colgroup>
-                <col className="w-[260px]" />
-                <col className="w-[160px]" />
-                <col className="w-[180px]" />
-                <col className="w-[160px]" />
-                <col className="w-[140px]" />
-                <col className="w-[120px]" />
-              </colgroup>
+        <div className="w-full overflow-x-auto">
+          <table className="min-w-[1100px] w-full text-sm text-gray-300">
+            <thead className="text-gray-400 uppercase text-xs tracking-wider">
+              <tr className="border-b border-white/10 text-left">
+                <th className="px-6 py-4">Teacher ID</th>
+                <th className="px-6 py-4">Name</th>
+                <th className="px-6 py-4">Subject</th>
+                <th className="px-6 py-4 text-center">Attendance</th>
+                <th className="px-6 py-4">Phone</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-center">Actions</th>
+              </tr>
+            </thead>
 
-              <thead className="text-gray-400">
-                <tr className="border-b border-white/10 text-left">
-                  <th className="px-6 py-4">Teacher</th>
-                  <th className="px-6 py-4">Subject</th>
-                  <th className="px-6 py-4 text-center">Attendance</th>
-                  <th className="px-6 py-4">Phone</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
+            <tbody>
+              {pagedTeachers.map((teacher) => (
+                <tr
+                  key={teacher.id}
+                  className="border-t border-white/10 hover:bg-white/5 transition-colors"
+                >
+                  {/* Teacher ID */}
+                  <td className="px-6 py-5 text-gray-300 font-medium">
+                    {teacher.teacherId}
+                  </td>
 
-              <tbody>
-                {teachersLoading ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-10 text-gray-400">
-                      Loading teachers...
-                    </td>
-                  </tr>
-                ) : pagedTeachers.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-10 text-gray-400">
-                      No teachers found
-                    </td>
-                  </tr>
-                ) : (
-                  pagedTeachers.map((t) => (
-                    <tr
-                      key={t.id}
-                      className="border-b border-white/5 hover:bg-white/5 transition"
+                  {/* Name + Avatar */}
+                  <td className="px-6 py-5 flex items-center gap-4">
+                    <img
+                      src={teacher.avatar}
+                      alt=""
+                      className="w-12 h-12 rounded-xl object-cover"
+                    />
+                    <span className="font-semibold text-white">
+                      {teacher.name}
+                    </span>
+                  </td>
+
+                  {/* Subject */}
+                  <td className="px-6 py-5">{teacher.subject}</td>
+
+                  {/* Attendance */}
+                  <td className="px-6 py-5 text-center">
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="w-24 h-2 bg-white/10 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-lime-400 rounded-full"
+                          style={{ width: `${teacher.attendance}%` }}
+                        />
+                      </div>
+                      <span className="text-lime-400 font-semibold text-sm">
+                        {teacher.attendance}%
+                      </span>
+                    </div>
+                  </td>
+
+                  {/* Phone */}
+                  <td className="px-6 py-5">{teacher.phone}</td>
+
+                  {/* Status */}
+                  <td className="px-6 py-5">
+                    <span
+                      className={`px-4 py-1.5 rounded-full text-xs font-semibold
+                        backdrop-blur-md border
+                        ${
+                          teacher.status === "Active"
+                            ? "bg-lime-400/10 text-lime-300 border-lime-400/30 shadow-[0_0_10px_rgba(163,230,53,0.4)]"
+                            : "bg-orange-400/10 text-orange-300 border-orange-400/30 shadow-[0_0_10px_rgba(251,146,60,0.4)]"
+                        }`}
                     >
-                      {/* Teacher */}
-                      <td className="px-6 py-4 align-middle">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <img
-                            src={t.avatar}
-                            className="w-10 h-10 rounded-xl border border-white/10"
-                          />
-                          <div className="min-w-0">
-                            <p className="text-white truncate">{t.name}</p>
-                            <p className="text-xs text-gray-500">
-                              {t.teacherId}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
+                      {teacher.status}
+                    </span>
+                  </td>
 
-                      {/* Subject */}
-                      <td className="px-6 py-4 align-middle text-white">
-                        {t.subject}
-                      </td>
+                  {/* Actions */}
+                  <td className="px-6 py-5 text-center">
+                    <div className="flex items-center justify-center gap-4">
+                      <button
+                        onClick={() => setViewTeacher(teacher)}
+                        className="text-gray-400 hover:text-lime-400 transition-colors"
+                      >
+                        <Eye size={18} />
+                      </button>
 
-                      {/* Attendance */}
-                      <td className="px-6 py-4 align-middle">
-                        <div className="flex items-center justify-center gap-2">
-                          <div className="w-24 h-2 bg-white/10 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-lime-400"
-                              style={{ width: `${t.attendance}%` }}
-                            />
-                          </div>
-                          <span className="text-lime-400 font-bold">
-                            {t.attendance}%
-                          </span>
-                        </div>
-                      </td>
+                      <button
+                        onClick={() => onEditTeacher(teacher)}
+                        className="text-gray-400 hover:text-yellow-400 transition-colors"
+                      >
+                        <Pencil size={18} />
+                      </button>
 
-                      {/* Phone */}
-                      <td className="px-6 py-4 align-middle text-gray-400">
-                        {t.phone}
-                      </td>
+                      <button
+                        onClick={() => onDelete(teacher.id)}
+                        className="text-gray-400 hover:text-red-400 transition-colors"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
 
-                      {/* Status */}
-                      <td className="px-6 py-4 align-middle">
-                        <StatusBadge status={t.status} />
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-6 py-4 align-middle text-right">
-                        <div className="flex justify-end gap-3">
-                          <Eye className="text-gray-400 hover:text-gray-300 cursor-pointer" size={18} />
-                          <Pencil   className="text-lime-400 hover:text-lime-300 cursor-pointer"size={18} />
-                          <button onClick={() => onDelete(t.id)}>
-                            <Trash2  className="text-red-400 hover:text-red-300 cursor-pointer"size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          <Pagination page={page} totalPages={totalPages} setPage={setPage} />
+              {pagedTeachers.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="text-center py-10 text-gray-400"
+                  >
+                    No teachers found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
+
+      {/* ===== Show Modal ===== */}
+      {viewTeacher && (
+        <ShowTeacher
+          teacher={viewTeacher}
+          onClose={() => setViewTeacher(null)}
+          onEdit={(teacher) => {
+            setViewTeacher(null);
+            onEditTeacher(teacher);
+          }}
+        />
+      )}
     </div>
   );
 }
