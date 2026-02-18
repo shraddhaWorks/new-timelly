@@ -67,7 +67,7 @@ export default function AppSidebar({ menuItems, profile, activeTab = "dashboard"
   return (
     <aside
       className="
-        hidden md:flex
+        hidden lg:flex
         w-64 h-full flex-col
         bg-white/10 backdrop-blur-2xl
         border-r border-white/10

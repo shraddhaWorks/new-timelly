@@ -44,7 +44,7 @@ export default function AppLayout({
     <ToastProvider>
       <div className="flex h-screen overflow-hidden">
         {/* DESKTOP SIDEBAR - profile from layout (sidebar + header show same) */}
-        <aside className="hidden xl:block">
+        <aside className="hidden lg:block">
           <AppSidebar
             menuItems={menuItems}
             profile={profile}
