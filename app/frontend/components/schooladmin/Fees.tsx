@@ -5,9 +5,10 @@ import PageHeader from "../common/PageHeader";
 import FeeStatCards from "./fees/FeeStatCards";
 import OfflinePaymentForm from "./fees/OfflinePaymentForm";
 import AddExtraFeeForm from "./fees/AddExtraFeeForm";
+import ExtraFeesList from "./fees/ExtraFeesList";
 import FeeStructureConfig from "./fees/FeeStructureConfig";
 import FeeRecordsTable from "./fees/FeeRecordsTable";
-import type { Class, Student, FeeSummary, FeeRecord, FeeStructure } from "./fees/types";
+import type { Class, Student, FeeSummary, FeeRecord, FeeStructure, ExtraFee } from "./fees/types";
 import Spinner from "../common/Spinner";
 
 export default function FeesTab() {
@@ -16,22 +17,25 @@ export default function FeesTab() {
   const [classes, setClasses] = useState<Class[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [structures, setStructures] = useState<FeeStructure[]>([]);
+  const [extraFees, setExtraFees] = useState<ExtraFee[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [sumRes, clsRes, stuRes, structRes] = await Promise.all([
+      const [sumRes, clsRes, stuRes, structRes, extraRes] = await Promise.all([
         fetch("/api/fees/summary"),
         fetch("/api/class/list"),
         fetch("/api/student/list"),
         fetch("/api/fees/structure"),
+        fetch("/api/fees/extra"),
       ]);
-      const [sumData, clsData, stuData, structData] = await Promise.all([
+      const [sumData, clsData, stuData, structData, extraData] = await Promise.all([
         sumRes.json(),
         clsRes.json(),
         stuRes.json(),
         structRes.json(),
+        extraRes.json(),
       ]);
 
       if (sumRes.ok) {
@@ -41,6 +45,7 @@ export default function FeesTab() {
       if (clsRes.ok) setClasses(clsData.classes || []);
       if (stuRes.ok) setStudents(stuData.students || []);
       if (structRes.ok) setStructures(structData.structures || []);
+      if (extraRes.ok) setExtraFees(Array.isArray(extraData?.extraFees) ? extraData.extraFees : []);
     } catch (e) {
       console.error(e);
     } finally {
@@ -78,6 +83,13 @@ export default function FeesTab() {
         <FeeStructureConfig
           classes={classes}
           structures={structures}
+          onSuccess={fetchData}
+        />
+
+        <ExtraFeesList
+          extraFees={extraFees}
+          classes={classes}
+          students={students}
           onSuccess={fetchData}
         />
 

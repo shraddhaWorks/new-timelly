@@ -16,7 +16,7 @@ export default function AddExtraFeeForm({ classes, students, onSuccess }: AddExt
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
-  const [targetType, setTargetType] = useState<"CLASS" | "SECTION" | "STUDENT">("CLASS");
+  const [targetType, setTargetType] = useState<"SCHOOL" | "CLASS" | "SECTION" | "STUDENT">("SCHOOL");
   const [classId, setClassId] = useState("");
   const [section, setSection] = useState("");
   const [studentId, setStudentId] = useState("");
@@ -35,6 +35,7 @@ export default function AddExtraFeeForm({ classes, students, onSuccess }: AddExt
         targetType,
       };
       if (targetType === "CLASS") body.targetClassId = classId || undefined;
+      // SCHOOL: no target fields, applies to all
       if (targetType === "SECTION") {
         body.targetClassId = classId;
         body.targetSection = section;
@@ -69,7 +70,7 @@ export default function AddExtraFeeForm({ classes, students, onSuccess }: AddExt
     <section className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-6">
       <h3 className="text-lg font-semibold mb-4">Add Extra Fees</h3>
       <p className="text-sm text-gray-400 mb-4">
-        Add uniform, bus, library, or any custom fee for a class, section, or student.
+        Add uniform, bus, library, or any custom fee for the entire school or a particular class.
       </p>
       {!showForm ? (
         <SecondaryButton title="Add Extra Fee" onClick={() => setShowForm(true)} />
@@ -98,9 +99,10 @@ export default function AddExtraFeeForm({ classes, students, onSuccess }: AddExt
           <SelectInput
             label="Apply To"
             value={targetType}
-            onChange={(v) => setTargetType(v as "CLASS" | "SECTION" | "STUDENT")}
+            onChange={(v) => setTargetType(v as "SCHOOL" | "CLASS" | "SECTION" | "STUDENT")}
             options={[
-              { label: "Entire Class", value: "CLASS" },
+              { label: "Entire School", value: "SCHOOL" },
+              { label: "Particular Class", value: "CLASS" },
               { label: "Section", value: "SECTION" },
               { label: "Particular Student", value: "STUDENT" },
             ]}

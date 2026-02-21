@@ -44,6 +44,7 @@ interface CreateEventFormProps {
     additionalInfo?: string | null;
     photo?: string | null;
     maxSeats?: number | null;
+    amount?: number | null;
     classId?: string | null;
   } | null;
   className?: string;
@@ -65,6 +66,7 @@ export default function CreateEventForm({
   const [description, setDescription] = useState("");
   const [additionalInfo, setAdditionalInfo] = useState("");
   const [maxSeats, setMaxSeats] = useState<string>("");
+  const [amount, setAmount] = useState<string>("0");
   const [classId, setClassId] = useState("");
   const [studentIds, setStudentIds] = useState<string[]>([]);
   const [classStudents, setClassStudents] = useState<{ id: string; user?: { name?: string | null }; class?: { name: string; section: string | null } }[]>([]);
@@ -122,6 +124,7 @@ export default function CreateEventForm({
     setMode(initialEvent.mode ?? "");
     setAdditionalInfo(initialEvent.additionalInfo ?? "");
     setMaxSeats(initialEvent.maxSeats != null ? String(initialEvent.maxSeats) : "");
+    setAmount(initialEvent.amount != null ? String(initialEvent.amount) : "0");
     setDate(toDateInputValue(initialEvent.eventDate));
     setTime(toTimeInputValue(initialEvent.eventDate));
     setPhotoFile(null);
@@ -169,6 +172,7 @@ export default function CreateEventForm({
           eventDate,
           photo: photoDataUrl || null,
           maxSeats: maxSeats ? parseInt(maxSeats, 10) : null,
+          amount: amount ? parseFloat(amount) : 0,
           classId: classId || null,
           studentIds: studentIds.length > 0 ? studentIds : undefined,
         }),
@@ -190,6 +194,7 @@ export default function CreateEventForm({
         setDescription("");
         setAdditionalInfo("");
         setMaxSeats("");
+        setAmount("0");
         setClassId("");
         setStudentIds([]);
         setPhotoFile(null);
@@ -369,6 +374,16 @@ export default function CreateEventForm({
           <div className="text-xs font-bold text-white/50 uppercase tracking-wider">
             Schedule & Media
           </div>
+
+          <SearchInput
+            label="Amount (₹) - 0 for free"
+            placeholder="0"
+            value={amount}
+            onChange={setAmount}
+            variant="glass"
+            type="number"
+            inputClassName="[&::-webkit-inner-spin-button]:appearance-none"
+          />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SearchInput

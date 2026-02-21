@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, CheckCircle, List, Search, Users } from "lucide-react";
 import PageHeader from "../../common/PageHeader";
 import EventCard from "../../schooladmin/workshops/EventCard";
@@ -60,6 +60,7 @@ function StatTile({
 /* ================= MAIN ================= */
 
 export default function ParentWorkshopsTab() {
+  const verifiedRef = useRef(false);
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [eventsError, setEventsError] = useState<string | null>(null);
@@ -73,7 +74,7 @@ export default function ParentWorkshopsTab() {
 
   /* ================= FETCH EVENTS ================= */
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
       setLoadingEvents(true);
       setEventsError(null);
@@ -89,11 +90,38 @@ export default function ParentWorkshopsTab() {
     } finally {
       setLoadingEvents(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchEvents();
-  }, []);
+  }, [fetchEvents]);
+
+  // Handle HyperPG return: verify workshop payment from cookie
+  useEffect(() => {
+    if (verifiedRef.current || typeof document === "undefined") return;
+    const match = document.cookie.match(/hyperpg_pending=([^;]+)/);
+    if (match) {
+      try {
+        const [orderId, amountStr] = decodeURIComponent(match[1]).split("|");
+        const amount = parseFloat(amountStr);
+        if (orderId && !Number.isNaN(amount) && amount > 0) {
+          verifiedRef.current = true;
+          document.cookie = "hyperpg_pending=; path=/; max-age=0";
+          fetch("/api/payment/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ gateway: "HYPERPG", order_id: orderId, amount }),
+          })
+            .then(async (res) => {
+              const d = await res.json();
+              if (!res.ok) alert(d?.message || "Payment verification failed");
+              else fetchEvents();
+            })
+            .catch(console.error);
+        }
+      } catch (_) {}
+    }
+  }, [fetchEvents]);
 
   /* ================= FETCH DETAILS ================= */
 

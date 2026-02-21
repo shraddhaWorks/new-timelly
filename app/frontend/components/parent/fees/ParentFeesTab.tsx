@@ -10,7 +10,6 @@ import {
   AlertCircle,
   IndianRupee,
   Shield,
-  ExternalLink,
 } from "lucide-react";
 import PageHeader from "../../common/PageHeader";
 import PayButton from "@/app/frontend/components/common/PayButton";
@@ -34,6 +33,12 @@ interface PaymentItem {
   juspayPaymentId?: string;
 }
 
+interface ExtraFeeItem {
+  id: string;
+  name: string;
+  amount: number;
+}
+
 interface FeeData {
   id: string;
   totalFee: number;
@@ -43,7 +48,7 @@ interface FeeData {
   remainingFee: number;
   installments: number;
   components?: Array<{ name: string; amount: number }>;
-  extraFees?: Array<{ name: string; amount: number }>;
+  extraFees?: ExtraFeeItem[];
   payments: PaymentItem[];
   installmentsList: InstallmentItem[];
 }
@@ -54,6 +59,9 @@ export default function ParentFeesTab() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [plan, setPlan] = useState<1 | 3>(1);
+  const [selectedComponents, setSelectedComponents] = useState<Set<number>>(new Set());
+  const [selectedExtraIds, setSelectedExtraIds] = useState<Set<string>>(new Set());
+  const [customAmount, setCustomAmount] = useState<string>("");
   const verifiedRef = useRef(false);
 
   const fetchFee = useCallback(async () => {
@@ -151,29 +159,49 @@ export default function ParentFeesTab() {
   }
 
   const remainingAmount = fee.remainingFee;
-  const payable = plan === 1 ? remainingAmount : remainingAmount / plan;
+
+  // Selected fees amount (when user picks specific items)
+  const selectedAmount = (() => {
+    let sum = 0;
+    fee.components?.forEach((c, i) => {
+      if (selectedComponents.has(i)) sum += c.amount || 0;
+    });
+    fee.extraFees?.forEach((ef) => {
+      if (selectedExtraIds.has(ef.id)) sum += ef.amount || 0;
+    });
+    return sum;
+  })();
+  const useSelectedFees = selectedAmount > 0 && selectedAmount <= remainingAmount;
+  const basePayable = useSelectedFees ? selectedAmount : remainingAmount;
+  const suggestedPayable = plan === 1 ? basePayable : basePayable / plan;
+  // Editable amount: use custom if valid, else suggested
+  const customNum = customAmount.trim() === "" ? null : parseFloat(customAmount);
+  const payable = customNum != null && !isNaN(customNum) && customNum > 0 && customNum <= remainingAmount
+    ? Math.min(customNum, remainingAmount)
+    : suggestedPayable;
   const progress = fee.finalFee > 0 ? Math.min((fee.amountPaid / fee.finalFee) * 100, 100) : 0;
 
   return (
-    <div className="max-w-7xl mx-auto h-full flex flex-col gap-6">
+    <div className="max-w-7xl mx-auto h-full flex flex-col gap-4 sm:gap-6 px-3 sm:px-4 pb-6">
       <PageHeader
         title="Fees"
         subtitle="View and pay your child's school fees"
+        compact
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Summary Cards */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="lg:col-span-2 glass-card rounded-2xl p-6 space-y-6"
+          className="lg:col-span-2 glass-card rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-6"
         >
           <h3 className="text-lg font-semibold text-white flex items-center gap-2">
             <IndianRupee className="w-5 h-5 text-lime-400" />
             Fee Summary
           </h3>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <div className="bg-white/5 rounded-xl p-4 border border-white/10">
               <p className="text-xs text-gray-400 uppercase tracking-wider">Total Fee</p>
               <p className="text-xl font-bold text-white mt-1">₹{fee.totalFee.toLocaleString()}</p>
@@ -191,6 +219,66 @@ export default function ParentFeesTab() {
               <p className="text-xl font-bold text-emerald-400 mt-1">₹{fee.amountPaid.toLocaleString()}</p>
             </div>
           </div>
+
+          {/* Fee Breakdown - select specific fees to pay */}
+          {((fee.components && fee.components.length > 0) || (fee.extraFees && fee.extraFees.length > 0)) && (
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-white">Fee Breakdown</h4>
+              <p className="text-xs text-gray-400">Select the fees you want to pay (or pay full remaining)</p>
+              <div className="rounded-xl border border-white/10 overflow-hidden">
+                <div className="divide-y divide-white/5">
+                  {fee.components?.map((c, i) => (
+                    <label
+                      key={`base-${i}`}
+                      className="flex justify-between items-center px-4 py-3 bg-white/5 cursor-pointer hover:bg-white/10 transition"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <input
+                          type="checkbox"
+                          checked={selectedComponents.has(i)}
+                          onChange={(e) => {
+                            setSelectedComponents((prev) => {
+                              const next = new Set(prev);
+                              if (e.target.checked) next.add(i);
+                              else next.delete(i);
+                              return next;
+                            });
+                          }}
+                          className="rounded border-white/30 w-4 h-4 accent-lime-500"
+                        />
+                        <span className="text-sm text-gray-300 truncate">{c.name || `Component ${i + 1}`}</span>
+                      </div>
+                      <span className="text-sm font-medium text-white shrink-0 ml-2">₹{(c.amount || 0).toLocaleString()}</span>
+                    </label>
+                  ))}
+                  {fee.extraFees?.map((ef) => (
+                    <label
+                      key={ef.id}
+                      className="flex justify-between items-center px-4 py-3 bg-white/5 cursor-pointer hover:bg-white/10 transition"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <input
+                          type="checkbox"
+                          checked={selectedExtraIds.has(ef.id)}
+                          onChange={(e) => {
+                            setSelectedExtraIds((prev) => {
+                              const next = new Set(prev);
+                              if (e.target.checked) next.add(ef.id);
+                              else next.delete(ef.id);
+                              return next;
+                            });
+                          }}
+                          className="rounded border-white/30 w-4 h-4 accent-lime-500"
+                        />
+                        <span className="text-sm text-gray-300 truncate">{ef.name}</span>
+                      </div>
+                      <span className="text-sm font-medium text-white shrink-0 ml-2">₹{(ef.amount || 0).toLocaleString()}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Progress */}
           <div>
@@ -221,12 +309,12 @@ export default function ParentFeesTab() {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 {([1, 3] as const).map((p) => (
                   <button
                     key={p}
                     onClick={() => setPlan(p)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                    className={`px-4 py-2.5 sm:py-2 rounded-lg text-sm font-medium transition min-h-[44px] touch-manipulation ${
                       plan === p
                         ? "bg-lime-500 text-black"
                         : "bg-white/5 text-gray-400 hover:bg-white/10"
@@ -236,27 +324,38 @@ export default function ParentFeesTab() {
                   </button>
                 ))}
               </div>
-              <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
+              <div className="flex flex-col gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
                 <div>
-                  <p className="text-sm text-gray-400">Amount to pay</p>
-                  <p className="text-2xl font-bold text-lime-400">₹{payable.toFixed(2)}</p>
+                  <label className="block text-sm text-gray-400 mb-1">Amount to pay (₹)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={remainingAmount}
+                    step={1}
+                    value={customAmount}
+                    onChange={(e) => setCustomAmount(e.target.value)}
+                    placeholder={`Max: ₹${remainingAmount.toLocaleString()}`}
+                    className="w-full rounded-xl bg-black/20 border border-white/10 px-4 py-3 text-lg font-semibold text-lime-400 focus:outline-none focus:ring-2 focus:ring-lime-500/50"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Enter amount as per your budget (max ₹{remainingAmount.toLocaleString()})
+                  </p>
                 </div>
-                <PayButton
-                  amount={payable}
-                  onSuccess={fetchFee}
-                  returnPath="/frontend/pages/parent?tab=fees"
-                />
+                <div className="w-full">
+                  <PayButton
+                    amount={payable}
+                    onSuccess={() => {
+                      fetchFee();
+                      setCustomAmount("");
+                    }}
+                    returnPath="/frontend/pages/parent?tab=fees"
+                  />
+                </div>
               </div>
               <p className="text-xs text-gray-500 flex items-center gap-1">
                 <Shield className="w-3.5 h-3.5" />
                 Secure payment via HyperPG • Instant receipt
               </p>
-              <a
-                href="/payments"
-                className="inline-flex items-center gap-2 text-sm text-lime-400 hover:text-lime-300"
-              >
-                Open full payment page <ExternalLink className="w-4 h-4" />
-              </a>
             </div>
           )}
         </motion.div>
@@ -266,7 +365,7 @@ export default function ParentFeesTab() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="glass-card rounded-2xl p-6 space-y-6"
+          className="glass-card rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-6"
         >
           <h3 className="text-lg font-semibold text-white flex items-center gap-2">
             <Receipt className="w-5 h-5 text-lime-400" />

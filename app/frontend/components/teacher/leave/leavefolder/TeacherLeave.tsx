@@ -141,7 +141,7 @@ export default function TeacherLeave() {
   };
 
   const handleCancel = async (id: string) => {
-    if (!confirm("Are you sure you want to withdraw this leave request? This cannot be undone.")) return;
+    if (!confirm("Do you really want to withdraw this leave request? This action cannot be undone.")) return;
     setError(null);
     try {
       const res = await fetch(`/api/leaves/${id}`, {

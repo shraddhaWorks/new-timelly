@@ -48,6 +48,7 @@ export async function PUT(
       photo,
       eventDate,
       maxSeats,
+      amount,
     } = await req.json();
 
     if (
@@ -88,6 +89,8 @@ export async function PUT(
       parsedEventDate = parsed;
     }
 
+    const eventAmount = typeof amount === "number" && amount >= 0 ? amount : (typeof amount === "string" ? parseFloat(amount) || 0 : 0);
+
     const updated = await prisma.event.update({
       where: { id },
       data: {
@@ -101,6 +104,7 @@ export async function PUT(
         eventDate: parsedEventDate,
         photo: photo ?? null,
         maxSeats: maxSeats != null && typeof maxSeats === "number" ? maxSeats : null,
+        amount: Math.max(0, eventAmount),
       },
       include: {
         class: {

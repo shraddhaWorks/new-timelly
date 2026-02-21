@@ -66,15 +66,15 @@ export async function POST(req: Request) {
 
     if (!name || typeof amount !== "number" || amount <= 0 || !targetType) {
       return NextResponse.json(
-        { message: "name, amount (positive number), and targetType (CLASS|SECTION|STUDENT) required" },
+        { message: "name, amount (positive number), and targetType (SCHOOL|CLASS|SECTION|STUDENT) required" },
         { status: 400 }
       );
     }
 
-    const validTypes = ["CLASS", "SECTION", "STUDENT"];
+    const validTypes = ["SCHOOL", "CLASS", "SECTION", "STUDENT"];
     if (!validTypes.includes(targetType)) {
       return NextResponse.json(
-        { message: "targetType must be CLASS, SECTION, or STUDENT" },
+        { message: "targetType must be SCHOOL, CLASS, SECTION, or STUDENT" },
         { status: 400 }
       );
     }
@@ -103,13 +103,15 @@ export async function POST(req: Request) {
       });
 
       const studentWhere =
-        targetType === "SECTION" && targetClassId && targetSection
-          ? { schoolId, classId: targetClassId, class: { section: targetSection } }
-          : targetType === "CLASS" && targetClassId
-            ? { schoolId, classId: targetClassId }
-            : targetType === "STUDENT" && targetStudentId
-              ? { schoolId, id: targetStudentId }
-              : null;
+        targetType === "SCHOOL"
+          ? { schoolId }
+          : targetType === "SECTION" && targetClassId && targetSection
+            ? { schoolId, classId: targetClassId, class: { section: targetSection } }
+            : targetType === "CLASS" && targetClassId
+              ? { schoolId, classId: targetClassId }
+              : targetType === "STUDENT" && targetStudentId
+                ? { schoolId, id: targetStudentId }
+                : null;
 
       if (studentWhere) {
         const students = await tx.student.findMany({

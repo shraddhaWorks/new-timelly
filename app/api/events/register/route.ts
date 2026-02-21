@@ -133,7 +133,8 @@ export async function POST(req: Request) {
       {
         message: "Successfully registered for the event",
         registration,
-        note: "Payment integration can be added later",
+        paymentRequired: event.amount > 0,
+        amount: event.amount,
       },
       { status: 201 }
     );

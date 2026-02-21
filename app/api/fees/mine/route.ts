@@ -50,6 +50,7 @@ export async function GET() {
       where: {
         schoolId: fee.student.schoolId,
         OR: [
+          { targetType: "SCHOOL" },
           { targetType: "STUDENT", targetStudentId: studentId },
           ...(classId ? [{ targetType: "CLASS", targetClassId: classId }] : []),
           ...(classId && fee.student.class?.section

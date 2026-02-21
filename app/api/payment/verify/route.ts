@@ -128,21 +128,53 @@ export async function POST(req: Request) {
 
     const hyperpgId = orderStatus.id || null;
 
-    const existing = hyperpgId
-      ? await prisma.payment.findFirst({
-          where: { hyperpgOrderId: hyperpgId, studentId },
-        })
-      : null;
+    // Find existing Payment by transactionId (our orderId) or hyperpgOrderId
+    const existing = await prisma.payment.findFirst({
+      where: {
+        studentId,
+        OR: [
+          { transactionId: orderId },
+          ...(hyperpgId ? [{ hyperpgOrderId: hyperpgId }] : []),
+        ],
+      },
+    });
+
     if (existing) {
+      // Update PENDING payment to SUCCESS
+      const payment = await prisma.payment.update({
+        where: { id: existing.id },
+        data: {
+          status: "SUCCESS",
+          hyperpgOrderId: hyperpgId || existing.hyperpgOrderId,
+          hyperpgTxnId: orderStatus.txn_id || existing.hyperpgTxnId,
+        },
+      });
+
+      // If workshop payment, update EventRegistration
+      if (existing.eventRegistrationId) {
+        await prisma.eventRegistration.update({
+          where: { id: existing.eventRegistrationId },
+          data: {
+            paymentStatus: "PAID",
+            paymentId: payment.id,
+          },
+        });
+        return NextResponse.json(
+          { payment, eventRegistration: { paymentStatus: "PAID" } },
+          { status: 200 }
+        );
+      }
+
       const fee = await prisma.studentFee.findUnique({
         where: { studentId },
       });
       return NextResponse.json(
-        { payment: existing, fee: fee ?? undefined },
+        { payment, fee: fee ?? undefined },
         { status: 200 }
       );
     }
 
+    // No pre-created Payment (legacy fee flow)
     const fee = await prisma.studentFee.findUnique({
       where: { studentId },
     });

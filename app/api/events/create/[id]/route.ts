@@ -67,6 +67,7 @@ export async function GET(
     }
 
     let isRegistered = false;
+    let registration: { id: string; paymentStatus: string } | null = null;
     let workshopCertificate: { id: string; title: string; certificateUrl: string | null; issuedDate: string } | null = null;
     if (session.user.studentId) {
       const [reg, cert] = await Promise.all([
@@ -87,6 +88,9 @@ export async function GET(
         }),
       ]);
       isRegistered = !!reg;
+      if (reg) {
+        registration = { id: reg.id, paymentStatus: reg.paymentStatus };
+      }
       if (cert) {
         workshopCertificate = {
           id: cert.id,
@@ -98,7 +102,7 @@ export async function GET(
     }
 
     return NextResponse.json({
-      event: { ...event, isRegistered, workshopCertificate },
+      event: { ...event, isRegistered, registration, workshopCertificate },
     }, { status: 200 });
   } catch (error: any) {
     console.error("Get event error:", error);

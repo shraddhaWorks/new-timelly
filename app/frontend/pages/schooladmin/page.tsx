@@ -108,7 +108,7 @@ function SchoolAdminContent() {
   }
 
   return (
-    <RequiredRoles allowedRoles={["SCHOOLADMIN"]}>
+    <RequiredRoles allowedRoles={["SCHOOLADMIN", "SUPERADMIN"]}>
       <AppLayout
         activeTab={tab}
         title={title}

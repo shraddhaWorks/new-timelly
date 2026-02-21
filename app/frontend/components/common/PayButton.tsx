@@ -9,12 +9,15 @@ interface PayButtonProps {
   onSuccess?: () => void;
   /** When paying from parent fees, pass "/frontend/pages/parent?tab=fees" so redirect returns here */
   returnPath?: string;
+  /** For workshop payments, pass event registration id so enrollment is updated on success */
+  eventRegistrationId?: string;
 }
 
 export default function PayButton({
   amount,
   onSuccess,
   returnPath,
+  eventRegistrationId,
 }: PayButtonProps) {
   const [loading, setLoading] = useState(false);
 
@@ -30,6 +33,7 @@ export default function PayButton({
         body: JSON.stringify({
           amount: normalizedAmount,
           ...(returnPath && { return_path: returnPath }),
+          ...(eventRegistrationId && { event_registration_id: eventRegistrationId }),
         }),
       });
 

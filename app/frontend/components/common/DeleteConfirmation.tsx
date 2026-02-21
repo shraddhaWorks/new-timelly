@@ -73,17 +73,20 @@ export default function DeleteConfirmation({
 
                             {/* Content */}
                             <div className="px-6 py-4 space-y-4">
-                                <p className="text-gray-400 text-center text-sm mb-6">
+                                <p className="text-gray-400 text-center text-sm mb-2">
                                     {message ?? (
                                         <>
-                                            Are you sure you want to delete{" "}
+                                            Do you really want to delete{" "}
                                             <span className="text-white font-semibold">{userName ?? "this item"}</span>?
                                         </>
                                     )}
                                 </p>
+                                <p className="text-sm text-amber-400/90 text-center font-medium">
+                                    This action cannot be undone.
+                                </p>
                                 {!message && (
-                                    <p className="text-sm text-white/60">
-                                        This action cannot be undone. All associated data will be removed from the system.
+                                    <p className="text-sm text-white/60 text-center">
+                                        All associated data will be removed from the system.
                                     </p>
                                 )}
 

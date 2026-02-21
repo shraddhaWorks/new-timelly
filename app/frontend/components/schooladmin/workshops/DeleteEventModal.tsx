@@ -41,7 +41,7 @@ export default function DeleteEventModal({
           Delete Event?
         </h3>
         <p className="mt-2 text-center text-sm text-white/60">
-          Are you sure you want to delete{" "}
+          Do you really want to delete{" "}
           <span className="text-white font-semibold">
             {title || "this event"}
           </span>

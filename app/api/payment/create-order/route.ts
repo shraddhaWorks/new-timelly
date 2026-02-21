@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 
 const hyperpgBaseUrl = process.env.HYPERPG_BASE_URL || "https://sandbox.hyperpg.in";
 const globalHyperpgMerchantId = process.env.HYPERPG_MERCHANT_ID;
@@ -19,7 +20,6 @@ function generateOrderId(): string {
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
-  console.log("session", session);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -34,6 +34,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const rawAmount = body.amount;
     const returnPath = (body.return_path as string) || "/payments";
+    const eventRegistrationId = typeof body.event_registration_id === "string" && body.event_registration_id ? body.event_registration_id : null;
 
     const amountNumber =
       typeof rawAmount === "string" ? parseFloat(rawAmount) : rawAmount;
@@ -43,6 +44,21 @@ export async function POST(req: Request) {
         { error: "Invalid amount (minimum INR 1)" },
         { status: 400 }
       );
+    }
+
+    // For fee payments (no workshop): enforce amount does not exceed remaining fee
+    if (!eventRegistrationId) {
+      const fee = await prisma.studentFee.findUnique({
+        where: { studentId: session.user.studentId },
+        select: { remainingFee: true },
+      });
+      const maxAllowed = fee ? fee.remainingFee : 0;
+      if (amountNumber > maxAllowed + 0.01) {
+        return NextResponse.json(
+          { error: `Amount cannot exceed remaining fee (₹${maxAllowed.toFixed(2)})` },
+          { status: 400 }
+        );
+      }
     }
 
     const student = await prisma.student.findUnique({
@@ -112,7 +128,7 @@ export async function POST(req: Request) {
       customer_phone: phone,
       first_name: firstName,
       last_name: lastName,
-      description: "Fee payment - Timelly",
+      description: eventRegistrationId ? "Workshop payment - Timelly" : "Fee payment - Timelly",
       customer_id: customerId,
       order_id: orderId,
       return_url: "https://hyperpg.in/",
@@ -122,7 +138,6 @@ export async function POST(req: Request) {
     };
     const expiryMins = process.env.HYPERPG_LINK_EXPIRY_MINS;
     if (expiryMins) sessionPayload["metadata.expiryInMins"] = String(expiryMins);
-    console.log("sessionPayload", sessionPayload);
     const apiKeyClean = apiKey.replace(/^["']|["']$/g, "").trim();
     const merchantIdClean = (merchantId || "").trim().replace(/^["']|["']$/g, "");
     // Match exact Postman that works: Basic Base64(apiKey) only, no colon, no x-merchantid
@@ -192,6 +207,19 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
+
+    // Store Payment in DB (status PENDING) - will be updated on verify
+    await prisma.payment.create({
+      data: {
+        studentId: session.user.studentId,
+        amount: amountNumber,
+        gateway: "HYPERPG",
+        hyperpgOrderId: data.id || null,
+        status: "PENDING",
+        transactionId: orderId,
+        ...(eventRegistrationId && { eventRegistrationId }),
+      } as Prisma.PaymentUncheckedCreateInput,
+    });
 
     return NextResponse.json({
       gateway: "HYPERPG",

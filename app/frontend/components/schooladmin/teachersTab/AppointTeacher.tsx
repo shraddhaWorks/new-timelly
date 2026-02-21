@@ -161,7 +161,7 @@ export default function AppointTeacher() {
 
   // REMOVE
   const handleRemove = async (classId: string) => {
-    if (!confirm("Remove class teacher?")) return;
+    if (!confirm("Do you really want to remove this class teacher? This action cannot be undone.")) return;
 
     setRemovingId(classId);
 

@@ -11,7 +11,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const { title, description, type, level, location, mode, additionalInfo, photo, eventDate, classId, studentIds, maxSeats } = await req.json();
+    const { title, description, type, level, location, mode, additionalInfo, photo, eventDate, classId, studentIds, maxSeats, amount } = await req.json();
 
     if (!title || !description || !type || !level || !location || !mode || !additionalInfo) {
       return NextResponse.json(
@@ -59,6 +59,8 @@ export async function POST(req: Request) {
       parsedEventDate = parsed;
     }
 
+    const eventAmount = typeof amount === "number" && amount >= 0 ? amount : (typeof amount === "string" ? parseFloat(amount) || 0 : 0);
+
     const event = await prisma.event.create({
       data: {
         title,
@@ -74,6 +76,7 @@ export async function POST(req: Request) {
         teacherId,
         schoolId,
         maxSeats: maxSeats != null && typeof maxSeats === "number" ? maxSeats : null,
+        amount: Math.max(0, eventAmount),
       },
       include: {
         class: {

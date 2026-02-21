@@ -177,7 +177,7 @@ const SchoolAdminTeacherTab = () => {
   );
 
   const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to remove this teacher from the list? Contact admin for permanent removal.")) {
+    if (confirm("Do you really want to remove this teacher from the list? Contact admin for permanent removal. This action cannot be undone.")) {
       setTeachers((prev) => prev.filter((t) => t.id !== id));
     }
   };

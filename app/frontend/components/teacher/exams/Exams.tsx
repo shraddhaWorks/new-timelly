@@ -167,7 +167,7 @@ export default function TeacherExamsTab() {
                 isOpen={!!examToDelete}
                 userName={examToDelete?.name ?? "this exam"}
                 title="Delete Exam"
-                message="Are you sure you want to delete this exam schedule?"
+                message="Do you really want to delete this exam schedule? This action cannot be undone."
                 confirmLabel="Delete Exam"
                 cancelLabel="Cancel"
                 onCancel={() => setExamToDelete(null)}
