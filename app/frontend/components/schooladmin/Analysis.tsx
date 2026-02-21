@@ -18,6 +18,7 @@ import {
   Users,
   Star,
   Award,
+  ChevronDown,
   CalendarCheck,
   TrendingUp,
   BookOpen,
