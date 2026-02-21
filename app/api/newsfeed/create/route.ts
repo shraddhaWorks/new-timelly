@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     const description =
       typeof body.description === "string" ? body.description.trim() : "";
     const photosRaw = Array.isArray(body.photos) ? body.photos : [];
-    const photos = photosRaw.filter((p): p is string => typeof p === "string" && !!p);
+    const photos = photosRaw.filter((p: unknown): p is string => typeof p === "string" && !!p);
     const photo =
       photos[0] ??
       (typeof body.photo === "string" && body.photo ? body.photo : null) ??
