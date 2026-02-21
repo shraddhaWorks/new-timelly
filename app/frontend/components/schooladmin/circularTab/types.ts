@@ -9,7 +9,6 @@ export interface CircularRow {
   attachments?: string[];
   classId: string | null;
   targetClass?: { id: string; name: string; section: string | null } | null;
-  targetClasses?: { id: string; name: string; section: string | null }[];
   publishStatus: string;
   issuedBy: { id: string; name: string | null };
 }

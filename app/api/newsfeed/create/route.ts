@@ -121,6 +121,7 @@ export async function POST(req: Request) {
           title,
           description,
           photo,
+          photos,
           likes: 0,
           createdBy,
           createdAt: isoNow,

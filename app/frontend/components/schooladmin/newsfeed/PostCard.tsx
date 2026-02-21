@@ -37,12 +37,7 @@ export default function PostCard({ post, onLike }: PostCardProps) {
         <div className="w-full aspect-video sm:h-64 md:h-80 max-h-80 overflow-hidden bg-black/20">
           <div className="flex overflow-x-auto snap-x snap-mandatory gap-0 h-full">
             {(post.photos && post.photos.length > 0 ? post.photos : [post.photo!]).map((src, i) => (
-              <img
-                key={i}
-                src={src}
-                alt=""
-                className="w-full h-full min-w-full object-cover snap-center snap-always"
-              />
+              <img key={i} src={src} alt="" className="w-full h-full min-w-full object-cover snap-center snap-always" />
             ))}
           </div>
         </div>

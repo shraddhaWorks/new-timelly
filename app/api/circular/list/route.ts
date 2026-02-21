@@ -40,9 +40,7 @@ export async function GET(req: Request) {
       });
     }
     if (classId) {
-      andClauses.push({
-        OR: [{ classId }, { classIds: { has: classId } }],
-      });
+      where.classId = classId;
     }
     if (andClauses.length > 0) where.AND = andClauses;
 
@@ -52,12 +50,7 @@ export async function GET(req: Request) {
       orderBy: { date: "desc" },
     });
 
-    const allClassIds = [
-      ...new Set([
-        ...circulars.map((c) => c.classId).filter(Boolean),
-        ...(circulars.flatMap((c) => (c as { classIds?: string[] }).classIds ?? [])),
-      ]),
-    ] as string[];
+    const allClassIds = [...new Set(circulars.map((c) => c.classId).filter((id): id is string => !!id))];
     const classes =
       allClassIds.length > 0
         ? await prisma.class.findMany({
@@ -67,16 +60,10 @@ export async function GET(req: Request) {
         : [];
     const classMap = Object.fromEntries(classes.map((cls) => [cls.id, cls]));
 
-    const enriched = circulars.map((c) => {
-      const cids = (c as { classIds?: string[] }).classIds ?? [];
-      const firstClassId = c.classId ?? cids[0];
-      const targetClasses = [c.classId, ...cids].filter((id): id is string => !!id);
-      return {
-        ...c,
-        targetClass: firstClassId ? classMap[firstClassId] ?? null : null,
-        targetClasses: [...new Set(targetClasses)].map((id) => classMap[id]).filter(Boolean),
-      };
-    });
+    const enriched = circulars.map((c) => ({
+      ...c,
+      targetClass: c.classId ? classMap[c.classId] ?? null : null,
+    }));
 
     return NextResponse.json({ circulars: enriched }, { status: 200 });
   } catch (e: unknown) {

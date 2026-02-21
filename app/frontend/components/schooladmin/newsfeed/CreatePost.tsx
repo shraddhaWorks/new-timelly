@@ -33,8 +33,7 @@ export default function CreatePost({ onPublished }: CreatePostProps) {
     try {
       const urls: string[] = [];
       for (const file of imageFiles) {
-        const url = await uploadImage(file, "newsfeed");
-        urls.push(url);
+        urls.push(await uploadImage(file, "newsfeed"));
       }
       setPhotoUrls((prev) => [...prev, ...urls]);
     } catch (err) {
@@ -140,16 +139,8 @@ export default function CreatePost({ onPublished }: CreatePostProps) {
           <div className="flex flex-wrap gap-2">
             {photoUrls.map((url, i) => (
               <div key={url} className="relative inline-block">
-                <img
-                  src={url}
-                  alt={`Attached ${i + 1}`}
-                  className="max-h-40 rounded-xl border border-white/10 object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() => removePhoto(i)}
-                  className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white hover:bg-black/80"
-                >
+                <img src={url} alt={`Attached ${i + 1}`} className="max-h-40 rounded-xl border border-white/10 object-cover" />
+                <button type="button" onClick={() => removePhoto(i)} className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white hover:bg-black/80">
                   <X size={14} />
                 </button>
               </div>

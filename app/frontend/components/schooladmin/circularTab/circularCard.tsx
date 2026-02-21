@@ -25,13 +25,13 @@ export default function CircularCard({ c }: { c: CircularRow }) {
           {c.content}
         </p>
 
-        {(c.recipients?.length > 0 || c.targetClass || (c as { targetClasses?: unknown[] }).targetClasses?.length) && (
+        {(c.recipients?.length > 0 || c.targetClass) && (
           <div className="flex flex-wrap gap-1.5 text-xs">
-            {((c as { targetClasses?: { name: string; section: string | null }[] }).targetClasses ?? (c.targetClass ? [c.targetClass] : [])).map((cls) => (
-              <span key={(cls as { id?: string }).id ?? cls.name} className="px-2 py-0.5 rounded-lg bg-lime-400/20 text-lime-400">
-                {cls.name}{cls.section ? ` ${cls.section}` : ""}
+            {c.targetClass && (
+              <span className="px-2 py-0.5 rounded-lg bg-lime-400/20 text-lime-400">
+                {c.targetClass.name}{c.targetClass.section ? ` ${c.targetClass.section}` : ""}
               </span>
-            ))}
+            )}
             {(c.recipients ?? []).filter((r) => r !== "all").map((r) => (
               <span key={r} className="px-2 py-0.5 rounded-lg bg-white/10 text-white/80 capitalize">
                 {r}

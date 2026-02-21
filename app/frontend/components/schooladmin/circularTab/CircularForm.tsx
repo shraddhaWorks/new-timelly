@@ -56,8 +56,6 @@ type CircularFormState = {
     recipients: string[];
     issuedBy: string;
     classId: string;
-    classIds: string[];
-    classTeacherOnly: boolean;
     publishStatus: PublishStatus;
     attachments: string[];
 };
@@ -83,8 +81,6 @@ export default function CircularForm({ onClose, onSuccess }: Props) {
         importanceLevel: "Medium",
         recipients: [],
         classId: "",
-        classIds: [],
-        classTeacherOnly: false,
         publishStatus: PUBLISH_STATUS.PUBLISHED,
         attachments: [],
     });
@@ -259,45 +255,26 @@ export default function CircularForm({ onClose, onSuccess }: Props) {
                 </div>
 
 
-                {/* target classes - class-wise circular */}
+                {/* target class - class-wise circular */}
                 <div>
                     <label className="block text-xs font-medium text-gray-400 mb-2 flex items-center gap-1.5">
-                        <GraduationCap size={14} /> Target Class(es) (optional)
+                        <GraduationCap size={14} /> Target Class (optional)
                     </label>
                     <p className="text-xs text-white/50 mb-2">
-                        Leave empty for school-wide. Select one or more classes to target students, parents, or class teachers of those classes only.
+                        Leave empty for school-wide. Select a class to target students, parents, or teachers of that class only.
                     </p>
-                    <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 bg-black/10 rounded-xl border border-white/10">
-                        {classes.map((c) => {
-                            const isSelected = form.classIds.includes(c.id);
-                            return (
-                                <button
-                                    key={c.id}
-                                    type="button"
-                                    onClick={() => {
-                                        const next = isSelected
-                                            ? form.classIds.filter((id) => id !== c.id)
-                                            : [...form.classIds, c.id];
-                                        setForm({
-                                            ...form,
-                                            classIds: next,
-                                            classId: next[0] ?? "",
-                                        });
-                                    }}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all
-                                        ${isSelected ? "bg-lime-400/20 text-lime-400 border-lime-400/50" : "bg-white/5 text-gray-400 border-white/10 hover:border-white/20"}
-                                    `}
-                                >
-                                    {c.name}{c.section ? ` ${c.section}` : ""}
-                                </button>
-                            );
-                        })}
-                    </div>
-                    {form.classIds.length > 0 && (
-                        <p className="text-xs text-lime-400/80 mt-1">
-                            {form.classIds.length} class(es) selected
-                        </p>
-                    )}
+                    <select
+                        value={form.classId}
+                        onChange={(e) => setForm({ ...form, classId: e.target.value })}
+                        className="w-full max-w-xs bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-gray-200 focus:outline-none focus:border-lime-400/50"
+                    >
+                        <option value="" className="bg-slate-800">All classes (school-wide)</option>
+                        {classes.map((c) => (
+                            <option key={c.id} value={c.id} className="bg-slate-800">
+                                {c.name}{c.section ? ` - ${c.section}` : ""}
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
                 {/* recipients */}
@@ -332,20 +309,6 @@ export default function CircularForm({ onClose, onSuccess }: Props) {
                             );
                         })}
                     </div>
-                    {form.recipients.includes("teachers") && form.classIds.length > 0 && (
-                        <label className="flex items-center gap-2 mt-3 cursor-pointer text-sm text-gray-300">
-                            <input
-                                type="checkbox"
-                                checked={form.classTeacherOnly}
-                                onChange={(e) =>
-                                    setForm({ ...form, classTeacherOnly: e.target.checked })
-                                }
-                                className="accent-lime-400 w-4 h-4 rounded"
-                            />
-                            <span>Class teachers only</span>
-                            <span className="text-xs text-white/50">— teachers of the selected class(es)</span>
-                        </label>
-                    )}
                 </div>
                 {/* publish status */}
 

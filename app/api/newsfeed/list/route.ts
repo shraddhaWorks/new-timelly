@@ -112,9 +112,7 @@ export async function GET() {
 
       const newsFeeds = feeds.map((f) => {
         const fAny = f as { photos?: string[] };
-        const photos = Array.isArray(fAny.photos) && fAny.photos.length > 0
-          ? fAny.photos
-          : f.photo ? [f.photo] : [];
+        const photos = Array.isArray(fAny.photos) && fAny.photos.length > 0 ? fAny.photos : f.photo ? [f.photo] : [];
         return {
         id: f.id,
         title: f.title,

@@ -276,9 +276,7 @@ model Circular {
   school          School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   importanceLevel String   @default("Medium") // High, Medium, Low
   recipients      String[] @default([]) // all, teachers, parents, students, staff
-  classId         String?  // optional: target single class (legacy)
-  classIds        String[] @default([]) // target multiple classes
-  classTeacherOnly Boolean @default(false) // when true + teachers: only class teachers of target classes
+  classId         String?  // optional: target specific class
   targetClass     Class?   @relation("CircularTargetClass", fields: [classId], references: [id], onDelete: SetNull)
   publishStatus   String   @default("DRAFT") // PUBLISHED, DRAFT
   createdAt       DateTime @default(now())
@@ -618,7 +616,7 @@ model NewsFeed {
   id          String   @id @default(cuid())
   title       String
   description String   @db.Text
-  photo       String?  // URL - backward compat, first image
+  photo       String?  // URL - first/main image
   photos      String[] @default([]) // multiple images
   likes       Int      @default(0)
   // Relations

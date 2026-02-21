@@ -35,8 +35,6 @@ export async function POST(req: Request) {
       importanceLevel,
       recipients,
       classId,
-      classIds,
-      classTeacherOnly,
       publishStatus,
     } = body;
 
@@ -62,9 +60,7 @@ export async function POST(req: Request) {
         attachments: Array.isArray(attachments) ? attachments : [],
         importanceLevel: importanceLevel || "Medium",
         recipients: Array.isArray(recipients) ? recipients : ["all"],
-        classId: classId || (Array.isArray(classIds) && classIds[0]) || null,
-        classIds: Array.isArray(classIds) ? classIds : [],
-        classTeacherOnly: !!classTeacherOnly,
+        classId: classId || null,
         publishStatus: publishStatus === "PUBLISHED" ? "PUBLISHED" : "DRAFT",
       },
     });
