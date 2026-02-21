@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
+import {
+  createNotificationsForUserIds,
+  getSchoolUserIds,
+} from "@/lib/notificationService";
 
 export async function POST(req: Request) {
   try {
@@ -102,6 +106,18 @@ export async function POST(req: Request) {
         })),
         skipDuplicates: true,
       });
+    }
+
+    try {
+      const userIds = await getSchoolUserIds(schoolId);
+      await createNotificationsForUserIds(
+        userIds.filter((id) => id !== teacherId),
+        "WORKSHOPS",
+        "New workshop/event",
+        title.length > 80 ? title.slice(0, 80) + "…" : title
+      );
+    } catch (nErr) {
+      console.warn("Workshop notification failed:", nErr);
     }
 
     return NextResponse.json(

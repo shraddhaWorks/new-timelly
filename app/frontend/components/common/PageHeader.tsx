@@ -29,10 +29,10 @@ export default function PageHeader({
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       className={`
-        rounded-2xl sm:rounded-3xl
+        rounded-xl sm:rounded-2xl md:rounded-3xl
         flex flex-col md:flex-row
-        md:items-center md:justify-between gap-3 sm:gap-4
-        ${compact ? "p-4 sm:p-6 mb-4 sm:mb-6" : "p-5 sm:p-6 mb-6 sm:mb-8"}
+        md:items-center md:justify-between gap-2 sm:gap-3 md:gap-4
+        ${compact ? "p-3 sm:p-4 md:p-6 mb-3 sm:mb-4 md:mb-6" : "p-4 sm:p-5 md:p-6 mb-4 sm:mb-6 md:mb-8"}
         ${transparent ? "bg-transparent" : "bg-white/5 backdrop-blur-xl border-b border-white/10"}
         ${className}
       `}

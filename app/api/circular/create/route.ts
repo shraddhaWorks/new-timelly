@@ -4,6 +4,10 @@ import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
 import { generateRefNumber } from "@/lib/utils";
 import { CIRCULAR_REF_PREFIX } from "@/lib/constants";
+import {
+  createNotificationsForUserIds,
+  getSchoolUserIds,
+} from "@/lib/notificationService";
 
 async function getSchoolId(session: { user: { id: string; schoolId?: string | null } }) {
   let schoolId = session.user.schoolId;
@@ -64,6 +68,20 @@ export async function POST(req: Request) {
         publishStatus: publishStatus === "PUBLISHED" ? "PUBLISHED" : "DRAFT",
       },
     });
+
+    if (circular.publishStatus === "PUBLISHED") {
+      try {
+        const userIds = await getSchoolUserIds(schoolId);
+        await createNotificationsForUserIds(
+          userIds.filter((id) => id !== session.user.id),
+          "CIRCULAR",
+          "New circular",
+          subject.length > 80 ? subject.slice(0, 80) + "…" : subject
+        );
+      } catch (nErr) {
+        console.warn("Circular notification creation failed:", nErr);
+      }
+    }
 
     return NextResponse.json({ circular }, { status: 201 });
   } catch (e: unknown) {

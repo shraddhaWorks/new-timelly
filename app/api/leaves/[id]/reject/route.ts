@@ -1,6 +1,7 @@
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
 import { getServerSession } from "next-auth";
+import { createNotification } from "@/lib/notificationService";
 
 interface Params {
   id: string;
@@ -43,6 +44,13 @@ export async function PATCH(req: Request, { params }: { params: Params | Promise
         approverId: session.user.id
       }
     });
+
+    createNotification(
+      leave.teacherId,
+      "LEAVE",
+      "Leave rejected",
+      "Your leave request was rejected"
+    ).catch(() => {});
 
     return new Response(JSON.stringify(leave), { status: 200 });
 

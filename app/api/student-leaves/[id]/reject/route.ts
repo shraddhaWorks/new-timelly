@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
+import { createNotification } from "@/lib/notificationService";
 
 export async function PATCH(
   req: Request,
@@ -23,7 +24,17 @@ export async function PATCH(
     const leave = await prisma.studentLeaveRequest.update({
       where: { id, status: "PENDING" },
       data: { status: "REJECTED", approverId: session.user.id, remarks },
+      include: { student: { select: { userId: true } } },
     });
+
+    if (leave.student?.userId) {
+      createNotification(
+        leave.student.userId,
+        "LEAVE",
+        "Leave rejected",
+        remarks ? `Your leave request was rejected: ${remarks}` : "Your leave request was rejected"
+      ).catch(() => {});
+    }
 
     return NextResponse.json({ leave }, { status: 200 });
   } catch (e: unknown) {

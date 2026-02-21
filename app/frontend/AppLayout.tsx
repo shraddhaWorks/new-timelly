@@ -65,7 +65,7 @@ export default function AppLayout({
             hideSearchAndNotifications={hideSearchAndNotifications}
           />
 
-          <main className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar p-3 sm:p-4 md:p-6 min-h-0">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar px-3 py-3 sm:p-4 md:p-6 min-h-0">
             {children}
           </main>
         </div>

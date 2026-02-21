@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
+import { createNotification } from "@/lib/notificationService";
 
 export async function POST(req: Request) {
   try {
@@ -83,7 +84,7 @@ export async function POST(req: Request) {
         }
 
         // Upsert attendance
-        return await prisma.attendance.upsert({
+        const result = await prisma.attendance.upsert({
           where: {
             studentId_classId_date_period: {
               studentId: att.studentId,
@@ -105,6 +106,18 @@ export async function POST(req: Request) {
             teacherId: teacherId,
           },
         });
+
+        if (student.userId) {
+          const dateStr = dateOnly.toLocaleDateString();
+          await createNotification(
+            student.userId,
+            "ATTENDANCE",
+            "Attendance Updated",
+            `Your attendance for period ${period} on ${dateStr} has been marked: ${att.status}`
+          );
+        }
+
+        return result;
       })
     );
 

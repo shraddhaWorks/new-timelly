@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { X, Loader2 } from "lucide-react";
-import SectionHeader from "./SectionHeader";
-import SecondaryButton from "./SecondaryButton";
 
 interface Notification {
   id: string;
@@ -77,41 +75,44 @@ export default function NotificationPanel({ onClose }: NotificationPanelProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg">
-      {/* Overlay */}
+    <div className="fixed inset-0 z-50 flex justify-end">
+      {/* Overlay - glass */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/30 backdrop-blur-md"
         onClick={onClose}
       />
 
-      {/* Panel */}
-      <aside className="relative w-full sm:w-[420px] h-full
-        bg-[#0b1220] border-l border-white/10
-        shadow-2xl flex flex-col">
+      {/* Panel - glassmorphism, 60% width on mobile, full height */}
+      <aside className="relative w-[60%] min-w-[280px] sm:w-[420px] h-full flex flex-col
+        bg-white/10 backdrop-blur-xl border-l border-white/20 shadow-2xl">
 
-        {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-white/10">
+        {/* Header - glass */}
+        <div className="flex items-center justify-between p-5
+          bg-white/5 backdrop-blur-sm border-b border-white/10">
           <div>
-            <SectionHeader title="Notifications"/>
-            <p className="text-sm text-gray-300 m-1">
+            <h2 className="text-lg font-semibold text-white">Notifications</h2>
+            <p className="text-sm text-white/60 mt-0.5">
               {unreadCount > 0 ? `${unreadCount} unread` : "All caught up"}
             </p>
           </div>
 
-          <button onClick={onClose}>
-            <X className="text-white" />
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition"
+          >
+            <X className="w-5 h-5 text-white" />
           </button>
         </div>
 
         {/* List */}
-        <div className="flex-1 overflow-y-auto px-4 space-y-4 pb-6">
+        <div className="flex-1 overflow-y-auto px-4 space-y-3 py-4">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-5 h-5 animate-spin text-white/60" />
-              <span className="ml-2 text-sm text-white/60">Loading notifications...</span>
+              <span className="ml-2 text-sm text-white/60">Loading...</span>
             </div>
           ) : notifications.length === 0 ? (
-            <div className="py-8 text-center text-sm text-white/40">
+            <div className="py-8 text-center text-sm text-white/50">
               No notifications yet.
             </div>
           ) : (
@@ -128,13 +129,20 @@ export default function NotificationPanel({ onClose }: NotificationPanelProps) {
             ))
           )}
         </div>
-        
-        {/* Mark all */}
-        {notifications.length > 0 && unreadCount > 0 && (
-          <div className="p-4 border-t border-white/10">
-            <SecondaryButton title="Mark All as Read" onClick={markAllRead} />
-          </div>
-        )}
+
+        {/* Mark All Read - bottom button */}
+        <div className="p-4 bg-white/5 backdrop-blur-sm border-t border-white/10">
+          <button
+            onClick={markAllRead}
+            disabled={unreadCount === 0}
+            className="w-full py-3 px-4 rounded-xl font-medium
+              bg-white/10 backdrop-blur-sm border border-white/20
+              text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed
+              transition-all"
+          >
+            Mark All Read
+          </button>
+        </div>
       </aside>
     </div>
   );
@@ -158,7 +166,9 @@ function NotificationItem({
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left rounded-xl bg-white/5 p-4 border border-white/10 hover:bg-white/10 transition ${
+      className={`w-full text-left rounded-xl p-4
+        bg-white/5 backdrop-blur-sm border border-white/10
+        hover:bg-white/10 transition ${
         isRead ? "opacity-60" : ""
       }`}
     >

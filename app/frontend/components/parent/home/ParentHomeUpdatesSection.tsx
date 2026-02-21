@@ -69,43 +69,43 @@ export default function ParentHomeUpdatesSection({ feeds, events }: Props) {
   };
 
   return (
-    <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2 space-y-6">
-        <div className="flex items-center gap-3 mb-4">
-          <MessageCircle className="w-5 h-5 text-[#A3E635]" />
-          <h3 className="text-xl font-bold text-white flex items-center gap-2">School Updates</h3>
+    <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+      <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+        <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+          <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-[#A3E635] flex-shrink-0" />
+          <h3 className="text-base sm:text-xl font-bold text-white flex items-center gap-2">School Updates</h3>
         </div>
 
         {!latestFeed ? (
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-white/70">
+          <div className="rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6 text-white/70 text-sm sm:text-base">
             No school updates available.
           </div>
         ) : (
           <article className="bg-[rgba(255,255,255,0.05)] backdrop-blur-xl border border-[rgba(255,255,255,0.1)] border-solid 
-          rounded-2xl shadow-[0px_10px_15px_0px_rgba(0,0,0,0.1),0px_4px_6px_0px_rgba(0,0,0,0.1)] overflow-hidden">
-            <header className="flex items-center justify-between p-5 border-b border-white/[0.05]">
-              <div className="flex items-center gap-4">
+          rounded-xl sm:rounded-2xl shadow-[0px_10px_15px_0px_rgba(0,0,0,0.1),0px_4px_6px_0px_rgba(0,0,0,0.1)] overflow-hidden">
+            <header className="flex items-center justify-between p-3 sm:p-5 border-b border-white/[0.05] gap-2">
+              <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={latestFeed.photo || "https://i.pravatar.cc/120?img=11"}
                   alt={latestFeed.createdBy?.name ?? "School"}
-                  className="w-12 h-12 rounded-xl object-cover border border-white/[0.1]"
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl object-cover border border-white/[0.1] flex-shrink-0"
                 />
-                <div>
-                  <h4 className="font-semibold text-white text-base">
+                <div className="min-w-0">
+                  <h4 className="font-semibold text-white text-sm sm:text-base truncate">
                     {latestFeed.createdBy?.name || "School Admin"}
                   </h4>
-                  <p className="text-xs text-[rgb(204,213,238)] mt-0.5">
+                  <p className="text-[11px] sm:text-xs text-[rgb(204,213,238)] mt-0.5">
                     {formatRelativeTime(latestFeed.createdAt)}
                   </p>
                 </div>
               </div>
-             <button className="p-2 hover:bg-white/[0.05] rounded-lg transition-all text-gray-400 hover:text-white"><MoreHorizontal className="h-5 w-5 text-white/50" /></button>
+             <button className="p-2 hover:bg-white/[0.05] rounded-lg transition-all text-gray-400 hover:text-white flex-shrink-0"><MoreHorizontal className="h-4 w-4 sm:h-5 sm:w-5 text-white/50" /></button>
             </header>
 
-            <div className="px-5 py-4">
-              <h5 className="font-bold text-white text-lg mb-2">{latestFeed.title}</h5>
-              <p className="text-gray-300 text-sm leading-relaxed">{latestFeed.description}</p>
+            <div className="px-3 sm:px-5 py-3 sm:py-4">
+              <h5 className="font-bold text-white text-base sm:text-lg mb-1 sm:mb-2 line-clamp-2">{latestFeed.title}</h5>
+              <p className="text-gray-300 text-xs sm:text-sm leading-relaxed line-clamp-4 sm:line-clamp-none">{latestFeed.description}</p>
               <span className="inline-block px-3 py-1 rounded-lg text-xs
                font-semibold bg-[#A3E635]/10 text-[#A3E635] border border-[#A3E635]/20 uppercase tracking-wide mb-2 mt-2">
                 EVENT
@@ -122,7 +122,7 @@ export default function ParentHomeUpdatesSection({ feeds, events }: Props) {
               )}
             </div>
 
-            <footer className="border-t border-white/10 px-6 py-4">
+            <footer className="border-t border-white/10 px-4 sm:px-6 py-3 sm:py-4">
               <div className="flex flex-wrap items-center gap-3 text-sm sm:text-base">
                 <span className="text-white/70">{likesCount} likes</span>
                 <button
@@ -149,26 +149,26 @@ export default function ParentHomeUpdatesSection({ feeds, events }: Props) {
         )}
       </div>
 
-      <aside className="bg-[rgba(255,255,255,0.05)] backdrop-blur-xl border border-[rgba(255,255,255,0.1)] border-solid rounded-2xl shadow-[0px_10px_15px_0px_rgba(0,0,0,0.1),0px_4px_6px_0px_rgba(0,0,0,0.1)] p-5">
-        <h4 className="font-bold text-white mb-4 flex items-center gap-2">
-          <Calendar className="h-5 w-5 text-lime-400" />
+      <aside className="bg-[rgba(255,255,255,0.05)] backdrop-blur-xl border border-[rgba(255,255,255,0.1)] border-solid rounded-xl sm:rounded-2xl shadow-[0px_10px_15px_0px_rgba(0,0,0,0.1),0px_4px_6px_0px_rgba(0,0,0,0.1)] p-4 sm:p-5">
+        <h4 className="font-bold text-white text-base sm:text-lg mb-3 sm:mb-4 flex items-center gap-2">
+          <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-lime-400 flex-shrink-0" />
           Upcoming Events
         </h4>
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {events.slice(0, 3).map((event) => {
             const badge = formatEventBadge(event.eventDate);
             return (
               <div
                 key={event.id}
-                className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.08] transition-colors"
+                className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.08] transition-colors"
               >
-                <div className="p-2 bg-[#A3E635]/10 rounded-lg text-[#A3E635] font-bold text-xs text-center min-w-[3rem]">
+                <div className="p-1.5 sm:p-2 bg-[#A3E635]/10 rounded-lg text-[#A3E635] font-bold text-xs text-center min-w-[2.5rem] sm:min-w-[3rem] flex-shrink-0">
                   <p className="text-xs">{badge.top}</p>
                   <p className="text-xs">{badge.bottom}</p>
                 </div>
-                <div className="min-w-0">
-                  <h5 className="font-semibold text-gray-200 text-sm">{event.title}</h5>
-                  <p className="text-xs text-[rgb(204,213,238)]">{event.type || "Event"}</p>
+                <div className="min-w-0 flex-1">
+                  <h5 className="font-semibold text-gray-200 text-xs sm:text-sm truncate">{event.title}</h5>
+                  <p className="text-[11px] sm:text-xs text-[rgb(204,213,238)]">{event.type || "Event"}</p>
                 </div>
               </div>
             );

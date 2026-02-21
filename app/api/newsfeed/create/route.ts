@@ -3,6 +3,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
 import { randomBytes } from "crypto";
+import {
+  createNotificationsForUserIds,
+  getSchoolUserIds,
+} from "@/lib/notificationService";
 
 function generateId(): string {
   const prefix = "c";
@@ -83,6 +87,18 @@ export async function POST(req: Request) {
           },
         },
       });
+
+      try {
+        const userIds = await getSchoolUserIds(schoolId);
+        await createNotificationsForUserIds(
+          userIds.filter((id) => id !== userId),
+          "NEWS",
+          "New post",
+          title.length > 60 ? title.slice(0, 60) + "…" : title
+        );
+      } catch (nErr) {
+        console.warn("News notification creation failed:", nErr);
+      }
 
       return NextResponse.json(
         {

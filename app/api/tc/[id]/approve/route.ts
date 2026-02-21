@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
+import { createNotification } from "@/lib/notificationService";
 
 export async function POST(
   req: Request,
@@ -119,6 +120,16 @@ export async function POST(
 
       return updatedTC;
     });
+
+    const studentUserId = tc.student?.userId;
+    if (studentUserId) {
+      await createNotification(
+        studentUserId,
+        "CERTIFICATES",
+        "Transfer Certificate Approved",
+        "Your Transfer Certificate request has been approved."
+      );
+    }
 
     return NextResponse.json(
       {

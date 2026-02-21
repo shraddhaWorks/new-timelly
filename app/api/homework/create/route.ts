@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
+import { createNotificationsForUserIds } from "@/lib/notificationService";
 
 export async function POST(req: Request) {
   try {
@@ -74,6 +75,20 @@ export async function POST(req: Request) {
         _count: { select: { submissions: true } },
       },
     });
+
+    const students = await prisma.student.findMany({
+      where: { classId },
+      select: { userId: true },
+    });
+    const userIds = students.map((s) => s.userId);
+    if (userIds.length > 0) {
+      createNotificationsForUserIds(
+        userIds,
+        "HOMEWORK",
+        "New homework",
+        title.length > 60 ? title.slice(0, 60) + "…" : title
+      ).catch(() => {});
+    }
 
     return NextResponse.json(
       { message: "Homework created successfully", homework },

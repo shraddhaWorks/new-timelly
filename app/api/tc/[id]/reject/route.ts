@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
+import { createNotification } from "@/lib/notificationService";
 
 export async function POST(
   req: Request,
@@ -36,6 +37,7 @@ export async function POST(
         id: id,
         schoolId: schoolId,
       },
+      include: { student: true },
     });
 
     if (!tc) {
@@ -59,6 +61,16 @@ export async function POST(
         approvedById: session.user.id,
       },
     });
+
+    const studentUserId = tc.student?.userId;
+    if (studentUserId) {
+      await createNotification(
+        studentUserId,
+        "CERTIFICATES",
+        "Transfer Certificate Rejected",
+        "Your Transfer Certificate request has been rejected."
+      );
+    }
 
     return NextResponse.json(
       { message: "TC request rejected", tc: updatedTC },

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
+import { createNotification } from "@/lib/notificationService";
 
 const hyperpgBaseUrl = process.env.HYPERPG_BASE_URL || "https://sandbox.hyperpg.in";
 const globalHyperpgMerchantId = process.env.HYPERPG_MERCHANT_ID;
@@ -168,6 +169,18 @@ export async function POST(req: Request) {
       const fee = await prisma.studentFee.findUnique({
         where: { studentId },
       });
+      const studentUser = await prisma.student.findUnique({
+        where: { id: studentId },
+        select: { userId: true },
+      });
+      if (studentUser?.userId) {
+        createNotification(
+          studentUser.userId,
+          "FEES",
+          "Payment received",
+          `₹${payment.amount.toLocaleString()} payment received successfully`
+        ).catch(() => {});
+      }
       return NextResponse.json(
         { payment, fee: fee ?? undefined },
         { status: 200 }
@@ -207,6 +220,19 @@ export async function POST(req: Request) {
         remainingFee: newRemaining,
       },
     });
+
+    const studentUser = await prisma.student.findUnique({
+      where: { id: studentId },
+      select: { userId: true },
+    });
+    if (studentUser?.userId) {
+      createNotification(
+        studentUser.userId,
+        "FEES",
+        "Payment received",
+        `₹${amountNum.toLocaleString()} payment received successfully`
+      ).catch(() => {});
+    }
 
     return NextResponse.json(
       { payment, fee: updatedFee },
