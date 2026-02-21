@@ -59,7 +59,7 @@ export async function POST(req: Request) {
         content,
         attachments: Array.isArray(attachments) ? attachments : [],
         importanceLevel: importanceLevel || "Medium",
-        recipients: Array.isArray(recipients) ? recipients : ["all"],
+        recipients: Array.isArray(recipients) && recipients.length > 0 ? recipients : ["all"],
         classId: classId || null,
         publishStatus: publishStatus === "PUBLISHED" ? "PUBLISHED" : "DRAFT",
       },

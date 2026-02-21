@@ -4,13 +4,14 @@ import { ReactNode } from "react";
 import { motion } from "framer-motion";
 
 interface PageHeaderProps {
-  title: ReactNode; // Changed from string to ReactNode
+  title: ReactNode;
   subtitle?: string;
   icon?: ReactNode;
   rightSlot?: ReactNode;
   className?: string;
   center?: boolean;
   transparent?: boolean;
+  compact?: boolean;
 }
 
 export default function PageHeader({
@@ -21,25 +22,27 @@ export default function PageHeader({
   className = "",
   center = false,
   transparent = false,
+  compact = false,
 }: PageHeaderProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       className={`
-        rounded-3xl p-5 sm:p-6 mb-6 sm:mb-8
+        rounded-2xl sm:rounded-3xl
         flex flex-col md:flex-row
-        md:items-center md:justify-between gap-4
+        md:items-center md:justify-between gap-3 sm:gap-4
+        ${compact ? "p-4 sm:p-6 mb-4 sm:mb-6" : "p-5 sm:p-6 mb-6 sm:mb-8"}
         ${transparent ? "bg-transparent" : "bg-white/5 backdrop-blur-xl border-b border-white/10"}
         ${className}
       `}
     >
       {/* LEFT */}
-      <div className={center ? "flex flex-col items-center text-center" : ""}>
+      <div className={`min-w-0 flex-1 ${center ? "flex flex-col items-center text-center" : ""}`}>
         <h1
-          className={`text-[24px] font-bold text-white flex items-center gap-2 ${
-            center ? "justify-center" : ""
-          }`}
+          className={`font-bold text-white flex items-center gap-2 min-w-0 ${
+            compact ? "text-lg sm:text-xl md:text-2xl" : "text-xl sm:text-2xl"
+          } ${center ? "justify-center" : ""}`}
         >
           {icon && (
             <span className="text-[#b4f03d] flex items-center">
@@ -50,7 +53,7 @@ export default function PageHeader({
         </h1>
 
         {subtitle && (
-          <p className="text-[14px] text-white/60 mt-1">
+          <p className={`text-white/60 mt-0.5 sm:mt-1 ${compact ? "text-xs sm:text-sm" : "text-sm"}`}>
             {subtitle}
           </p>
         )}
@@ -58,7 +61,7 @@ export default function PageHeader({
 
       {/* RIGHT */}
       {rightSlot && (
-        <div className={center ? "flex justify-center" : "w-full md:w-auto shrink-0"}>
+        <div className={center ? "flex justify-center w-full" : "w-full md:w-auto shrink-0 min-w-0"}>
           {rightSlot}
         </div>
       )}

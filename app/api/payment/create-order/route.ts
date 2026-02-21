@@ -19,6 +19,7 @@ function generateOrderId(): string {
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
+  console.log("session", session);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -114,14 +115,14 @@ export async function POST(req: Request) {
       description: "Fee payment - Timelly",
       customer_id: customerId,
       order_id: orderId,
-      return_url: returnUrl,
+      return_url: "https://hyperpg.in/",
       send_mail: false,
       send_sms: false,
       send_whatsapp: false,
     };
     const expiryMins = process.env.HYPERPG_LINK_EXPIRY_MINS;
     if (expiryMins) sessionPayload["metadata.expiryInMins"] = String(expiryMins);
-
+    console.log("sessionPayload", sessionPayload);
     const apiKeyClean = apiKey.replace(/^["']|["']$/g, "").trim();
     const merchantIdClean = (merchantId || "").trim().replace(/^["']|["']$/g, "");
     // Match exact Postman that works: Basic Base64(apiKey) only, no colon, no x-merchantid
@@ -140,6 +141,7 @@ export async function POST(req: Request) {
       method: "POST",
       headers,
       body: JSON.stringify(sessionPayload),
+      
     });
 
     const errText = await res.text();

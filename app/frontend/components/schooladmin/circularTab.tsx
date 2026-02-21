@@ -51,35 +51,29 @@ export default function SchoolAdminCircularsTab() {
   }, [circulars, search, importance]);
 
   return (
-    <div className="min-h-screen text-white">
+    <div className="min-h-screen text-white w-full min-w-0 overflow-x-hidden">
       {/* HEADER */}
-     
       <PageHeader
-      className=""
-         icon={<Scroll className="w-5 h-7 size-1/12" />}
+        compact
+        className=""
+        icon={<Scroll className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />}
         title="Circulars & Notices"
         subtitle="Create and manage school-wide circulars"
         transparent={true}
         rightSlot={
           <button
             onClick={() => setShowForm((prev) => !prev)}
-            className="
-              flex items-center justify-center gap-2
-              px-5 py-3
-              rounded-full
-              bg-lime-400 text-black font-semibold
-              hover:bg-lime-300 transition
-              w-full sm:w-auto
-            "
+            className="flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-full bg-lime-400 text-black font-semibold hover:bg-lime-300 transition w-full sm:w-auto text-sm sm:text-base shrink-0"
           >
             {showForm ? (
               <>
-              <X className="w-5 h-5" />
-              <span>Cancel</span>
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>Cancel</span>
               </>
             ) : (
               <>
-                <Plus className="w-5 h-5" /><span>Create Circular</span>
+                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>Create Circular</span>
               </>
             )}
           </button>
@@ -87,7 +81,7 @@ export default function SchoolAdminCircularsTab() {
       />
 
       {/* CONTENT */}
-      <div className="max-w-7xl mx-auto mt-4 sm:mt-6 space-y-4 sm:space-y-6">
+      <div className="w-full max-w-7xl mx-auto px-0 sm:px-4 mt-3 sm:mt-6 space-y-4 sm:space-y-6 pb-6 sm:pb-8">
         {/* FORM (pushes content down) */}
         {showForm && (
           <div className="w-full">
@@ -102,7 +96,7 @@ export default function SchoolAdminCircularsTab() {
         )}
 
         {/* FILTER CARD */}
-        <div className="p-3 sm:p-4">
+        <div className="w-full min-w-0 px-2 sm:px-0">
           <CircularFilters
             search={search}
             onSearch={setSearch}

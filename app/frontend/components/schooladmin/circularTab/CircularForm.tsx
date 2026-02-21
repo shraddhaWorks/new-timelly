@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
+import { uploadImage } from "../../../utils/upload";
 import {
     X,
     Clock,
@@ -69,7 +70,10 @@ type Props = {
 
 export default function CircularForm({ onClose, onSuccess }: Props) {
     const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [attachmentUploading, setAttachmentUploading] = useState(false);
     const [selected, setSelected] = useState<"High" | "Medium" | "Low">("Medium");
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const { classes } = useClasses();
 
     const [form, setForm] = useState<CircularFormState>({
@@ -93,6 +97,31 @@ export default function CircularForm({ onClose, onSuccess }: Props) {
     //             : [...prev.recipients, value],
     //     }));
     // };
+
+    const handleAttachFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files?.length) return;
+        setAttachmentUploading(true);
+        setError(null);
+        try {
+            for (const file of Array.from(files)) {
+                const url = await uploadImage(file, "circulars");
+                setForm((prev) => ({ ...prev, attachments: [...prev.attachments, url] }));
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to upload attachment");
+        } finally {
+            setAttachmentUploading(false);
+            e.target.value = "";
+        }
+    };
+
+    const removeAttachment = (index: number) => {
+        setForm((prev) => ({
+            ...prev,
+            attachments: prev.attachments.filter((_, i) => i !== index),
+        }));
+    };
 
     const toggleRecipient = (value: string) => {
         setForm((prev) => {
@@ -124,6 +153,7 @@ export default function CircularForm({ onClose, onSuccess }: Props) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
+        setError(null);
 
         try {
             const res = await fetch("/api/circular/create", {
@@ -132,10 +162,13 @@ export default function CircularForm({ onClose, onSuccess }: Props) {
                 body: JSON.stringify(form),
             });
 
-            if (!res.ok) throw new Error("Failed to create circular");
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "Failed to create circular");
 
             onSuccess();
+            onClose();
         } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to create circular");
             console.error(err);
         } finally {
             setSubmitting(false);
@@ -214,8 +247,33 @@ export default function CircularForm({ onClose, onSuccess }: Props) {
                 <div>
                     <label htmlFor="" className="block text-xs font-medium text-gray-400 mb-2">Attachments</label>
                     <div className="flex flex-wrap gap-3 mb-3">
-                        <button className="px-3 py-2 bg-white/5 border border-dashed border-white/20 rounded-lg text-sm text-gray-400 hover:text-white hover:border-lime-400/50 hover:bg-lime-400/5 transition-all flex items-center gap-2"> Attach Document</button>
-
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            multiple
+                            accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp"
+                            className="hidden"
+                            onChange={handleAttachFile}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={attachmentUploading}
+                            className="px-3 py-2 bg-white/5 border border-dashed border-white/20 rounded-lg text-sm text-gray-400 hover:text-white hover:border-lime-400/50 hover:bg-lime-400/5 transition-all flex items-center gap-2 disabled:opacity-60"
+                        >
+                            {attachmentUploading ? "Uploading…" : "Attach Document"}
+                        </button>
+                        {form.attachments.map((url, i) => (
+                            <span
+                                key={url}
+                                className="px-3 py-2 bg-lime-400/10 border border-lime-400/30 rounded-lg text-xs text-lime-400 flex items-center gap-2"
+                            >
+                                <a href={url} target="_blank" rel="noopener noreferrer" className="truncate max-w-[120px]">
+                                    Attachment {i + 1}
+                                </a>
+                                <button type="button" onClick={() => removeAttachment(i)} className="text-red-400 hover:text-red-300">×</button>
+                            </span>
+                        ))}
                     </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -363,6 +421,12 @@ export default function CircularForm({ onClose, onSuccess }: Props) {
 
 
 
+                {error && (
+                    <div className="rounded-xl bg-red-500/20 border border-red-500/30 px-4 py-3 text-red-300 text-sm">
+                        {error}
+                    </div>
+                )}
+
                 {/* actions */}
                 <div className="flex gap-3 justify-end pt-4 border-t border-white/10">
                     <button
@@ -375,13 +439,12 @@ export default function CircularForm({ onClose, onSuccess }: Props) {
 
                     <motion.button
                         type="submit"
-                        disabled={false}
-                        whileTap={{ scale: 0.97 }}
-                        className="px-6 py-2.5 bg-lime-400 hover:bg-lime-500 text-black font-bold rounded-xl shadow-lg shadow-lime-400/20 transition-all flex items-center gap-2"
-                       
+                        disabled={submitting}
+                        whileTap={{ scale: submitting ? 1 : 0.97 }}
+                        className="px-6 py-2.5 bg-lime-400 hover:bg-lime-500 text-black font-bold rounded-xl shadow-lg shadow-lime-400/20 transition-all flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                         <Save size={18} className="inline" />
-                        Create Circular
+                        {submitting ? "Creating…" : "Create Circular"}
                     </motion.button>
                 </div>
             </form>

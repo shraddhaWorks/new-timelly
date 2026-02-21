@@ -36,30 +36,19 @@ export default function CircularFilters({
   const { classes } = useClasses();
 
   return (
-    <div
-      className="
-      bg-white/5 backdrop-blur-xl rounded-2xl p-4 border border-white/10 flex flex-col gap-4"
-    >
+    <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-3 sm:p-4 border border-white/10 flex flex-col gap-3 sm:gap-4 w-full min-w-0 overflow-hidden">
       {/* Row 1: Search + Importance */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 w-4 h-4" />
+      <div className="flex flex-col md:flex-row gap-3 sm:gap-4 items-stretch md:items-center justify-between">
+        <div className="relative flex-1 w-full min-w-0">
+          <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-white/50 w-4 h-4 shrink-0 pointer-events-none" />
           <input
             value={search}
             onChange={(e) => onSearch(e.target.value)}
-            placeholder="Search circulars by title or reference no..."
-            className="
-              w-full
-              pl-11 pr-4 py-3
-              rounded-xl
-              bg-black/20
-              text-white
-              placeholder:text-white/50
-              focus:outline-none
-            "
+            placeholder="Search by title or ref..."
+            className="w-full min-w-0 pl-10 sm:pl-11 pr-3 sm:pr-4 py-2.5 sm:py-3 rounded-xl bg-black/20 text-white text-sm sm:text-base placeholder:text-white/50 focus:outline-none focus:ring-1 focus:ring-lime-400/50"
           />
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
+        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
           {["All Importance", ...IMPORTANCE_LEVELS].map((opt) => {
             const isActive = importance === opt;
             return (
@@ -67,7 +56,7 @@ export default function CircularFilters({
                 key={opt}
                 onClick={() => onImportance(opt)}
                 className={`
-                  px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap
+                  px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium whitespace-nowrap shrink-0
                   transition-all border
                   ${
                     isActive
@@ -84,20 +73,14 @@ export default function CircularFilters({
       </div>
 
       {/* Row 2: Recipient + Class filters */}
-      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center border-t border-white/10 pt-4">
-        <div className="flex items-center gap-2 min-w-0">
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center border-t border-white/10 pt-3 sm:pt-4">
+        <div className="flex items-center gap-2 min-w-0 flex-1 sm:flex-initial">
           <Users className="w-4 h-4 text-white/50 shrink-0" />
           <span className="text-sm text-white/70 shrink-0">Recipients:</span>
           <select
             value={recipient}
             onChange={(e) => onRecipient(e.target.value)}
-            className="
-              flex-1 min-w-0 max-w-[180px]
-              px-3 py-2 rounded-xl
-              bg-black/20 text-white text-sm
-              border border-white/10
-              focus:outline-none focus:border-lime-400/50
-            "
+            className="flex-1 sm:flex-initial min-w-0 max-w-full sm:max-w-[180px] px-3 py-2 rounded-xl bg-black/20 text-white text-sm border border-white/10 focus:outline-none focus:ring-1 focus:ring-lime-400/50"
           >
             {RECIPIENT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value} className="bg-slate-800">
@@ -106,19 +89,13 @@ export default function CircularFilters({
             ))}
           </select>
         </div>
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-2 min-w-0 flex-1 sm:flex-initial">
           <GraduationCap className="w-4 h-4 text-white/50 shrink-0" />
           <span className="text-sm text-white/70 shrink-0">Class:</span>
           <select
             value={classId}
             onChange={(e) => onClassId(e.target.value)}
-            className="
-              flex-1 min-w-0 max-w-[200px]
-              px-3 py-2 rounded-xl
-              bg-black/20 text-white text-sm
-              border border-white/10
-              focus:outline-none focus:border-lime-400/50
-            "
+            className="flex-1 sm:flex-initial min-w-0 max-w-full sm:max-w-[200px] px-3 py-2 rounded-xl bg-black/20 text-white text-sm border border-white/10 focus:outline-none focus:ring-1 focus:ring-lime-400/50"
           >
             <option value="" className="bg-slate-800">All Classes</option>
             {classes.map((c) => (

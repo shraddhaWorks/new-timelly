@@ -3,6 +3,18 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
 
+async function getSchoolId(session: { user: { id: string; schoolId?: string | null } }) {
+  let schoolId = session.user.schoolId;
+  if (!schoolId) {
+    const adminSchool = await prisma.school.findFirst({
+      where: { admins: { some: { id: session.user.id } } },
+      select: { id: true },
+    });
+    schoolId = adminSchool?.id ?? null;
+  }
+  return schoolId;
+}
+
 type FeedRow = {
   id: string;
   title: string;
@@ -81,7 +93,7 @@ export async function GET() {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const schoolId = session.user.schoolId as string | undefined;
+    const schoolId = await getSchoolId(session);
 
     if (!schoolId) {
       return NextResponse.json({ newsFeeds: [] }, { status: 200 });

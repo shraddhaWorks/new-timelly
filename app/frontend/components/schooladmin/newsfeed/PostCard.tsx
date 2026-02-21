@@ -1,6 +1,7 @@
 "use client";
 
-import { Heart } from "lucide-react";
+import { useState } from "react";
+import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { formatRelativeTime } from "../../../utils/format";
 import type { NewsFeedItem } from "../../../hooks/useNewsFeeds";
 
@@ -12,6 +13,13 @@ interface PostCardProps {
 export default function PostCard({ post, onLike }: PostCardProps) {
   const authorName = post.createdBy?.name ?? "School";
   const timeStr = formatRelativeTime(post.createdAt);
+
+  const images = (post.photos && post.photos.length > 0) ? post.photos : (post.photo ? [post.photo] : []);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const hasMultiple = images.length > 1;
+
+  const goPrev = () => setCurrentIndex((i) => (i <= 0 ? images.length - 1 : i - 1));
+  const goNext = () => setCurrentIndex((i) => (i >= images.length - 1 ? 0 : i + 1));
 
   return (
     <article className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl md:rounded-3xl overflow-hidden">
@@ -33,13 +41,44 @@ export default function PostCard({ post, onLike }: PostCardProps) {
         </span>
       </div>
 
-      {((post.photos && post.photos.length > 0) || post.photo) && (
-        <div className="w-full aspect-video sm:h-64 md:h-80 max-h-80 overflow-hidden bg-black/20">
-          <div className="flex overflow-x-auto snap-x snap-mandatory gap-0 h-full">
-            {(post.photos && post.photos.length > 0 ? post.photos : [post.photo!]).map((src, i) => (
-              <img key={i} src={src} alt="" className="w-full h-full min-w-full object-cover snap-center snap-always" />
-            ))}
-          </div>
+      {images.length > 0 && (
+        <div className="relative w-full bg-black/20 group">
+          <img
+            src={images[currentIndex]}
+            alt=""
+            className="w-full h-auto block"
+          />
+          {hasMultiple && (
+            <>
+              <button
+                type="button"
+                onClick={goPrev}
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition opacity-80 group-hover:opacity-100"
+                aria-label="Previous photo"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                onClick={goNext}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition opacity-80 group-hover:opacity-100"
+                aria-label="Next photo"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+                {images.map((_, i) => (
+                  <span
+                    key={i}
+                    className={`w-1.5 h-1.5 rounded-full transition ${
+                      i === currentIndex ? "bg-white" : "bg-white/50"
+                    }`}
+                    aria-hidden
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 

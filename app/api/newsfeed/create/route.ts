@@ -11,6 +11,18 @@ function generateId(): string {
   return `${prefix}${timestamp}${random}`;
 }
 
+async function getSchoolId(session: { user: { id: string; schoolId?: string | null } }) {
+  let schoolId = session.user.schoolId;
+  if (!schoolId) {
+    const adminSchool = await prisma.school.findFirst({
+      where: { admins: { some: { id: session.user.id } } },
+      select: { id: true },
+    });
+    schoolId = adminSchool?.id ?? null;
+  }
+  return schoolId;
+}
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -18,6 +30,8 @@ export async function POST(req: Request) {
     if (!session) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
+
+    const schoolId = await getSchoolId(session);
 
     const body = await req.json();
     const title =
@@ -37,8 +51,6 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-
-    const schoolId = session.user.schoolId as string | undefined;
 
     if (!schoolId) {
       return NextResponse.json(
