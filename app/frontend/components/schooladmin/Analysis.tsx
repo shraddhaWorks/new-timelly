@@ -18,7 +18,6 @@ import {
   Users,
   Star,
   Award,
-  ChevronDown,
   CalendarCheck,
   TrendingUp,
   BookOpen,
@@ -47,6 +46,7 @@ type AnalysisResponse = {
 
 import Spinner from "../common/Spinner";
 import PageHeader from "../common/PageHeader";
+import SelectInput from "../common/SelectInput";
 /* ---------------- Component ---------------- */
 
 export default function AnalysisDashboard() {

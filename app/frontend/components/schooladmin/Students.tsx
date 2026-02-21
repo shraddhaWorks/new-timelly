@@ -8,12 +8,14 @@ import UploadCsvPanel from "./students/UploadCsvPanel";
 import AddStudentForm from "./students/AddStudentForm";
 import StudentDetailsModal from "./students/StudentDetailsModal";
 import StudentEditPanel from "./students/StudentEditPanel";
+import StudentMobileCard from "./students/StudentMobileCard";
 import DeleteConfirmation from "../common/DeleteConfirmation";
 import { buildStudentColumns } from "./students/studentColumns";
 import useStudentPage from "./students/useStudentPage";
 import { getAge } from "./students/utils";
 import { ClassItem } from "./students/types";
 import SuccessPopups from "../common/SuccessPopUps";
+import Spinner from "../common/Spinner";
 
 type Props = {
   classes?: ClassItem[];
@@ -112,25 +114,76 @@ export default function StudentsManagementPage({ classes = [], reload }: Props) 
           />
         )}
 
-        <DataTable
-          columns={columns}
-          data={pagedStudents}
-          loading={page.tableLoading}
-          emptyText="No students found"
-          tableTitle={`All Students (${page.filteredStudents.length})`}
-          tableSubtitle={
-            page.selectedClass
-              ? `Class ${page.selectedClass}${page.selectedSection ? ` ${page.selectedSection}` : ""}`
-              : undefined
-          }
-          showMobile={false}
-          forceTableOnMobile
-          pagination={{
-            page: safePage,
-            totalPages,
-            onChange: setTablePage,
-          }}
-        />
+        <div className="md:hidden space-y-3">
+          {page.tableLoading ? (
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
+              <Spinner size={26} label="Loading..." />
+            </div>
+          ) : pagedStudents.length === 0 ? (
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/60">
+              No students found
+            </div>
+          ) : (
+            pagedStudents.map((student, index) => (
+              <StudentMobileCard
+                key={student.id}
+                student={student}
+                index={index}
+                onView={page.openView}
+                onEdit={page.openEdit}
+                onDelete={page.openDelete}
+              />
+            ))
+          )}
+
+          {totalPages > 1 && !page.tableLoading && (
+            <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+              <span className="text-xs text-white/60">
+                Page {safePage} of {totalPages}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTablePage(Math.max(1, safePage - 1))}
+                  disabled={safePage <= 1}
+                  className="rounded-full px-4 py-2 text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTablePage(Math.min(totalPages, safePage + 1))}
+                  disabled={safePage >= totalPages}
+                  className="rounded-full px-4 py-2 text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="hidden md:block">
+          <DataTable
+            columns={columns}
+            data={pagedStudents}
+            loading={page.tableLoading}
+            emptyText="No students found"
+            tableTitle={`All Students (${page.filteredStudents.length})`}
+            tableSubtitle={
+              page.selectedClass
+                ? `Class ${page.selectedClass}${page.selectedSection ? ` ${page.selectedSection}` : ""}`
+                : undefined
+            }
+            showMobile={false}
+            forceTableOnMobile
+            pagination={{
+              page: safePage,
+              totalPages,
+              onChange: setTablePage,
+            }}
+          />
+        </div>
       </div>
 
       {page.viewStudent && (

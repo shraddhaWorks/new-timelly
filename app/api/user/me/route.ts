@@ -17,6 +17,7 @@ export async function GET() {
         name: true,
         email: true,
         mobile: true,
+        address: true,
         language: true,
         photoUrl: true,
         teacherId: true,
@@ -59,6 +60,7 @@ export async function PUT(req: Request) {
 
     const data: {
       mobile?: string | null;
+      address?: string | null;
       language?: string | null;
       photoUrl?: string | null;
       name?: string | null;
@@ -69,6 +71,9 @@ export async function PUT(req: Request) {
 
     if (typeof body.mobile === "string" || body.mobile === null) {
       data.mobile = body.mobile && body.mobile.trim() ? body.mobile.trim() : null;
+    }
+    if (typeof body.address === "string" || body.address === null) {
+      data.address = body.address && body.address.trim() ? body.address.trim() : null;
     }
     if (typeof body.language === "string" || body.language === null) {
       data.language = body.language;
@@ -94,6 +99,7 @@ export async function PUT(req: Request) {
           name: true,
           email: true,
           mobile: true,
+          address: true,
           language: true,
           photoUrl: true,
           teacherId: true,

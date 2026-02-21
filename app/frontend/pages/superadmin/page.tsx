@@ -22,7 +22,15 @@ function SuperAdminContent() {
   const tab = useSearchParams().get("tab") ?? "dashboard";
   const title = SUPERADMIN_TAB_TITLES[tab] ?? tab.toUpperCase();
   const { data: session, status } = useSession();
-  const [profile, setProfile] = useState<{ name: string; subtitle?: string; image?: string | null }>({
+  const [profile, setProfile] = useState<{
+    name: string;
+    subtitle?: string;
+    image?: string | null;
+    email?: string;
+    phone?: string;
+    address?: string;
+    userId?: string;
+  }>({
     name: "Super Admin",
     subtitle: "Super Admin",
     image: null,
@@ -39,6 +47,10 @@ function SuperAdminContent() {
           name: u.name ?? "Super Admin",
           subtitle: "Super Admin",
           image: u.photoUrl ?? null,
+          email: u.email ?? undefined,
+          phone: u.mobile ?? undefined,
+          address: u.address ?? undefined,
+          userId: u.id ?? undefined,
         });
       }
     } catch {
@@ -53,6 +65,7 @@ function SuperAdminContent() {
       name: session.user?.name ?? prev.name,
       subtitle: "Super Admin",
       image: session.user?.image ?? prev.image ?? null,
+      email: session.user?.email ?? prev.email ?? undefined,
     }));
     let cancelled = false;
     fetchProfile().then(() => { if (cancelled) return; });
