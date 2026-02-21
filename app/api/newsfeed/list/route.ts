@@ -110,13 +110,19 @@ export async function GET() {
           : [];
       const likedSet = new Set(myLikes.map((l) => l.newsFeedId));
 
-      const newsFeeds = feeds.map((f) => ({
+      const newsFeeds = feeds.map((f) => {
+        const fAny = f as { photos?: string[] };
+        const photos = Array.isArray(fAny.photos) && fAny.photos.length > 0
+          ? fAny.photos
+          : f.photo ? [f.photo] : [];
+        return {
         id: f.id,
         title: f.title,
         description: f.description,
-        photo: f.photo ?? null,
-        mediaUrl: f.photo ?? null,
-        mediaType: f.photo ? "PHOTO" : null,
+        photo: f.photo ?? photos[0] ?? null,
+        photos,
+        mediaUrl: f.photo ?? photos[0] ?? null,
+        mediaType: (f.photo || photos.length) ? "PHOTO" : null,
         likes: f.likes ?? 0,
         schoolId: f.schoolId,
         createdById: f.createdById,
@@ -126,7 +132,8 @@ export async function GET() {
         createdAt: f.createdAt.toISOString(),
         updatedAt: f.updatedAt.toISOString(),
         likedByMe: likedSet.has(f.id),
-      }));
+      };
+      });
 
       return NextResponse.json({ newsFeeds }, { status: 200 });
     } catch (prismaErr) {

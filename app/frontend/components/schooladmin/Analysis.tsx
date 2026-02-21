@@ -28,6 +28,7 @@ import {
 
 type AnalysisResponse = {
   availableYears: number[];
+  classes?: { id: string; name: string; section: string | null }[];
   selectedYear: number;
   stats: {
     feesCollected: number;
@@ -53,11 +54,14 @@ export default function AnalysisDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [year, setYear] = useState(new Date().getFullYear());
+  const [classId, setClassId] = useState("");
 
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetch(`/api/school/analysis?year=${year}`, { credentials: "include" })
+    const params = new URLSearchParams({ year: String(year) });
+    if (classId) params.set("classId", classId);
+    fetch(`/api/school/analysis?${params}`, { credentials: "include" })
       .then((res) => res.json())
       .then((res: AnalysisResponse & { message?: string }) => {
         if (res.message && !res.stats) {
@@ -72,7 +76,7 @@ export default function AnalysisDashboard() {
         setData(null);
       })
       .finally(() => setLoading(false));
-  }, [year]);
+  }, [year, classId]);
 
   if (loading) {
     return (
@@ -181,32 +185,61 @@ export default function AnalysisDashboard() {
         className="border"
         transparent={false}
         rightSlot={
-          <div className="relative self-center">
-            <select
-              value={year}
-              onChange={(e) => setYear(Number(e.target.value))}
-              className="
-                appearance-none
-                bg-black/40
-                text-white
-                px-6 sm:px-7 py-2 pl-2
-                rounded-xl
-                text-sm
-                border border-white/10
-                focus:outline-none
-                focus:ring-1 focus:ring-white/20
-                cursor-pointer
-                text-center
-                min-w-[100px]
-              "
-            >
-              {(data.availableYears ?? []).map((y) => (
-                <option key={y} value={y} className="text-black">
-                  {y}-{y + 1}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60 pointer-events-none" />
+          <div className="flex flex-wrap items-center gap-2 self-center">
+            <div className="relative">
+              <select
+                value={classId}
+                onChange={(e) => setClassId(e.target.value)}
+                className="
+                  appearance-none
+                  bg-black/40
+                  text-white
+                  px-4 py-2 pl-3 pr-8
+                  rounded-xl
+                  text-sm
+                  border border-white/10
+                  focus:outline-none
+                  focus:ring-1 focus:ring-white/20
+                  cursor-pointer
+                  min-w-[120px]
+                "
+              >
+                <option value="" className="text-black">All Classes</option>
+                {(data.classes ?? []).map((c) => (
+                  <option key={c.id} value={c.id} className="text-black">
+                    {c.name}{c.section ? ` ${c.section}` : ""}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60 pointer-events-none" />
+            </div>
+            <div className="relative">
+              <select
+                value={year}
+                onChange={(e) => setYear(Number(e.target.value))}
+                className="
+                  appearance-none
+                  bg-black/40
+                  text-white
+                  px-6 sm:px-7 py-2 pl-2
+                  rounded-xl
+                  text-sm
+                  border border-white/10
+                  focus:outline-none
+                  focus:ring-1 focus:ring-white/20
+                  cursor-pointer
+                  text-center
+                  min-w-[100px]
+                "
+              >
+                {(data.availableYears ?? []).map((y) => (
+                  <option key={y} value={y} className="text-black">
+                    {y}-{y + 1}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60 pointer-events-none" />
+            </div>
           </div>
         }
       />

@@ -6,7 +6,7 @@ import prisma from "@/lib/db";
 const hyperpgBaseUrl = process.env.HYPERPG_BASE_URL || "https://sandbox.hyperpg.in";
 const globalHyperpgMerchantId = process.env.HYPERPG_MERCHANT_ID;
 const globalHyperpgApiKey = process.env.HYPERPG_API_KEY;
-const hyperpgAuthStyle = process.env.HYPERPG_AUTH_STYLE || "merchant_key";
+const hyperpgAuthStyle = process.env.HYPERPG_AUTH_STYLE || "api_key";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -80,21 +80,19 @@ export async function POST(req: Request) {
       );
     }
 
-    const authCredentials =
+    const apiKeyClean = apiKey.replace(/^["']|["']$/g, "").trim();
+    const auth =
       hyperpgAuthStyle === "merchant_key"
-        ? `${merchantId}:${apiKey}`
-        : `${apiKey}:`;
-    const auth = Buffer.from(authCredentials).toString("base64");
+        ? Buffer.from(`${merchantId}:${apiKeyClean}`).toString("base64")
+        : Buffer.from(`${apiKeyClean}:`, "utf8").toString("base64");
+    const headers: Record<string, string> = {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: `Basic ${auth}`,
+      ...(merchantId && { "x-merchantid": merchantId.trim() }),
+    };
     const statusRes = await fetch(
       `${hyperpgBaseUrl}/orders/${encodeURIComponent(orderId)}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "x-merchantid": merchantId,
-          Authorization: `Basic ${auth}`,
-        },
-      }
+      { method: "GET", headers }
     );
 
     if (!statusRes.ok) {

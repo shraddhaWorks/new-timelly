@@ -7,7 +7,8 @@ const hyperpgBaseUrl = process.env.HYPERPG_BASE_URL || "https://sandbox.hyperpg.
 const globalHyperpgMerchantId = process.env.HYPERPG_MERCHANT_ID;
 const globalHyperpgApiKey = process.env.HYPERPG_API_KEY;
 const hyperpgClientId = process.env.HYPERPG_CLIENT_ID || "test";
-const hyperpgAuthStyle = process.env.HYPERPG_AUTH_STYLE || "merchant_key";
+// JusPay/HyperPG Session API: Basic Base64(apiKey + ":") + mandatory x-merchantid header
+const hyperpgAuthStyle = process.env.HYPERPG_AUTH_STYLE || "api_key";
 
 /** HyperPG requires order_id: alphanumeric, max 20 chars */
 function generateOrderId(): string {
@@ -56,25 +57,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Student not found" }, { status: 404 });
     }
 
-    const settings = await prisma.schoolSettings.findUnique({
+    const useGlobalOnly = process.env.HYPERPG_USE_GLOBAL_CREDENTIALS === "true" || process.env.HYPERPG_USE_GLOBAL_CREDENTIALS === "1";
+    const settings = useGlobalOnly ? null : await prisma.schoolSettings.findUnique({
       where: { schoolId: student.schoolId },
     });
 
-    const merchantId =
-      settings?.hyperpgMerchantId?.trim() || globalHyperpgMerchantId?.trim();
-    const apiKey =
-      settings?.hyperpgApiKey?.trim() || globalHyperpgApiKey?.trim();
+    const merchantId = useGlobalOnly
+      ? (globalHyperpgMerchantId?.trim() ?? "")
+      : (settings?.hyperpgMerchantId?.trim() || globalHyperpgMerchantId?.trim());
+    const apiKey = useGlobalOnly
+      ? (globalHyperpgApiKey?.trim() ?? "")
+      : (settings?.hyperpgApiKey?.trim() || globalHyperpgApiKey?.trim());
 
-    if (!merchantId || !apiKey) {
+    if (!apiKey) {
       return NextResponse.json(
         {
           error:
-            "Payment not configured for this school. School admin must add HyperPG Merchant ID and API Key in School Settings (or set HYPERPG_MERCHANT_ID and HYPERPG_API_KEY in .env for fallback).",
+            "Payment not configured for this school. School admin must add HyperPG API Key in School Settings (or set HYPERPG_API_KEY in .env for fallback).",
         },
         { status: 500 }
       );
     }
-
     const orderId = generateOrderId();
     const baseUrl =
       process.env.HYPERPG_RETURN_URL ||
@@ -98,10 +101,10 @@ export async function POST(req: Request) {
     const email = (session.user.email || student.user?.email || "student@timelly.in").slice(0, 300);
     const customerId = String(session.user.studentId).slice(0, 128);
 
-    const sessionPayload = {
+    const sessionPayload: Record<string, unknown> = {
       mobile_country_code: "+91",
       payment_page_client_id: hyperpgClientId,
-      amount: amountNumber.toFixed(2),
+      amount: Number(amountNumber.toFixed(2)),
       currency: "INR",
       action: "paymentPage",
       customer_email: email,
@@ -112,43 +115,48 @@ export async function POST(req: Request) {
       customer_id: customerId,
       order_id: orderId,
       return_url: returnUrl,
-      source_object: "PAYMENT_LINK",
       send_mail: false,
       send_sms: false,
       send_whatsapp: false,
     };
+    const expiryMins = process.env.HYPERPG_LINK_EXPIRY_MINS;
+    if (expiryMins) sessionPayload["metadata.expiryInMins"] = String(expiryMins);
 
-    const authCredentials =
-      hyperpgAuthStyle === "merchant_key"
-        ? `${merchantId}:${apiKey}`
-        : `${apiKey}:`;
-    const auth = Buffer.from(authCredentials).toString("base64");
+    const apiKeyClean = apiKey.replace(/^["']|["']$/g, "").trim();
+    const merchantIdClean = (merchantId || "").trim().replace(/^["']|["']$/g, "");
+    // Match exact Postman that works: Basic Base64(apiKey) only, no colon, no x-merchantid
+    const auth =
+      hyperpgAuthStyle === "merchant_key" && merchantIdClean
+        ? Buffer.from(`${merchantIdClean}:${apiKeyClean}`).toString("base64")
+        : Buffer.from(apiKeyClean, "utf8").toString("base64");
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Authorization: `Basic ${auth}`,
+    };
+    if (merchantIdClean && hyperpgAuthStyle === "merchant_key") {
+      headers["x-merchantid"] = merchantIdClean;
+    }
     const res = await fetch(`${hyperpgBaseUrl}/session`, {
       method: "POST",
-
-
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        "User-Agent": "Timelly/1.0",
-        Authorization: `Basic ${auth}`,
-        "x-merchantid": merchantId,
-      },
+      headers,
       body: JSON.stringify(sessionPayload),
     });
 
     const errText = await res.text();
     if (!res.ok) {
       console.error("HyperPG session error:", res.status, errText);
-      let details = errText.slice(0, 300);
+      console.error("HyperPG request URL:", hyperpgBaseUrl + "/session");
+      console.error("HyperPG auth style:", hyperpgAuthStyle, "Authorization length:", headers.Authorization?.length ?? 0);
+      let details = errText.slice(0, 500);
       try {
-        const j = JSON.parse(errText);
-        if (j.error_message) details = j.error_message;
-        else if (j.error_code) details = j.error_code;
+        const j = JSON.parse(errText) as Record<string, unknown>;
+        if (j && typeof j.error_message === "string") details = j.error_message;
+        else if (j && typeof j.error_code === "string") details = j.error_code;
+        else if (j && typeof j.message === "string") details = j.message;
       } catch (_) {}
       const hint =
-        res.status === 403
-          ? " Ensure this school's HyperPG Merchant ID and API Key in School Settings match the credentials provided by the payments team for this school."
+        res.status === 403 || res.status === 401
+          ? " Confirm with HyperPG: (1) This Merchant ID and API Key are for the correct account (e.g. school linked to your email). (2) HYPERPG_MERCHANT_ID and HYPERPG_API_KEY in .env match the credentials that work in Postman. (3) If they use whitelisting, your server IP or domain may need to be whitelisted."
           : "";
       return NextResponse.json(
         {

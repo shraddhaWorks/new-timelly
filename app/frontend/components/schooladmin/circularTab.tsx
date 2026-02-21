@@ -1,25 +1,30 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import PageHeader from "../common/PageHeader";
 
 import CircularFilters from "./circularTab/CircularFilters";
 import CircularList from "./circularTab/CircularList";
 import CircularForm from "./circularTab/CircularForm";
 import { CircularRow } from "./circularTab/types";
-import { Cross,  Plus, Scroll, X } from "lucide-react";
+import { Plus, Scroll, X } from "lucide-react";
 
 export default function SchoolAdminCircularsTab() {
   const [circulars, setCirculars] = useState<CircularRow[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
   const [importance, setImportance] = useState("All Importance");
+  const [recipient, setRecipient] = useState("all");
+  const [classId, setClassId] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const fetchCirculars = async () => {
+  const fetchCirculars = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/circular/list?status=all");
+      const params = new URLSearchParams({ status: "all" });
+      if (recipient && recipient !== "all") params.set("recipient", recipient);
+      if (classId) params.set("classId", classId);
+      const res = await fetch(`/api/circular/list?${params}`);
       const data = await res.json();
       setCirculars(data.circulars ?? []);
     } catch (e) {
@@ -27,28 +32,20 @@ export default function SchoolAdminCircularsTab() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [recipient, classId]);
 
   useEffect(() => {
     fetchCirculars();
-  }, []);
+  }, [fetchCirculars]);
 
   const filteredCirculars = useMemo(() => {
     return circulars.filter((c) => {
-      if (
-        search &&
-        !c.subject.toLowerCase().includes(search.toLowerCase())
-      ) {
+      if (search && !c.subject.toLowerCase().includes(search.toLowerCase())) {
         return false;
       }
-
-      if (
-        importance !== "All Importance" &&
-        c.importanceLevel !== importance
-      ) {
+      if (importance !== "All Importance" && c.importanceLevel !== importance) {
         return false;
       }
-
       return true;
     });
   }, [circulars, search, importance]);
@@ -111,6 +108,10 @@ export default function SchoolAdminCircularsTab() {
             onSearch={setSearch}
             importance={importance}
             onImportance={setImportance}
+            recipient={recipient}
+            onRecipient={setRecipient}
+            classId={classId}
+            onClassId={setClassId}
           />
         </div>
 

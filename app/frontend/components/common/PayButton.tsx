@@ -1,6 +1,7 @@
 "use client";
 
-import { CreditCard } from "lucide-react";
+import { useState } from "react";
+import { CreditCard, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface PayButtonProps {
@@ -15,7 +16,11 @@ export default function PayButton({
   onSuccess,
   returnPath,
 }: PayButtonProps) {
+  const [loading, setLoading] = useState(false);
+
   const payNow = async () => {
+    if (loading) return;
+    setLoading(true);
     try {
       const normalizedAmount = Number(amount.toFixed(2));
 
@@ -30,9 +35,10 @@ export default function PayButton({
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        alert(
-          `Failed to create order: ${errorData.error || errorData.message || "Unknown error"}`
-        );
+        const msg = errorData.details || errorData.error || errorData.message || "Unknown error";
+        const status = errorData.statusFromGateway ? ` (Gateway ${errorData.statusFromGateway})` : "";
+        alert(`Failed to create order: ${msg}${status}`);
+        setLoading(false);
         return;
       }
 
@@ -47,25 +53,38 @@ export default function PayButton({
       }
 
       alert("Payment is not configured. Please contact support.");
+      setLoading(false);
     } catch (err) {
       console.error(err);
       alert("Payment failed");
+      setLoading(false);
     }
   };
 
   return (
     <motion.button
-      whileHover={{ scale: 1.05, y: -2 }}
-      whileTap={{ scale: 0.95 }}
+      type="button"
+      disabled={loading}
+      whileHover={loading ? {} : { scale: 1.05, y: -2 }}
+      whileTap={loading ? {} : { scale: 0.95 }}
       onClick={payNow}
-      className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-teal-600 hover:to-emerald-500 text-white py-4 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg border border-emerald-400/30 transition-all duration-300"
+      className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-teal-600 hover:to-emerald-500 disabled:from-emerald-600 disabled:to-teal-700 disabled:opacity-90 text-white py-4 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg border border-emerald-400/30 transition-all duration-300"
     >
-      <CreditCard size={20} />
-      Pay ₹
-      {Number(amount).toLocaleString("en-IN", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}
+      {loading ? (
+        <>
+          <Loader2 size={20} className="animate-spin" />
+          Redirecting to payment…
+        </>
+      ) : (
+        <>
+          <CreditCard size={20} />
+          Pay ₹
+          {Number(amount).toLocaleString("en-IN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
+        </>
+      )}
     </motion.button>
   );
 }

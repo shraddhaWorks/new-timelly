@@ -11,7 +11,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const { title, description, type, level, location, mode, additionalInfo, photo, eventDate, classId, maxSeats } = await req.json();
+    const { title, description, type, level, location, mode, additionalInfo, photo, eventDate, classId, studentIds, maxSeats } = await req.json();
 
     if (!title || !description || !type || !level || !location || !mode || !additionalInfo) {
       return NextResponse.json(
@@ -87,6 +87,19 @@ export async function POST(req: Request) {
         },
       },
     });
+
+    // Pre-register selected students
+    const ids = Array.isArray(studentIds) ? studentIds.filter((id): id is string => typeof id === "string" && !!id) : [];
+    if (ids.length > 0) {
+      await prisma.eventRegistration.createMany({
+        data: ids.map((studentId) => ({
+          eventId: event.id,
+          studentId,
+          paymentStatus: "PENDING",
+        })),
+        skipDuplicates: true,
+      });
+    }
 
     return NextResponse.json(
       { message: "Event created successfully", event },

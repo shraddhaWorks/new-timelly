@@ -18,25 +18,35 @@ interface CreatePostProps {
 export default function CreatePost({ onPublished }: CreatePostProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState("");
 
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file?.type.startsWith("image/")) return;
+    const files = e.target.files;
+    if (!files?.length) return;
+    const imageFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    if (!imageFiles.length) return;
     setPhotoUploading(true);
     setError("");
     try {
-      const url = await uploadImage(file, "newsfeed");
-      setPhotoUrl(url);
+      const urls: string[] = [];
+      for (const file of imageFiles) {
+        const url = await uploadImage(file, "newsfeed");
+        urls.push(url);
+      }
+      setPhotoUrls((prev) => [...prev, ...urls]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to upload image");
     } finally {
       setPhotoUploading(false);
     }
     e.target.value = "";
+  }, []);
+
+  const removePhoto = useCallback((index: number) => {
+    setPhotoUrls((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
   const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
@@ -47,7 +57,7 @@ export default function CreatePost({ onPublished }: CreatePostProps) {
     setError("");
     try {
       const url = await uploadImage(file, "newsfeed");
-      setPhotoUrl(url);
+      setPhotoUrls((prev) => [...prev, url]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to upload image");
     } finally {
@@ -70,15 +80,16 @@ export default function CreatePost({ onPublished }: CreatePostProps) {
         body: JSON.stringify({
           title: title.trim(),
           description: description.trim(),
-          photo: photoUrl || undefined,
-          mediaUrl: photoUrl || undefined,
+          photo: photoUrls[0] || undefined,
+          photos: photoUrls,
+          mediaUrl: photoUrls[0] || undefined,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to create post");
       setTitle("");
       setDescription("");
-      setPhotoUrl(null);
+      setPhotoUrls([]);
       onPublished();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to create post");
@@ -113,10 +124,11 @@ export default function CreatePost({ onPublished }: CreatePostProps) {
         <div className="flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 text-gray-300 hover:text-white transition text-xs md:text-sm cursor-pointer">
             {photoUploading ? <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" /> : <ImageIcon className="w-4 h-4 md:w-5 md:h-5" />}
-            <span>{photoUploading ? "Uploading…" : "Photo"}</span>
+            <span>{photoUploading ? "Uploading…" : "Add photos (multiple)"}</span>
             <input
               type="file"
               accept="image/*"
+              multiple
               className="hidden"
               onChange={handleFileSelect}
               disabled={photoUploading}
@@ -124,20 +136,24 @@ export default function CreatePost({ onPublished }: CreatePostProps) {
           </label>
           <span className="text-white/50 text-xs">or paste image (Ctrl+V)</span>
         </div>
-        {photoUrl && (
-          <div className="relative inline-block">
-            <img
-              src={photoUrl}
-              alt="Attached"
-              className="max-h-40 rounded-xl border border-white/10 object-cover"
-            />
-            <button
-              type="button"
-              onClick={() => setPhotoUrl(null)}
-              className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white hover:bg-black/80"
-            >
-              <X size={14} />
-            </button>
+        {photoUrls.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {photoUrls.map((url, i) => (
+              <div key={url} className="relative inline-block">
+                <img
+                  src={url}
+                  alt={`Attached ${i + 1}`}
+                  className="max-h-40 rounded-xl border border-white/10 object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => removePhoto(i)}
+                  className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white hover:bg-black/80"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
           </div>
         )}
 

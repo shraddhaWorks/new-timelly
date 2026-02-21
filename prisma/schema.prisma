@@ -275,8 +275,11 @@ model Circular {
   schoolId        String
   school          School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   importanceLevel String   @default("Medium") // High, Medium, Low
-  recipients      String[] @default([]) // All, Teachers, Parents, Students, Staff, or classId for specific class
-  classId         String? // optional: target specific class
+  recipients      String[] @default([]) // all, teachers, parents, students, staff
+  classId         String?  // optional: target single class (legacy)
+  classIds        String[] @default([]) // target multiple classes
+  classTeacherOnly Boolean @default(false) // when true + teachers: only class teachers of target classes
+  targetClass     Class?   @relation("CircularTargetClass", fields: [classId], references: [id], onDelete: SetNull)
   publishStatus   String   @default("DRAFT") // PUBLISHED, DRAFT
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -326,8 +329,9 @@ model Class {
   homeworks    Homework[]
   timetables   Timetable[]
   classRooms   ClassRoom[]
-  examTerms    ExamTerm[]
-  feeStructure ClassFeeStructure?
+  examTerms         ExamTerm[]
+  feeStructure      ClassFeeStructure?
+  circularsTargeted Circular[] @relation("CircularTargetClass")
 
   createdAt DateTime @default(now())
 }
@@ -611,11 +615,12 @@ model EventRegistration {
 // =====================
 
 model NewsFeed {
-  id          String  @id @default(cuid())
+  id          String   @id @default(cuid())
   title       String
-  description String  @db.Text
-  photo       String? // URL or base64
-  likes       Int     @default(0)
+  description String   @db.Text
+  photo       String?  // URL - backward compat, first image
+  photos      String[] @default([]) // multiple images
+  likes       Int      @default(0)
   // Relations
   schoolId    String
   school      School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)

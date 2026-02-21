@@ -24,12 +24,12 @@ export async function POST(req: Request) {
       typeof body.title === "string" ? body.title.trim() : "";
     const description =
       typeof body.description === "string" ? body.description.trim() : "";
+    const photosRaw = Array.isArray(body.photos) ? body.photos : [];
+    const photos = photosRaw.filter((p): p is string => typeof p === "string" && !!p);
     const photo =
-      typeof body.photo === "string" && body.photo
-        ? body.photo
-        : typeof body.mediaUrl === "string" && body.mediaUrl
-          ? body.mediaUrl
-          : null;
+      photos[0] ??
+      (typeof body.photo === "string" && body.photo ? body.photo : null) ??
+      (typeof body.mediaUrl === "string" && body.mediaUrl ? body.mediaUrl : null);
 
     if (!title || !description) {
       return NextResponse.json(
@@ -59,7 +59,8 @@ export async function POST(req: Request) {
         data: {
           title,
           description,
-          photo,
+          photo: photo || null,
+          photos: photos.length > 0 ? photos : [],
           likes: 0,
           schoolId,
           createdById: userId,
@@ -79,6 +80,7 @@ export async function POST(req: Request) {
             title: newsFeed.title,
             description: newsFeed.description,
             photo: newsFeed.photo,
+            photos: (newsFeed as { photos?: string[] }).photos ?? photos,
             likes: newsFeed.likes,
             createdBy: newsFeed.createdBy ?? createdBy,
             createdAt: newsFeed.createdAt.toISOString(),
@@ -96,9 +98,10 @@ export async function POST(req: Request) {
     const now = new Date();
     const isoNow = now.toISOString();
 
+    const photosArr = photos.length > 0 ? photos : (photo ? [photo] : []);
     await prisma.$executeRawUnsafe(
-      `INSERT INTO "NewsFeed" (id, title, description, photo, likes, "schoolId", "createdById", "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, $4, 0, $5, $6, $7::timestamptz, $8::timestamptz)`,
+      `INSERT INTO "NewsFeed" (id, title, description, photo, photos, likes, "schoolId", "createdById", "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, $9::text[], 0, $5, $6, $7::timestamptz, $8::timestamptz)`,
       id,
       title,
       description,
@@ -106,7 +109,8 @@ export async function POST(req: Request) {
       schoolId,
       userId,
       isoNow,
-      isoNow
+      isoNow,
+      photosArr
     );
 
     return NextResponse.json(

@@ -7,6 +7,7 @@ export interface NewsFeedItem {
   title: string;
   description: string;
   photo: string | null;
+  photos?: string[];
   likes: number;
   likedByMe: boolean;
   createdBy: { id: string; name: string | null; email: string | null };
@@ -32,6 +33,7 @@ export function useNewsFeeds() {
           title: String(f.title ?? ""),
           description: String(f.description ?? ""),
           photo: typeof f.photo === "string" ? f.photo : typeof f.mediaUrl === "string" ? f.mediaUrl : null,
+          photos: Array.isArray(f.photos) ? f.photos : undefined,
           likes: typeof f.likes === "number" ? f.likes : 0,
           likedByMe: Boolean(f.likedByMe),
           createdBy:

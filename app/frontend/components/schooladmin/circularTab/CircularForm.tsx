@@ -4,17 +4,14 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import {
     X,
-    Calendar,
-    Paperclip,
-    User,
-    CheckCircle2,
     Clock,
-    FileText,
     Check,
     Plus,
     CircleCheckBig,
     Save,
+    GraduationCap,
 } from "lucide-react";
+import { useClasses } from "@/hooks/useClasses";
 
 /* -------------------- constants -------------------- */
 
@@ -59,6 +56,8 @@ type CircularFormState = {
     recipients: string[];
     issuedBy: string;
     classId: string;
+    classIds: string[];
+    classTeacherOnly: boolean;
     publishStatus: PublishStatus;
     attachments: string[];
 };
@@ -73,6 +72,7 @@ type Props = {
 export default function CircularForm({ onClose, onSuccess }: Props) {
     const [submitting, setSubmitting] = useState(false);
     const [selected, setSelected] = useState<"High" | "Medium" | "Low">("Medium");
+    const { classes } = useClasses();
 
     const [form, setForm] = useState<CircularFormState>({
         referenceNumber: "",
@@ -83,6 +83,8 @@ export default function CircularForm({ onClose, onSuccess }: Props) {
         importanceLevel: "Medium",
         recipients: [],
         classId: "",
+        classIds: [],
+        classTeacherOnly: false,
         publishStatus: PUBLISH_STATUS.PUBLISHED,
         attachments: [],
     });
@@ -226,7 +228,7 @@ export default function CircularForm({ onClose, onSuccess }: Props) {
                         <input type="text" value={form.issuedBy} onChange={(e) => setForm({ ...form, issuedBy: e.target.value })} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-gray-200 focus:outline-none focus:border-lime-400/50" />
                     </div>
                     <div>
-                        <label htmlFor="" className="block text-xs font-medium text-gray-400 mb-1.5">Issued by</label>
+                        <label className="block text-xs font-medium text-gray-400 mb-1.5">Importance</label>
                         {/* importance */}
                         <div className="flex bg-black/20 rounded-xl p-1 border border-white/10">
                             {IMPORTANCE_LEVELS.map(({ label, activeClass }) => {
@@ -236,7 +238,10 @@ export default function CircularForm({ onClose, onSuccess }: Props) {
                                     <button
                                         key={label}
                                         type="button"
-                                        onClick={() => setSelected(label)}
+                                        onClick={() => {
+                                            setSelected(label);
+                                            setForm((f) => ({ ...f, importanceLevel: label }));
+                                        }}
                                         className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all
           ${isActive
                                                 ? activeClass
@@ -254,43 +259,93 @@ export default function CircularForm({ onClose, onSuccess }: Props) {
                 </div>
 
 
-                {/* recipients */}
+                {/* target classes - class-wise circular */}
+                <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-2 flex items-center gap-1.5">
+                        <GraduationCap size={14} /> Target Class(es) (optional)
+                    </label>
+                    <p className="text-xs text-white/50 mb-2">
+                        Leave empty for school-wide. Select one or more classes to target students, parents, or class teachers of those classes only.
+                    </p>
+                    <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 bg-black/10 rounded-xl border border-white/10">
+                        {classes.map((c) => {
+                            const isSelected = form.classIds.includes(c.id);
+                            return (
+                                <button
+                                    key={c.id}
+                                    type="button"
+                                    onClick={() => {
+                                        const next = isSelected
+                                            ? form.classIds.filter((id) => id !== c.id)
+                                            : [...form.classIds, c.id];
+                                        setForm({
+                                            ...form,
+                                            classIds: next,
+                                            classId: next[0] ?? "",
+                                        });
+                                    }}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all
+                                        ${isSelected ? "bg-lime-400/20 text-lime-400 border-lime-400/50" : "bg-white/5 text-gray-400 border-white/10 hover:border-white/20"}
+                                    `}
+                                >
+                                    {c.name}{c.section ? ` ${c.section}` : ""}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    {form.classIds.length > 0 && (
+                        <p className="text-xs text-lime-400/80 mt-1">
+                            {form.classIds.length} class(es) selected
+                        </p>
+                    )}
+                </div>
 
+                {/* recipients */}
                 <div>
                     <label className="block text-xs font-medium text-gray-400 mb-2">
                         Recipients
                     </label>
-
+                    <p className="text-xs text-white/50 mb-2">
+                        Choose who receives this circular. If classes are selected above, students/parents/teachers apply to those classes only.
+                    </p>
                     <div className="flex flex-wrap gap-2">
                         {CIRCULAR_RECIPIENTS.map((r) => {
                             const isSelected = form.recipients.includes(r.value);
-
                             return (
                                 <button
                                     key={r.value}
                                     type="button"
                                     onClick={() => toggleRecipient(r.value)}
                                     className={`
-            px-3 py-1.5 rounded-lg text-xs font-medium border
-            transition-all flex items-center gap-1.5
-            ${isSelected
-                                            ? "bg-lime-400/20 text-lime-400 border-lime-400/50"
-                                            : "bg-white/5 text-gray-400 border-white/10 hover:border-white/20"
-                                        }
-          `}
+                                        px-3 py-1.5 rounded-lg text-xs font-medium border
+                                        transition-all flex items-center gap-1.5
+                                        ${isSelected ? "bg-lime-400/20 text-lime-400 border-lime-400/50" : "bg-white/5 text-gray-400 border-white/10 hover:border-white/20"}
+                                    `}
                                 >
                                     {isSelected && (
                                         <span className="w-3.5 h-3.5 rounded-full bg-lime-400 flex items-center justify-center">
                                             <Check size={10} className="text-black" />
                                         </span>
                                     )}
-
                                     {r.label}
                                 </button>
-
                             );
                         })}
                     </div>
+                    {form.recipients.includes("teachers") && form.classIds.length > 0 && (
+                        <label className="flex items-center gap-2 mt-3 cursor-pointer text-sm text-gray-300">
+                            <input
+                                type="checkbox"
+                                checked={form.classTeacherOnly}
+                                onChange={(e) =>
+                                    setForm({ ...form, classTeacherOnly: e.target.checked })
+                                }
+                                className="accent-lime-400 w-4 h-4 rounded"
+                            />
+                            <span>Class teachers only</span>
+                            <span className="text-xs text-white/50">— teachers of the selected class(es)</span>
+                        </label>
+                    )}
                 </div>
                 {/* publish status */}
 

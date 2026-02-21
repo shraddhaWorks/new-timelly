@@ -25,6 +25,20 @@ export default function CircularCard({ c }: { c: CircularRow }) {
           {c.content}
         </p>
 
+        {(c.recipients?.length > 0 || c.targetClass || (c as { targetClasses?: unknown[] }).targetClasses?.length) && (
+          <div className="flex flex-wrap gap-1.5 text-xs">
+            {((c as { targetClasses?: { name: string; section: string | null }[] }).targetClasses ?? (c.targetClass ? [c.targetClass] : [])).map((cls) => (
+              <span key={(cls as { id?: string }).id ?? cls.name} className="px-2 py-0.5 rounded-lg bg-lime-400/20 text-lime-400">
+                {cls.name}{cls.section ? ` ${cls.section}` : ""}
+              </span>
+            ))}
+            {(c.recipients ?? []).filter((r) => r !== "all").map((r) => (
+              <span key={r} className="px-2 py-0.5 rounded-lg bg-white/10 text-white/80 capitalize">
+                {r}
+              </span>
+            ))}
+          </div>
+        )}
         <div className="flex justify-between items-center pt-3 border-t border-white/10">
           <div className="flex items-center gap-2 text-sm text-white">
             <div

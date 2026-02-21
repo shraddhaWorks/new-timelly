@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import PageHeader from "../../common/PageHeader";
 import { SelectField } from "./MarksSelectField";
-import { Download, Save, Upload } from "lucide-react";
+import { Save } from "lucide-react";
 import DataTable from "../../common/TableLayout";
 import { Column } from "@/app/frontend/types/superadmin";
 
@@ -57,6 +57,7 @@ export default function TeacherMarksTab() {
     section: "",
     subject: "Mathematics",
     examType: "Term 1",
+    maxMarks: 100,
   });
   const [activeBtn, setActiveBtn] = useState<null | "save" | "import" | "export">(null);
   const [rows, setRows] = useState<StudentRow[]>([]);
@@ -130,7 +131,7 @@ export default function TeacherMarksTab() {
           name,
           avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=40&background=4ade80&color=fff`,
           marks: mark ? (mark.marks as number) : "",
-          maxMarks: mark ? mark.totalMarks : 100,
+          maxMarks: form.maxMarks,
           markId: mark?.id,
         };
       });
@@ -182,16 +183,22 @@ export default function TeacherMarksTab() {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, marks: num } : r)));
   };
 
+  const updateMaxMarks = (value: string) => {
+    const num = Math.min(1000, Math.max(1, Number(value) || 100));
+    setForm((prev) => ({ ...prev, maxMarks: num }));
+    setRows((prev) => prev.map((r) => ({ ...r, maxMarks: num })));
+  };
+
   const getPercentage = (m: number | "", max: number) =>
     m === "" ? "--" : `${((Number(m) / max) * 100).toFixed(1)}%`;
 
-  const getGrade = (m: number | "") => {
-    if (m === "") return "--";
-    const n = Number(m);
-    if (n >= 90) return "A+";
-    if (n >= 80) return "A";
-    if (n >= 70) return "B+";
-    if (n >= 60) return "B";
+  const getGrade = (m: number | "", max: number) => {
+    if (m === "" || max <= 0) return "--";
+    const pct = (Number(m) / max) * 100;
+    if (pct >= 90) return "A+";
+    if (pct >= 80) return "A";
+    if (pct >= 70) return "B+";
+    if (pct >= 60) return "B";
     return "C";
   };
 
@@ -276,7 +283,7 @@ export default function TeacherMarksTab() {
       header: "GRADE",
       align: "center",
       render: (row: StudentRow) => {
-        const g = getGrade(row.marks);
+        const g = getGrade(row.marks, row.maxMarks);
         return (
           <span
             className={`px-3 py-1 rounded-full text-xs border ${
@@ -332,6 +339,17 @@ export default function TeacherMarksTab() {
               options={examTypeOptions}
               className="w-full px-4 py-2.5 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:border-lime-400/50 text-white text-sm"
             />
+            <div>
+              <label className="block text-xs font-medium text-white/60 mb-1.5">MAX MARKS</label>
+              <input
+                type="number"
+                min={1}
+                max={1000}
+                value={form.maxMarks}
+                onChange={(e) => updateMaxMarks(e.target.value)}
+                className="w-full px-4 py-2.5 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:border-lime-400/50 text-white text-sm"
+              />
+            </div>
           </div>
         </div>
 
@@ -339,8 +357,6 @@ export default function TeacherMarksTab() {
         <div className="flex flex-col sm:flex-row gap-4">
           {[
             { key: "save", label: "Save Marks", icon: Save },
-            { key: "import", label: "Import Excel", icon: Upload },
-            { key: "export", label: "Export Excel", icon: Download },
           ].map((btn) => {
             const Icon = btn.icon;
             return (
@@ -401,7 +417,7 @@ export default function TeacherMarksTab() {
                 ) : (
                   pagedRows.map((student) => {
                     const percentage = getPercentage(student.marks, student.maxMarks);
-                    const grade = getGrade(student.marks);
+                    const grade = getGrade(student.marks, student.maxMarks);
                     return (
                       <div
                         key={student.id}
