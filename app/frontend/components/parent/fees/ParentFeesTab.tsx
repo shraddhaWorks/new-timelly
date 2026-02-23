@@ -119,10 +119,12 @@ export default function ParentFeesTab() {
         .then(async (res) => {
           const d = await res.json();
           if (!res.ok) alert(d.message || "Payment verification failed");
-          else fetchFee();
+          else {
+            fetchFee();
+            window.location.href = `/frontend/pages/payment-success?order_id=${encodeURIComponent(orderIdToVerify)}`;
+          }
         })
         .catch(console.error);
-      window.history.replaceState({}, "", "/frontend/pages/parent?tab=fees");
     }
   }, [searchParams, fetchFee]);
 
