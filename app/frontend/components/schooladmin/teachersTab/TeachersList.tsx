@@ -264,9 +264,10 @@ export default function TeachersList({
                   </span>
                 </div>
               </div>
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                 <span className="text-white/60">{teacher.subject}</span>
                 <span className="text-lime-400 font-semibold">{teacher.attendance}%</span>
+                <a href={`tel:${teacher.phone}`} className="text-white/60 hover:text-lime-400 truncate">{teacher.phone}</a>
               </div>
               <div className="flex gap-2 pt-2">
                 <button

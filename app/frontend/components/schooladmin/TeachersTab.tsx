@@ -575,16 +575,9 @@ const SchoolAdminTeacherTab = () => {
 
       {/* ================= Teachers List ================= */}
 
-      <div className="flex justify-end pt-2">
-      
+      <div className="w-full min-w-0">
+        <AppointTeacher />
       </div>
-     <div className="w-full min-w-0">
-  <div className="w-full overflow-x-auto">
-    <div className="min-w-[900px]">
-      <AppointTeacher />
-    </div>
-  </div>
-</div>
       </div>
     </div>
   );

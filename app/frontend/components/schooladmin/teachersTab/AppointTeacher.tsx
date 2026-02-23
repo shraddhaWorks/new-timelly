@@ -185,28 +185,28 @@ export default function AppointTeacher() {
   /* ================= UI ================= */
 
   return (
-    <div className="w-full max-w-6xl mx-auto bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 text-white">
+    <div className="w-full max-w-6xl mx-auto bg-white/5 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-white/10 text-white overflow-hidden">
       {/* HEADER */}
-      <div className="p-6">
-        <h2 className="text-lg font-bold flex items-center gap-2">
-          <GraduationCap className="text-lime-400" />
+      <div className="p-4 sm:p-5 md:p-6">
+        <h2 className="text-base sm:text-lg font-bold flex items-center gap-2">
+          <GraduationCap className="text-lime-400 w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
           Appoint Class Teacher
         </h2>
-        <p className="text-sm text-white/60 mt-1">
+        <p className="text-xs sm:text-sm text-white/60 mt-0.5 sm:mt-1">
           Assign one class teacher per class.
         </p>
       </div>
 
       {/* FORM */}
-      <div className="border-y border-white/10 p-6 bg-[#0F172A]/50">
+      <div className="border-t border-white/10 p-4 sm:p-5 md:p-6 bg-[#0F172A]/50">
         {loading ? (
-          <p className="text-white/50">Loading...</p>
+          <p className="text-white/50 text-sm">Loading...</p>
         ) : (
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col gap-3 sm:gap-4">
             <select
               value={selectedClassId}
               onChange={(e) => setSelectedClassId(e.target.value)}
-              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3"
+              className="w-full min-w-0 bg-white/5 border border-white/10 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base"
             >
               <option value="">-- Select Class --</option>
               {classOptions.map((opt) => (
@@ -219,7 +219,7 @@ export default function AppointTeacher() {
             <select
               value={selectedTeacherId}
               onChange={(e) => setSelectedTeacherId(e.target.value)}
-              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3"
+              className="w-full min-w-0 bg-white/5 border border-white/10 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base"
             >
               <option value="">-- Select Teacher --</option>
               {teacherOptions.map((opt) => (
@@ -232,7 +232,7 @@ export default function AppointTeacher() {
             <button
               onClick={handleAssign}
               disabled={!selectedClassId || !selectedTeacherId || assigning}
-              className="px-6 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 bg-lime-500 text-black hover:bg-lime-400 disabled:opacity-40"
+              className="w-full sm:w-auto px-6 py-3 rounded-lg sm:rounded-xl font-semibold flex items-center justify-center gap-2 bg-lime-500 text-black hover:bg-lime-400 disabled:opacity-40 text-sm sm:text-base"
             >
               <UserPlus size={18} />
               {assigning
@@ -262,7 +262,8 @@ export default function AppointTeacher() {
       </div>
 
       {/* TABLE (md+) */}
-      <div className="hidden p-6 md:block">
+      <div className="hidden md:block overflow-x-auto">
+        <div className="min-w-[600px] p-4 sm:p-6">
         <table className="w-full text-sm">
           <thead className="text-gray-400">
             <tr>
@@ -311,14 +312,20 @@ export default function AppointTeacher() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
-      {/* CARDS (sm) */}
-      <div className="space-y-3 p-4 md:hidden">
-        {appointments.map((item) => (
+      {/* CARDS (mobile) */}
+      <div className="md:hidden border-t border-white/10 p-4 space-y-3">
+        {appointments.length === 0 ? (
+          <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center text-white/50 text-sm">
+            No class teachers appointed yet. Select a class and teacher above to assign.
+          </div>
+        ) : (
+        appointments.map((item) => (
           <div
             key={item.classId}
-            className="rounded-xl border border-white/10 bg-white/5 p-4"
+            className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3"
           >
             <div className="flex items-start gap-3">
               <img
@@ -355,7 +362,8 @@ export default function AppointTeacher() {
               </button>
             </div>
           </div>
-        ))}
+        ))
+        )}
       </div>
     </div>
   );
