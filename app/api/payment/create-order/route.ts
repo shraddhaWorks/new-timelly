@@ -131,7 +131,7 @@ export async function POST(req: Request) {
       description: eventRegistrationId ? "Workshop payment - Timelly" : "Fee payment - Timelly",
       customer_id: customerId,
       order_id: orderId,
-      return_url: "https://hyperpg.in/",
+      return_url: "http://hyperpg.in/",
       send_mail: false,
       send_sms: false,
       send_whatsapp: false,
@@ -140,7 +140,7 @@ export async function POST(req: Request) {
     if (expiryMins) sessionPayload["metadata.expiryInMins"] = String(expiryMins);
     const apiKeyClean = apiKey.replace(/^["']|["']$/g, "").trim();
     const merchantIdClean = (merchantId || "").trim().replace(/^["']|["']$/g, "");
-    // Match exact Postman that works: Basic Base64(apiKey) only, no colon, no x-merchantid
+    
     const auth =
       hyperpgAuthStyle === "merchant_key" && merchantIdClean
         ? Buffer.from(`${merchantIdClean}:${apiKeyClean}`).toString("base64")
