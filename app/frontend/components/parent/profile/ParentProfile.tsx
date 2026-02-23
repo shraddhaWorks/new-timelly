@@ -41,9 +41,9 @@ type StudentProfile = {
 
 function InfoTag({ value, icon: Icon }: { value: string; icon?: React.ComponentType<{ className?: string }> }) {
   return (
-    <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-full text-white text-sm transition-all duration-200 hover:border-white/20 hover:bg-white/10">
-      {Icon && <Icon className="w-4 h-4 text-lime-400" />}
-      {value}
+    <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-white/5 border border-white/10 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-white text-xs sm:text-sm transition-all duration-200 hover:border-white/20 hover:bg-white/10 truncate max-w-full">
+      {Icon && <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-lime-400 shrink-0" />}
+      <span className="truncate">{value}</span>
     </div>
   );
 }
@@ -242,31 +242,23 @@ export default function ParentProfile() {
     <div className="min-h-screen p-3 sm:p-5 md:p-6 pb-20 sm:pb-6 overflow-x-hidden">
       <main className="max-w-6xl mx-auto space-y-5 md:space-y-7">
         {/* Header: title + Download only */}
-        <section className="rounded-2xl sm:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 md:p-8">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">Student Profile</h1>
-              <p className="text-white/60 text-sm mt-1">Manage student records and information</p>
+        <section className="rounded-xl sm:rounded-2xl md:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-3 sm:p-4 md:p-6 lg:p-8">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4">
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white truncate">Student Profile</h1>
+              <p className="text-white/60 text-xs sm:text-sm mt-0.5 sm:mt-1 hidden sm:block">Manage student records and information</p>
             </div>
-            <button
-              type="button"
-              onClick={generatePdf}
-              disabled={pdfLoading}
-              className="inline-flex items-center justify-center gap-2 bg-lime-400 text-black px-4 py-2.5 sm:px-5 sm:py-3 rounded-full font-semibold text-sm sm:text-base transition-all duration-200 hover:bg-lime-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed shrink-0"
-            >
-              <Download size={18} />
-              {pdfLoading ? "Generating…" : "Download PDF Report"}
-            </button>
+          
           </div>
         </section>
 
         {/* Profile card: image + name + tags */}
-        <section className="rounded-xl sm:rounded-2xl md:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 md:p-8 transition-all duration-200 hover:border-white/20">
+        <section className="rounded-xl sm:rounded-2xl md:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-3 sm:p-4 md:p-6 lg:p-8 transition-all duration-200 hover:border-white/20">
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 sm:gap-6">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 md:gap-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 sm:p-4 rounded-2xl bg-lime-400/20 shrink-0 transition-transform duration-200 hover:scale-105">
-                  <GraduationCap className="w-8 h-8 sm:w-10 sm:h-10 text-lime-400" />
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 md:gap-6 min-w-0 flex-1">
+              <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                <div className="p-2.5 sm:p-3 md:p-4 rounded-xl sm:rounded-2xl bg-lime-400/20 shrink-0 transition-transform duration-200 hover:scale-105">
+                  <GraduationCap className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-lime-400" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white truncate">
@@ -282,7 +274,7 @@ export default function ParentProfile() {
               </div>
             </div>
             <div className="shrink-0 flex justify-center md:justify-end">
-                <div className="relative h-32 w-32 sm:h-44 sm:w-44 md:h-52 md:w-52 rounded-2xl overflow-hidden border-2 border-white/20 bg-white/5 transition-all duration-200 hover:border-lime-400/40 hover:shadow-lg">
+                <div className="relative h-24 w-24 sm:h-32 sm:w-32 md:h-44 md:w-44 lg:h-52 lg:w-52 rounded-xl sm:rounded-2xl overflow-hidden border-2 border-white/20 bg-white/5 transition-all duration-200 hover:border-lime-400/40 hover:shadow-lg">
                 {photoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -301,14 +293,14 @@ export default function ParentProfile() {
         </section>
 
         {/* Stats grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4 lg:gap-5">
           {stats.map((item) => (
             <div
               key={item.label}
-              className="rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 text-center transition-all duration-200 hover:border-white/20 hover:shadow-lg hover:scale-[1.02]"
+              className="rounded-xl sm:rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 p-3 sm:p-4 md:p-6 text-center transition-all duration-200 hover:border-white/20 hover:shadow-lg hover:scale-[1.02]"
             >
-              <item.icon className="mx-auto w-6 h-6 sm:w-8 sm:h-8 text-lime-400 mb-2 sm:mb-3" />
-              <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white">{item.value}</h3>
+              <item.icon className="mx-auto w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-lime-400 mb-1.5 sm:mb-2 md:mb-3" />
+              <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-white truncate">{item.value}</h3>
               <p className="text-white/60 text-xs sm:text-sm uppercase tracking-wide mt-1">
                 {item.label}
               </p>
@@ -318,32 +310,32 @@ export default function ParentProfile() {
 
         {/* Academic performance – bar graph */}
         {profile.academicPerformance.length > 0 && (
-          <section className="rounded-2xl sm:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 md:p-8 transition-all duration-200 hover:border-white/20 overflow-hidden">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-              <h2 className="flex items-center gap-2 text-xl sm:text-2xl font-bold text-white">
+          <section className="rounded-xl sm:rounded-2xl md:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-3 sm:p-4 md:p-6 lg:p-8 transition-all duration-200 hover:border-white/20 overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+              <h2 className="flex items-center gap-2 text-base sm:text-xl md:text-2xl font-bold text-white">
                 <BarChart3 className="w-6 h-6 text-lime-400" />
                 Academic performance
               </h2>
             </div>
-            <div className="overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
-              <div className="flex gap-2 sm:gap-6 min-w-[320px] sm:min-w-[480px] md:min-w-[620px]" style={{ minHeight: 200 }}>
+            <div className="overflow-x-auto no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0">
+              <div className="flex gap-1 sm:gap-2 md:gap-6 min-w-[280px] sm:min-w-[400px] md:min-w-[620px]" style={{ minHeight: 180 }}>
               {/* Y-axis labels */}
               <div
-                className="flex flex-col justify-between text-white/60 text-xs sm:text-sm shrink-0 py-1"
-                style={{ height: 220 }}
+                className="flex flex-col justify-between text-white/60 text-[10px] sm:text-xs md:text-sm shrink-0 py-1"
+                style={{ height: 180 }}
               >
                 {[100, 75, 50, 25, 0].map((val) => (
                   <span key={val}>{val}</span>
                 ))}
               </div>
               {/* Bar chart area with grid */}
-              <div className="flex-1 relative" style={{ height: 220 }}>
+              <div className="flex-1 relative" style={{ height: 180 }}>
                 {/* Horizontal grid lines */}
                 {[0, 25, 50, 75, 100].map((pct) => (
                   <div
                     key={pct}
                     className="absolute left-0 right-0 border-t border-white/10"
-                    style={{ bottom: `${(pct / 100) * 200}px` }}
+                    style={{ bottom: `${(pct / 100) * 160}px` }}
                   />
                 ))}
                 {/* Bars */}
@@ -357,12 +349,12 @@ export default function ParentProfile() {
                       <div
                         className="w-full max-w-[3rem] sm:max-w-[4rem] rounded-t-lg bg-lime-400 flex justify-center items-end pb-1 text-black font-bold text-xs sm:text-sm transition-all duration-200 hover:bg-lime-300 cursor-default"
                         style={{
-                          height: `${Math.max(12, (a.score / 100) * 200)}px`,
+                          height: `${Math.max(10, (a.score / 100) * 160)}px`,
                         }}
                       >
                         {a.score}
                       </div>
-                      <span className="text-white/80 text-[10px] sm:text-xs mt-2 truncate w-full text-center">
+                      <span className="text-white/80 text-[9px] sm:text-[10px] md:text-xs mt-1 sm:mt-2 truncate w-full text-center">
                         {a.subject}
                       </span>
                     </div>
@@ -375,12 +367,12 @@ export default function ParentProfile() {
         )}
 
         {/* Student details (read-only) */}
-        <section className="rounded-2xl sm:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 md:p-8 transition-all duration-200 hover:border-white/20">
-          <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 flex items-center gap-2">
+        <section className="rounded-xl sm:rounded-2xl md:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-3 sm:p-4 md:p-6 lg:p-8 transition-all duration-200 hover:border-white/20">
+          <h2 className="text-base sm:text-xl md:text-2xl font-bold text-white mb-3 sm:mb-4 md:mb-6 flex items-center gap-2">
             <User className="w-6 h-6 text-lime-400" />
             Student details
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
             {[
               { label: "Full name", value: s.name },
               { label: "Admission number", value: s.admissionNumber },
@@ -394,7 +386,7 @@ export default function ParentProfile() {
             ].map(({ label, value }) => (
               <div key={label} className="group">
                 <p className="text-white/50 text-xs sm:text-sm mb-1 uppercase tracking-wide">{label}</p>
-                <p className="text-white font-medium rounded-xl bg-white/5 border border-white/10 px-4 py-3 transition-colors group-hover:border-white/20">
+                <p className="text-white font-medium rounded-lg sm:rounded-xl bg-white/5 border border-white/10 px-3 py-2 sm:px-4 sm:py-3 transition-colors group-hover:border-white/20 text-sm sm:text-base break-words">
                   {value || "—"}
                 </p>
               </div>
@@ -403,20 +395,20 @@ export default function ParentProfile() {
         </section>
 
         {/* Parent / guardian info */}
-        <section className="rounded-2xl sm:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 md:p-8 transition-all duration-200 hover:border-white/20">
-          <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 flex items-center gap-2">
+        <section className="rounded-xl sm:rounded-2xl md:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-3 sm:p-4 md:p-6 lg:p-8 transition-all duration-200 hover:border-white/20">
+          <h2 className="text-base sm:text-xl md:text-2xl font-bold text-white mb-3 sm:mb-4 md:mb-6 flex items-center gap-2">
             <Phone className="w-6 h-6 text-lime-400" />
             Parent / guardian
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-            <div className="rounded-xl bg-white/5 border border-white/10 px-4 py-3 flex items-center gap-3 transition-colors hover:border-white/20">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+            <div className="rounded-lg sm:rounded-xl bg-white/5 border border-white/10 px-3 py-2.5 sm:px-4 sm:py-3 flex items-center gap-2 sm:gap-3 transition-colors hover:border-white/20 min-w-0">
               <User className="w-5 h-5 text-lime-400 shrink-0" />
               <div>
                 <p className="text-white/50 text-xs">Guardian name</p>
                 <p className="text-white font-medium">{s.fatherName || "—"}</p>
               </div>
             </div>
-            <div className="rounded-xl bg-white/5 border border-white/10 px-4 py-3 flex items-center gap-3 transition-colors hover:border-white/20">
+            <div className="rounded-lg sm:rounded-xl bg-white/5 border border-white/10 px-3 py-2.5 sm:px-4 sm:py-3 flex items-center gap-2 sm:gap-3 transition-colors hover:border-white/20 min-w-0">
               <Phone className="w-5 h-5 text-lime-400 shrink-0" />
               <div>
                 <p className="text-white/50 text-xs">Contact</p>
