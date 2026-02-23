@@ -14,7 +14,7 @@ export default function CircularCard({ c }: { c: CircularRow }) {
   const attachments = c.attachments ?? [];
 
   return (
-    <div className="rounded-2xl overflow-hidden bg-white/5 border border-white/10 w-full min-w-0 break-words">
+    <div className="rounded-xl sm:rounded-2xl overflow-hidden bg-white/5 border border-white/10 w-full min-w-0 break-words">
       <div
         className="h-1"
         style={{ background: getImportanceBorderColor(c.importanceLevel) }}

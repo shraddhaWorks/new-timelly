@@ -51,7 +51,7 @@ export default function SchoolAdminCircularsTab() {
   }, [circulars, search, importance]);
 
   return (
-    <div className="min-h-screen text-white w-full min-w-0 overflow-x-hidden">
+    <div className="min-h-screen text-white w-full min-w-0 overflow-x-hidden pb-20 lg:pb-0">
       {/* HEADER */}
       <PageHeader
         compact
@@ -81,7 +81,7 @@ export default function SchoolAdminCircularsTab() {
       />
 
       {/* CONTENT */}
-      <div className="w-full max-w-7xl mx-auto px-0 sm:px-4 mt-3 sm:mt-6 space-y-4 sm:space-y-6 pb-6 sm:pb-8">
+      <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 mt-3 sm:mt-6 space-y-4 sm:space-y-6 pb-6 sm:pb-8">
         {/* FORM (pushes content down) */}
         {showForm && (
           <div className="w-full">

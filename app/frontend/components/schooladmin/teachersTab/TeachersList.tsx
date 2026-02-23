@@ -42,6 +42,9 @@ export default function TeachersList({
   pagedTeachers,
   searchTerm,
   setSearchTerm,
+  page,
+  totalPages,
+  setPage,
   onDelete,
   onEditTeacher,
 }: Props) {
@@ -50,7 +53,8 @@ export default function TeachersList({
 
   return (
     <div className="w-full">
-      <div className="rounded-3xl overflow-hidden border shadow-2xl bg-white/5 backdrop-blur-xl rounded-2xl shadow-lg border border-white/10 overflow-hidden hidden md:block">
+      {/* Desktop table */}
+      <div className="rounded-2xl overflow-hidden border border-white/10 bg-white/5 backdrop-blur-xl hidden md:block">
 
         {/* ===== Header ===== */}
         <div className="flex items-center justify-between px-8 py-6 border-b border-white/10">
@@ -188,6 +192,105 @@ export default function TeachersList({
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-4 pb-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search teachers..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-lime-400/50"
+          />
+        </div>
+        <h2 className="text-base font-semibold text-white">
+          All Teachers ({filteredTeachers.length})
+        </h2>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between gap-4 py-2">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm font-medium disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span className="text-sm text-white/60">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm font-medium disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        )}
+        {teachersLoading ? (
+          <div className="py-8 text-center text-gray-400 text-sm">Loading…</div>
+        ) : pagedTeachers.length === 0 ? (
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-gray-400 text-sm">
+            No teachers found.
+          </div>
+        ) : (
+          pagedTeachers.map((teacher) => (
+            <div
+              key={teacher.id}
+              className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-4 sm:p-5 space-y-3"
+            >
+              <div className="flex items-center gap-3">
+                <img
+                  src={teacher.avatar}
+                  alt=""
+                  className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover border border-white/10 shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-semibold text-white truncate">{teacher.name}</h4>
+                  <p className="text-xs text-white/50 font-mono">{teacher.teacherId}</p>
+                  <span
+                    className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                      teacher.status === "Active"
+                        ? "bg-lime-400/10 text-lime-400 border-lime-400/20"
+                        : "bg-orange-400/10 text-orange-400 border-orange-400/20"
+                    }`}
+                  >
+                    {teacher.status}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-white/60">{teacher.subject}</span>
+                <span className="text-lime-400 font-semibold">{teacher.attendance}%</span>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={() => setViewTeacher(teacher)}
+                  className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center gap-1.5 text-sm text-gray-300"
+                >
+                  <Eye size={16} /> View
+                </button>
+                <button
+                  onClick={() => onEditTeacher(teacher)}
+                  className="flex-1 py-2.5 rounded-xl bg-lime-400/10 hover:bg-lime-400/20 flex items-center justify-center gap-1.5 text-sm text-lime-400 border border-lime-400/20"
+                >
+                  <Pencil size={16} /> Edit
+                </button>
+                <button
+                  onClick={() => onDelete(teacher.id)}
+                  className="p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* ===== Show Modal ===== */}

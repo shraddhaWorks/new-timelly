@@ -406,11 +406,7 @@ const SchoolAdminTeacherTab = () => {
   ];
 
   return (
-    <div className="  w-full
-  max-w-screen-2xl
-  mx-auto
-  space-y-6
-  min-w-0">
+    <div className="w-full max-w-screen-2xl mx-auto space-y-4 sm:space-y-6 min-w-0 overflow-x-hidden px-2 sm:px-0 pb-20 lg:pb-0">
 
       <PageHeader
         title="Teachers"
@@ -429,11 +425,7 @@ const SchoolAdminTeacherTab = () => {
       />
 
       {/* ===== Stats Cards ===== */}
-      <div className="  grid
-    gap-4
-    grid-cols-1
-    sm:grid-cols-2
-    lg:grid-cols-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
           title="Total Present"
           value={<>{presentCount} <span className="text-sm text-lime-400">/ {teachers.length}</span></>}
@@ -468,7 +460,7 @@ const SchoolAdminTeacherTab = () => {
   shadow-[0_20px_60px_rgba(0,0,0,0.45)]
   overflow-hidden">
 
-        <div className="px-4 md:p-5 border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="px-3 sm:px-4 md:p-5 border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
           <div>
             <h3 className="text-lg font-bold text-gray-100 flex items-center gap-2">
               <Calendar size={18} />
@@ -479,7 +471,7 @@ const SchoolAdminTeacherTab = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
             <input
               type="date"
               value={attendanceDate}

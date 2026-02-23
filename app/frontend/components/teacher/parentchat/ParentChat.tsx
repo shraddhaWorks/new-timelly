@@ -108,27 +108,28 @@ export default function TeacherParentChatTab() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto h-full flex flex-col gap-6">
+    <div className="max-w-7xl mx-auto h-full flex flex-col gap-4 sm:gap-6 px-3 sm:px-0 pb-20 lg:pb-6 min-h-0 overflow-hidden">
       <PageHeader
         title="Parent Communication"
         subtitle="Manage chat requests and conversations"
+        compact
       />
 
-      <div className="flex flex-1 gap-6 overflow-hidden">
+      <div className="flex flex-1 min-h-0 gap-4 sm:gap-6 overflow-hidden">
         {/* ================= Sidebar ================= */}
         <div
-          className={`glass-card rounded-2xl flex-col overflow-hidden
+          className={`glass-card rounded-xl sm:rounded-2xl flex flex-col overflow-hidden
           ${activeChat ? "hidden lg:flex" : "flex"}
-          w-full lg:w-96`}
+          w-full lg:w-96 min-h-[280px] lg:min-h-0`}
         >
           {/* Tabs */}
-          <div className="p-3 flex gap-2 border-b border-white/10">
+          <div className="p-3 flex gap-2 overflow-x-auto no-scrollbar border-b border-white/10">
             {(["all", "approved", "pending", "rejected", "ended"] as const).map(
               (tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-3 py-1.5 rounded-lg text-xs capitalize
+                  className={`px-3 py-1.5 rounded-lg text-xs capitalize shrink-0
                     ${activeTab === tab
                       ? "bg-lime-500 text-black"
                       : "bg-white/5 text-gray-400 hover:bg-white/10"
@@ -190,7 +191,7 @@ export default function TeacherParentChatTab() {
 
         {/* ================= Chat Window ================= */}
         <div
-          className={`flex-1 glass-card rounded-2xl overflow-hidden
+          className={`flex-1 min-w-0 min-h-0 glass-card rounded-xl sm:rounded-2xl overflow-hidden flex flex-col
           ${activeChat ? "flex" : "hidden lg:flex"}`}
         >
           {activeChat ? (

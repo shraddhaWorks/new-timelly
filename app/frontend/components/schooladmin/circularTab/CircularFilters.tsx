@@ -36,7 +36,7 @@ export default function CircularFilters({
   const { classes } = useClasses();
 
   return (
-    <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-3 sm:p-4 border border-white/10 flex flex-col gap-3 sm:gap-4 w-full min-w-0 overflow-hidden">
+    <div className="bg-white/5 backdrop-blur-xl rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-white/10 flex flex-col gap-3 sm:gap-4 w-full min-w-0 overflow-hidden">
       {/* Row 1: Search + Importance */}
       <div className="flex flex-col md:flex-row gap-3 sm:gap-4 items-stretch md:items-center justify-between">
         <div className="relative flex-1 w-full min-w-0">

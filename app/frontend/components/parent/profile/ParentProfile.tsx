@@ -239,7 +239,7 @@ export default function ParentProfile() {
   ];
 
   return (
-    <div className="min-h-screen p-3 sm:p-5 md:p-6">
+    <div className="min-h-screen p-3 sm:p-5 md:p-6 pb-20 sm:pb-6 overflow-x-hidden">
       <main className="max-w-6xl mx-auto space-y-5 md:space-y-7">
         {/* Header: title + Download only */}
         <section className="rounded-2xl sm:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 md:p-8">
@@ -261,15 +261,15 @@ export default function ParentProfile() {
         </section>
 
         {/* Profile card: image + name + tags */}
-        <section className="rounded-2xl sm:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 md:p-8 transition-all duration-200 hover:border-white/20">
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-6">
+        <section className="rounded-xl sm:rounded-2xl md:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 md:p-8 transition-all duration-200 hover:border-white/20">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 sm:gap-6">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 md:gap-6">
               <div className="flex items-center gap-4">
                 <div className="p-3 sm:p-4 rounded-2xl bg-lime-400/20 shrink-0 transition-transform duration-200 hover:scale-105">
                   <GraduationCap className="w-8 h-8 sm:w-10 sm:h-10 text-lime-400" />
                 </div>
-                <div>
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white truncate">
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white truncate">
                     {s.name || "Student"}
                   </h2>
                   <p className="text-white/60 text-sm mt-0.5">Student profile overview</p>
@@ -301,14 +301,14 @@ export default function ParentProfile() {
         </section>
 
         {/* Stats grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
           {stats.map((item) => (
             <div
               key={item.label}
               className="rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 text-center transition-all duration-200 hover:border-white/20 hover:shadow-lg hover:scale-[1.02]"
             >
               <item.icon className="mx-auto w-6 h-6 sm:w-8 sm:h-8 text-lime-400 mb-2 sm:mb-3" />
-              <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">{item.value}</h3>
+              <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white">{item.value}</h3>
               <p className="text-white/60 text-xs sm:text-sm uppercase tracking-wide mt-1">
                 {item.label}
               </p>
@@ -325,8 +325,8 @@ export default function ParentProfile() {
                 Academic performance
               </h2>
             </div>
-            <div className="overflow-x-auto no-scrollbar">
-              <div className="flex gap-3 sm:gap-6 min-w-[620px]" style={{ minHeight: 240 }}>
+            <div className="overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+              <div className="flex gap-2 sm:gap-6 min-w-[320px] sm:min-w-[480px] md:min-w-[620px]" style={{ minHeight: 200 }}>
               {/* Y-axis labels */}
               <div
                 className="flex flex-col justify-between text-white/60 text-xs sm:text-sm shrink-0 py-1"

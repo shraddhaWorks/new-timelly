@@ -10,6 +10,7 @@ type Props = {
   onToggle: (id: string) => void;
   onEdit: (h: HomeworkItem) => void;
   onDelete: (id: string) => void;
+  onViewSubmissions?: (id: string) => void;
 };
 
 export default function HomeworkList({
@@ -18,6 +19,7 @@ export default function HomeworkList({
   onToggle,
   onEdit,
   onDelete,
+  onViewSubmissions,
 }: Props) {
   if (homeworks.length === 0) {
     return (
@@ -41,6 +43,7 @@ export default function HomeworkList({
           onToggle={() => onToggle(h.id)}
           onEdit={() => onEdit(h)}
           onDelete={() => onDelete(h.id)}
+          onViewSubmissions={onViewSubmissions ? () => onViewSubmissions(h.id) : undefined}
         />
       ))}
     </div>
