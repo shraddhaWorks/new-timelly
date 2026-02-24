@@ -99,7 +99,7 @@ function SchoolAdminContent() {
       case "analysis":
         return <SchoolAdminAnalysisTab />;
       case "fees":
-        return <SchoolAdminFeesTab />;;
+        return <SchoolAdminFeesTab />;
       case "settings":
         return <SchoolAdminSettingsTab />;
       default:

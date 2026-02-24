@@ -29,8 +29,15 @@ interface PaymentItem {
   status: string;
   createdAt: string;
   transactionId?: string;
-  razorpayPaymentId?: string;
-  juspayPaymentId?: string;
+  gateway?: string;
+}
+
+interface RefundItem {
+  id: string;
+  paymentId: string;
+  amount: number;
+  status: string;
+  createdAt: string;
 }
 
 interface ExtraFeeItem {
@@ -50,6 +57,7 @@ interface FeeData {
   components?: Array<{ name: string; amount: number }>;
   extraFees?: ExtraFeeItem[];
   payments: PaymentItem[];
+  refunds?: RefundItem[];
   installmentsList: InstallmentItem[];
 }
 
@@ -401,35 +409,64 @@ export default function ParentFeesTab() {
 
           <h3 className="text-lg font-semibold text-white flex items-center gap-2 pt-4 border-t border-white/10">
             <CreditCard className="w-5 h-5 text-lime-400" />
-            Payment history
+            Payment & Refund history
           </h3>
-          <div className="space-y-2 max-h-40 overflow-y-auto">
-            {fee.payments?.length ? (
-              fee.payments.map((p) => (
-                <div
-                  key={p.id}
-                  className="flex justify-between items-center p-3 rounded-lg bg-white/5 border border-white/5"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-white">₹{p.amount.toLocaleString()}</p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(p.createdAt).toLocaleString("en-IN")}
-                    </p>
-                  </div>
-                  <span
-                    className={`text-xs px-2 py-1 rounded ${
-                      p.status === "SUCCESS"
-                        ? "bg-emerald-500/20 text-emerald-400"
-                        : "bg-amber-500/20 text-amber-400"
-                    }`}
+          <div className="space-y-2 max-h-56 overflow-y-auto">
+            {(() => {
+              const payments = fee.payments || [];
+              const refunds = fee.refunds || [];
+              const transactions = [
+                ...payments.map((p) => ({ type: "payment" as const, ...p })),
+                ...refunds.map((r) => ({ type: "refund" as const, ...r })),
+              ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+              if (transactions.length === 0) {
+                return <p className="text-sm text-gray-500 py-4">No payments or refunds yet</p>;
+              }
+              return transactions.map((t) =>
+                t.type === "payment" ? (
+                  <div
+                    key={`pay-${t.id}`}
+                    className="flex justify-between items-center p-3 rounded-lg bg-white/5 border border-white/5"
                   >
-                    {p.status}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-gray-500 py-4">No payments yet</p>
-            )}
+                    <div>
+                      <p className="text-sm font-medium text-emerald-400">
+                        +₹{t.amount.toLocaleString()} (Payment)
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(t.createdAt).toLocaleString("en-IN")}
+                      </p>
+                    </div>
+                    <span
+                      className={`text-xs px-2 py-1 rounded ${
+                        t.status === "SUCCESS"
+                          ? "bg-emerald-500/20 text-emerald-400"
+                          : "bg-amber-500/20 text-amber-400"
+                      }`}
+                    >
+                      {t.status}
+                    </span>
+                  </div>
+                ) : (
+                  <div
+                    key={`ref-${t.id}`}
+                    className="flex justify-between items-center p-3 rounded-lg bg-white/5 border border-amber-500/20"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-amber-400">
+                        -₹{t.amount.toLocaleString()} (Refund)
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(t.createdAt).toLocaleString("en-IN")}
+                      </p>
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded bg-amber-500/20 text-amber-400">
+                      Refunded
+                    </span>
+                  </div>
+                )
+              );
+            })()}
           </div>
         </motion.div>
       </div>

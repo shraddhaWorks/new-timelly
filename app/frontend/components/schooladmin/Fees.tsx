@@ -8,6 +8,7 @@ import AddExtraFeeForm from "./fees/AddExtraFeeForm";
 import ExtraFeesList from "./fees/ExtraFeesList";
 import FeeStructureConfig from "./fees/FeeStructureConfig";
 import FeeRecordsTable from "./fees/FeeRecordsTable";
+import FeeTransactionsList from "./fees/FeeTransactionsList";
 import type { Class, Student, FeeSummary, FeeRecord, FeeStructure, ExtraFee } from "./fees/types";
 import Spinner from "../common/Spinner";
 
@@ -92,6 +93,8 @@ export default function FeesTab() {
           students={students}
           onSuccess={fetchData}
         />
+
+        <FeeTransactionsList students={students} onSuccess={fetchData} />
 
         <FeeRecordsTable fees={fees} classes={classes} />
       </div>

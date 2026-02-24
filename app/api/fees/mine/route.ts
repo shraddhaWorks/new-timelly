@@ -67,10 +67,20 @@ export async function GET() {
     });
 
     const payments = await prisma.payment.findMany({
-      where: { studentId },
+      where: { studentId, eventRegistrationId: null },
       orderBy: { createdAt: "desc" },
-      take: 20,
+      take: 50,
     });
+
+    const paymentIds = payments.map((p) => p.id);
+    let refunds: { id: string; paymentId: string; amount: number; status: string; createdAt: Date }[] = [];
+    if (paymentIds.length > 0) {
+      const placeholders = paymentIds.map((_, i) => `$${i + 1}`).join(", ");
+      refunds = (await prisma.$queryRawUnsafe(
+        `SELECT id, "paymentId", amount, status, "createdAt" FROM "Refund" WHERE "paymentId" IN (${placeholders}) AND status = 'SUCCESS' ORDER BY "createdAt" DESC`,
+        ...paymentIds
+      )) as { id: string; paymentId: string; amount: number; status: string; createdAt: Date }[];
+    }
 
     const perInstallment = fee.finalFee / Math.max(fee.installments, 1);
     const baseDue = new Date(new Date().getFullYear(), 6, 15); // Jul 15
@@ -106,6 +116,7 @@ export async function GET() {
         components: (components?.components as Array<{ name: string; amount: number }>) || [],
         extraFees,
         payments,
+        refunds,
         installmentsList: installments,
       },
     };

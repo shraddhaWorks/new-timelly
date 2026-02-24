@@ -961,8 +961,22 @@ model Payment {
 
   eventRegistrationId String? // When paying for workshop, links to EventRegistration
 
+  refunds Refund[]
+
   createdAt DateTime @default(now())
 
   @@index([studentId])
+}
+
+model Refund {
+  id        String   @id @default(cuid())
+  paymentId String
+  payment   Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  amount    Float
+  reason    String?
+  status    String   @default("SUCCESS") // SUCCESS | FAILED
+  createdAt DateTime @default(now())
+
+  @@index([paymentId])
 }
 
