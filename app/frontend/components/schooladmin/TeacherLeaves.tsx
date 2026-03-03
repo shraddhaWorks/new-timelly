@@ -1,5 +1,6 @@
 
 "use client";
+import { useCallback } from "react";
 import Spinner from "../common/Spinner";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -48,11 +49,15 @@ export default function SchoolTeacherLeavesTab() {
   const [showConditionalModal, setShowConditionalModal] = useState(false);
   const [selectedLeaveId, setSelectedLeaveId] = useState<string | null>(null);
   const [conditionalMessage, setConditionalMessage] = useState("");
+  const [actionId, setActionId] = useState<string | null>(null);
 
   /* ---------------- DATE HELPERS ---------------- */
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = useMemo(() => {
+    const t = new Date();
+    t.setHours(0, 0, 0, 0);
+    return t;
+  }, []);
 
   const isToday = (date?: string | null) => {
     if (!date) return false;
@@ -69,19 +74,19 @@ export default function SchoolTeacherLeavesTab() {
     return today >= f && today <= t;
   };
 
-const currentMonthLabel = new Date().toLocaleString("en-US", {
-  month: "short",
-});
+  const currentMonthLabel = new Date().toLocaleString("en-US", {
+    month: "short",
+  });
 
-const isCurrentMonth = (date: string) => {
-  const d = new Date(date);
-  const now = new Date();
+  const isCurrentMonth = (date: string) => {
+    const d = new Date(date);
+    const now = new Date();
 
-  return (
-    d.getMonth() === now.getMonth() &&
-    d.getFullYear() === now.getFullYear()
-  );
-};
+    return (
+      d.getMonth() === now.getMonth() &&
+      d.getFullYear() === now.getFullYear()
+    );
+  };
 
 
   const iconStyles = {
@@ -99,64 +104,111 @@ const isCurrentMonth = (date: string) => {
 
   /* ---------------- LOAD DATA ---------------- */
 
-  async function loadPendingLeaves() {
-    const res = await fetch("/api/leaves/pending");
-    setPendingLeaves(await res.json());
-  }
 
-  async function loadAllLeaves() {
-    const res = await fetch("/api/leaves/all");
-    setAllLeaves(await res.json());
-  }
+
+  const loadPendingLeaves = useCallback(async () => {
+    try {
+      const res = await fetch("/api/leaves/pending");
+      const data = await res.json();
+
+      if (res.ok && Array.isArray(data)) {
+        setPendingLeaves(data);
+      } else {
+        setPendingLeaves([]);
+      }
+    } catch {
+      setPendingLeaves([]);
+    }
+  }, []);
+
+  const loadAllLeaves = useCallback(async () => {
+    try {
+      const res = await fetch("/api/leaves/all");
+      const data = await res.json();
+
+      if (res.ok && Array.isArray(data)) {
+        setAllLeaves(data);
+      } else {
+        setAllLeaves([]);
+      }
+    } catch {
+      setAllLeaves([]);
+    }
+  }, []);
+
+
 
   useEffect(() => {
-    Promise.all([loadPendingLeaves(), loadAllLeaves()]).finally(() =>
-      setLoading(false)
-    );
-  }, []);
+    setLoading(true);
+
+    Promise.all([loadPendingLeaves(), loadAllLeaves()])
+      .finally(() => setLoading(false));
+
+  }, [loadPendingLeaves, loadAllLeaves]);
 
   /* ---------------- ACTIONS ---------------- */
 
   async function approveLeave(id: string) {
-    await fetch(`/api/leaves/${id}/approve`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "FULL" }),
-    });
+    setActionId(id);
 
-    loadPendingLeaves();
-    loadAllLeaves();
+    try {
+      const res = await fetch(`/api/leaves/${id}/approve`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "FULL" }),
+      });
+
+      if (res.ok) {
+        await Promise.all([loadPendingLeaves(), loadAllLeaves()]);
+      }
+    } finally {
+      setActionId(null);
+    }
   }
 
   async function conditionalApproveLeave() {
     if (!selectedLeaveId || !conditionalMessage.trim()) return;
 
-    await fetch(`/api/leaves/${selectedLeaveId}/approve`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        type: "CONDITIONAL",
-        remarks: conditionalMessage,
-      }),
-    });
+    setActionId(selectedLeaveId);
 
-    setShowConditionalModal(false);
-    setConditionalMessage("");
-    setSelectedLeaveId(null);
+    try {
+      const res = await fetch(`/api/leaves/${selectedLeaveId}/approve`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "CONDITIONAL",
+          remarks: conditionalMessage,
+        }),
+      });
 
-    loadPendingLeaves();
-    loadAllLeaves();
+      if (res.ok) {
+        await Promise.all([loadPendingLeaves(), loadAllLeaves()]);
+      }
+
+      setShowConditionalModal(false);
+      setConditionalMessage("");
+      setSelectedLeaveId(null);
+    } finally {
+      setActionId(null);
+    }
   }
 
   async function rejectLeave(id: string) {
-    await fetch(`/api/leaves/${id}/reject`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ remarks: "Rejected by admin" }),
-    });
+    setActionId(id);
 
-    loadPendingLeaves();
-    loadAllLeaves();
+    try {
+      const res = await fetch(`/api/leaves/${id}/reject`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ remarks: "Rejected by admin" }),
+      });
+
+      if (res.ok) {
+        await Promise.all([loadPendingLeaves(), loadAllLeaves()]);
+      }
+    } finally {
+      setActionId(null);
+    }
   }
 
   /* ---------------- FILTERS ---------------- */
@@ -173,12 +225,12 @@ const isCurrentMonth = (date: string) => {
   );
 
   const currentMonthLeaves = useMemo(
-  () =>
-    allLeaves.filter((l) =>
-      isCurrentMonth(l.fromDate)
-    ),
-  [allLeaves]
-);
+    () =>
+      allLeaves.filter((l) =>
+        isCurrentMonth(l.fromDate)
+      ),
+    [allLeaves]
+  );
 
 
   const teachersOnLeaveToday = useMemo(
@@ -204,7 +256,7 @@ const isCurrentMonth = (date: string) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Spinner/>
+        <Spinner />
       </div>
     );
   }
@@ -253,19 +305,19 @@ const isCurrentMonth = (date: string) => {
         </div>
 
         {/* Total Requests */}
-     <div className="p-3 sm:p-6 rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl flex items-center gap-2 sm:gap-4">
-  <div className={`p-2 rounded-lg border ${iconStyles.purple}`}>
-    <FileText size={16} />
-  </div>
-  <div>
-    <p className="text-xs text-white/60">
-      Total Requests ({currentMonthLabel})
-    </p>
-    <p className={`text-lg sm:text-2xl font-bold ${textColor.purple}`}>
-      {currentMonthLeaves.length}
-    </p>
-  </div>
-</div>
+        <div className="p-3 sm:p-6 rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl flex items-center gap-2 sm:gap-4">
+          <div className={`p-2 rounded-lg border ${iconStyles.purple}`}>
+            <FileText size={16} />
+          </div>
+          <div>
+            <p className="text-xs text-white/60">
+              Total Requests ({currentMonthLabel})
+            </p>
+            <p className={`text-lg sm:text-2xl font-bold ${textColor.purple}`}>
+              {currentMonthLeaves.length}
+            </p>
+          </div>
+        </div>
 
       </div>
 
@@ -290,6 +342,7 @@ const isCurrentMonth = (date: string) => {
                     : rejectedLeaves
               }
               status={activeTab}
+              actionId={actionId}
               onApprove={approveLeave}
               onReject={rejectLeave}
               onConditional={(id: string) => {
@@ -310,6 +363,7 @@ const isCurrentMonth = (date: string) => {
                     : rejectedLeaves
               }
               status={activeTab}
+              actionId={actionId}
               onApprove={approveLeave}
               onReject={rejectLeave}
               onConditional={(id: string) => {
@@ -330,7 +384,7 @@ const isCurrentMonth = (date: string) => {
               <AlertTriangle className="text-yellow-400" /> Conditional Approval
             </h3>
             <p className="text-xs text-white/50">Please specify the condition for approving this leave request. The teacher will be notified of this condition.
-</p>
+            </p>
             <textarea
               className="w-full h-28 rounded-xl bg-black/30 border border-yellow-500/40 p-3 text-sm text-white outline-none"
               placeholder="e.g. Must complete pending grading before leaving..."
@@ -347,7 +401,8 @@ const isCurrentMonth = (date: string) => {
               </button>
               <button
                 onClick={conditionalApproveLeave}
-                className="px-5 py-2 rounded-xl bg-yellow-500 text-black font-semibold"
+                disabled={actionId === selectedLeaveId}
+                className="px-5 py-2 rounded-xl bg-yellow-500 text-black font-semibold disabled:opacity-50"
               >
                 Confirm
               </button>
@@ -361,7 +416,7 @@ const isCurrentMonth = (date: string) => {
 
 /* ---------------- CARD LIST (MOBILE) ---------------- */
 
-function LeaveCardList({ leaves, status, onApprove, onReject, onConditional }: any) {
+function LeaveCardList({ leaves, status, actionId, onApprove, onReject, onConditional }: any) {
   return (
     <div className="space-y-3">
       {leaves.length === 0 ? (
@@ -440,9 +495,16 @@ function LeaveCardList({ leaves, status, onApprove, onReject, onConditional }: a
               {/* Actions or Status */}
               {status === "PENDING" && (
                 <div className="grid grid-cols-3 gap-2 pt-2">
-                  <ActionButton full label="Approve" icon={CheckCircle} color="green" onClick={() => onApprove(l.id)} />
-                  <ActionButton full label="Conditional" icon={AlertTriangle} color="yellow" onClick={() => onConditional(l.id)} />
-                  <ActionButton full label="Reject" icon={XCircleIcon} color="red" onClick={() => onReject(l.id)} />
+                  <ActionButton
+                    full
+                    label="Approve"
+                    icon={CheckCircle}
+                    color="green"
+                    onClick={() => onApprove(l.id)}
+                    disabled={actionId === l.id}
+                  />
+                  <ActionButton full label="Conditional" icon={AlertTriangle} color="yellow" onClick={() => onConditional(l.id)} disabled={actionId === l.id} />
+                  <ActionButton full label="Reject" icon={XCircleIcon} color="red" onClick={() => onReject(l.id)} disabled={actionId === l.id} />
                 </div>
 
 
@@ -478,18 +540,18 @@ function LeaveCardList({ leaves, status, onApprove, onReject, onConditional }: a
 
 /* ---------------- TABLE (DESKTOP) ---------------- */
 
-function LeaveTable({ leaves, status, onApprove, onReject, onConditional }: any) {
+function LeaveTable({ leaves, status, actionId, onApprove, onReject, onConditional }: any) {
   return (
-    <table className="w-full text-sm">
+    <table className="w-full text-sm border-collapse">
       <thead className="text-gray-400 border-b border-gray-600">
         <tr>
-          <th className="text-left py-2">Teacher Name</th>
-          <th>Leave Type</th>
-          <th>Dates</th>
-          <th>Days</th>
-          <th>Reason</th>
-          {status === "PENDING" && <th>Actions</th>}
-          {status === "APPROVED" && <th>Status</th>}
+          <th className="text-left py-3 px-3">Teacher Name</th>
+          <th className="py-3 px-3">Leave Type</th>
+          <th className="py-3 px-3">Dates</th>
+          <th className="py-3 px-3">Days</th>
+          <th className="py-3 px-3 md:w-[20%] lg:w-[30%] text-left">Reason</th>
+          {status === "PENDING" && <th className="py-3 px-3">Actions</th>}
+          {status === "APPROVED" && <th className="py-3 px-3">Status</th>}
         </tr>
       </thead>
 
@@ -511,13 +573,13 @@ function LeaveTable({ leaves, status, onApprove, onReject, onConditional }: any)
               </td>
               <td className="text-center">{days}</td>
 
-              <td className="text-center text-gray-300">
+              <td className="px-3 py-4 text-gray-300 whitespace-normal break-words text-left">
                 {l.reason ?? "—"}
 
                 {l.status === "CONDITIONALLY_APPROVED" && l.remarks && (
-                  <div className="mt-1 flex items-center justify-center gap-1 text-yellow-400 text-xs">
-                    <AlertTriangle size={12} />
-                    Condition: {l.remarks}
+                  <div className="mt-2 flex items-start gap-2 text-yellow-400 text-xs">
+                    <AlertTriangle size={14} className="mt-[2px]" />
+                    <span>Condition: {l.remarks}</span>
                   </div>
                 )}
               </td>
@@ -539,9 +601,14 @@ function LeaveTable({ leaves, status, onApprove, onReject, onConditional }: any)
 
               {status === "PENDING" && (
                 <td className="text-center space-x-2">
-                  <ActionButton icon={CheckCircle} color="green" onClick={() => onApprove(l.id)} />
-                  <ActionButton icon={AlertTriangle} color="yellow" onClick={() => onConditional(l.id)} />
-                  <ActionButton icon={XCircleIcon} color="red" onClick={() => onReject(l.id)} />
+                  <ActionButton
+                    icon={CheckCircle}
+                    color="green"
+                    onClick={() => onApprove(l.id)}
+                    disabled={actionId === l.id}
+                  />
+                  <ActionButton icon={AlertTriangle} color="yellow" onClick={() => onConditional(l.id)} disabled={actionId === l.id} />
+                  <ActionButton icon={XCircleIcon} color="red" onClick={() => onReject(l.id)} disabled={actionId === l.id} />
                 </td>
               )}
             </tr>
@@ -591,7 +658,7 @@ function IconTab({ label, count, icon: Icon, active, onClick }: any) {
   );
 }
 
-function ActionButton({ label, icon: Icon, color, onClick, full }: any) {
+function ActionButton({ label, icon: Icon, color, onClick, full, disabled }: any) {
   const colorMap: any = {
     green:
       "border-lime-400 text-black bg-lime-400",
@@ -614,7 +681,8 @@ function ActionButton({ label, icon: Icon, color, onClick, full }: any) {
     return (
       <button
         onClick={onClick}
-        className={`p-2 rounded-xl border ${colorMap[color]} transition`}
+        disabled={disabled}
+        className={`p-2 rounded-xl border ${colorMap[color]} transition disabled:opacity-50 disabled:cursor-not-allowed`}
       >
         <Icon size={16} />
       </button>
@@ -625,13 +693,15 @@ function ActionButton({ label, icon: Icon, color, onClick, full }: any) {
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       className={`
-        inline-flex items-center gap-2 flex-col
-        px-1 py-2 text-xs font-semibold
-        border ${mobileColorMap[color]}
-        ${full ? "w-full justify-center rounded-xl" : "rounded-full"}
-        transition
-      `}
+    inline-flex items-center gap-2 flex-col
+    px-1 py-2 text-xs font-semibold
+    border ${mobileColorMap[color]}
+    ${full ? "w-full justify-center rounded-xl" : "rounded-full"}
+    transition
+    disabled:opacity-50 disabled:cursor-not-allowed
+  `}
     >
       <Icon size={16} />
       <span>{label}</span>
