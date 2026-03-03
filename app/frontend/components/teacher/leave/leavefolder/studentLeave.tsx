@@ -76,7 +76,7 @@ export default function StudentLeave() {
     try {
       const res = await fetch("/api/student-leaves/all");
       const data = await res.json();
-
+      //console.log("All Leaves:", data);
       if (res.ok && Array.isArray(data)) setAllLeaves(data);
       else setAllLeaves([]);
     } catch (err) {
@@ -121,6 +121,7 @@ export default function StudentLeave() {
 
   const displayList = subTab === "pending" ? pendingLeaves : allLeaves;
   const filteredList = searchQuery.trim()
+
     ? displayList.filter((l) =>
       (l.student?.user?.name ?? "")
         .toLowerCase()
@@ -253,11 +254,11 @@ export default function StudentLeave() {
                     <p className="text-white/70 text-[0.85rem] md:text-[0.9rem] leading-relaxed font-normal">
                       {leave.reason}
                     </p>
-                    {leave.attachment && (
+                    {/*{leave.attachment && (
                       <button className="flex items-center gap-1.5 mt-2 text-[#b4f03d] text-xs font-semibold hover:underline w-fit">
                         <Paperclip size={12} /> View Attachment
                       </button>
-                    )}
+                    )}*/}
                   </div>
                 </div>
 
