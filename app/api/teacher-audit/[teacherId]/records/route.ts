@@ -26,18 +26,19 @@ export async function GET(
     const take = Math.min(100, Number(searchParams.get("take") || 50));
     const academicYear = searchParams.get("academicYear")?.trim() ?? "";
 
-    // Academic year "2024-2025" -> Sep 1 2024 - Aug 31 2025
-    let dateRange: { gte: Date; lte: Date } | undefined;
-    if (academicYear) {
-      const m = academicYear.match(/^(\d{4})-(\d{4})$/);
-      if (m) {
-        const startYear = parseInt(m[1], 10);
-        dateRange = {
-          gte: new Date(startYear, 8, 1, 0, 0, 0),
-          lte: new Date(startYear + 1, 7, 31, 23, 59, 59),
-        };
-      }
-    }
+   // Academic year "2024-2025" -> June 1 2024 - April 30 2025
+let dateRange: { gte: Date; lte: Date } | undefined;
+
+if (academicYear) {
+  const m = academicYear.match(/^(\d{4})-(\d{4})$/);
+  if (m) {
+    const startYear = parseInt(m[1], 10);
+    dateRange = {
+      gte: new Date(startYear, 5, 1, 0, 0, 0), // June 1
+      lte: new Date(startYear + 1, 4, 31, 23, 59, 59), // may 31
+    };
+  }
+}
 
     const where = dateRange
       ? { teacherId, createdAt: dateRange }
@@ -60,7 +61,7 @@ export async function GET(
 
     // ✅ Always clamp final score
     const performanceScore = clampScore(
-      50 + (agg._sum.scoreImpact ?? 0)
+      agg._sum.scoreImpact ?? 0
     );
 
     return NextResponse.json(
@@ -113,6 +114,21 @@ const category: TeacherAuditCategory =
         : "";
     const scoreImpact = Number(body.scoreImpact);
 
+    const academicYear = body.academicYear?.trim() ?? "";
+
+let dateRange: { gte: Date; lte: Date } | undefined;
+
+if (academicYear) {
+  const m = academicYear.match(/^(\d{4})-(\d{4})$/);
+  if (m) {
+    const startYear = parseInt(m[1], 10);
+    dateRange = {
+      gte: new Date(startYear, 5, 1, 0, 0, 0),
+      lte: new Date(startYear + 1, 4, 31, 23, 59, 59),
+    };
+  }
+}
+
     /* ---------- BASIC VALIDATIONS ---------- */
    
 
@@ -139,14 +155,15 @@ const category: TeacherAuditCategory =
 
     /* ---------- SCORE SAFETY LOGIC ---------- */
 
-    // 1️⃣ Get current score
-    const agg = await prisma.teacherAuditRecord.aggregate({
-      where: { teacherId },
-      _sum: { scoreImpact: true },
-    });
+   const agg = await prisma.teacherAuditRecord.aggregate({
+  where: dateRange
+    ? { teacherId, createdAt: dateRange }
+    : { teacherId },
+  _sum: { scoreImpact: true },
+});
 
     const currentScore = clampScore(
-      50 + (agg._sum.scoreImpact ?? 0)
+      agg._sum.scoreImpact ?? 0
     );
 
     // 2️⃣ Calculate next score
