@@ -58,8 +58,6 @@ export async function POST(req: Request) {
         console.error("Supabase bucket check failed:", {
           bucket: SUPABASE_BUCKET,
           message: bucketError?.message ?? "Bucket not found",
-          statusCode: bucketError?.statusCode ?? null,
-          error: bucketError?.error ?? null,
         });
         if (!isDev) {
           return NextResponse.json(
@@ -69,8 +67,6 @@ export async function POST(req: Request) {
               details: {
                 bucket: SUPABASE_BUCKET,
                 reason: bucketError?.message ?? "Bucket not found",
-                code: bucketError?.statusCode ?? null,
-                type: bucketError?.error ?? null,
               },
             },
             { status: 502 }
