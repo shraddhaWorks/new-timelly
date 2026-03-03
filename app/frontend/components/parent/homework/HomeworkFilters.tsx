@@ -27,7 +27,7 @@ export default function HomeworkFilters({
           </p>
         </div>
 
-        <span className="rounded-full border border-lime-400/30 px-4 py-1 text-sm text-lime-300">
+        <span className="rounded-full border border-lime-400/30 px-4 py-3 text-sm text-lime-300">
           {filteredCount} Results
         </span>
       </div>
