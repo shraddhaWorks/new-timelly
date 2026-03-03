@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
+import { createNotification } from "@/lib/notificationService";
 
 export async function POST(req: Request) {
   try {
@@ -103,6 +104,15 @@ export async function POST(req: Request) {
         },
       },
     });
+
+    if (certificate.student?.user?.id) {
+      createNotification(
+        certificate.student.user.id,
+        "CERTIFICATES",
+        "Certificate issued",
+        `${title} has been issued to you`
+      ).catch(() => {});
+    }
 
     return NextResponse.json(
       { message: "Certificate assigned successfully", certificate },

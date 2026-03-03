@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
+import { createNotification } from "@/lib/notificationService";
 
 const hyperpgBaseUrl = process.env.HYPERPG_BASE_URL || "https://sandbox.hyperpg.in";
 const globalHyperpgMerchantId = process.env.HYPERPG_MERCHANT_ID;
 const globalHyperpgApiKey = process.env.HYPERPG_API_KEY;
-const hyperpgAuthStyle = process.env.HYPERPG_AUTH_STYLE || "merchant_key";
+const hyperpgAuthStyle = process.env.HYPERPG_AUTH_STYLE || "api_key";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -80,21 +81,19 @@ export async function POST(req: Request) {
       );
     }
 
-    const authCredentials =
+    const apiKeyClean = apiKey.replace(/^["']|["']$/g, "").trim();
+    const auth =
       hyperpgAuthStyle === "merchant_key"
-        ? `${merchantId}:${apiKey}`
-        : `${apiKey}:`;
-    const auth = Buffer.from(authCredentials).toString("base64");
+        ? Buffer.from(`${merchantId}:${apiKeyClean}`).toString("base64")
+        : Buffer.from(`${apiKeyClean}:`, "utf8").toString("base64");
+    const headers: Record<string, string> = {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: `Basic ${auth}`,
+      ...(merchantId && { "x-merchantid": merchantId.trim() }),
+    };
     const statusRes = await fetch(
       `${hyperpgBaseUrl}/orders/${encodeURIComponent(orderId)}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "x-merchantid": merchantId,
-          Authorization: `Basic ${auth}`,
-        },
-      }
+      { method: "GET", headers }
     );
 
     if (!statusRes.ok) {
@@ -130,21 +129,65 @@ export async function POST(req: Request) {
 
     const hyperpgId = orderStatus.id || null;
 
-    const existing = hyperpgId
-      ? await prisma.payment.findFirst({
-          where: { hyperpgOrderId: hyperpgId, studentId },
-        })
-      : null;
+    // Find existing Payment by transactionId (our orderId) or hyperpgOrderId
+    const existing = await prisma.payment.findFirst({
+      where: {
+        studentId,
+        OR: [
+          { transactionId: orderId },
+          ...(hyperpgId ? [{ hyperpgOrderId: hyperpgId }] : []),
+        ],
+      },
+    });
+
     if (existing) {
+      // Update PENDING payment to SUCCESS
+      const payment = await prisma.payment.update({
+        where: { id: existing.id },
+        data: {
+          status: "SUCCESS",
+          hyperpgOrderId: hyperpgId || existing.hyperpgOrderId,
+          hyperpgTxnId: orderStatus.txn_id || existing.hyperpgTxnId,
+        },
+      });
+
+      // If workshop payment, update EventRegistration
+      if (existing.eventRegistrationId) {
+        await prisma.eventRegistration.update({
+          where: { id: existing.eventRegistrationId },
+          data: {
+            paymentStatus: "PAID",
+            paymentId: payment.id,
+          },
+        });
+        return NextResponse.json(
+          { payment, eventRegistration: { paymentStatus: "PAID" } },
+          { status: 200 }
+        );
+      }
+
       const fee = await prisma.studentFee.findUnique({
         where: { studentId },
       });
+      const studentUser = await prisma.student.findUnique({
+        where: { id: studentId },
+        select: { userId: true },
+      });
+      if (studentUser?.userId) {
+        createNotification(
+          studentUser.userId,
+          "FEES",
+          "Payment received",
+          `₹${payment.amount.toLocaleString()} payment received successfully`
+        ).catch(() => {});
+      }
       return NextResponse.json(
-        { payment: existing, fee: fee ?? undefined },
+        { payment, fee: fee ?? undefined },
         { status: 200 }
       );
     }
 
+    // No pre-created Payment (legacy fee flow)
     const fee = await prisma.studentFee.findUnique({
       where: { studentId },
     });
@@ -177,6 +220,19 @@ export async function POST(req: Request) {
         remainingFee: newRemaining,
       },
     });
+
+    const studentUser = await prisma.student.findUnique({
+      where: { id: studentId },
+      select: { userId: true },
+    });
+    if (studentUser?.userId) {
+      createNotification(
+        studentUser.userId,
+        "FEES",
+        "Payment received",
+        `₹${amountNum.toLocaleString()} payment received successfully`
+      ).catch(() => {});
+    }
 
     return NextResponse.json(
       { payment, fee: updatedFee },

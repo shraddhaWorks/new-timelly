@@ -64,6 +64,7 @@ export async function GET(
       class: r.student.class
         ? `${r.student.class.name}${r.student.class.section ? `-${r.student.class.section}` : ""}`
         : null,
+      paymentStatus: r.paymentStatus || "PENDING",
     }));
 
     return NextResponse.json(

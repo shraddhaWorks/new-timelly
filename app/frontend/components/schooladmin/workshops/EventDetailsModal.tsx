@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   CalendarDays,
   Clock,
@@ -15,6 +15,7 @@ import {
   Download,
 } from "lucide-react";
 import { AVATAR_URL } from "../../../constants/images";
+import PayButton from "../../common/PayButton";
 
 interface EventDetailsModalProps {
   open: boolean;
@@ -33,7 +34,9 @@ interface EventDetailsModalProps {
     additionalInfo?: string | null;
     photo?: string | null;
     maxSeats?: number | null;
+    amount?: number | null;
     isRegistered?: boolean;
+    registration?: { id: string; paymentStatus: string } | null;
     teacher?: { name?: string | null; email?: string | null; photoUrl?: string | null } | null;
     _count?: { registrations: number };
     workshopCertificate?: {
@@ -44,6 +47,7 @@ interface EventDetailsModalProps {
     } | null;
   } | null;
   showEnrollAction?: boolean;
+  showEnrolledStudents?: boolean;
   onEnrollSuccess?: () => void;
 }
 
@@ -75,11 +79,29 @@ export default function EventDetailsModal({
   error,
   event,
   showEnrollAction = false,
+  showEnrolledStudents = false,
   onEnrollSuccess,
 }: EventDetailsModalProps) {
   const [enrollLoading, setEnrollLoading] = useState(false);
   const [enrollError, setEnrollError] = useState<string | null>(null);
   const [enrolled, setEnrolled] = useState(false);
+  const [enrolledStudents, setEnrolledStudents] = useState<
+    Array<{ id: string; registrationId: string; name: string | null; email: string | null; class: string | null; paymentStatus: string }>
+  >([]);
+
+  useEffect(() => {
+    if (open && showEnrolledStudents && event?.id) {
+      fetch(`/api/events/${event.id}/registrations`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.students) setEnrolledStudents(data.students);
+          else setEnrolledStudents([]);
+        })
+        .catch(() => setEnrolledStudents([]));
+    } else {
+      setEnrolledStudents([]);
+    }
+  }, [open, showEnrolledStudents, event?.id]);
 
   if (!open) return null;
 
@@ -89,6 +111,9 @@ export default function EventDetailsModal({
   const statusLabel = isUpcoming ? "Upcoming" : "Completed";
 
   const isRegistered = event?.isRegistered ?? enrolled;
+  const registration = event?.registration ?? null;
+  const eventAmount = event?.amount ?? 0;
+  const needsPayment = isRegistered && eventAmount > 0 && registration?.paymentStatus === "PENDING";
   const enrolledCount = event?._count?.registrations ?? 0;
   const maxSeats = event?.maxSeats ?? null;
   const isFull = maxSeats != null && maxSeats > 0 && enrolledCount >= maxSeats;
@@ -225,6 +250,43 @@ export default function EventDetailsModal({
                     </div>
                   </div>
 
+                  {showEnrolledStudents && enrolledStudents.length > 0 && (
+                    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 sm:px-5 sm:py-4">
+                      <div className="text-xs uppercase tracking-wide text-white/50 mb-3">
+                        Enrolled Students ({enrolledStudents.length})
+                      </div>
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {enrolledStudents.map((s) => {
+                          const paid = s.paymentStatus === "PAID" || s.paymentStatus === "SUCCESS";
+                          return (
+                            <div
+                              key={s.registrationId}
+                              className="flex justify-between items-center py-2 border-b border-white/5 last:border-0"
+                            >
+                              <div>
+                                <p className="text-sm font-medium text-white">
+                                  {s.name || "—"}
+                                </p>
+                                <p className="text-xs text-gray-400">
+                                  {s.class || s.email || "—"}
+                                </p>
+                              </div>
+                              <span
+                                className={`text-xs px-2 py-1 rounded ${
+                                  paid
+                                    ? "bg-emerald-500/20 text-emerald-400"
+                                    : "bg-amber-500/20 text-amber-400"
+                                }`}
+                              >
+                                {paid ? "Paid" : "Pending"}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 sm:px-5 sm:py-4">
                     <div className="text-xs uppercase tracking-wide text-white/50">
                       Event Stats
@@ -252,7 +314,9 @@ export default function EventDetailsModal({
                       )}
                       <div className="flex items-center justify-between pt-1">
                         <span>Fee</span>
-                        <span className="text-white">Free</span>
+                        <span className="text-white">
+                          {eventAmount > 0 ? `₹${eventAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "Free"}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -288,10 +352,22 @@ export default function EventDetailsModal({
                         </div>
                       )}
                       {isRegistered ? (
-                        <div className="flex items-center gap-2 text-lime-400">
-                          <CheckCircle size={18} />
-                          <span className="text-sm font-medium">You are enrolled</span>
-                        </div>
+                        needsPayment ? (
+                          <div className="space-y-3">
+                            <p className="text-sm text-white/70">Complete payment to confirm enrollment</p>
+                            <PayButton
+                              amount={eventAmount}
+                              returnPath="/frontend/pages/parent?tab=workshops"
+                              eventRegistrationId={registration?.id}
+                              onSuccess={onEnrollSuccess}
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 text-lime-400">
+                            <CheckCircle size={18} />
+                            <span className="text-sm font-medium">You are enrolled</span>
+                          </div>
+                        )
                       ) : isFull ? (
                         <div className="text-sm text-white/60">Workshop is full</div>
                       ) : (

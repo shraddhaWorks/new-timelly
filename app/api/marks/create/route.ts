@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
+import { createNotification } from "@/lib/notificationService";
 
 function calculateGrade(marks: number, totalMarks: number): string {
   const percentage = (marks / totalMarks) * 100;
@@ -109,6 +110,15 @@ export async function POST(req: Request) {
         },
       },
     });
+
+    if (mark.student?.user?.id) {
+      createNotification(
+        mark.student.user.id,
+        "MARKS",
+        "Marks updated",
+        `${subject}: ${marks}/${totalMarks} - Grade ${grade}`
+      ).catch(() => {});
+    }
 
     return NextResponse.json(
       { message: "Marks added successfully", mark },

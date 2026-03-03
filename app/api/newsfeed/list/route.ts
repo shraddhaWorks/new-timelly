@@ -3,6 +3,18 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
 
+async function getSchoolId(session: { user: { id: string; schoolId?: string | null } }) {
+  let schoolId = session.user.schoolId;
+  if (!schoolId) {
+    const adminSchool = await prisma.school.findFirst({
+      where: { admins: { some: { id: session.user.id } } },
+      select: { id: true },
+    });
+    schoolId = adminSchool?.id ?? null;
+  }
+  return schoolId;
+}
+
 type FeedRow = {
   id: string;
   title: string;
@@ -81,7 +93,7 @@ export async function GET() {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const schoolId = session.user.schoolId as string | undefined;
+    const schoolId = await getSchoolId(session);
 
     if (!schoolId) {
       return NextResponse.json({ newsFeeds: [] }, { status: 200 });
@@ -110,13 +122,17 @@ export async function GET() {
           : [];
       const likedSet = new Set(myLikes.map((l) => l.newsFeedId));
 
-      const newsFeeds = feeds.map((f) => ({
+      const newsFeeds = feeds.map((f) => {
+        const fAny = f as { photos?: string[] };
+        const photos = Array.isArray(fAny.photos) && fAny.photos.length > 0 ? fAny.photos : f.photo ? [f.photo] : [];
+        return {
         id: f.id,
         title: f.title,
         description: f.description,
-        photo: f.photo ?? null,
-        mediaUrl: f.photo ?? null,
-        mediaType: f.photo ? "PHOTO" : null,
+        photo: f.photo ?? photos[0] ?? null,
+        photos,
+        mediaUrl: f.photo ?? photos[0] ?? null,
+        mediaType: (f.photo || photos.length) ? "PHOTO" : null,
         likes: f.likes ?? 0,
         schoolId: f.schoolId,
         createdById: f.createdById,
@@ -126,7 +142,8 @@ export async function GET() {
         createdAt: f.createdAt.toISOString(),
         updatedAt: f.updatedAt.toISOString(),
         likedByMe: likedSet.has(f.id),
-      }));
+      };
+      });
 
       return NextResponse.json({ newsFeeds }, { status: 200 });
     } catch (prismaErr) {

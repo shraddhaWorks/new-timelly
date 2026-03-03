@@ -19,6 +19,7 @@ interface AttendanceButtonProps {
   active?: boolean;
   leftIcon?: ReactNode;
   type?: "button" | "submit" | "reset";
+  disabled?: boolean;
 }
 
 const VARIANT_CLASSES: Record<AttendanceButtonVariant, string> = {
@@ -50,16 +51,19 @@ export default function AttendanceButton({
   active = false,
   leftIcon,
   type = "button",
+  disabled = false,
 }: AttendanceButtonProps) {
   return (
     <button
       type={type}
       onClick={onClick}
+      disabled={disabled}
       className={[
         "inline-flex items-center gap-2 rounded-xl border",
         "font-semibold transition-all duration-200",
-        "cursor-pointer select-none",
-        "hover:shadow-[0_0_14px_rgba(255,255,255,0.12)] hover:brightness-110",
+        "select-none",
+        disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
+        disabled ? "" : "hover:shadow-[0_0_14px_rgba(255,255,255,0.12)] hover:brightness-110",
         SIZE_CLASSES[size],
         VARIANT_CLASSES[variant],
         active ? "shadow-[0_0_16px_rgba(255,255,255,0.2)]" : "",

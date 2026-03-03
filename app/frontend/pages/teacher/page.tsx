@@ -45,6 +45,10 @@ function TeacherDashboardInner() {
     name: session?.user?.name ?? "Teacher",
     subtitle: "Teacher",
     image: null as string | null,
+    email: undefined as string | undefined,
+    phone: undefined as string | undefined,
+    address: undefined as string | undefined,
+    userId: undefined as string | undefined,
   });
 
   const renderTabContent = () => {
@@ -91,6 +95,10 @@ function TeacherDashboardInner() {
             name: u.name ?? "Teacher",
             subtitle: "Teacher",
             image: u.photoUrl ?? null,
+            email: u.email ?? undefined,
+            phone: u.mobile ?? undefined,
+            address: u.address ?? undefined,
+            userId: u.id ?? undefined,
           });
         }
       } catch {

@@ -68,7 +68,7 @@ export default function useHomeworkPage() {
   );
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this assignment?")) return;
+    if (!confirm("Do you really want to delete this assignment? This action cannot be undone.")) return;
     try {
       const res = await fetch(`/api/homework/${id}`, {
         method: "DELETE",

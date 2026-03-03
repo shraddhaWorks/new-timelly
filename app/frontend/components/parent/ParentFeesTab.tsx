@@ -126,7 +126,11 @@ export default function ParentFeesTab() {
                 })}
               </p>
             </div>
-            <PayButton amount={payable} onSuccess={fetchFee} />
+            <PayButton
+              amount={payable}
+              onSuccess={fetchFee}
+              returnPath="/frontend/pages/parent?tab=fees"
+            />
           </div>
           <p className="text-xs text-gray-500 mt-3">
             Instant payment • 100% secure • Get instant receipt
@@ -163,7 +167,11 @@ export default function ParentFeesTab() {
                     </button>
                   </>
                 ) : (
-                  <PayButton amount={inst.amount} onSuccess={fetchFee} />
+                  <PayButton
+                    amount={inst.amount}
+                    onSuccess={fetchFee}
+                    returnPath="/frontend/pages/parent?tab=fees"
+                  />
                 )}
               </div>
             </div>

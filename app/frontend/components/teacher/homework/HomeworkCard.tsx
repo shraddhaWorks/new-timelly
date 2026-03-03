@@ -15,6 +15,7 @@ type Props = {
   onToggle: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onViewSubmissions?: () => void;
 };
 
 
@@ -26,6 +27,7 @@ export default function HomeworkCard({
   onToggle,
   onEdit,
   onDelete,
+  onViewSubmissions,
 }: Props) {
   const totalStudents = h.class?._count?.students ?? 0;
   const submitted = h._count?.submissions ?? 0;
@@ -181,12 +183,17 @@ export default function HomeworkCard({
                 </div>
               </div>
 
-              <a
-                href={`/frontend/pages/teacher?tab=homework&view=submissions&id=${h.id}`}
-                className="block w-full py-3.5 rounded-xl bg-lime-400/10 hover:bg-lime-400/20 text-lime-400 font-bold text-sm transition-all active:scale-95 border border-lime-400/20 text-center"
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewSubmissions?.();
+                }}
+                className="block w-full py-3.5 rounded-xl bg-lime-400/10 hover:bg-lime-400/20 text-lime-400 font-bold text-sm transition-all active:scale-95 border border-lime-400/20 text-center disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!onViewSubmissions}
               >
                 View All Submissions
-              </a>
+              </button>
             </div>
           </div>
         </div>

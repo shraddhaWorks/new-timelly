@@ -260,40 +260,42 @@ export default function ScheduleExamView({
                 subtitle="Manage schedules and track syllabus coverage"
             />
 
-            <form className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 " onSubmit={handleSubmit}>
+            <form className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6" onSubmit={handleSubmit}>
 
                 {/* LEFT COLUMN: Exam Details Card */}
                 <div className="lg:col-span-4 flex flex-col gap-6">
                     {/* EXAM DETAILS CONTAINER */}
                     <div className="somu rounded-[1rem] p-8 flex flex-col gap-8 h-fit ">
-                        <div className="flex items-center gap-3">
-                            <BookOpen className="text-lime-400" size={22} />
-                            <h2 className="text-xl font-semibold text-white">Exam Details</h2>
-                        </div>
+                        
+                            
+                            <h2 className="text-lg font-bold text-white flex items-center gap-2"><BookOpen className="text-lime-400"/>Exam Details</h2>
+                        
 
                         <div className="space-y-3">
                             {/* Exam Title */}
                             <div className="flex flex-col gap-2">
-                                <label className="text-[12px] text-white/50 uppercase ">Exam Title</label>
+                                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider">Exam Title</label>
                                 <input
                                     value={examTitle}
                                     onChange={(e) => setExamTitle(e.target.value)}
                                     placeholder="Term 1 Mathematics Finals"
-                                    className="bg-[#2a213a]/50 border border-white/5 rounded-2xl p-2 text-white/80 focus:border-[#b4ff39]/50 focus:bg-[#2a213a] outline-none transition-all placeholder:text-white"
+                                    className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none 
+                                    focus:border-lime-400/50 text-white placeholder-gray-500 transition-all text-sm"
                                 />
                             </div>
 
                             {/* Class and Subject */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-[10px]  text-white/30 uppercase tracking-[0.1em]">Class</label>
+                                    <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider">Class</label>
                                     {classLoading ? (
-                                        <div className="bg-[#2a213a]/50 border border-white/5 rounded-2xl p-2 text-white/40 text-sm">Loading classes...</div>
+                                        <div className="bg-[#2a213a]/50 border border-white/5 rounded-2xl p-2 text-white/40 text-sm"><Spinner/></div>
                                     ) : (
                                         <select
                                             value={selectedClassId}
                                             onChange={(e) => setSelectedClassId(e.target.value)}
-                                            className="bg-[#2a213a]/50 border border-white/5 rounded-2xl p-2 text-white/80 focus:border-[#b4ff39]/50 outline-none placeholder:text-white/20"
+                                            className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none
+                                             focus:border-lime-400/50 text-white placeholder-gray-500 transition-all text-sm"
                                         >
                                             <option value="">Select class</option>
                                             {classes.map((c) => (
@@ -305,12 +307,13 @@ export default function ScheduleExamView({
                                     )}
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-[10px] text-white/30 uppercase tracking-[0.2em]">Subject</label>
+                                    <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider">Subject</label>
                                     <input
                                         value={subject}
                                         onChange={(e) => setSubject(e.target.value)}
                                         placeholder="Mathematics"
-                                        className="bg-[#2a213a]/50 border border-white/5 rounded-2xl p-2 text-white/80 focus:border-[#b4ff39]/50 outline-none placeholder:text-white/20"
+                                        className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none 
+                                        focus:border-lime-400/50 text-white placeholder-gray-500 transition-all text-sm"
                                     />
                                 </div>
                             </div>
@@ -318,20 +321,23 @@ export default function ScheduleExamView({
                             {/* Date and Status */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">Date</label>
+                                    <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider">Date</label>
                                     <input
                                         type="date"
                                         value={examDate}
                                         onChange={(e) => setExamDate(e.target.value)}
-                                        className="w-full bg-[#2a213a]/50 border border-white/5 rounded-2xl py-2.5 px-3 text-white/90 outline-none focus:border-[#b4ff39]/50 [color-scheme:dark]"
+                                        className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:border-lime-400/50
+                                         text-white placeholder-gray-500 transition-all text-sm [color-scheme:dark]"
                                     />
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">Status</label>
+                                    <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider">Status</label>
                                     <select
                                         value={examStatus}
                                         onChange={(e) => setExamStatus(e.target.value as "UPCOMING" | "COMPLETED")}
-                                        className="w-full bg-[#2a213a]/50 border border-white/5 rounded-2xl py-2.5 px-3 text-white/90 outline-none focus:border-[#b4ff39]/50"
+                                        className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl 
+                                        focus:outline-none focus:border-lime-400/50 
+                                        text-white placeholder-gray-500 transition-all text-sm appearance-none cursor-pointer"
                                     >
                                         <option value="UPCOMING">Upcoming</option>
                                         <option value="COMPLETED">Completed</option>
@@ -342,16 +348,18 @@ export default function ScheduleExamView({
                             {/* Time and Duration */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">Time</label>
+                                    <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider">Time</label>
                                     <input
                                         type="time"
                                         value={startTime}
                                         onChange={(e) => setStartTime(e.target.value)}
-                                        className="w-full bg-[#2a213a]/50 border border-white/5 rounded-2xl py-2.5 px-3 text-white/90 outline-none focus:border-[#b4ff39]/50 [color-scheme:dark]"
+                                        className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl 
+                                        focus:outline-none focus:border-lime-400/50 text-white
+                                         placeholder-gray-500 transition-all text-sm [color-scheme:dark]"
                                     />
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">Duration (minutes)</label>
+                                    <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider">Duration</label>
                                     <div className="flex gap-2 flex-wrap items-center">
                                         <input
                                             type="number"
@@ -372,11 +380,12 @@ export default function ScheduleExamView({
                                                 if (Number.isNaN(n) || n < 0) setDurationMin(60);
                                             }}
                                             placeholder="60"
-                                            className="w-24 bg-[#2a213a]/50 border border-white/5 rounded-2xl py-2.5 px-3 text-white/90 outline-none focus:border-[#b4ff39]/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                            className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none 
+                                            focus:border-lime-400/50 text-white placeholder-gray-500 transition-all text-sm"
                                         />
-                                        <span className="text-white/50 text-sm">min</span>
+                                        <span className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider">min</span>
                                         <div className="flex gap-1">
-                                            {[60, 90, 120, 180].map((m) => (
+                                            {[60, 90, 120].map((m) => (
                                                 <button
                                                     key={m}
                                                     type="button"
@@ -406,14 +415,17 @@ export default function ScheduleExamView({
                             type="button"
                             onClick={onCancel}
                             disabled={submitLoading}
-                            className="flex-1 bg-[#1e162e]/40 backdrop-blur-xl border border-white/10 py-4 rounded-2xl font-semibold text-white hover:bg-white/10 transition-all text-sm uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50"
+                            className="flex-1 px-4 py-3 border border-white/10 rounded-xl text-gray-300
+                             font-bold hover:bg-white/5 transition-all flex items-center justify-center gap-2"
                         >
-                            <X size={18} /> Cancel
+                            <X /> Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={submitLoading}
-                            className="flex-[1.5] bg-[#b4ff39] text-black py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(180,255,57,0.2)] hover:scale-[1.02] transition-transform disabled:opacity-50"
+                            className="flex-1 px-4 py-3 bg-lime-400 hover:bg-lime-500 text-black rounded-xl 
+                            font-bold transition-all shadow-[0_0_15px_rgba(163,230,53,0.3)]
+                             hover:shadow-[0_0_20px_rgba(163,230,53,0.4)] flex items-center justify-center gap-2"
                         >
                             {submitLoading ? "Saving…" : <><Save size={20} /> Save Exam</>}
                         </button>
@@ -422,43 +434,42 @@ export default function ScheduleExamView({
 
               <div className="lg:col-span-8 bg-white/5 backdrop-blur-xl border-b border-white/10 rounded-[1rem] flex flex-col overflow-hidden shadow-2xl">
   {/* Header Section */}
-  <div className="p-6 md:p-8 border-b border-white/30 flex justify-between items-center bg-white/5">
+  <div className="p-6 border-b border-white/10 flex items-center justify-between">
     <div className="flex items-center gap-3">
-      <div className="p-2 bg-[#b4ff39]/10 rounded-lg shrink-0">
-        <CheckCircle2 className="text-[#b4ff39]" size={20} />
-      </div>
-      <h2 className="text-lg md:text-xl font-semibold tracking-tight text-white">Syllabus & Coverage</h2>
+      <h2 className="text-lg font-bold text-white flex items-center gap-2"><CheckCircle2 className="text-lime-400" />Syllabus & Coverage</h2>
     </div>
     <button 
       type="button" 
       onClick={addUnit} 
-      className="relative z-50 bg-white/5 border border-white/10 px-3 py-2 rounded-xl text-white/70 text-[10px] md:text-xs font-bold flex items-center gap-2 hover:bg-[#b4ff39] hover:text-black transition-all shrink-0"
+      className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold 
+      rounded-lg transition-all text-lime-400 hover:text-white flex items-center gap-1.5"
     >
-      <Plus size={14} /> Add Unit
+      <Plus /> Add Unit
     </button>
   </div>
 
   {/* Units Content */}
-  <div className="p-4 lg:p-6 overflow-y-auto lg:max-h-[400px] custom-scrollbar">
+  <div className="lg:col-span-2 rounded-2xl flex flex-col h-full overflow-hidden">
     {units.length === 0 ? (
       <p className="text-white/40 text-sm py-6 text-center">No syllabus units yet.</p>
     ) : (
       <>
-        <div className="flex flex-row lg:flex-col overflow-x-auto lg:overflow-x-visible gap-4 pb-6 lg:pb-0 snap-x snap-mandatory no-scrollbar relative">
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-white/10">
           {units.map((unit, idx) => (
             <div
               key={unit.id}
-              className="snap-center shrink-0 w-[92%] lg:w-full text-white border border-white/10 lg:border-white/5 rounded-[1.5rem] lg:rounded-[1rem] p-5 relative transition-all hover:bg-[#2a213a]/50 group bg-white/[0.03] lg:bg-transparent"
+              className="bg-white/5 border border-white/5 rounded-xl p-4 animate-fadeIn"
             >
-              <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+              <div className="flex items-start gap-4 mb-4">
                 {/* Number Badge */}
-                <div className="h-10 w-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 text-sm shrink-0">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 text-gray-400 text-xs font-bold shrink-0 border border-white/10">
                   {idx + 1}
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start mb-4 lg:mb-2 gap-4">
-                    <input
+                    <div>
+                        <input
                       value={unit.name}
                       onChange={(e) => {
                         const newUnits = [...units];
@@ -466,8 +477,12 @@ export default function ScheduleExamView({
                         setUnits(newUnits);
                       }}
                       placeholder="Unit / Topic Name"
-                      className="bg-transparent text-sm font-bold text-white w-full outline-none pr-4 border-b border-transparent focus:border-[#b4ff39]/30"
+                      className="w-full bg-transparent border-none p-0 text-white font-medium
+                       focus:outline-none placeholder-gray-600 focus:placeholder-gray-400 transition-all"
                     />
+                        <div className="h-px bg-white/10 w-full mt-2"></div>
+                    </div>
+                  
                     {/* Fixed Remove Button: propagation stop ensures it clicks while scrolling */}
                     <button 
                       type="button"
@@ -475,16 +490,16 @@ export default function ScheduleExamView({
                         e.stopPropagation(); 
                         removeUnit(unit.id);
                       }} 
-                      className="relative z-50 text-white/20 hover:text-red-400 transition-colors lg:opacity-0 lg:group-hover:opacity-100 p-1"
+                      className="p-2 hover:bg-red-500/10 rounded-lg text-gray-500 hover:text-red-400 transition-all"
                     >
-                      <Trash2 size={18} />
+                      <Trash2 className="w-4 h-5"/>
                     </button>
                   </div>
 
                   <div className="flex flex-col xl:flex-row items-start xl:items-center gap-6 xl:gap-8">
                     {/* Status Selection */}
                     <div className="shrink-0 z-10 w-full lg:w-auto">
-                      <label className="block text-[10px] text-white/20 uppercase tracking-[0.1em] mb-2">Status</label>
+                      <label className="block text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider">Status</label>
                       <div className="flex p-1 rounded-xl border border-white/5 bg-black/20 lg:bg-transparent inline-flex">
                         {["Pending", "Partial", "Completed"].map((status) => (
                           <button
@@ -512,7 +527,7 @@ export default function ScheduleExamView({
                     {/* Progress Slider */}
                     <div className="flex-1 w-full mt-2 lg:mt-0">
                       <div className="flex justify-between items-center mb-2 px-1">
-                        <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Completion %</label>
+                        <label className="block text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider">Completion %</label>
                         <span className="text-sm text-[#b4ff39]">{unit.completion}%</span>
                       </div>
                       <div className="relative h-6 flex items-center group">

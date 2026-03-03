@@ -44,7 +44,7 @@ export default function CircularNoticeCard({
 
   return (
     <article
-      className={`relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl flex flex-col ${className}`}
+      className={`relative overflow-hidden rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 backdrop-blur-xl flex flex-col ${className}`}
     >
       <div className={`absolute top-0 left-0 h-1 w-full ${accentClassName}`} />
 
@@ -61,10 +61,10 @@ export default function CircularNoticeCard({
         </span>
       </div>
 
-      <h4 className="mt-4 text-2xl font-bold text-white leading-tight line-clamp-2">{subject}</h4>
+      <h4 className="mt-3 sm:mt-4 text-lg sm:text-2xl font-bold text-white leading-tight line-clamp-2">{subject}</h4>
 
-      <div className="mt-4 bg-black/20 rounded-xl p-5 border border-white/5 flex-1">
-        <p className="text-base text-white/60 italic leading-relaxed line-clamp-6">{content}</p>
+      <div className="mt-3 sm:mt-4 bg-black/20 rounded-lg sm:rounded-xl p-3 sm:p-5 border border-white/5 flex-1">
+        <p className="text-sm sm:text-base text-white/60 italic leading-relaxed line-clamp-4 sm:line-clamp-6">{content}</p>
       </div>
 
       {attachments.length > 0 && (
@@ -99,7 +99,7 @@ export default function CircularNoticeCard({
         </div>
       )}
 
-      <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between text-sm text-white/60">
+      <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-white/10 flex items-center justify-between text-xs sm:text-sm text-white/60 gap-2">
         <div className="flex items-center gap-2">
           <span className="h-7 w-7 rounded-full bg-lime-400/20 text-lime-300 flex items-center justify-center text-xs font-bold overflow-hidden">
             {issuedByPhoto ? (

@@ -82,19 +82,19 @@ export default function ParentHomeStats({
   ];
 
   return (
-    <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+    <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
       {items.map((item) => (
-        <StatCard key={item.key} className="bg-white/5">
-          <div className="flex items-start justify-between mb-4">
-            <div className="p-2.5 rounded-xl transition-transform duration-300 hover:scale-110 bg-[#A3E635]/10">{item.icon}</div>
-            <span className={`px-2 py-1 text-xs font-bold rounded-full ${item.badgeClass}`}>
+        <StatCard key={item.key} className="bg-white/5 p-4 sm:p-5">
+          <div className="flex items-start justify-between mb-3 sm:mb-4">
+            <div className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-transform duration-300 hover:scale-110 bg-[#A3E635]/10">{item.icon}</div>
+            <span className={`px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold rounded-full ${item.badgeClass}`}>
               {item.badge}
             </span>
           </div>
-          <div className="mt-5">
-            <h3 className="text-sm font-medium text-gray-400 mb-1">{item.title}</h3>
-            <p className="text-3xl font-bold text-white mb-2 tracking-tight">{item.value}</p>
-            <p className="text-xs text-[rgb(204,213,238)] font-medium">{item.subtitle}</p>
+          <div className="mt-3 sm:mt-5">
+            <h3 className="text-xs sm:text-sm font-medium text-gray-400 mb-0.5 sm:mb-1">{item.title}</h3>
+            <p className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2 tracking-tight">{item.value}</p>
+            <p className="text-[11px] sm:text-xs text-[rgb(204,213,238)] font-medium line-clamp-2">{item.subtitle}</p>
           </div>
         </StatCard>
       ))}

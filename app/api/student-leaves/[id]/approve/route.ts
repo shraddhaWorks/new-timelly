@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
+import { createNotification } from "@/lib/notificationService";
 
 export async function PATCH(
   _req: Request,
@@ -20,7 +21,17 @@ export async function PATCH(
     const leave = await prisma.studentLeaveRequest.update({
       where: { id, status: "PENDING" },
       data: { status: "APPROVED", approverId: session.user.id },
+      include: { student: { select: { userId: true } } },
     });
+
+    if (leave.student?.userId) {
+      createNotification(
+        leave.student.userId,
+        "LEAVE",
+        "Leave approved",
+        "Your leave request has been approved"
+      ).catch(() => {});
+    }
 
     return NextResponse.json({ leave }, { status: 200 });
   } catch (e: unknown) {

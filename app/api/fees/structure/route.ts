@@ -89,16 +89,157 @@ export async function PUT(req: Request) {
       );
     }
 
-    const structure = await prisma.classFeeStructure.upsert({
-      where: { classId },
-      create: { schoolId, classId, components: components as object[] },
-      update: { components: components as object[] },
-      include: { class: { select: { id: true, name: true, section: true } } },
+    const structure = await prisma.$transaction(async (tx) => {
+      const s = await tx.classFeeStructure.upsert({
+        where: { classId },
+        create: { schoolId, classId, components: components as object[] },
+        update: { components: components as object[] },
+        include: { class: { select: { id: true, name: true, section: true } } },
+      });
+
+      const comps = components as Array<{ name: string; amount: number }>;
+      const baseTotal = comps.reduce((a, c) => a + (c.amount || 0), 0);
+
+      const students = await tx.student.findMany({
+        where: { classId, schoolId },
+        include: {
+          class: { select: { section: true } },
+          fee: true,
+        },
+      });
+
+      const extraFees = await tx.extraFee.findMany({
+        where: { schoolId },
+        select: {
+          amount: true,
+          targetType: true,
+          targetClassId: true,
+          targetSection: true,
+          targetStudentId: true,
+        },
+      });
+
+      for (const student of students) {
+        const fee = student.fee;
+        if (!fee) continue;
+
+        let extraTotal = 0;
+        for (const ef of extraFees) {
+          const applies =
+            ef.targetType === "SCHOOL" ||
+            (ef.targetType === "CLASS" && ef.targetClassId === classId) ||
+            (ef.targetType === "SECTION" &&
+              ef.targetClassId === classId &&
+              ef.targetSection === student.class?.section) ||
+            (ef.targetType === "STUDENT" && ef.targetStudentId === student.id);
+          if (applies) extraTotal += ef.amount;
+        }
+
+        const newTotalFee = baseTotal + extraTotal;
+        const discount = (fee.discountPercent || 0) / 100;
+        const newFinalFee = Math.round(newTotalFee * (1 - discount) * 100) / 100;
+        const newRemainingFee = Math.max(0, newFinalFee - fee.amountPaid);
+
+        await tx.studentFee.update({
+          where: { studentId: student.id },
+          data: {
+            totalFee: newTotalFee,
+            finalFee: newFinalFee,
+            remainingFee: newRemainingFee,
+          },
+        });
+      }
+
+      return s;
     });
 
     return NextResponse.json({ structure });
   } catch (error: any) {
     console.error("Fee structure PUT error:", error);
+    return NextResponse.json(
+      { message: error?.message || "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+  const isAdmin = session.user.role === "SCHOOLADMIN" || session.user.role === "SUPERADMIN";
+  if (!isAdmin) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
+  try {
+    const schoolId = await getSchoolId(session);
+    if (!schoolId) {
+      return NextResponse.json({ message: "School not found" }, { status: 400 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const classId = searchParams.get("classId");
+    if (!classId) {
+      return NextResponse.json({ message: "classId required" }, { status: 400 });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.classFeeStructure.deleteMany({
+        where: { classId, schoolId },
+      });
+
+      const students = await tx.student.findMany({
+        where: { classId, schoolId },
+        include: { class: { select: { section: true } }, fee: true },
+      });
+
+      const extraFees = await tx.extraFee.findMany({
+        where: { schoolId },
+        select: {
+          amount: true,
+          targetType: true,
+          targetClassId: true,
+          targetSection: true,
+          targetStudentId: true,
+        },
+      });
+
+      for (const student of students) {
+        const fee = student.fee;
+        if (!fee) continue;
+
+        let extraTotal = 0;
+        for (const ef of extraFees) {
+          const applies =
+            ef.targetType === "SCHOOL" ||
+            (ef.targetType === "CLASS" && ef.targetClassId === classId) ||
+            (ef.targetType === "SECTION" &&
+              ef.targetClassId === classId &&
+              ef.targetSection === student.class?.section) ||
+            (ef.targetType === "STUDENT" && ef.targetStudentId === student.id);
+          if (applies) extraTotal += ef.amount;
+        }
+
+        const discount = (fee.discountPercent || 0) / 100;
+        const newFinalFee = Math.round(extraTotal * (1 - discount) * 100) / 100;
+        const newRemainingFee = Math.max(0, newFinalFee - fee.amountPaid);
+
+        await tx.studentFee.update({
+          where: { studentId: student.id },
+          data: {
+            totalFee: extraTotal,
+            finalFee: newFinalFee,
+            remainingFee: newRemainingFee,
+          },
+        });
+      }
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error("Fee structure DELETE error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }

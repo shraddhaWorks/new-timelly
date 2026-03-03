@@ -113,7 +113,11 @@ export default function StudentDetailsPage() {
     let cancelled = false;
     setLoading(true);
     fetch(`/api/student/${selectedId}`, { credentials: "include" })
-      .then((r) => r.json())
+      .then(async (r) => {
+        const d = await r.json();
+        if (!r.ok) throw new Error(d?.message || "Failed to load student");
+        return d;
+      })
       .then((d) => {
         if (!cancelled && d?.student) {
           setDetail(d);
@@ -121,8 +125,11 @@ export default function StudentDetailsPage() {
           setDetail(null);
         }
       })
-      .catch(() => {
-        if (!cancelled) setDetail(null);
+      .catch((err) => {
+        if (!cancelled) {
+          setDetail(null);
+          console.error("Student details error:", err);
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

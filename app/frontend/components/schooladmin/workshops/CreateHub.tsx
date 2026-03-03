@@ -456,7 +456,7 @@ export default function CreateHub({ events }: CreateHubProps) {
             <div className="mt-4 space-y-3">
               <span className="text-xs font-medium text-white/70">Text style</span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
+                <div className="min-w-0">
                   <label className="block text-xs text-white/50 mb-1">Font family</label>
                   <select
                     value={nameTextStyle.fontFamily}
@@ -473,7 +473,7 @@ export default function CreateHub({ events }: CreateHubProps) {
                     <option value="Verdana">Verdana</option>
                   </select>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <label className="block text-xs text-white/50 mb-1">Font size (px)</label>
                   <input
                     type="number"
@@ -489,16 +489,16 @@ export default function CreateHub({ events }: CreateHubProps) {
                     className="w-full rounded-lg bg-black/30 border border-white/20 text-sm text-white px-3 py-2 focus:outline-none focus:ring-1 focus:ring-lime-400/50"
                   />
                 </div>
-                <div>
+                <div className="min-w-0 sm:col-span-2">
                   <label className="block text-xs text-white/50 mb-1">Font color</label>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 min-w-0">
                     <input
                       type="color"
                       value={nameTextStyle.fontColor}
                       onChange={(e) =>
                         setNameTextStyle((s) => ({ ...s, fontColor: e.target.value }))
                       }
-                      className="h-9 w-12 rounded cursor-pointer border border-white/20 bg-black/30"
+                      className="h-9 w-12 shrink-0 rounded cursor-pointer border border-white/20 bg-black/30"
                     />
                     <input
                       type="text"
@@ -506,12 +506,12 @@ export default function CreateHub({ events }: CreateHubProps) {
                       onChange={(e) =>
                         setNameTextStyle((s) => ({ ...s, fontColor: e.target.value || "#1a1a1a" }))
                       }
-                      className="flex-1 rounded-lg bg-black/30 border border-white/20 text-sm text-white px-3 py-2 focus:outline-none focus:ring-1 focus:ring-lime-400/50"
+                      className="min-w-0 flex-1 rounded-lg bg-black/30 border border-white/20 text-sm text-white px-3 py-2 focus:outline-none focus:ring-1 focus:ring-lime-400/50"
                       placeholder="#1a1a1a"
                     />
                   </div>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <label className="block text-xs text-white/50 mb-1">Font weight</label>
                   <select
                     value={nameTextStyle.fontWeight}
@@ -550,17 +550,15 @@ export default function CreateHub({ events }: CreateHubProps) {
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-xs text-white/50 mb-1">Preview</label>
-                  <div
-                    className="rounded-lg border border-white/20 bg-white/5 px-4 py-3 min-h-[48px] flex items-center"
-                    style={{ textAlign: nameTextStyle.textAlign }}
-                  >
+                  <div className="rounded-lg border border-white/20 bg-white/5 px-4 py-3 min-h-[48px] flex items-center">
                     <span
-                      className="w-full"
+                      className="block w-full"
                       style={{
                         fontFamily: nameTextStyle.fontFamily,
                         fontSize: Math.min(24, nameTextStyle.fontSize),
                         fontWeight: nameTextStyle.fontWeight,
                         color: nameTextStyle.fontColor,
+                        textAlign: nameTextStyle.textAlign,
                       }}
                     >
                       Student Name

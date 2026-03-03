@@ -279,6 +279,7 @@ export default function WorkshopsAndEventsTab() {
           loading={detailsLoading}
           error={detailsError}
           event={eventDetails}
+          showEnrolledStudents
         />
 
         <DeleteEventModal

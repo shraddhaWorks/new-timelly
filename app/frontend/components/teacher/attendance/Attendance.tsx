@@ -67,6 +67,7 @@ export default function TeacherAttendanceTab() {
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [savingAttendance, setSavingAttendance] = useState(false);
+  const [copyingFromYesterday, setCopyingFromYesterday] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
@@ -257,6 +258,64 @@ export default function TeacherAttendanceTab() {
     );
   }, [classOptions, selectedClass]);
 
+  const handleCopyFromYesterday = async () => {
+    if (!selectedClass || students.length === 0) {
+      toast.show("Please select a class with students first", "warning");
+      return;
+    }
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().slice(0, 10);
+    setCopyingFromYesterday(true);
+    try {
+      const res = await fetch(
+        `/api/attendance/view?classId=${encodeURIComponent(selectedClass)}&date=${yesterdayStr}`,
+        { credentials: "include" }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || "Failed to fetch yesterday's attendance");
+      const attendances = data?.attendances ?? [];
+      const statusByStudentId: Record<string, AttendanceStatus> = {};
+      attendances.forEach((a: { studentId: string; status: string }) => {
+        statusByStudentId[a.studentId] = a.status.toLowerCase() as AttendanceStatus;
+      });
+      setStudents((prev) =>
+        prev.map((s) => ({
+          ...s,
+          status: statusByStudentId[s.id] ?? "present",
+        }))
+      );
+      toast.show("Copied attendance from yesterday", "success");
+    } catch (error: any) {
+      toast.show(error?.message || "Failed to copy from yesterday", "error");
+    } finally {
+      setCopyingFromYesterday(false);
+    }
+  };
+
+  const handleExportReport = () => {
+    if (!selectedClassLabel || students.length === 0) {
+      toast.show("No attendance data to export", "warning");
+      return;
+    }
+    const headers = ["Roll No", "Student Name", "Status", "Date"];
+    const rows = students.map((s) => [
+      s.roll,
+      s.name,
+      s.status.charAt(0).toUpperCase() + s.status.slice(1),
+      selectedDate,
+    ]);
+    const csv = [headers.join(","), ...rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `attendance-${selectedClassLabel.replace(/\s+/g, "-")}-${selectedDate}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.show("Report exported", "success");
+  };
+
   const handleSaveAttendance = async () => {
     if (savingAttendance) return;
 
@@ -307,61 +366,61 @@ export default function TeacherAttendanceTab() {
   };
 
   return (
-    <div className="min-h-screen text-white px-3 sm:px-6 lg:px-8 py-4 space-y-6">
+    <div className="min-h-screen text-white px-3 sm:px-6 lg:px-8 py-4 space-y-4 sm:space-y-6 pb-20 sm:pb-6 overflow-x-hidden">
       <PageHeader
         title="Attendance Management"
         subtitle="Mark and manage student attendance"
       />
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard className="bg-white/5 relative">
-          <div className="flex items-center gap-4">
-            <div className="h-10 w-10 rounded-xl bg-lime-400/20 border border-lime-400/20 flex items-center justify-center">
+      <section className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+        <StatCard className="bg-white/5 relative p-4 sm:p-5">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-lime-400/20 border border-lime-400/20 flex items-center justify-center flex-shrink-0">
               <CheckCircle2 size={18} className="text-lime-300" />
             </div>
-            <div>
-              <p className="text-[11px] uppercase tracking-wider text-white/60">Present</p>
-              <p className="text-2xl font-semibold text-white">{stats.present}</p>
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-[11px] uppercase tracking-wider text-white/60">Present</p>
+              <p className="text-xl sm:text-2xl font-semibold text-white">{stats.present}</p>
             </div>
           </div>
         </StatCard>
-        <StatCard className="bg-white/5 relative">
-          <div className="flex items-center gap-4">
-            <div className="h-10 w-10 rounded-xl bg-red-500/20 border border-red-500/20 flex items-center justify-center">
+        <StatCard className="bg-white/5 relative p-4 sm:p-5">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-red-500/20 border border-red-500/20 flex items-center justify-center flex-shrink-0">
               <XCircle size={18} className="text-red-400" />
             </div>
-            <div>
-              <p className="text-[11px] uppercase tracking-wider text-white/60">Absent</p>
-              <p className="text-2xl font-semibold text-white">{stats.absent}</p>
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-[11px] uppercase tracking-wider text-white/60">Absent</p>
+              <p className="text-xl sm:text-2xl font-semibold text-white">{stats.absent}</p>
             </div>
           </div>
         </StatCard>
-        <StatCard className="bg-white/5 relative">
-          <div className="flex items-center gap-4">
-            <div className="h-10 w-10 rounded-xl bg-amber-400/20 border border-amber-400/20 flex items-center justify-center">
+        <StatCard className="bg-white/5 relative p-4 sm:p-5">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-amber-400/20 border border-amber-400/20 flex items-center justify-center flex-shrink-0">
               <Clock size={18} className="text-amber-300" />
             </div>
-            <div>
-              <p className="text-[11px] uppercase tracking-wider text-white/60">Late</p>
-              <p className="text-2xl font-semibold text-white">{stats.late}</p>
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-[11px] uppercase tracking-wider text-white/60">Late</p>
+              <p className="text-xl sm:text-2xl font-semibold text-white">{stats.late}</p>
             </div>
           </div>
         </StatCard>
-        <StatCard className="bg-white/5 relative">
-          <div className="flex items-center gap-4">
-            <div className="h-10 w-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center">
+        <StatCard className="bg-white/5 relative p-4 sm:p-5">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-white/10 border border-white/10 flex items-center justify-center flex-shrink-0">
               <Users size={18} className="text-white/60" />
             </div>
-            <div>
-              <p className="text-[11px] uppercase tracking-wider text-white/60">Total</p>
-              <p className="text-2xl font-semibold text-white">{stats.total}</p>
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-[11px] uppercase tracking-wider text-white/60">Total</p>
+              <p className="text-xl sm:text-2xl font-semibold text-white">{stats.total}</p>
             </div>
           </div>
         </StatCard>
       </section>
 
-      <section className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-4 sm:p-6 space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1.1fr] gap-4 items-end">
+      <section className="rounded-xl sm:rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-4 sm:p-6 space-y-4 sm:space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1.1fr] gap-3 sm:gap-4 items-end">
           <SelectInput
             label="Select Class"
             value={selectedClass}
@@ -388,10 +447,10 @@ export default function TeacherAttendanceTab() {
             inputClassName="appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:pointer-events-none"
             variant="glass"
           />
-          <div className="flex lg:justify-end">
+          <div className="flex lg:justify-end sm:col-span-2 lg:col-span-1">
             <AttendanceButton
               variant={liveMode ? "success" : "neutral"}
-              className="w-full px-8"
+              className="w-full sm:w-auto px-6 sm:px-8"
               leftIcon={
                 <CircleDot
                   size={16}
@@ -407,37 +466,42 @@ export default function TeacherAttendanceTab() {
 
         <div className="h-px bg-white/10" />
 
-        <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <AttendanceButton
             variant="primary"
             leftIcon={<CheckCircle2 size={16} />}
-            className="w-full sm:w-auto"
+            className="w-full"
             onClick={() =>
               setStudents((prev) => prev.map((s) => ({ ...s, status: "present" })))
             }
+            disabled={students.length === 0}
           >
             Mark All Present
           </AttendanceButton>
           <AttendanceButton
             variant="ghost"
             leftIcon={<Copy size={16} />}
-            className="w-full sm:w-auto"
+            className="w-full"
+            onClick={handleCopyFromYesterday}
+            disabled={!selectedClass || students.length === 0 || copyingFromYesterday}
           >
-            Copy from Yesterday
+            {copyingFromYesterday ? "Copying…" : "Copy from Yesterday"}
           </AttendanceButton>
           <AttendanceButton
             variant="ghost"
             leftIcon={<Download size={16} />}
-            className="w-full sm:w-auto"
+            className="w-full"
+            onClick={handleExportReport}
+            disabled={students.length === 0}
           >
             Export Report
           </AttendanceButton>
         </div>
       </section>
 
-      <section className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
+      <section className="rounded-xl sm:rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
         <div className="p-4 sm:p-6">
-          <h3 className="text-xl font-semibold text-white">Mark Attendance</h3>
+          <h3 className="text-lg sm:text-xl font-semibold text-white">Mark Attendance</h3>
           <p className="text-sm text-white/60 mt-1">
             {selectedClassLabel || "No class selected"} -{" "}
             {formatLongDate(selectedDate)}
@@ -448,7 +512,7 @@ export default function TeacherAttendanceTab() {
           <InlinePanelTable columns={columns} data={students} rowKey={(row) => row.id} />
         </div>
 
-        <div className="md:hidden px-4 pb-4 space-y-4">
+        <div className="md:hidden px-4 pb-4 space-y-3 max-h-[50vh] overflow-y-auto no-scrollbar">
           {students.length === 0 && (
             <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/60">
               No students found
@@ -467,8 +531,8 @@ export default function TeacherAttendanceTab() {
                     className="h-full w-full object-cover"
                   />
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-white">{student.name}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-white truncate">{student.name}</p>
                   <p className="text-xs text-white/60">Roll: {student.roll}</p>
                 </div>
               </div>

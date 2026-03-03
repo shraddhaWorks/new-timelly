@@ -100,25 +100,24 @@ export default function ChatWindow({
   const myId = session?.user?.id ?? "";
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex flex-col h-full w-full min-h-0">
 
       {/* ================= Header ================= */}
-      <div className="p-3 md:p-4 border-b border-white/10">
-        <div className="flex items-center justify-between gap-3">
-
-          {/* Left */}
-          <div className="flex items-center gap-3 min-w-0">
+      <div className="p-3 sm:p-4 border-b border-white/10 shrink-0">
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <button
               onClick={onBack}
-              className="lg:hidden text-white shrink-0"
+              className="lg:hidden text-white shrink-0 p-1 -m-1 touch-manipulation"
+              aria-label="Back to conversations"
             >
-              <ArrowLeft />
+              <ArrowLeft size={22} />
             </button>
 
             <img
               src={chat.avatar}
               alt={chat.parent}
-              className="w-9 h-9 md:w-10 md:h-10 rounded-full object-cover shrink-0"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover shrink-0"
             />
 
             <div className="min-w-0">
@@ -132,23 +131,25 @@ export default function ChatWindow({
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
 
             {/* Voice & Video (Only if Approved and not ended) */}
             {canChat && (
               <>
                 <button
                   onClick={() => alert("Starting voice call...")}
-                  className="p-2 rounded-full hover:bg-white/10 text-gray-300 hover:text-white transition"
+                  className="p-2 sm:p-2 rounded-full hover:bg-white/10 active:bg-white/15 text-gray-300 hover:text-white transition touch-manipulation min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
+                  aria-label="Voice call"
                 >
-                  <Phone size={18} />
+                  <Phone size={20} />
                 </button>
 
                 <button
                   onClick={() => alert("Starting video call...")}
-                  className="p-2 rounded-full hover:bg-white/10 text-gray-300 hover:text-white transition"
+                  className="p-2 sm:p-2 rounded-full hover:bg-white/10 active:bg-white/15 text-gray-300 hover:text-white transition touch-manipulation min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
+                  aria-label="Video call"
                 >
-                  <Video size={18} />
+                  <Video size={20} />
                 </button>
               </>
             )}
@@ -158,17 +159,17 @@ export default function ChatWindow({
               <>
                 <button
                   onClick={onApprove}
-                  className="px-3 py-1.5 rounded-full bg-lime-400 text-black text-xs md:text-sm flex items-center gap-1"
+                  className="px-3 py-2 sm:py-1.5 rounded-full bg-lime-400 text-black text-xs sm:text-sm flex items-center gap-1 touch-manipulation min-h-[44px] sm:min-h-0"
                 >
-                  <Check size={14} />
+                  <Check size={16} />
                   <span className="hidden sm:inline">Approve</span>
                 </button>
 
                 <button
                   onClick={onReject}
-                  className="px-3 py-1.5 rounded-full bg-red-500/20 text-red-400 text-xs md:text-sm flex items-center gap-1"
+                  className="px-3 py-2 sm:py-1.5 rounded-full bg-red-500/20 text-red-400 text-xs sm:text-sm flex items-center gap-1 touch-manipulation min-h-[44px] sm:min-h-0"
                 >
-                  <X size={14} />
+                  <X size={16} />
                   <span className="hidden sm:inline">Reject</span>
                 </button>
               </>
@@ -178,10 +179,11 @@ export default function ChatWindow({
             {canChat && variant === "teacher" && onEndChat && (
               <button
                 onClick={onEndChat}
-                className="px-3 py-1.5 rounded-full bg-amber-500/20 text-amber-400 text-xs md:text-sm flex items-center gap-1"
+                className="px-3 py-2 sm:py-1.5 rounded-full bg-amber-500/20 text-amber-400 text-xs sm:text-sm flex items-center gap-1 touch-manipulation min-h-[44px] sm:min-h-0"
                 title="End chat"
+                aria-label="End chat"
               >
-                <PhoneOff size={14} />
+                <PhoneOff size={16} />
                 <span className="hidden sm:inline">End chat</span>
               </button>
             )}
@@ -206,7 +208,7 @@ export default function ChatWindow({
       )}
 
       {!isPending && !isRejected && (
-        <div className="flex-1 flex flex-col p-3 md:p-4 overflow-hidden">
+        <div className="flex-1 flex flex-col p-3 sm:p-4 overflow-hidden min-h-0">
           {isEnded && (
             <p className="text-center text-amber-400/90 text-sm py-2 border-b border-white/10 mb-2">
               Chat ended by the teacher. No new messages can be sent.
@@ -227,7 +229,7 @@ export default function ChatWindow({
                 return (
                   <div
                     key={m.id}
-                    className={`max-w-[75%] rounded-xl p-3 text-sm ${
+                    className={`max-w-[85%] sm:max-w-[75%] rounded-xl p-3 text-sm ${
                       isMe
                         ? "ml-auto bg-lime-500 text-black"
                         : "bg-white/10 text-white"
@@ -250,8 +252,10 @@ export default function ChatWindow({
 
       {/* ================= Input ================= */}
       {!isRejected && !isEnded && (
-        <div className="p-3 md:p-4 border-t border-white/10 flex items-center gap-3">
-          <Paperclip className="text-gray-400 shrink-0" />
+        <div className="p-3 sm:p-4 pb-4 border-t border-white/10 flex items-center gap-2 sm:gap-3 shrink-0">
+          <button type="button" className="text-gray-400 shrink-0 p-2 -m-2 touch-manipulation" aria-label="Attach file">
+            <Paperclip size={20} />
+          </button>
 
           <input
             disabled={isPending || !canChat}
@@ -263,7 +267,7 @@ export default function ChatWindow({
                 handleSend();
               }
             }}
-            className="flex-1 bg-white/5 rounded-lg px-4 py-2 text-sm outline-none text-white disabled:opacity-40"
+            className="flex-1 min-w-0 bg-white/5 rounded-xl px-4 py-3 sm:py-2.5 text-base sm:text-sm outline-none text-white disabled:opacity-40"
             placeholder={
               isPending
                 ? "Approve request to start chatting…"
@@ -274,9 +278,10 @@ export default function ChatWindow({
           <button
             disabled={isPending || !canChat || sending}
             onClick={handleSend}
-            className="text-lime-400 disabled:opacity-40"
+            className="text-lime-400 disabled:opacity-40 p-2 -m-2 touch-manipulation min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
+            aria-label="Send message"
           >
-            <Send />
+            <Send size={20} />
           </button>
         </div>
       )}

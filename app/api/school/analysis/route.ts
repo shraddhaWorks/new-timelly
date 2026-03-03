@@ -39,6 +39,8 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const yearParam = searchParams.get("year");
+    const classIdParam = searchParams.get("classId");
+    const classId = classIdParam && classIdParam.trim() ? classIdParam.trim() : null;
     const year = yearParam ? parseInt(yearParam, 10) : new Date().getFullYear();
     const currentYear = new Date().getFullYear();
     const validYear = Number.isNaN(year) ? currentYear : Math.max(currentYear - 5, Math.min(currentYear + 1, year));
@@ -47,11 +49,16 @@ export async function GET(req: Request) {
     const yearEnd = new Date(validYear, 11, 31, 23, 59, 59);
     const availableYears = [currentYear, currentYear - 1, currentYear - 2, currentYear - 3];
 
+    const baseStudentWhere = {
+      schoolId,
+      ...(classId ? { classId } : {}),
+    };
+
     // Monthly fees collection for the selected year
     const payments = await prisma.payment.findMany({
       where: {
         status: "SUCCESS",
-        student: { schoolId },
+        student: baseStudentWhere,
         createdAt: { gte: yearStart, lte: yearEnd },
       },
       select: { amount: true, createdAt: true },
@@ -71,11 +78,10 @@ export async function GET(req: Request) {
     // Enrollment growth - student count by year (createdAt)
     const enrollmentByYear: { year: number; count: number }[] = [];
     for (let y = currentYear - 3; y <= currentYear; y++) {
-      const yStart = new Date(y, 0, 1);
       const yEnd = new Date(y, 11, 31, 23, 59, 59);
       const count = await prisma.student.count({
         where: {
-          schoolId,
+          ...baseStudentWhere,
           createdAt: { lte: yEnd },
         },
       });
@@ -86,7 +92,7 @@ export async function GET(req: Request) {
     const attendanceRecords = await prisma.attendance.groupBy({
       by: ["status"],
       where: {
-        class: { schoolId },
+        class: { schoolId, ...(classId ? { id: classId } : {}) },
         date: { gte: yearStart, lte: yearEnd },
       },
       _count: true,
@@ -107,7 +113,7 @@ export async function GET(req: Request) {
     // Subject performance - avg (marks/totalMarks)*100 per subject
     const marks = await prisma.mark.findMany({
       where: {
-        class: { schoolId },
+        class: { schoolId, ...(classId ? { id: classId } : {}) },
         totalMarks: { gt: 0 },
         createdAt: { gte: yearStart, lte: yearEnd },
       },
@@ -127,7 +133,7 @@ export async function GET(req: Request) {
     // Top performing teachers - by average student marks
     const teacherMarks = await prisma.mark.findMany({
       where: {
-        class: { schoolId },
+        class: { schoolId, ...(classId ? { id: classId } : {}) },
         createdAt: { gte: yearStart, lte: yearEnd },
       },
       select: {
@@ -178,11 +184,19 @@ export async function GET(req: Request) {
 
     // Total enrollment
     const totalEnrollment = await prisma.student.count({
+      where: baseStudentWhere,
+    });
+
+    // Classes for filter dropdown
+    const classes = await prisma.class.findMany({
       where: { schoolId },
+      select: { id: true, name: true, section: true },
+      orderBy: { name: "asc" },
     });
 
     return NextResponse.json({
       availableYears,
+      classes,
       selectedYear: validYear,
       stats: {
         feesCollected,

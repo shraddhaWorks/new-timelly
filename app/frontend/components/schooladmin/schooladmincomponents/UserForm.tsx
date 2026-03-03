@@ -559,7 +559,7 @@ export default function UserForm({ mode = "create", initialData }: UserFormProps
 
           <div className="lg:col-span-1" />
 
-          <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 no-scrollbar">
+          <div className="space-y-4 overflow-y-auto pr-2 no-scrollbar">
             {AVAILABLE_FEATURES_FOR_TEACHERS.map((feature) => (
               <AllowedFeatureToggle
                 key={feature.key}

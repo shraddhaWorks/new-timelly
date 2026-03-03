@@ -45,6 +45,9 @@ function ParentDashboardInner() {
     subtitle: "Parent",
     image: null as string | null,
     email: undefined as string | undefined,
+    phone: undefined as string | undefined,
+    address: undefined as string | undefined,
+    userId: undefined as string | undefined,
   });
 
   const renderTabContent = () => {
@@ -90,7 +93,7 @@ function ParentDashboardInner() {
           fetch("/api/student/parent-details"),
         ]);
         const userData = await userRes.json();
-        const parentData = await parentDetailsRes.json();
+        const parentData = await parentDetailsRes.json().catch(() => ({}));
         if (cancelled || !userRes.ok) return;
 
         const u = userData.user;
@@ -100,6 +103,9 @@ function ParentDashboardInner() {
             subtitle: "Parent",
             image: u.photoUrl ?? null,
             email: u.email ?? undefined,
+            phone: u.mobile ?? undefined,
+            address: parentDetailsRes.ok ? parentData?.address ?? undefined : undefined,
+            userId: u.id ?? undefined,
           });
         }
       } catch {

@@ -68,7 +68,7 @@ export default function DeleteClassPanel({
             Confirm Deletion
           </h3>
           <p className="mt-1.5 text-xs sm:text-sm text-white/60 max-w-xl">
-            Are you sure you want to delete{" "}
+            Do you really want to delete{" "}
             <span className="text-white font-semibold">
               {row.name} - {row.section}
             </span>
