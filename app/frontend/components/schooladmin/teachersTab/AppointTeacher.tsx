@@ -1,7 +1,7 @@
 "use client";
 
 import { GraduationCap, UserPlus, Trash2, Pencil } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 
 const DEFAULT_AVATAR =
   "https://randomuser.me/api/portraits/lego/1.jpg";
@@ -12,7 +12,13 @@ type ClassItem = {
   name: string;
   section: string | null;
   teacherId: string | null;
-  teacher?: { id: string; name: string | null; email: string | null } | null;
+  teacher?: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    teacherId?: string | null;
+    photoUrl?: string | null;
+  } | null;
 };
 
 type TeacherItem = {
@@ -48,50 +54,84 @@ export default function AppointTeacher() {
   const [editingClassId, setEditingClassId] = useState<string | null>(null);
 
   /* ================= FETCH ================= */
-  useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
+  const loadData = useCallback(
+    async (cancelledRef?: { current: boolean }) => {
       setLoading(true);
+      try {
+        const [classRes, teacherRes] = await Promise.all([
+          fetch("/api/class/list", {
+            credentials: "include",
+            cache: "no-store",
+          }),
+          fetch("/api/teacher/list", {
+            credentials: "include",
+            cache: "no-store",
+          }),
+        ]);
 
-      const [classRes, teacherRes] = await Promise.all([
-        fetch("/api/class/list", { credentials: "include" }),
-        fetch("/api/teacher/list", { credentials: "include" }),
-      ]);
+        if (cancelledRef?.current) return;
 
-      if (cancelled) return;
+        const classData = await classRes.json();
+        const teacherData = await teacherRes.json();
 
-      const classData = await classRes.json();
-      const teacherData = await teacherRes.json();
+        if (classData.classes) setClasses(classData.classes);
+        if (teacherData.teachers) setTeachers(teacherData.teachers);
+      } finally {
+        if (!cancelledRef?.current) setLoading(false);
+      }
+    },
+    []
+  );
 
-      if (classData.classes) setClasses(classData.classes);
-      if (teacherData.teachers) setTeachers(teacherData.teachers);
-
-      setLoading(false);
-    })();
-
+  useEffect(() => {
+    const cancelledRef = { current: false };
+    loadData(cancelledRef);
     return () => {
-      cancelled = true;
+      cancelledRef.current = true;
     };
-  }, []);
+  }, [loadData]);
+
+  useEffect(() => {
+    const refresh = () => {
+      void loadData();
+    };
+    window.addEventListener("teacher-profile-updated", refresh);
+    return () => {
+      window.removeEventListener("teacher-profile-updated", refresh);
+    };
+  }, [loadData]);
 
   /* ================= DATA ================= */
+  const teachersById = useMemo(
+    () =>
+      new Map(
+        teachers.map((teacher) => [teacher.id, teacher] as const)
+      ),
+    [teachers]
+  );
+
   const appointments: AppointmentRow[] = useMemo(() => {
     return classes
       .filter((c) => c.teacherId && c.teacher)
-      .map((c) => ({
-        classId: c.id,
-        className: [c.name, c.section]
-          .filter(Boolean)
-          .join(c.section ? " - " : ""),
-        teacherName: c.teacher!.name || "Teacher",
-        teacherCode:
-          (c.teacher as { teacherId?: string }).teacherId ||
-          c.teacher!.id.slice(0, 6).toUpperCase(),
-        teacherEmail: c.teacher!.email || "-",
-        avatar: DEFAULT_AVATAR,
-      }));
-  }, [classes]);
+      .map((c) => {
+        const photoFromClass = c.teacher?.photoUrl || null;
+        const photoFromTeacherList = c.teacherId
+          ? teachersById.get(c.teacherId)?.photoUrl || null
+          : null;
+
+        return {
+          classId: c.id,
+          className: [c.name, c.section]
+            .filter(Boolean)
+            .join(c.section ? " - " : ""),
+          teacherName: c.teacher!.name || "Teacher",
+          teacherCode:
+            c.teacher?.teacherId || c.teacher!.id.slice(0, 6).toUpperCase(),
+          teacherEmail: c.teacher!.email || "-",
+          avatar: photoFromClass || photoFromTeacherList || DEFAULT_AVATAR,
+        };
+      });
+  }, [classes, teachersById]);
 
   const classOptions = classes.map((c) => ({
     value: c.id,
@@ -129,12 +169,7 @@ export default function AppointTeacher() {
       setSelectedTeacherId("");
       setEditingClassId(null);
 
-      // refresh list
-      const listRes = await fetch("/api/class/list", {
-        credentials: "include",
-      });
-      const listData = await listRes.json();
-      if (listData.classes) setClasses(listData.classes);
+      await loadData();
     } catch (e) {
       window.alert(e instanceof Error ? e.message : "Failed.");
     } finally {
@@ -172,12 +207,7 @@ export default function AppointTeacher() {
       body: JSON.stringify({ teacherId: null }),
     });
 
-    const listRes = await fetch("/api/class/list", {
-      credentials: "include",
-    });
-
-    const listData = await listRes.json();
-    if (listData.classes) setClasses(listData.classes);
+    await loadData();
 
     setRemovingId(null);
   };
@@ -283,6 +313,9 @@ export default function AppointTeacher() {
                   <img
                     src={item.avatar}
                     className="w-7 h-7 rounded-full"
+                    onError={(e) => {
+                      e.currentTarget.src = DEFAULT_AVATAR;
+                    }}
                   />
                   {item.teacherName}
                 </td>
@@ -331,6 +364,9 @@ export default function AppointTeacher() {
               <img
                 src={item.avatar}
                 className="h-9 w-9 rounded-full"
+                onError={(e) => {
+                  e.currentTarget.src = DEFAULT_AVATAR;
+                }}
               />
               <div className="min-w-0">
                 <div className="truncate text-sm font-semibold text-white">

@@ -61,6 +61,17 @@ const EditTeacher = ({ teacher, onClose, onSave }: Props) => {
         avatar: updated.photoUrl ?? formData.avatar,
       });
 
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("teacher-profile-updated", {
+            detail: {
+              teacherId: teacher.id,
+              photoUrl: updated.photoUrl ?? formData.avatar,
+            },
+          })
+        );
+      }
+
       onClose();
     } catch (e) {
       if (typeof window !== "undefined") {
