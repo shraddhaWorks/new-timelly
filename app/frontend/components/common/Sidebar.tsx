@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { motion } from "framer-motion";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { ChevronDown, User, ChevronRight } from "lucide-react";
 import { SidebarItem } from "../../types/sidebar";
 import BrandLogo from "./TimellyLogo";
@@ -32,6 +32,12 @@ export default function AppSidebar({ menuItems, profile, activeTab = "dashboard"
   const { data: session } = useSession();
   const [profileOpen, setProfileOpen] = useState(false);
   const [accounts, setAccounts] = useState<{ email: string; name: string; userId: string }[]>([]);
+  const [liveProfile, setLiveProfile] = useState<{
+    name: string;
+    subtitle: string;
+    image: string;
+    email: string;
+  } | null>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const currentEmail = (session?.user as { email?: string })?.email ?? profile?.email;
 
@@ -75,9 +81,73 @@ export default function AppSidebar({ menuItems, profile, activeTab = "dashboard"
     });
   };
 
-  const displayName = (profile?.name && profile.name.trim()) ? profile.name : (session?.user?.name ?? "User");
-  const subtitle = profile?.subtitle ?? session?.user?.role ?? "";
-  const avatarUrl = (profile?.image != null && profile.image !== "") ? profile.image : (session?.user?.image ?? AVATAR_URL);
+  const refreshLiveProfile = useCallback(async () => {
+    try {
+      const res = await fetch("/api/user/me", { credentials: "include", cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok || !data?.user) return;
+      const user = data.user as {
+        name?: string;
+        role?: string;
+        email?: string;
+        photoUrl?: string | null;
+      };
+      setLiveProfile({
+        name: user.name ?? profile?.name ?? session?.user?.name ?? "User",
+        subtitle: user.role ?? profile?.subtitle ?? session?.user?.role ?? "",
+        image: user.photoUrl ?? profile?.image ?? session?.user?.image ?? AVATAR_URL,
+        email: user.email ?? profile?.email ?? session?.user?.email ?? "",
+      });
+    } catch {
+      // ignore
+    }
+  }, [
+    profile?.email,
+    profile?.image,
+    profile?.name,
+    profile?.subtitle,
+    session?.user?.email,
+    session?.user?.image,
+    session?.user?.name,
+    session?.user?.role,
+  ]);
+
+  useEffect(() => {
+    refreshLiveProfile();
+  }, [refreshLiveProfile]);
+
+  useEffect(() => {
+    const onUpdated = () => {
+      void refreshLiveProfile();
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void refreshLiveProfile();
+      }
+    };
+    window.addEventListener("teacher-profile-updated", onUpdated);
+    window.addEventListener("profile-updated", onUpdated);
+    window.addEventListener("focus", onUpdated);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("teacher-profile-updated", onUpdated);
+      window.removeEventListener("profile-updated", onUpdated);
+      window.removeEventListener("focus", onUpdated);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [refreshLiveProfile]);
+
+  const displayName = (liveProfile?.name && liveProfile.name.trim())
+    ? liveProfile.name
+    : (profile?.name && profile.name.trim())
+      ? profile.name
+      : (session?.user?.name ?? "User");
+  const subtitle = liveProfile?.subtitle ?? profile?.subtitle ?? session?.user?.role ?? "";
+  const avatarUrl = (liveProfile?.image != null && liveProfile.image !== "")
+    ? liveProfile.image
+    : (profile?.image != null && profile.image !== "")
+      ? profile.image
+      : (session?.user?.image ?? AVATAR_URL);
 
   // Only filter menu items for TEACHER role. Other roles see full menu.
   const allowedFeatures = (session?.user as any)?.allowedFeatures ?? [];
@@ -142,6 +212,10 @@ export default function AppSidebar({ menuItems, profile, activeTab = "dashboard"
                 src={avatarUrl}
                 alt=""
                 className="w-10 h-10 rounded-xl border border-white/20 object-cover shrink-0"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = AVATAR_URL;
+                }}
               />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white break-words line-clamp-2">

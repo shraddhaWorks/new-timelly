@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { supabaseAdmin, SUPABASE_BUCKET } from "@/lib/supabase";
+import { mkdir, writeFile } from "fs/promises";
+import path from "path";
 
 const MAX_SIZE_MB = 10;
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -11,18 +13,21 @@ const ALLOWED_DOC_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 
+async function saveLocally(file: File, folder: string, safeName: string) {
+  const localFolder = folder.replace(/[^a-zA-Z0-9/_-]/g, "").replace(/^\/+/, "");
+  const relPath = path.posix.join("uploads", localFolder || "images", `${Date.now()}-${safeName}`);
+  const absPath = path.join(process.cwd(), "public", ...relPath.split("/"));
+  await mkdir(path.dirname(absPath), { recursive: true });
+  const buffer = Buffer.from(await file.arrayBuffer());
+  await writeFile(absPath, buffer);
+  return `/${relPath}`;
+}
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
-
-    if (!supabaseAdmin) {
-      return NextResponse.json(
-        { message: "Upload not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY." },
-        { status: 503 }
-      );
     }
 
     const formData = await req.formData();
@@ -60,32 +65,33 @@ export async function POST(req: Request) {
       );
     }
 
-    const ext = file.name.split(".").pop() || "jpg";
     const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_").slice(0, 80);
-    const path = `${folder}/${Date.now()}-${safeName}`;
+    const storagePath = `${folder}/${Date.now()}-${safeName}`;
 
-    const buffer = Buffer.from(await file.arrayBuffer());
+    if (supabaseAdmin) {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const { data, error } = await supabaseAdmin.storage
+        .from(SUPABASE_BUCKET)
+        .upload(storagePath, buffer, {
+          contentType: file.type,
+          upsert: false,
+        });
 
-    const { data, error } = await supabaseAdmin.storage
-      .from(SUPABASE_BUCKET)
-      .upload(path, buffer, {
-        contentType: file.type,
-        upsert: false,
-      });
+      if (!error && data?.path) {
+        const { data: urlData } = supabaseAdmin.storage
+          .from(SUPABASE_BUCKET)
+          .getPublicUrl(data.path);
 
-    if (error) {
-      console.error("Supabase upload error:", error);
-      return NextResponse.json(
-        { message: error.message || "Upload failed" },
-        { status: 500 }
-      );
+        return NextResponse.json({ url: urlData.publicUrl, path: data.path, provider: "supabase" });
+      }
+
+      console.error("Supabase upload error, falling back to local:", error);
+    } else {
+      console.warn("Supabase not configured, using local upload fallback.");
     }
 
-    const { data: urlData } = supabaseAdmin.storage
-      .from(SUPABASE_BUCKET)
-      .getPublicUrl(data.path);
-
-    return NextResponse.json({ url: urlData.publicUrl, path: data.path });
+    const localUrl = await saveLocally(file, folder, safeName);
+    return NextResponse.json({ url: localUrl, path: localUrl.replace(/^\//, ""), provider: "local" });
   } catch (e) {
     console.error("Upload API error:", e);
     return NextResponse.json(

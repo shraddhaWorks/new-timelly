@@ -38,6 +38,7 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
   const [searchQuery, setSearchQuery] = useState("");
   const [modalProfile, setModalProfile] = useState<HeaderProfile | undefined>(profile);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [liveProfile, setLiveProfile] = useState<HeaderProfile | null>(null);
 
   const { data: session } = useSession();
 
@@ -59,8 +60,84 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
     const interval = setInterval(fetchUnreadCount, 60000); // refresh every 60s
     return () => clearInterval(interval);
   }, [fetchUnreadCount]);
-  const displayName = (profile?.name && profile.name.trim()) ? profile.name : (session?.user?.name ?? "User");
-  const avatarUrl = (profile?.image != null && profile.image !== "") ? profile.image : (session?.user?.image ?? AVATAR_URL);
+  const displayName = (liveProfile?.name && liveProfile.name.trim())
+    ? liveProfile.name
+    : (profile?.name && profile.name.trim())
+      ? profile.name
+      : (session?.user?.name ?? "User");
+  const avatarUrl = (liveProfile?.image != null && liveProfile.image !== "")
+    ? liveProfile.image
+    : (profile?.image != null && profile.image !== "")
+      ? profile.image
+      : (session?.user?.image ?? AVATAR_URL);
+
+  const refreshLiveProfile = useCallback(async () => {
+    try {
+      const res = await fetch("/api/user/me", { credentials: "include", cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok || !data?.user) return;
+      const user = data.user as {
+        id?: string;
+        name?: string;
+        role?: string;
+        email?: string;
+        mobile?: string;
+        address?: string | null;
+        photoUrl?: string | null;
+      };
+      setLiveProfile({
+        name: user.name ?? profile?.name ?? session?.user?.name ?? "User",
+        subtitle: user.role ?? profile?.subtitle ?? session?.user?.role ?? "",
+        image: user.photoUrl ?? profile?.image ?? session?.user?.image ?? AVATAR_URL,
+        email: user.email ?? profile?.email ?? session?.user?.email ?? "",
+        phone: user.mobile ?? profile?.phone ?? session?.user?.mobile ?? "",
+        userId: user.id ?? profile?.userId,
+        address: user.address ?? profile?.address,
+        status: profile?.status,
+      });
+    } catch {
+      // ignore
+    }
+  }, [
+    profile?.address,
+    profile?.email,
+    profile?.image,
+    profile?.name,
+    profile?.phone,
+    profile?.status,
+    profile?.subtitle,
+    profile?.userId,
+    session?.user?.email,
+    session?.user?.image,
+    session?.user?.mobile,
+    session?.user?.name,
+    session?.user?.role,
+  ]);
+
+  useEffect(() => {
+    refreshLiveProfile();
+  }, [refreshLiveProfile]);
+
+  useEffect(() => {
+    const onUpdated = () => {
+      void refreshLiveProfile();
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void refreshLiveProfile();
+      }
+    };
+    window.addEventListener("teacher-profile-updated", onUpdated);
+    window.addEventListener("profile-updated", onUpdated);
+    window.addEventListener("focus", onUpdated);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("teacher-profile-updated", onUpdated);
+      window.removeEventListener("profile-updated", onUpdated);
+      window.removeEventListener("focus", onUpdated);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [refreshLiveProfile]);
 
   const openSettings = () => {
     if (pathname?.startsWith("/frontend/pages/")) {
@@ -140,17 +217,17 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
         }
 
         setModalProfile({
-          name: user.name ?? profile?.name ?? session?.user?.name ?? "User",
+          name: user.name ?? liveProfile?.name ?? profile?.name ?? session?.user?.name ?? "User",
           subtitle: profile?.subtitle ?? role,
-          image: user.photoUrl ?? profile?.image ?? session?.user?.image ?? AVATAR_URL,
-          email: user.email ?? profile?.email ?? session?.user?.email ?? "",
-          phone: user.mobile ?? profile?.phone ?? session?.user?.mobile ?? "",
-          userId: user.id ?? profile?.userId,
-          address,
+          image: user.photoUrl ?? liveProfile?.image ?? profile?.image ?? session?.user?.image ?? AVATAR_URL,
+          email: user.email ?? liveProfile?.email ?? profile?.email ?? session?.user?.email ?? "",
+          phone: user.mobile ?? liveProfile?.phone ?? profile?.phone ?? session?.user?.mobile ?? "",
+          userId: user.id ?? liveProfile?.userId ?? profile?.userId,
+          address: address ?? liveProfile?.address,
           status: profile?.status,
         });
       } catch {
-        setModalProfile(profile);
+        setModalProfile(liveProfile ?? profile);
       }
     })();
 
@@ -159,6 +236,7 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
     };
   }, [
     showProfile,
+    liveProfile,
     profile,
     session?.user?.email,
     session?.user?.image,
