@@ -95,9 +95,16 @@ export default function AppointTeacher() {
     const refresh = () => {
       void loadData();
     };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "timelly:profile-updated") {
+        void loadData();
+      }
+    };
     window.addEventListener("teacher-profile-updated", refresh);
+    window.addEventListener("storage", onStorage);
     return () => {
       window.removeEventListener("teacher-profile-updated", refresh);
+      window.removeEventListener("storage", onStorage);
     };
   }, [loadData]);
 

@@ -200,6 +200,7 @@ export default function TeacherProfileTab() {
               detail: { userId: user.id, photoUrl: mappedProfile.avatarUrl },
             })
           );
+          localStorage.setItem("timelly:profile-updated", String(Date.now()));
         }
 
         if (mappedClasses.length > 0) {
@@ -225,6 +226,7 @@ export default function TeacherProfileTab() {
               detail: { photoUrl: draftData.avatarUrl },
             })
           );
+          localStorage.setItem("timelly:profile-updated", String(Date.now()));
         }
       }
 
