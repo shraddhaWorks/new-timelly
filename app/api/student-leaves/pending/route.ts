@@ -29,12 +29,39 @@ export async function GET() {
     if (!schoolId) return NextResponse.json({ message: "School not found" }, { status: 400 });
 
     const leaves = await prisma.studentLeaveRequest.findMany({
-      where: { schoolId, status: "PENDING" },
-      include: {
+      where: {
+        schoolId,
+        status: "PENDING", // only pending
+      },
+      select: {
+        id: true,
+        leaveType: true,
+        reason: true,
+        fromDate: true,
+        toDate: true,
+        status: true,
+        remarks: true,
+        createdAt: true,
+
+
         student: {
-          include: {
-            user: { select: { id: true, name: true, email: true } },
-            class: { select: { id: true, name: true, section: true } },
+          select: {
+            id: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                photoUrl: true, // needed for avatar
+              },
+            },
+            class: {
+              select: {
+                id: true,
+                name: true,
+                section: true,
+              },
+            },
           },
         },
       },
