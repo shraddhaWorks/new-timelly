@@ -201,6 +201,13 @@ export default function PortalSettingsPanel({ portal }: { portal: PortalVariant 
         }
         // Update initial form to reflect saved state
         setInitialForm((prev) => prev ? { ...prev, photoUrl } : null);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("profile-updated", {
+              detail: { photoUrl },
+            })
+          );
+        }
         toast.show("Profile photo updated and saved.", "success");
       } catch (error) {
         toast.show(error instanceof Error ? error.message : "Image upload failed.", "error");
@@ -232,6 +239,13 @@ export default function PortalSettingsPanel({ portal }: { portal: PortalVariant 
     setSaving(true);
     try {
       await saveProfile(form, portal);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("profile-updated", {
+            detail: { photoUrl: form.photoUrl || null },
+          })
+        );
+      }
       await savePassword(passwords, passwordDirty, setPasswordSaving);
       localStorage.setItem(prefKey, JSON.stringify(prefs));
       setInitialForm(form);
