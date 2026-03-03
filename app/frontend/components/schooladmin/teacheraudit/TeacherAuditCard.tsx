@@ -66,10 +66,11 @@ export default function TeacherAuditCard({
   onSaveRecord,
 }: TeacherAuditCardProps) {
 
-  const score = Math.max(0, Math.min(100, teacher.performanceScore));
+  // If the add form is open for this teacher, add the pending scoreImpact
+const displayScore = Math.max(0, Math.min(100, teacher.performanceScore));
   const isScoreMaxed =
-    (addFormMode === "good" && score >= 100) ||
-    (addFormMode === "bad" && score <= 0);
+    (addFormMode === "good" && displayScore >= 100) ||
+    (addFormMode === "bad" && displayScore <= 0);
 
   const categories = [
     "Teaching Method",
@@ -89,7 +90,7 @@ export default function TeacherAuditCard({
     return "bg-lime-500 shadow-[0_0_10px_rgba(132,204,22,0.5)]";
   };
 
-  const barStyle = getScoreColor(score);
+  const barStyle = getScoreColor(displayScore);
 
   return (
     <div className="px-1 md:px-0 w-full">
@@ -141,11 +142,11 @@ export default function TeacherAuditCard({
               <div className="flex items-center gap-4 w-full xl:w-auto">
                 <div className="h-12 w-12 xl:h-14 xl:w-14 flex-shrink-0 rounded-xl xl:rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
                   <span className={`text-lg xl:text-xl font-bold transition-colors duration-500 ${
-                    score >= 90 ? "text-green-500" : 
-                    score >= 70 ? "text-lime-300" : 
-                    score < 50 ? "text-yellow-400" : "text-lime-500"
+                    displayScore >= 90 ? "text-green-500" : 
+                    displayScore >= 70 ? "text-lime-300" : 
+                    displayScore < 50 ? "text-yellow-400" : "text-lime-500"
                   }`}>
-                    {score}
+                    {displayScore}
                   </span>
                 </div>
                 
@@ -156,11 +157,11 @@ export default function TeacherAuditCard({
                   <div className="h-2 rounded-full bg-white/10 overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-700 ease-in-out ${barStyle}`}
-                      style={{ width: `${score}%` }}
+                      style={{ width: `${displayScore}%` }}
                     />
                   </div>
                   <div className="flex justify-between items-center mt-1">
-                    <p className="text-[10px] text-white/40 font-bold">{score}/100</p>
+                    <p className="text-[10px] text-white/40 font-bold">{displayScore}/100</p>
                   </div>
                 </div>
               </div>

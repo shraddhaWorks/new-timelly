@@ -8,12 +8,18 @@ function clampScore(score: number) {
 }
 
 /** Academic year "2024-2025" -> { start: Sep 1 2024, end: Aug 31 2025 } */
-function academicYearRange(academicYear: string): { start: Date; end: Date } | null {
+/** Academic year "2024-2025" -> June 1 2024 - April 30 2025 */
+function academicYearRange(
+  academicYear: string
+): { start: Date; end: Date } | null {
   const m = academicYear.match(/^(\d{4})-(\d{4})$/);
   if (!m) return null;
+
   const startYear = parseInt(m[1], 10);
-  const start = new Date(startYear, 8, 1, 0, 0, 0); // Sep 1
-  const end = new Date(startYear + 1, 7, 31, 23, 59, 59); // Aug 31 next year
+
+  const start = new Date(startYear, 5, 1, 0, 0, 0); // June 1
+  const end = new Date(startYear + 1, 4, 31, 23, 59, 59); // may 31
+
   return { start, end };
 }
 
@@ -81,7 +87,7 @@ export async function GET(req: Request) {
           _count: { _all: true },
         });
         const impact = agg._sum.scoreImpact ?? 0;
-        const score = clampScore(50 + impact);
+        const score = clampScore(impact);
         return { teacherId: t.id, score, recordCount: agg._count._all };
       })
     );
@@ -92,7 +98,7 @@ export async function GET(req: Request) {
       {
         teachers: teachers.map((t) => ({
           ...t,
-          performanceScore: scoreMap.get(t.id)?.score ?? 50,
+          performanceScore: scoreMap.get(t.id)?.score ?? 0,
           recordCount: scoreMap.get(t.id)?.recordCount ?? 0,
         })),
       },

@@ -7,16 +7,25 @@ import TeacherAuditCard from "./teacheraudit/TeacherAuditCard";
 
 import Spinner from "../common/Spinner";
 
-const DEFAULT_ACADEMIC_YEARS = [
-  { value: "2025-2026", label: "2025-2026" },
-  { value: "2024-2025", label: "2024-2025" },
-  { value: "2023-2024", label: "2023-2024" },
-];
+function getCurrentAcademicYear() {
+  const now = new Date();
+
+  // Academic year starts in June (month index 5)
+  const startYear =
+    now.getMonth() >= 5 ? now.getFullYear() : now.getFullYear() - 1;
+
+  return `${startYear}-${startYear + 1}`;
+}
+
 
 export default function TeacherAuditTab() {
   const [q, setQ] = useState("");
-  const [academicYear, setAcademicYear] = useState("2025-2026");
-  const [academicYears, setAcademicYears] = useState(DEFAULT_ACADEMIC_YEARS);
+  const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
+ const currentYear = getCurrentAcademicYear();
+
+const [academicYears, setAcademicYears] = useState([
+  { value: currentYear, label: currentYear },
+]);
   const [loading, setLoading] = useState(true);
   const [teachers, setTeachers] = useState<TeacherRow[]>([]);
   const [expandedTeacherId, setExpandedTeacherId] = useState<string | null>(
@@ -44,6 +53,7 @@ export default function TeacherAuditTab() {
       if (academicYear && academicYear !== "all") params.set("academicYear", academicYear);
       const res = await fetch(`/api/teacher-audit/teachers?${params.toString()}`);
       const data = await res.json();
+      console.log("Fetched teachers", data);
       setTeachers(data.teachers ?? []);
     } catch {
       setTeachers([]);
@@ -65,6 +75,7 @@ export default function TeacherAuditTab() {
         `/api/teacher-audit/${teacherId}/records?${params.toString()}`
       );
       const data = await res.json();
+      //console.log("Loaded records for", teacherId, data);
       setRecordsByTeacher((prev) => ({
         ...prev,
         [teacherId]: data.records ?? [],
@@ -90,44 +101,45 @@ export default function TeacherAuditTab() {
     if (!recordsByTeacher[teacherId]) loadRecords(teacherId);
   };
 
-const saveRecord = async () => {
-  const teacherId = expandedTeacherId;
-  if (!teacherId) return;
+  const saveRecord = async () => {
+    const teacherId = expandedTeacherId;
+    if (!teacherId) return;
 
-  setSaving(true);
+    setSaving(true);
 
-  try {
-    const payload = {
-      category: category || "OTHER",
-      customCategory: category ? null : customCategory.trim(),
-      scoreImpact, // ✅ send raw impact
-      ...(description.trim() && { description: description.trim() }),
-    };
+    try {
+      const payload = {
+        category: category || "OTHER",
+        customCategory: category ? null : customCategory.trim(),
+        scoreImpact, // ✅ send raw impact
+        academicYear,
+        ...(description.trim() && { description: description.trim() }),
+      };
 
-    const res = await fetch(`/api/teacher-audit/${teacherId}/records`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+      const res = await fetch(`/api/teacher-audit/${teacherId}/records`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Failed to save");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to save");
 
-    await loadRecords(teacherId);
-    await fetchTeachers();
+      await loadRecords(teacherId);
+      await fetchTeachers();
 
-    setDescription("");
-    setCustomCategory("");
-    setCategory("");
-  } catch (e) {
-    alert(e instanceof Error ? e.message : "Failed to save");
-  } finally {
-    setSaving(false);
-  }
-};
+      setDescription("");
+      setCustomCategory("");
+      setCategory("");
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  };
 
 
-  
+
 
   return (
     <div className="space-y-4 sm:space-y-6 px-3 md:px-0 overflow-x-hidden">
@@ -145,7 +157,7 @@ const saveRecord = async () => {
           })
         }
         recordCount={teachers.length}
-        onSearchSubmit={() => {}}
+        onSearchSubmit={() => { }}
         placeholder="Search teacher..."
       />
 
