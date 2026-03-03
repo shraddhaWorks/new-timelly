@@ -207,6 +207,7 @@ export default function PortalSettingsPanel({ portal }: { portal: PortalVariant 
               detail: { photoUrl },
             })
           );
+          localStorage.setItem("timelly:profile-updated", String(Date.now()));
         }
         toast.show("Profile photo updated and saved.", "success");
       } catch (error) {
@@ -245,6 +246,7 @@ export default function PortalSettingsPanel({ portal }: { portal: PortalVariant 
             detail: { photoUrl: form.photoUrl || null },
           })
         );
+        localStorage.setItem("timelly:profile-updated", String(Date.now()));
       }
       await savePassword(passwords, passwordDirty, setPasswordSaving);
       localStorage.setItem(prefKey, JSON.stringify(prefs));

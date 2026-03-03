@@ -70,6 +70,7 @@ const EditTeacher = ({ teacher, onClose, onSave }: Props) => {
             },
           })
         );
+        localStorage.setItem("timelly:profile-updated", String(Date.now()));
       }
 
       onClose();

@@ -13,6 +13,18 @@ const ALLOWED_DOC_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 
+function isTransientUploadError(message: string) {
+  const m = message.toLowerCase();
+  return (
+    m.includes("timeout") ||
+    m.includes("timed out") ||
+    m.includes("fetch failed") ||
+    m.includes("network") ||
+    m.includes("econnreset") ||
+    m.includes("enotfound")
+  );
+}
+
 async function saveLocally(file: File, folder: string, safeName: string) {
   const localFolder = folder.replace(/[^a-zA-Z0-9/_-]/g, "").replace(/^\/+/, "");
   const relPath = path.posix.join("uploads", localFolder || "images", `${Date.now()}-${safeName}`);
@@ -20,7 +32,7 @@ async function saveLocally(file: File, folder: string, safeName: string) {
   await mkdir(path.dirname(absPath), { recursive: true });
   const buffer = Buffer.from(await file.arrayBuffer());
   await writeFile(absPath, buffer);
-  return `/${relPath}`;
+  return { url: `/${relPath}`, path: relPath };
 }
 
 export async function POST(req: Request) {
@@ -28,6 +40,43 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+    const isDev = process.env.NODE_ENV !== "production";
+
+    if (!supabaseAdmin && !isDev) {
+      return NextResponse.json(
+        { message: "Upload not configured on server. Missing Supabase credentials." },
+        { status: 503 }
+      );
+    }
+
+    if (supabaseAdmin) {
+      const { data: bucketInfo, error: bucketError } = await supabaseAdmin.storage.getBucket(
+        SUPABASE_BUCKET
+      );
+      if (bucketError || !bucketInfo) {
+        console.error("Supabase bucket check failed:", {
+          bucket: SUPABASE_BUCKET,
+          message: bucketError?.message ?? "Bucket not found",
+          statusCode: bucketError?.statusCode ?? null,
+          error: bucketError?.error ?? null,
+        });
+        if (!isDev) {
+          return NextResponse.json(
+            {
+              message:
+                "Storage bucket is unavailable. Check SUPABASE_STORAGE_BUCKET and SUPABASE_SERVICE_ROLE_KEY.",
+              details: {
+                bucket: SUPABASE_BUCKET,
+                reason: bucketError?.message ?? "Bucket not found",
+                code: bucketError?.statusCode ?? null,
+                type: bucketError?.error ?? null,
+              },
+            },
+            { status: 502 }
+          );
+        }
+      }
     }
 
     const formData = await req.formData();
@@ -67,31 +116,70 @@ export async function POST(req: Request) {
 
     const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_").slice(0, 80);
     const storagePath = `${folder}/${Date.now()}-${safeName}`;
+    const buffer = Buffer.from(await file.arrayBuffer());
+    let data:
+      | {
+          path: string;
+          id: string;
+          fullPath: string;
+        }
+      | null = null;
+    let error: {
+      message: string;
+      statusCode?: string;
+      error?: string;
+    } | null = null;
 
-    if (supabaseAdmin) {
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const { data, error } = await supabaseAdmin.storage
+    for (let attempt = 1; supabaseAdmin && attempt <= 2; attempt++) {
+      const result = await supabaseAdmin.storage
         .from(SUPABASE_BUCKET)
         .upload(storagePath, buffer, {
           contentType: file.type,
           upsert: false,
         });
 
-      if (!error && data?.path) {
-        const { data: urlData } = supabaseAdmin.storage
-          .from(SUPABASE_BUCKET)
-          .getPublicUrl(data.path);
+      data = result.data;
+      error = result.error;
 
-        return NextResponse.json({ url: urlData.publicUrl, path: data.path, provider: "supabase" });
+      if (!error || data?.path) break;
+      if (attempt < 2 && isTransientUploadError(error.message || "")) {
+        await new Promise((r) => setTimeout(r, 300));
+        continue;
       }
-
-      console.error("Supabase upload error, falling back to local:", error);
-    } else {
-      console.warn("Supabase not configured, using local upload fallback.");
+      break;
     }
 
-    const localUrl = await saveLocally(file, folder, safeName);
-    return NextResponse.json({ url: localUrl, path: localUrl.replace(/^\//, ""), provider: "local" });
+    if (!error && data?.path && supabaseAdmin) {
+      const { data: urlData } = supabaseAdmin.storage
+        .from(SUPABASE_BUCKET)
+        .getPublicUrl(data.path);
+
+      return NextResponse.json({ url: urlData.publicUrl, path: data.path, provider: "supabase" });
+    }
+
+    if (isDev) {
+      const local = await saveLocally(file, folder, safeName);
+      return NextResponse.json({ url: local.url, path: local.path, provider: "local-dev" });
+    }
+
+    if (error || !data?.path) {
+      const details = {
+        bucket: SUPABASE_BUCKET,
+        path: storagePath,
+        message: error?.message ?? "Unknown upload error",
+        code: error?.statusCode ?? null,
+        type: error?.error ?? null,
+      };
+      console.error("Supabase upload error:", details);
+      return NextResponse.json(
+        {
+          message: error?.message || "Upload failed at storage provider.",
+          details,
+        },
+        { status: 502 }
+      );
+    }
+    return NextResponse.json({ message: "Upload failed." }, { status: 502 });
   } catch (e) {
     console.error("Upload API error:", e);
     return NextResponse.json(

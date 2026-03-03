@@ -122,6 +122,11 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
     const onUpdated = () => {
       void refreshLiveProfile();
     };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "timelly:profile-updated") {
+        void refreshLiveProfile();
+      }
+    };
     const onVisible = () => {
       if (document.visibilityState === "visible") {
         void refreshLiveProfile();
@@ -130,11 +135,13 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
     window.addEventListener("teacher-profile-updated", onUpdated);
     window.addEventListener("profile-updated", onUpdated);
     window.addEventListener("focus", onUpdated);
+    window.addEventListener("storage", onStorage);
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       window.removeEventListener("teacher-profile-updated", onUpdated);
       window.removeEventListener("profile-updated", onUpdated);
       window.removeEventListener("focus", onUpdated);
+      window.removeEventListener("storage", onStorage);
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, [refreshLiveProfile]);

@@ -15,7 +15,13 @@ export async function uploadImage(file: File, folder = "images"): Promise<string
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data?.message || "Upload failed");
+    const details =
+      data?.details && typeof data.details === "object"
+        ? ` (${Object.entries(data.details)
+            .map(([k, v]) => `${k}: ${String(v)}`)
+            .join(", ")})`
+        : "";
+    throw new Error(`Upload failed [${res.status}]: ${data?.message || "Unknown error"}${details}`);
   }
   if (!data?.url) {
     throw new Error("No URL returned from upload");
