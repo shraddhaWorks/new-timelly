@@ -37,7 +37,12 @@ export async function GET(
         students: {
           include: {
             user: {
-              select: { id: true, name: true, email: true },
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                photoUrl: true  
+              },
             },
           },
         },
