@@ -427,7 +427,7 @@ export default function TeacherLeave() {
                       </td>
                       <td className="px-6 py-5 max-w-[200px]">
                         <div className=" text-sm text-white/80">{leave.reason}</div>
-                        <div className="text-[12px] text-white/30 mt-1 truncate">{leave.remarks || "Approved"}</div>
+                        <div className="text-[12px] text-white/30 mt-1">{leave.remarks || ""}</div>
                       </td>
                       <td className="px-4 py-5">
                         <div className="flex justify-end gap-3">
