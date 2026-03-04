@@ -95,7 +95,7 @@ export default function ParentHomeUpdatesSection({ feeds, events }: Props) {
                   <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={feed.photo || "https://i.pravatar.cc/120?img=11"}
+                      src={feed.createdBy?.photoUrl || "https://i.pravatar.cc/120?img=11"}
                       alt={feed.createdBy?.name ?? "School"}
                       className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl object-cover border border-white/[0.1] flex-shrink-0"
                     />
