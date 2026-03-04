@@ -384,9 +384,9 @@ export default function TeacherLeave() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-white/10 text-white/30 text-[11px] uppercase tracking-[0.2em] bg-white/5">
-                  <th className="px-6 py-4 font-bold">Type</th>
-                  <th className="px-6 py-4 font-bold">Dates</th>
-                  <th className="px-6 py-4 font-bold text-center">Days</th>
+                  <th className="px-4 py-4 font-bold">Type</th>
+                  <th className="px-4 py-4 font-bold">Dates</th>
+                  <th className="px-4 py-4 font-bold text-center">Days</th>
                   <th className="px-6 py-4 font-bold text-center">Status</th>
                   <th className="px-6 py-4 font-bold">Reason/Remarks</th>
                   <th className="px-6 py-4 font-bold text-right">Actions</th>
@@ -397,9 +397,9 @@ export default function TeacherLeave() {
                   const days = Math.ceil((new Date(leave.toDate).getTime() - new Date(leave.fromDate).getTime()) / (1000 * 60 * 60 * 24)) + 1;
                   return (
                     <tr key={leave.id} className="group hover:bg-white/[0.02] transition-colors">
-                      <td className="px-6 py-5 font-bold text-sm">{leaveTypeLabel(leave.leaveType)}</td>
-                      <td className="px-6 py-5 text-white/60 text-sm">{leave.fromDate.split("T")[0]} - {leave.toDate.split("T")[0]}</td>
-                      <td className="px-6 py-5 text-center font-bold text-sm">{days}</td>
+                      <td className="px-4 py-5 font-bold text-sm">{leaveTypeLabel(leave.leaveType)}</td>
+                      <td className="px-4 py-5 text-white/60 text-sm">{leave.fromDate.split("T")[0]} - {leave.toDate.split("T")[0]}</td>
+                      <td className="px-4 py-5 text-center font-bold text-sm">{days}</td>
                       <td className="px-6 py-5 text-center">
                         <span className={`px-4 py-1.5 rounded-lg text-[11px] font-bold border ${statusStyle(leave.status)}`}>
                           {leave.status.replace("_", " ")}
