@@ -27,6 +27,7 @@ export type ParentFeed = {
   createdAt: string;
   createdBy?: {
     name?: string | null;
+    photoUrl?: string | null;
   } | null;
 };
 
