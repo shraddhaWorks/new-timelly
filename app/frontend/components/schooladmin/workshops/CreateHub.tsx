@@ -295,7 +295,7 @@ export default function CreateHub({ events }: CreateHubProps) {
       )}
 
       <div className="mt-6 grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
-        {/* Left: Workshop + Certificate + Position */}
+        {/* Left: Workshop + Certificate */}
         <div className="xl:col-span-1 space-y-6">
           {/* 1. Select Workshop */}
           <div>
@@ -406,6 +406,10 @@ export default function CreateHub({ events }: CreateHubProps) {
             </label>
           </div>
 
+        </div>
+
+        {/* Right: Name Position & Enrolled Students */}
+        <div className="xl:col-span-2 space-y-6">
           {/* 3. Name Position & Text Style */}
           <div>
             <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
@@ -414,99 +418,100 @@ export default function CreateHub({ events }: CreateHubProps) {
             <p className="mt-2 text-xs text-white/50 mb-3">
               Click on the certificate where the student name should appear
             </p>
-            {certificateUrl ? (
-              <div
-                className="relative rounded-xl overflow-hidden border-2 border-white/20 hover:border-lime-400/50 bg-black/30 transition-colors max-h-[200px] sm:max-h-[240px] flex items-center justify-center"
-                style={
-                  previewImgSize
-                    ? { aspectRatio: `${previewImgSize.w} / ${previewImgSize.h}` }
-                    : { aspectRatio: "3 / 2" }
-                }
-              >
-                <img
-                  src={certificateUrl}
-                  alt="Certificate preview"
-                  className="w-full h-full object-contain select-none cursor-crosshair"
-                  draggable={false}
-                  onClick={handlePreviewClick}
-                  onLoad={handlePreviewImgLoad}
-                />
-                {namePosition && (
-                  <div
-                    className="absolute pointer-events-none w-4 h-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-lime-400 bg-lime-400/40"
-                    style={{
-                      left: `${namePosition.xPercent * 100}%`,
-                      top: `${namePosition.yPercent * 100}%`,
-                    }}
+            <div className="mt-3 grid grid-cols-1 lg:grid-cols-[0.8fr_1.2fr] gap-4 items-stretch">
+              {certificateUrl ? (
+                <div
+                  className="relative rounded-xl overflow-hidden border-2 border-white/20 hover:border-lime-400/50 bg-black/30 transition-colors min-h-[200px] sm:min-h-[220px] flex items-center justify-center"
+                  style={
+                    previewImgSize
+                      ? { aspectRatio: `${previewImgSize.w} / ${previewImgSize.h}` }
+                      : { aspectRatio: "3 / 2" }
+                  }
+                >
+                  <img
+                    src={certificateUrl}
+                    alt="Certificate preview"
+                    className="w-full h-full object-contain select-none cursor-crosshair"
+                    draggable={false}
+                    onClick={handlePreviewClick}
+                    onLoad={handlePreviewImgLoad}
                   />
-                )}
-                {!namePosition && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
-                    <span className="text-sm text-white/70">Click on certificate to set name position</span>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="rounded-xl border border-dashed border-white/20 bg-black/20 aspect-[3/2] flex items-center justify-center text-white/40 text-sm">
-                Upload a certificate first
-              </div>
-            )}
-
-            {/* Text Style Options */}
-            <div className="mt-4 space-y-3">
-              <span className="text-xs font-medium text-white/70">Text style</span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="min-w-0">
-                  <label className="block text-xs text-white/50 mb-1">Font family</label>
-                  <select
-                    value={nameTextStyle.fontFamily}
-                    onChange={(e) =>
-                      setNameTextStyle((s) => ({ ...s, fontFamily: e.target.value }))
-                    }
-                    className="w-full rounded-lg bg-black/30 border border-white/20 text-sm text-white px-3 py-2 focus:outline-none focus:ring-1 focus:ring-lime-400/50"
-                  >
-                    <option value="Georgia">Georgia</option>
-                    <option value="Times New Roman">Times New Roman</option>
-                    <option value="Arial">Arial</option>
-                    <option value="Helvetica">Helvetica</option>
-                    <option value="Courier New">Courier New</option>
-                    <option value="Verdana">Verdana</option>
-                  </select>
-                </div>
-                <div className="min-w-0">
-                  <label className="block text-xs text-white/50 mb-1">Font size (px)</label>
-                  <input
-                    type="number"
-                    min={12}
-                    max={120}
-                    value={nameTextStyle.fontSize}
-                    onChange={(e) =>
-                      setNameTextStyle((s) => ({
-                        ...s,
-                        fontSize: Math.max(12, Math.min(120, Number(e.target.value) || 32)),
-                      }))
-                    }
-                    className="w-full rounded-lg bg-black/30 border border-white/20 text-sm text-white px-3 py-2 focus:outline-none focus:ring-1 focus:ring-lime-400/50"
-                  />
-                </div>
-                <div className="min-w-0 sm:col-span-2">
-                  <label className="block text-xs text-white/50 mb-1">Font color</label>
-                  <div className="flex gap-2 min-w-0">
-                    <input
-                      type="color"
-                      value={nameTextStyle.fontColor}
-                      onChange={(e) =>
-                        setNameTextStyle((s) => ({ ...s, fontColor: e.target.value }))
-                      }
-                      className="h-9 w-12 shrink-0 rounded cursor-pointer border border-white/20 bg-black/30"
+                  {namePosition && (
+                    <div
+                      className="absolute pointer-events-none w-4 h-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-lime-400 bg-lime-400/40"
+                      style={{
+                        left: `${namePosition.xPercent * 100}%`,
+                        top: `${namePosition.yPercent * 100}%`,
+                      }}
                     />
+                  )}
+                  {!namePosition && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
+                      <span className="text-sm text-white/70">Click on certificate to set name position</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-white/20 bg-black/20 aspect-[3/2] min-h-[200px] sm:min-h-[220px] flex items-center justify-center text-white/40 text-sm">
+                  Upload a certificate first
+                </div>
+              )}
+
+              {/* Text Style Options */}
+              <div className="space-y-3 rounded-xl border border-white/10 bg-black/20 p-4 h-full">
+                <span className="text-xs font-medium text-white/70">Text style</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="min-w-0">
+                    <label className="block text-xs text-white/50 mb-1">Font family</label>
+                    <select
+                      value={nameTextStyle.fontFamily}
+                      onChange={(e) =>
+                        setNameTextStyle((s) => ({ ...s, fontFamily: e.target.value }))
+                      }
+                      className="w-full rounded-lg bg-black/30 border border-white/20 text-sm text-white px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-lime-400/50"
+                    >
+                      <option value="Georgia">Georgia</option>
+                      <option value="Times New Roman">Times New Roman</option>
+                      <option value="Arial">Arial</option>
+                      <option value="Helvetica">Helvetica</option>
+                      <option value="Courier New">Courier New</option>
+                      <option value="Verdana">Verdana</option>
+                    </select>
+                  </div>
+                  <div className="min-w-0">
+                    <label className="block text-xs text-white/50 mb-1">Font size (px)</label>
+                    <input
+                      type="number"
+                      min={12}
+                      max={120}
+                      value={nameTextStyle.fontSize}
+                      onChange={(e) =>
+                        setNameTextStyle((s) => ({
+                          ...s,
+                          fontSize: Math.max(12, Math.min(120, Number(e.target.value) || 32)),
+                        }))
+                      }
+                      className="w-full rounded-lg bg-black/30 border border-white/20 text-sm text-white px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-lime-400/50"
+                    />
+                  </div>
+                  <div className="min-w-0 sm:col-span-2">
+                    <label className="block text-xs text-white/50 mb-1">Font color</label>
+                    <div className="flex gap-2 min-w-0">
+                      <input
+                        type="color"
+                        value={nameTextStyle.fontColor}
+                        onChange={(e) =>
+                          setNameTextStyle((s) => ({ ...s, fontColor: e.target.value }))
+                        }
+                        className="h-9 w-12 shrink-0 rounded cursor-pointer border border-white/20 bg-black/30"
+                      />
                     <input
                       type="text"
                       value={nameTextStyle.fontColor}
                       onChange={(e) =>
                         setNameTextStyle((s) => ({ ...s, fontColor: e.target.value || "#1a1a1a" }))
                       }
-                      className="min-w-0 flex-1 rounded-lg bg-black/30 border border-white/20 text-sm text-white px-3 py-2 focus:outline-none focus:ring-1 focus:ring-lime-400/50"
+                      className="min-w-0 flex-1 rounded-lg bg-black/30 border border-white/20 text-sm text-white px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-lime-400/50"
                       placeholder="#1a1a1a"
                     />
                   </div>
@@ -521,57 +526,55 @@ export default function CreateHub({ events }: CreateHubProps) {
                         fontWeight: e.target.value as "normal" | "bold",
                       }))
                     }
-                    className="w-full rounded-lg bg-black/30 border border-white/20 text-sm text-white px-3 py-2 focus:outline-none focus:ring-1 focus:ring-lime-400/50"
+                    className="w-full rounded-lg bg-black/30 border border-white/20 text-sm text-white px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-lime-400/50"
                   >
-                    <option value="normal">Normal</option>
-                    <option value="bold">Bold</option>
-                  </select>
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-xs text-white/50 mb-1">Text align</label>
-                  <div className="flex gap-2">
-                    {(["left", "center", "right"] as const).map((align) => (
-                      <button
-                        key={align}
-                        type="button"
-                        onClick={() =>
-                          setNameTextStyle((s) => ({ ...s, textAlign: align }))
-                        }
-                        className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                          nameTextStyle.textAlign === align
-                            ? "bg-lime-400 text-black"
-                            : "bg-black/30 border border-white/20 text-white/70 hover:bg-white/10"
-                        }`}
-                      >
-                        {align.charAt(0).toUpperCase() + align.slice(1)}
-                      </button>
-                    ))}
+                      <option value="normal">Normal</option>
+                      <option value="bold">Bold</option>
+                    </select>
                   </div>
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-xs text-white/50 mb-1">Preview</label>
-                  <div className="rounded-lg border border-white/20 bg-white/5 px-4 py-3 min-h-[48px] flex items-center">
-                    <span
-                      className="block w-full"
-                      style={{
-                        fontFamily: nameTextStyle.fontFamily,
-                        fontSize: Math.min(24, nameTextStyle.fontSize),
-                        fontWeight: nameTextStyle.fontWeight,
-                        color: nameTextStyle.fontColor,
-                        textAlign: nameTextStyle.textAlign,
-                      }}
-                    >
-                      Student Name
-                    </span>
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs text-white/50 mb-1">Text align</label>
+                    <div className="flex gap-2">
+                      {(["left", "center", "right"] as const).map((align) => (
+                        <button
+                          key={align}
+                          type="button"
+                          onClick={() =>
+                            setNameTextStyle((s) => ({ ...s, textAlign: align }))
+                          }
+                          className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                            nameTextStyle.textAlign === align
+                              ? "bg-lime-400 text-black"
+                              : "bg-black/30 border border-white/20 text-white/70 hover:bg-white/10"
+                          }`}
+                        >
+                          {align.charAt(0).toUpperCase() + align.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs text-white/50 mb-1">Preview</label>
+                    <div className="rounded-lg border border-white/20 bg-white/5 px-4 py-3 min-h-[48px] flex items-center">
+                      <span
+                        className="block w-full"
+                        style={{
+                          fontFamily: nameTextStyle.fontFamily,
+                          fontSize: Math.min(24, nameTextStyle.fontSize),
+                          fontWeight: nameTextStyle.fontWeight,
+                          color: nameTextStyle.fontColor,
+                          textAlign: nameTextStyle.textAlign,
+                        }}
+                      >
+                        Student Name
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Right: Enrolled Students */}
-        <div className="xl:col-span-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
               4. Select Students ({selectedCount} selected)
