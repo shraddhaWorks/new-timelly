@@ -67,8 +67,8 @@ export default function FeesTab() {
   }
 
   return (
-    <div className="min-h-screen text-white overflow-x-hidden">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen text-white overflow-x-hidden w-full">
+      <div className="w-full space-y-6 px-3 sm:px-4 md:px-6">
         <PageHeader
           title="Fees Management"
           subtitle="Track and manage student fee payments with detailed breakdowns"
