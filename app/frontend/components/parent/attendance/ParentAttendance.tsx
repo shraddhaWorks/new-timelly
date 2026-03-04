@@ -414,7 +414,7 @@ export default function ParentAttendanceTab() {
                       bg,
                       cell.isCurrentMonth ? "hover:brightness-110" : "cursor-default pointer-events-none",
                       cell.isSelected
-                        ? "!bg-white !text-black !border-lime-300/90 shadow-[inset_0_0_0_2px_rgba(180,243,120,0.95)]"
+                        ? "!border-white/90 shadow-[inset_0_0_0_2px_rgba(255,255,255,0.7)]"
                         : "",
                       cell.isToday && !cell.isSelected ? "ring-1 ring-white/35" : "",
                     ].join(" ")}
