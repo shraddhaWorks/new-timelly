@@ -103,10 +103,29 @@ export function addMonths(date: Date, delta: number): Date {
 }
 
 export function parseApiDateKey(value: string): string | null {
+  if (!value) return null;
+  const hasTime = value.includes("T");
+  const datePart = hasTime ? value.split("T")[0] : value.split(" ")[0];
+  const parts = datePart.split("-").map(Number);
+  if (parts.length === 3 && parts[0] > 31) {
+    const [year, month, day] = parts;
+    if (hasTime) {
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) return null;
+      const utc = new Date(
+        parsed.getUTCFullYear(),
+        parsed.getUTCMonth(),
+        parsed.getUTCDate()
+      );
+      return toDateKey(utc);
+    }
+    const local = new Date(year, (month ?? 1) - 1, day ?? 1);
+    return Number.isNaN(local.getTime()) ? null : toDateKey(local);
+  }
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime())
     ? null
-    : toDateKey(new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate()));
+    : toDateKey(new Date(parsed.getUTCFullYear(), parsed.getUTCMonth(), parsed.getUTCDate()));
 }
 
 export function normalizeStatus(status: string): AttendanceStatus | null {

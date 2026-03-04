@@ -210,7 +210,7 @@ export default function ParentCertificatesTab() {
           <StatCard className="relative h-24 md:h-28 p-4 md:p-6 rounded-2xl">
             <div>
               <span className="text-xs uppercase text-white/70">Processing</span>
-              <div className="text-xl md:text-2xl font-semibold">
+              <div className="text-xl md:text-2xl font-semibold text-white">
                 {pendingRequests.length}
               </div>
             </div>
@@ -220,7 +220,7 @@ export default function ParentCertificatesTab() {
           <StatCard className="relative h-24 md:h-28 p-4 md:p-6 rounded-2xl">
             <div>
               <span className="text-xs uppercase text-white/70">Total Issued</span>
-              <div className="text-xl md:text-2xl font-semibold">
+              <div className="text-xl md:text-2xl font-semibold text-white">
                 {totalIssued}
               </div>
             </div>
@@ -381,9 +381,9 @@ export default function ParentCertificatesTab() {
                       required
                       className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-[#A3E635]/50 focus:border-[#A3E635]"
                     >
-                      <option value="">Select type</option>
+                      <option value="" className="text-gray-700 bg-white">Select type</option>
                       {certificateTypes.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
+                        <option key={opt.value} value={opt.value} className="text-black bg-white">
                           {opt.label}
                         </option>
                       ))}

@@ -1,7 +1,7 @@
 "use client";
 
 import { Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import SearchInput from "../../common/SearchInput";
 import CircularNoticeCard from "../../common/CircularNoticeCard";
 import { ParentCircular } from "./types";
@@ -24,6 +24,8 @@ function normalizeImportance(value?: string | null): ImportanceFilter {
 export default function ParentHomeCircularsSection({ circulars }: Props) {
   const [search, setSearch] = useState("");
   const [importance, setImportance] = useState<ImportanceFilter>("all");
+  const [page, setPage] = useState(1);
+  const pageSize = 6;
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -39,6 +41,16 @@ export default function ParentHomeCircularsSection({ circulars }: Props) {
       return matchImportance && matchQuery;
     });
   }, [circulars, importance, search]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [importance, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const startIndex = (safePage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const pagedCirculars = filtered.slice(startIndex, endIndex);
 
   return (
     <section className="space-y-4 sm:space-y-5">
@@ -95,20 +107,52 @@ export default function ParentHomeCircularsSection({ circulars }: Props) {
           No circulars found for the selected filters.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {filtered.map((c, index) => (
-            <CircularNoticeCard
-              key={c.id}
-              referenceNumber={c.referenceNumber}
-              subject={c.subject}
-              content={c.content}
-              publishStatus={c.publishStatus}
-              date={c.date}
-              issuedBy={c.issuedBy?.name ?? "School Admin"}
-              attachments={c.attachments}
-              accentClassName={ACCENT_COLORS[index % ACCENT_COLORS.length]}
-            />
-          ))}
+        <div className="space-y-4 sm:space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {pagedCirculars.map((c, index) => (
+              <CircularNoticeCard
+                key={c.id}
+                referenceNumber={c.referenceNumber}
+                subject={c.subject}
+                content={c.content}
+                publishStatus={c.publishStatus}
+                date={c.date}
+                issuedBy={c.issuedBy?.name ?? "School Admin"}
+                attachments={c.attachments}
+                accentClassName={ACCENT_COLORS[index % ACCENT_COLORS.length]}
+              />
+            ))}
+          </div>
+
+          {filtered.length > pageSize && (
+            <div className="flex flex-wrap items-center justify-between gap-3 px-2 text-white/70">
+              <div className="text-xs">
+                Showing {Math.min(startIndex + 1, filtered.length)}-
+                {Math.min(endIndex, filtered.length)} of {filtered.length}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={safePage === 1}
+                  className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/10"
+                >
+                  Prev
+                </button>
+                <div className="text-xs">
+                  Page {safePage} of {totalPages}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={safePage === totalPages}
+                  className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/10"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </section>

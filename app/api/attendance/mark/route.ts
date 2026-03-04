@@ -56,8 +56,14 @@ export async function POST(req: Request) {
     // Allow teachers to mark attendance for any class in their school
     // (Removed strict assignment check for flexibility)
 
-    const dateObj = new Date(date);
-    const dateOnly = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+    const dateOnly = (() => {
+      if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        const [y, m, d] = date.split("-").map(Number);
+        return new Date(Date.UTC(y, (m ?? 1) - 1, d ?? 1));
+      }
+      const parsed = new Date(date);
+      return new Date(Date.UTC(parsed.getUTCFullYear(), parsed.getUTCMonth(), parsed.getUTCDate()));
+    })();
 
     // Create or update attendance records
     const results = await Promise.all(

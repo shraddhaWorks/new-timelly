@@ -45,15 +45,23 @@ export async function GET(req: Request) {
       }
     }
 
+    const toUtcDateOnly = (value: string) => {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        const [y, m, d] = value.split("-").map(Number);
+        return new Date(Date.UTC(y, (m ?? 1) - 1, d ?? 1));
+      }
+      const parsed = new Date(value);
+      return new Date(Date.UTC(parsed.getUTCFullYear(), parsed.getUTCMonth(), parsed.getUTCDate()));
+    };
+
     if (date) {
-      const dateObj = new Date(date);
-      where.date = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+      where.date = toUtcDateOnly(date);
     }
 
     if (startDate && endDate) {
       where.date = {
-        gte: new Date(startDate),
-        lte: new Date(endDate),
+        gte: toUtcDateOnly(startDate),
+        lte: toUtcDateOnly(endDate),
       };
     }
     const attendances = await prisma.attendance.findMany({

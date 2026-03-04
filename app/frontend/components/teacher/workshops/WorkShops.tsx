@@ -2,7 +2,6 @@
 
 import HeaderActionButton from "../../common/HeaderActionButton";
 import PageHeader from "../../common/PageHeader";
-import CreateHub from "../../schooladmin/workshops/CreateHub";
 import CreateEventForm from "../../schooladmin/workshops/CreateEventForm";
 import EventCard from "../../schooladmin/workshops/EventCard";
 import EventDetailsModal from "../../schooladmin/workshops/EventDetailsModal";
@@ -253,7 +252,6 @@ export default function TeacherWorkshopsTab() {
           <StatTile title="COMPLETED" value={`${stats.completed}`} icon={<CheckCircle size={24} />} />
         </div>
 
-        <CreateHub events={events} />
 
         {activeAction === "workshop" && (
           <div ref={formRef}>
