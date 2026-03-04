@@ -75,7 +75,7 @@ export async function GET() {
       prisma.newsFeed.findMany({
         where: { schoolId: student.schoolId },
         include: {
-          createdBy: { select: { name: true } },
+          createdBy: { select: { name: true, photoUrl: true } },
           likedBy: {
             where: { userId: session.user.id },
             select: { id: true },
@@ -147,7 +147,7 @@ export async function GET() {
           likes: f.likes,
           likedByMe: f.likedBy.length > 0,
           createdAt: f.createdAt.toISOString(),
-          createdBy: { name: f.createdBy?.name ?? null },
+          createdBy: { name: f.createdBy?.name ?? null, photoUrl: f.createdBy?.photoUrl ?? null },
         })),
       },
       { status: 200 }
