@@ -37,6 +37,8 @@ function statusStyle(s: string) {
 
 }
 
+
+
 export default function TeacherLeave() {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -319,11 +321,18 @@ export default function TeacherLeave() {
                     </div>
 
                     <span
-                      className={`px-3 py-1 rounded-lg text-[10px] font-bold border ${statusStyle(
+                      className={`inline-flex flex-col items-center justify-center px-3 py-1 rounded-lg text-[10px] font-bold border leading-tight ${statusStyle(
                         leave.status
                       )}`}
                     >
-                      {leave.status.replace("_", " ")}
+                      {leave.status === "CONDITIONALLY_APPROVED" ? (
+                        <>
+                          <span>CONDITIONALLY</span>
+                          <span>APPROVED</span>
+                        </>
+                      ) : (
+                        leave.status.replace(/_/g, " ")
+                      )}
                     </span>
                   </div>
 
@@ -387,9 +396,9 @@ export default function TeacherLeave() {
                   <th className="px-4 py-4 font-bold">Type</th>
                   <th className="px-4 py-4 font-bold">Dates</th>
                   <th className="px-4 py-4 font-bold text-center">Days</th>
-                  <th className="px-6 py-4 font-bold text-center">Status</th>
+                  <th className="px-4 py-4 font-bold text-center">Status</th>
                   <th className="px-6 py-4 font-bold">Reason/Remarks</th>
-                  <th className="px-6 py-4 font-bold text-right">Actions</th>
+                  <th className="px-4 py-4 font-bold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -401,15 +410,26 @@ export default function TeacherLeave() {
                       <td className="px-4 py-5 text-white/60 text-sm">{leave.fromDate.split("T")[0]} - {leave.toDate.split("T")[0]}</td>
                       <td className="px-4 py-5 text-center font-bold text-sm">{days}</td>
                       <td className="px-6 py-5 text-center">
-                        <span className={`px-4 py-1.5 rounded-lg text-[11px] font-bold border ${statusStyle(leave.status)}`}>
-                          {leave.status.replace("_", " ")}
+                        <span
+                          className={`inline-flex flex-col items-center justify-center px-4 py-1.5 rounded-lg text-[11px] font-bold border leading-tight ${statusStyle(
+                            leave.status
+                          )}`}
+                        >
+                          {leave.status === "CONDITIONALLY_APPROVED" ? (
+                            <>
+                              <span>CONDITIONALLY</span>
+                              <span>APPROVED</span>
+                            </>
+                          ) : (
+                            leave.status.replace(/_/g, " ")
+                          )}
                         </span>
                       </td>
                       <td className="px-6 py-5 max-w-[200px]">
                         <div className=" text-sm text-white/80">{leave.reason}</div>
                         <div className="text-[12px] text-white/30 mt-1 truncate">{leave.remarks || "Approved"}</div>
                       </td>
-                      <td className="px-6 py-5">
+                      <td className="px-4 py-5">
                         <div className="flex justify-end gap-3">
                           {leave.status === "PENDING" && (
                             <>
