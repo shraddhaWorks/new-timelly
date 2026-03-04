@@ -54,14 +54,18 @@ export default function AnalysisDashboard() {
   const [data, setData] = useState<AnalysisResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [year, setYear] = useState(new Date().getFullYear());
+  // year is the start academic year; 0 indicates not yet loaded
+  const [year, setYear] = useState<number>(0);
   const [classId, setClassId] = useState("");
 
   useEffect(() => {
     setLoading(true);
     setError(null);
-    const params = new URLSearchParams({ year: String(year) });
+
+    const params = new URLSearchParams();
+    if (year !== 0) params.set("year", String(year));
     if (classId) params.set("classId", classId);
+
     fetch(`/api/school/analysis?${params}`, { credentials: "include" })
       .then((res) => res.json())
       .then((res: AnalysisResponse & { message?: string }) => {
@@ -71,6 +75,10 @@ export default function AnalysisDashboard() {
           return;
         }
         setData(res as AnalysisResponse);
+        // ensure year matches server suggestion
+        if (year === 0 && res.selectedYear) {
+          setYear(res.selectedYear);
+        }
       })
       .catch(() => {
         setError("Failed to load analysis");
@@ -102,7 +110,7 @@ export default function AnalysisDashboard() {
       value: data.stats.feesCollected >= 100000
         ? `₹${(data.stats.feesCollected / 100000).toFixed(1)}L`
         : `₹${data.stats.feesCollected.toLocaleString()}`,
-      change: `${data.selectedYear}-${data.selectedYear + 1}`,
+      change: "vs last month",
       icon: IndianRupee,
       iconColor: "text-lime-400",
       iconBorder: "border-lime-400/30",
@@ -112,7 +120,7 @@ export default function AnalysisDashboard() {
     {
       title: "Total Enrollment",
       value: data.stats.totalEnrollment.toLocaleString(),
-      change: "Current students",
+      change: "New admissions",
       icon: Users,
       iconColor: "text-sky-400",
       iconBorder: "border-sky-400/30",
@@ -123,9 +131,9 @@ export default function AnalysisDashboard() {
       title: "Avg Teacher Rating",
       value:
         data.stats.avgTeacherRating > 0
-          ? `${data.stats.avgTeacherRating}%`
+          ? `${data.stats.avgTeacherRating} / 5`
           : "—",
-      change: "By student exam performance",
+      change: "Based on student feedback",
       icon: Star,
       iconColor: "text-purple-300",
       iconBorder: "border-purple-300/30",
@@ -135,7 +143,7 @@ export default function AnalysisDashboard() {
     {
       title: "Avg Exam Score",
       value: `${data.stats.avgExamScore}%`,
-      change: "Across subjects",
+      change: "vs last year",
       icon: Award,
       iconColor: "text-yellow-400",
       iconBorder: "border-yellow-400/30",
@@ -216,7 +224,13 @@ export default function AnalysisDashboard() {
             </div>
             <div className="relative">
               <select
-                value={year}
+                value={
+                  year !== 0
+                    ? year
+                    : data.availableYears && data.availableYears.length > 0
+                    ? data.availableYears[0]
+                    : ""
+                }
                 onChange={(e) => setYear(Number(e.target.value))}
                 className="
                   appearance-none
@@ -356,8 +370,13 @@ export default function AnalysisDashboard() {
                 tickLine={false}
                 axisLine={false}
               />
-              <YAxis {...axisStyle} tickLine={false} axisLine={false} />
-              <Tooltip />
+              <YAxis
+                {...axisStyle}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(v) => `${v}%`}
+              />
+              <Tooltip formatter={(value: any) => `${value}%`} />
               <Line
                 type="monotone"
                 dataKey="students"
@@ -377,7 +396,7 @@ export default function AnalysisDashboard() {
         <div className="rounded-xl sm:rounded-2xl p-4 sm:p-5 bg-white/10 backdrop-blur-md min-h-[280px] sm:min-h-[320px]">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div className="flex items-center gap-2">
-              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400 shrink-0" />
+              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400 bg-dark-400 shrink-0" />
               <h3 className="font-semibold text-white text-xs sm:text-sm">
                 Subject Performance
               </h3>
@@ -452,9 +471,9 @@ export default function AnalysisDashboard() {
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-lime-400 font-bold text-sm sm:text-base">
-                    {t.rating}%
+                    {t.rating.toFixed(1)}
                   </p>
-                  <p className="text-[10px] text-white/40">Score</p>
+                  <p className="text-[10px] text-white/40">Rating</p>
                 </div>
               </div>
             ))}
