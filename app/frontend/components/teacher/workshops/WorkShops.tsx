@@ -2,11 +2,12 @@
 
 import HeaderActionButton from "../../common/HeaderActionButton";
 import PageHeader from "../../common/PageHeader";
+import SearchInput from "../../common/SearchInput";
 import CreateEventForm from "../../schooladmin/workshops/CreateEventForm";
 import EventCard from "../../schooladmin/workshops/EventCard";
 import EventDetailsModal from "../../schooladmin/workshops/EventDetailsModal";
 import DeleteEventModal from "../../schooladmin/workshops/DeleteEventModal";
-import { CalendarDays, CheckCircle, List, LucideIcon, Plus, Users, X } from "lucide-react";
+import { CalendarDays, CheckCircle, List, LucideIcon, Plus, Search, Users, X } from "lucide-react";
 import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 interface EventItem {
@@ -41,6 +42,7 @@ export default function TeacherWorkshopsTab() {
   const [editingEvent, setEditingEvent] = useState<EventItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<EventItem | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [search, setSearch] = useState("");
   const formRef = useRef<HTMLDivElement | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 3;
@@ -68,7 +70,7 @@ export default function TeacherWorkshopsTab() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [events.length]);
+  }, [events.length, search]);
 
   useEffect(() => {
     if (activeAction !== "workshop") return;
@@ -131,9 +133,26 @@ export default function TeacherWorkshopsTab() {
     };
   }, [events]);
 
-  const totalPages = Math.max(1, Math.ceil(events.length / pageSize));
+  const filteredEvents = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return events;
+    return events.filter((event) => {
+      const title = event.title?.toLowerCase() ?? "";
+      const desc = event.description?.toLowerCase() ?? "";
+      const location = event.location?.toLowerCase() ?? "";
+      const mode = event.mode?.toLowerCase() ?? "";
+      return (
+        title.includes(q) ||
+        desc.includes(q) ||
+        location.includes(q) ||
+        mode.includes(q)
+      );
+    });
+  }, [events, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredEvents.length / pageSize));
   const clampedPage = Math.min(currentPage, totalPages);
-  const pagedEvents = events.slice(
+  const pagedEvents = filteredEvents.slice(
     (clampedPage - 1) * pageSize,
     clampedPage * pageSize
   );
@@ -229,7 +248,17 @@ export default function TeacherWorkshopsTab() {
           className="bg-white/5 backdrop-blur-xl rounded-2xl p-4 sm:p-5 md:p-6 border border-white/10 shadow-lg flex flex-col xl:flex-row xl:items-center justify-between gap-4"
           rightSlot={
             <div className="w-full xl:w-auto">
-              <div className="flex flex-wrap gap-2 sm:gap-3 xl:justify-end">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 xl:justify-end w-full">
+                <div className="w-full sm:w-[260px]">
+                  <SearchInput
+                    value={search}
+                    onChange={setSearch}
+                    icon={Search}
+                    placeholder="Search..."
+                    variant="glass"
+                    iconPosition="left"
+                  />
+                </div>
                 {renderButton(
                   "workshop",
                   Plus,
@@ -318,9 +347,9 @@ export default function TeacherWorkshopsTab() {
             </div>
           )}
 
-          {!loadingEvents && events.length === 0 && !eventsError && (
+          {!loadingEvents && filteredEvents.length === 0 && !eventsError && (
             <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-6 text-sm text-white/50">
-              No workshops or events yet. Create one above.
+              No workshops or events found. Create one above.
             </div>
           )}
 
@@ -361,7 +390,7 @@ export default function TeacherWorkshopsTab() {
             })}
           </div>
 
-          {events.length > pageSize && (
+          {filteredEvents.length > pageSize && (
             <div className="flex items-center justify-between pt-3">
               <span className="text-xs text-white/50">
                 Page {clampedPage} of {totalPages}
