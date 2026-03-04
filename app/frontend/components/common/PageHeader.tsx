@@ -61,7 +61,13 @@ export default function PageHeader({
 
       {/* RIGHT */}
       {rightSlot && (
-        <div className={center ? "flex justify-center w-full" : "w-full md:w-auto shrink-0 min-w-0"}>
+        <div
+          className={
+            center
+              ? "w-full md:w-auto shrink-0 min-w-0 flex justify-center md:justify-end md:ml-auto"
+              : "w-full md:w-auto shrink-0 min-w-0"
+          }
+        >
           {rightSlot}
         </div>
       )}
