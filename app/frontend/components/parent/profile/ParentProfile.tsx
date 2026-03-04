@@ -32,6 +32,9 @@ type StudentProfile = {
     phone: string;
     fatherName: string;
     motherName?: string;
+    gender?: string;
+    previousSchool?: string;
+    status?: string;
     class: { id: string; name: string; section: string | null; displayName: string } | null;
   };
   attendanceTrends: Array<{ month: string; present: number; total: number; pct: number }>;
@@ -54,10 +57,14 @@ export default function ParentProfile() {
   const [user, setUser] = useState<{ name: string | null; photoUrl: string | null; mobile: string | null } | null>(null);
   const [homeworkTotal, setHomeworkTotal] = useState(0);
   const [homeworkSubmitted, setHomeworkSubmitted] = useState(0);
+  const [pendingHomework, setPendingHomework] = useState(0);
+  const [upcomingEvents, setUpcomingEvents] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
-
+  const [selectedTerm, setSelectedTerm] = useState("Term 1");
+  // compute academic year string based on current date
+  const [academicYear, setAcademicYear] = useState("");
   const studentId = (session?.user as { studentId?: string | null })?.studentId ?? null;
 
   const fetchData = useCallback(async () => {
@@ -69,10 +76,11 @@ export default function ParentProfile() {
     setLoading(true);
     setError(null);
     try {
-      const [userRes, studentRes, homeworkRes] = await Promise.all([
+      const [userRes, studentRes, homeworkRes, eventsRes] = await Promise.all([
         fetch("/api/user/me", { credentials: "include" }),
         fetch(`/api/student/${studentId}`, { credentials: "include" }),
         fetch("/api/homework/list", { credentials: "include" }),
+        fetch("/api/events/list", { credentials: "include" }),
       ]);
       if (userRes.ok) {
         const d = await userRes.json();
@@ -89,8 +97,20 @@ export default function ParentProfile() {
         const d = await homeworkRes.json();
         const list = d.homeworks ?? [];
         setHomeworkTotal(list.length);
-        setHomeworkSubmitted(list.filter((h: { hasSubmitted?: boolean }) => h.hasSubmitted).length);
+        const submitted = list.filter((h: { hasSubmitted?: boolean }) => h.hasSubmitted).length;
+        setHomeworkSubmitted(submitted);
+        setPendingHomework(list.length - submitted);
       }
+      if (eventsRes.ok) {
+        const d = await eventsRes.json();
+        const list = d.events ?? [];
+        const now = new Date();
+        const upcoming = list.filter((e: any) => e.eventDate && new Date(e.eventDate) >= now).length;
+        setUpcomingEvents(upcoming);
+      }
+      // Academic year calc
+      const yr = new Date().getFullYear();
+      setAcademicYear(`${yr - 1}-${yr}`);
     } catch {
       setError("Something went wrong");
     } finally {
@@ -190,7 +210,7 @@ export default function ParentProfile() {
   if (status === "loading" || loading) {
     return (
       <div className="min-h-screen p-4 sm:p-6 md:p-8 flex items-center justify-center">
-        <Spinner/>
+        <Spinner />
       </div>
     );
   }
@@ -208,73 +228,96 @@ export default function ParentProfile() {
   if (!profile) return null;
 
   const s = profile.student;
+  const filteredPerformance = profile.academicPerformance;
   const photoUrl = s.photoUrl || user?.photoUrl || null;
   const attendancePct =
     profile.attendanceTrends.length > 0
       ? Math.round(
-          profile.attendanceTrends.reduce((a, t) => a + t.pct, 0) / profile.attendanceTrends.length
-        )
+        profile.attendanceTrends.reduce((a, t) => a + t.pct, 0) / profile.attendanceTrends.length
+      )
       : 0;
   const overallGrade =
     profile.academicPerformance.length > 0
       ? (() => {
-          const avg = Math.round(
-            profile.academicPerformance.reduce((a, x) => a + x.score, 0) /
-              profile.academicPerformance.length
-          );
-          if (avg >= 90) return "A+";
-          if (avg >= 80) return "A";
-          if (avg >= 70) return "B+";
-          if (avg >= 60) return "B";
-          return "C";
-        })()
+        const avg = Math.round(
+          profile.academicPerformance.reduce((a, x) => a + x.score, 0) /
+          profile.academicPerformance.length
+        );
+        if (avg >= 90) return "A+";
+        if (avg >= 80) return "A";
+        if (avg >= 70) return "B+";
+        if (avg >= 60) return "B";
+        return "C";
+      })()
       : "—";
 
   const stats = [
     { label: "Overall grade", value: overallGrade, icon: Award },
     { label: "Attendance", value: `${attendancePct}%`, icon: TrendingUp },
     { label: "Total assignments", value: String(homeworkTotal), icon: BookOpen },
-    { label: "Submitted", value: String(homeworkSubmitted), icon: Clock },
-    { label: "Certificates", value: String(profile.certificates.length), icon: Calendar },
+    { label: "Pending homework", value: String(pendingHomework), icon: Clock },
+    { label: "Upcoming events", value: String(upcomingEvents), icon: Calendar },
   ];
 
   return (
     <div className="min-h-screen p-3 sm:p-5 md:p-6 pb-20 sm:pb-6 overflow-x-hidden">
       <main className="max-w-6xl mx-auto space-y-5 md:space-y-7">
-        {/* Header: title + Download only */}
+        {/* Header: student name + overview */}
         <section className="rounded-xl sm:rounded-2xl md:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-3 sm:p-4 md:p-6 lg:p-8">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4">
             <div className="min-w-0">
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white truncate">Student Profile</h1>
               <p className="text-white/60 text-xs sm:text-sm mt-0.5 sm:mt-1 hidden sm:block">Manage student records and information</p>
             </div>
-          
+
           </div>
         </section>
 
         {/* Profile card: image + name + tags */}
-        <section className="rounded-xl sm:rounded-2xl md:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-3 sm:p-4 md:p-6 lg:p-8 transition-all duration-200 hover:border-white/20">
+        <section className="rounded-xl sm:rounded-2xl md:rounded-3xl  somu p-3 sm:p-4 md:p-6 lg:p-8 transition-all duration-200 hover:border-white/20">
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 sm:gap-6">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 md:gap-6 min-w-0 flex-1">
-              <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                <div className="p-2.5 sm:p-3 md:p-4 rounded-xl sm:rounded-2xl bg-lime-400/20 shrink-0 transition-transform duration-200 hover:scale-105">
-                  <GraduationCap className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-lime-400" />
+            <div className="flex flex-col gap-6 min-w-0 flex-1">
+              {/* Name and Subtitle Section */}
+              <div className="flex items-center gap-4 min-w-0">
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 shrink-0">
+                  <GraduationCap className="w-8 h-8 md:w-10 md:h-10 text-lime-400" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white truncate">
+                <div className="min-w-0">
+                  <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight">
                     {s.name || "Student"}
                   </h2>
-                  <p className="text-white/60 text-sm mt-0.5">Student profile overview</p>
+                  <p className="text-white/50 text-lg mt-1">Student Profile Overview</p>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2 sm:gap-3">
-                {s.class?.displayName && <InfoTag value={s.class.displayName} icon={BookOpen} />}
-                {s.rollNo && <InfoTag value={`Roll: ${s.rollNo}`} icon={User} />}
-                <InfoTag value={s.admissionNumber} icon={FileText} />
+
+              {/* Tags Row 1: Class and Roll */}
+              <div className="flex flex-wrap gap-3">
+                {s.class?.displayName && (
+                  <div className="inline-flex items-center gap-2 bg-white/10 border border-white/10 px-6 py-3 rounded-3xl text-white font-medium">
+                    <User className="w-5 h-5 text-lime-400" />
+                    <span className="text-lg">Class {s.class.displayName}</span>
+                  </div>
+                )}
+                {s.rollNo && (
+                  <div className="inline-flex items-center gap-2 bg-white/10 border border-white/10 px-6 py-3 rounded-3xl text-white font-medium">
+                    <span className="text-lg text-white/90">Roll: {s.rollNo}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Tags Row 2: Admission and Academic Year */}
+              <div className="flex flex-wrap gap-3">
+                <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-5 py-2 rounded-2xl text-white/60">
+                  <span className="text-sm font-medium uppercase tracking-wider">{s.admissionNumber}</span>
+                </div>
+                <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-5 py-2 rounded-2xl text-white/60">
+                  <Calendar className="w-4 h-4 text-lime-400" />
+                  <span className="text-sm font-medium">{academicYear}</span>
+                </div>
               </div>
             </div>
             <div className="shrink-0 flex justify-center md:justify-end">
-                <div className="relative h-24 w-24 sm:h-32 sm:w-32 md:h-44 md:w-44 lg:h-52 lg:w-52 rounded-xl sm:rounded-2xl overflow-hidden border-2 border-white/20 bg-white/5 transition-all duration-200 hover:border-lime-400/40 hover:shadow-lg">
+              <div className="relative h-24 w-24 sm:h-32 sm:w-32 md:h-44 md:w-44 lg:h-52 lg:w-52 rounded-xl sm:rounded-2xl overflow-hidden border-2 border-white/20 bg-white/5 transition-all duration-200 hover:border-lime-400/40 hover:shadow-lg">
                 {photoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -290,99 +333,123 @@ export default function ParentProfile() {
               </div>
             </div>
           </div>
-        </section>
 
-        {/* Stats grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4 lg:gap-5">
-          {stats.map((item) => (
-            <div
-              key={item.label}
-              className="rounded-xl sm:rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 p-3 sm:p-4 md:p-6 text-center transition-all duration-200 hover:border-white/20 hover:shadow-lg hover:scale-[1.02]"
-            >
-              <item.icon className="mx-auto w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-lime-400 mb-1.5 sm:mb-2 md:mb-3" />
-              <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-white truncate">{item.value}</h3>
-              <p className="text-white/60 text-xs sm:text-sm uppercase tracking-wide mt-1">
-                {item.label}
-              </p>
-            </div>
-          ))}
-        </div>
+          {/* =========================
+         PREMIUM ACADEMIC PERFORMANCE
+         ========================= */}
 
-        {/* Academic performance – bar graph */}
-        {profile.academicPerformance.length > 0 && (
-          <section className="rounded-xl sm:rounded-2xl md:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-3 sm:p-4 md:p-6 lg:p-8 transition-all duration-200 hover:border-white/20 overflow-hidden">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-              <h2 className="flex items-center gap-2 text-base sm:text-xl md:text-2xl font-bold text-white">
-                <BarChart3 className="w-6 h-6 text-lime-400" />
-                Academic performance
-              </h2>
-            </div>
-            <div className="overflow-x-auto no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0">
-              <div className="flex gap-1 sm:gap-2 md:gap-6 min-w-[280px] sm:min-w-[400px] md:min-w-[620px]" style={{ minHeight: 180 }}>
-              {/* Y-axis labels */}
-              <div
-                className="flex flex-col justify-between text-white/60 text-[10px] sm:text-xs md:text-sm shrink-0 py-1"
-                style={{ height: 180 }}
-              >
-                {[100, 75, 50, 25, 0].map((val) => (
-                  <span key={val}>{val}</span>
-                ))}
+          {filteredPerformance.length > 0 && (
+            <section className="rounded-3xl  border border-white/10 p-8 shadow-xl overflow-hidden mt-10">
+
+              {/* Header + Filter */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
+                <h2 className="flex items-center gap-3 text-2xl font-bold text-white">
+                  <BarChart3 className="w-7 h-7 text-lime-400" />
+                  Academic Performance
+                </h2>
+
+                
               </div>
-              {/* Bar chart area with grid */}
-              <div className="flex-1 relative" style={{ height: 180 }}>
-                {/* Horizontal grid lines */}
-                {[0, 25, 50, 75, 100].map((pct) => (
-                  <div
-                    key={pct}
-                    className="absolute left-0 right-0 border-t border-white/10"
-                    style={{ bottom: `${(pct / 100) * 160}px` }}
-                  />
-                ))}
-                {/* Bars */}
-                <div className="absolute inset-0 flex items-end justify-around gap-1 sm:gap-2">
-                  {profile.academicPerformance.map((a) => (
-                    <div
-                      key={a.subject}
-                      className="flex flex-col items-center flex-1 min-w-0 group"
-                      title={`${a.subject}: ${a.score}%`}
-                    >
-                      <div
-                        className="w-full max-w-[3rem] sm:max-w-[4rem] rounded-t-lg bg-lime-400 flex justify-center items-end pb-1 text-black font-bold text-xs sm:text-sm transition-all duration-200 hover:bg-lime-300 cursor-default"
-                        style={{
-                          height: `${Math.max(10, (a.score / 100) * 160)}px`,
-                        }}
-                      >
-                        {a.score}
-                      </div>
-                      <span className="text-white/80 text-[9px] sm:text-[10px] md:text-xs mt-1 sm:mt-2 truncate w-full text-center">
-                        {a.subject}
-                      </span>
-                    </div>
+
+              <div className="flex gap-6 min-h-[340px] mt-8">
+                {/* Y Axis */}
+                <div className="flex flex-col-reverse justify-between text-white/40 text-xs font-medium pb-[34px]">
+                  {[0, 25, 50, 75, 100].map((val) => (
+                    <span key={val} className="h-0 flex items-center">{val}</span>
                   ))}
                 </div>
+
+                {/* Chart Area */}
+                <div className="relative flex-1">
+                  {/* Grid Lines */}
+                  {[0, 25, 50, 75, 100].map((val) => (
+                    <div
+                      key={val}
+                      className="absolute left-0 right-0 border-t border-white/5"
+                      style={{ bottom: `${(val / 100) * 280}px` }}
+                    />
+                  ))}
+
+                  {/* Bars Area - Strictly for bars and scores */}
+                  <div className="absolute inset-0 flex items-end justify-around px-2">
+                    {filteredPerformance.map((item) => (
+                      <div
+                        key={item.subject}
+                        className="flex flex-col items-center justify-end h-full"
+                        style={{ width: '15%' }}
+                      >
+                        {/* Score Label */}
+                        <span className="text-white font-bold text-sm mb-2 transition-transform duration-300 group-hover:scale-110">
+                          {item.score}
+                        </span>
+
+                        {/* Bar - Fixed at 280px container height, aligned to bottom */}
+                        <div
+                          className="w-full max-w-[60px] rounded-t-xl bg-[#A3C615] transition-all duration-1000 ease-out hover:bg-[#b8e018] hover:shadow-[0_0_20px_rgba(163,198,21,0.3)]"
+                          style={{
+                            height: `${(item.score / 100) * 280}px`,
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
+
+              {/* Separate Row for Subject Labels (Outside the Chart Container) */}
+              <div className="flex justify-around mt-4 pl-12 pr-2">
+                {filteredPerformance.map((item) => (
+                  <span key={item.subject} className="text-white/60 text-xs font-medium tracking-wide w-[15%] text-center">
+                    {item.subject}
+                  </span>
+                ))}
               </div>
-            </div>
-          </section>
-        )}
+            </section>
+          )}
+
+
+          {/* Stats grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4 lg:gap-5 mt-10">
+            {stats.map((item) => (
+              <div
+                key={item.label}
+                className="rounded-xl sm:rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 p-3 sm:p-4 md:p-6 text-center transition-all duration-200 hover:border-white/20 hover:shadow-lg hover:scale-[1.02]"
+              >
+                <item.icon className="mx-auto w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-lime-400 mb-1.5 sm:mb-2 md:mb-3" />
+                <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-white truncate">{item.value}</h3>
+                <p className="text-white/60 text-xs sm:text-sm uppercase tracking-wide mt-1">
+                  {item.label}
+                </p>
+              </div>
+            ))}
+          </div>
+
+        </section>
+
+
+
+
 
         {/* Student details (read-only) */}
         <section className="rounded-xl sm:rounded-2xl md:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-3 sm:p-4 md:p-6 lg:p-8 transition-all duration-200 hover:border-white/20">
-          <h2 className="text-base sm:text-xl md:text-2xl font-bold text-white mb-3 sm:mb-4 md:mb-6 flex items-center gap-2">
+          <h2 className="text-base sm:text-xl md:text-2xl font-bold text-white mb-4 flex items-center gap-2">
             <User className="w-6 h-6 text-lime-400" />
             Student details
           </h2>
+
+          {/* General information */}
+          <h3 className="text-sm sm:text-base font-semibold text-white mb-2">General Information</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
             {[
-              { label: "Full name", value: s.name },
-              { label: "Admission number", value: s.admissionNumber },
-              { label: "Class", value: s.class?.displayName ?? "—" },
-              { label: "Roll number", value: s.rollNo || "—" },
-              { label: "DOB", value: s.dob || "—" },
+              { label: "Full name", value: s.name || "—" },
+              { label: "Student ID", value: s.admissionNumber },
               { label: "Gender", value: (s as { gender?: string }).gender ?? "—" },
-              { label: "Address", value: s.address || "—" },
-              { label: "Phone", value: s.phone || "—" },
-              { label: "Email", value: s.email || "—" },
+              { label: "Age", value: s.age !== null ? String(s.age) : "—" },
+              { label: "Date of birth", value: s.dob || "—" },
+              { label: "Previous school", value: (s as { previousSchool?: string }).previousSchool || "—" },
+              { label: "Class", value: s.class?.displayName ?? "—" },
+              { label: "Section", value: s.class?.section || "—" },
+              { label: "Status", value: (s as { status?: string }).status || "Active" },
             ].map(({ label, value }) => (
               <div key={label} className="group">
                 <p className="text-white/50 text-xs sm:text-sm mb-1 uppercase tracking-wide">{label}</p>
@@ -392,14 +459,9 @@ export default function ParentProfile() {
               </div>
             ))}
           </div>
-        </section>
 
-        {/* Parent / guardian info */}
-        <section className="rounded-xl sm:rounded-2xl md:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-3 sm:p-4 md:p-6 lg:p-8 transition-all duration-200 hover:border-white/20">
-          <h2 className="text-base sm:text-xl md:text-2xl font-bold text-white mb-3 sm:mb-4 md:mb-6 flex items-center gap-2">
-            <Phone className="w-6 h-6 text-lime-400" />
-            Parent / guardian
-          </h2>
+          {/* Parent / guardian info */}
+          <h3 className="text-sm sm:text-base font-semibold text-white mt-8 mb-2">Parent Information</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
             <div className="rounded-lg sm:rounded-xl bg-white/5 border border-white/10 px-3 py-2.5 sm:px-4 sm:py-3 flex items-center gap-2 sm:gap-3 transition-colors hover:border-white/20 min-w-0">
               <User className="w-5 h-5 text-lime-400 shrink-0" />
@@ -416,7 +478,10 @@ export default function ParentProfile() {
               </div>
             </div>
           </div>
+
         </section>
+
+
       </main>
     </div>
   );
