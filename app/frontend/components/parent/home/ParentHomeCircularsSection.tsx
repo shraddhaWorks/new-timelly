@@ -25,7 +25,7 @@ export default function ParentHomeCircularsSection({ circulars }: Props) {
   const [search, setSearch] = useState("");
   const [importance, setImportance] = useState<ImportanceFilter>("all");
   const [page, setPage] = useState(1);
-  const pageSize = 6;
+  const pageSize = 3;
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
