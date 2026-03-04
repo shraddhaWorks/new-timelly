@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Calendar, Heart, MessageCircle, MoreHorizontal } from "lucide-react";
 import { formatRelativeTime } from "../../../utils/format";
 import { ParentEvent, ParentFeed } from "./types";
@@ -8,17 +8,6 @@ import { ParentEvent, ParentFeed } from "./types";
 type Props = {
   feeds: ParentFeed[];
   events: ParentEvent[];
-};
-
-type EventUpdate = {
-  id: string;
-  title: string;
-  description?: string | null;
-  eventDate?: string | null;
-  createdAt?: string | null;
-  photo?: string | null;
-  type?: string | null;
-  teacher?: { name?: string | null } | null;
 };
 
 function formatEventBadge(value?: string | null) {
@@ -38,64 +27,51 @@ function formatEventBadge(value?: string | null) {
   };
 }
 
-export default function ParentHomeUpdatesSection({ feeds: _feeds, events }: Props) {
-  const [schoolUpdates, setSchoolUpdates] = useState<EventUpdate[]>([]);
-  const [updatesLoading, setUpdatesLoading] = useState(true);
-  const [updatesError, setUpdatesError] = useState<string | null>(null);
-  const [likesState, setLikesState] = useState<
-    Record<string, { liked: boolean; count: number }>
-  >({});
+export default function ParentHomeUpdatesSection({ feeds, events }: Props) {
+  const latestFeed = useMemo(() => feeds[0] ?? null, [feeds]);
+  const topFeeds = useMemo(() => feeds.slice(0, 3), [feeds]);
+  const [likedByMe, setLikedByMe] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const [isLiking, setIsLiking] = useState(false);
 
   useEffect(() => {
-    let active = true;
+    setLikedByMe(Boolean(latestFeed?.likedByMe));
+    setLikesCount(Number(latestFeed?.likes ?? 0));
+  }, [latestFeed]);
 
-    (async () => {
-      try {
-        setUpdatesLoading(true);
-        setUpdatesError(null);
+  const handleLike = async () => {
+    if (!latestFeed || isLiking) return;
 
-        const res = await fetch("/api/events/list", {
-          credentials: "include",
-          cache: "no-store",
-        });
-        const payload = await res.json().catch(() => ({}));
+    setIsLiking(true);
+    const prevLiked = likedByMe;
+    const prevLikes = likesCount;
+    const nextLiked = !prevLiked;
+    const nextLikes = Math.max(0, prevLikes + (nextLiked ? 1 : -1));
 
-        if (!res.ok) {
-          throw new Error(payload?.message || "Failed to load school updates");
-        }
-        if (!active) return;
+    setLikedByMe(nextLiked);
+    setLikesCount(nextLikes);
 
-        setSchoolUpdates(Array.isArray(payload?.events) ? payload.events : []);
-      } catch (e) {
-        if (!active) return;
-        setUpdatesError(e instanceof Error ? e.message : "Failed to load school updates");
-      } finally {
-        if (active) setUpdatesLoading(false);
-      }
-    })();
+    try {
+      const res = await fetch(`/api/newsfeed/${latestFeed.id}/like`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload?.message || "Failed to update like");
 
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  const handleLike = (eventId: string) => {
-    setLikesState((prev) => {
-      const current = prev[eventId] ?? { liked: false, count: 0 };
-      const nextLiked = !current.liked;
-      return {
-        ...prev,
-        [eventId]: {
-          liked: nextLiked,
-          count: Math.max(0, current.count + (nextLiked ? 1 : -1)),
-        },
-      };
-    });
+      setLikedByMe(Boolean(payload?.liked));
+      setLikesCount(Number(payload?.likes ?? nextLikes));
+    } catch {
+      setLikedByMe(prevLiked);
+      setLikesCount(prevLikes);
+    } finally {
+      setIsLiking(false);
+    }
   };
 
   return (
-    <section className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 items-stretch">
-      <div className="lg:col-span-3 space-y-4 sm:space-y-6">
+    <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 items-stretch">
+      <div className="lg:col-span-2 space-y-4 sm:space-y-6">
         <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 w-full">
           <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-[#A3E635] flex-shrink-0" />
           <h3 className="text-base sm:text-xl font-bold text-white flex items-center gap-2 w-full">
@@ -103,26 +79,19 @@ export default function ParentHomeUpdatesSection({ feeds: _feeds, events }: Prop
           </h3>
         </div>
 
-        {updatesLoading ? (
-          <div className="rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6 text-white/70 text-sm sm:text-base">
-            Loading school updates...
-          </div>
-        ) : updatesError ? (
-          <div className="rounded-xl sm:rounded-2xl border border-red-400/20 bg-red-500/10 p-4 sm:p-6 text-red-100 text-sm sm:text-base">
-            {updatesError}
-          </div>
-        ) : schoolUpdates.length === 0 ? (
+        {!latestFeed ? (
           <div className="rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6 text-white/70 text-sm sm:text-base">
             No school updates available.
           </div>
         ) : (
-          <div className="space-y-4 max-h-[680px] overflow-y-auto no-scrollbar pr-1">
-            {schoolUpdates.map((event) => (
+          <div className="space-y-4 max-h-[520px] overflow-y-auto no-scrollbar pr-1">
+            {topFeeds.map((feed) => (
               <article
-                key={event.id}
-                className="overflow-hidden rounded-xl sm:rounded-2xl bg-[rgba(255,255,255,0.05)] backdrop-blur-xl border border-[rgba(255,255,255,0.1)] border-solid shadow-[0px_10px_15px_0px_rgba(0,0,0,0.1),0px_4px_6px_0px_rgba(0,0,0,0.1)]"
+                key={feed.id}
+                className="bg-[rgba(255,255,255,0.05)] backdrop-blur-xl border border-[rgba(255,255,255,0.1)] border-solid 
+                rounded-xl sm:rounded-2xl shadow-[0px_10px_15px_0px_rgba(0,0,0,0.1),0px_4px_6px_0px_rgba(0,0,0,0.1)] overflow-hidden flex flex-col min-h-[240px]"
               >
-                <header className="flex items-center justify-between px-4 py-4 sm:px-5 sm:py-5 border-b border-white/10 gap-2">
+                <header className="flex items-center justify-between p-3 sm:p-5 border-b border-white/[0.05] gap-2 min-h-[64px]">
                   <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -131,12 +100,11 @@ export default function ParentHomeUpdatesSection({ feeds: _feeds, events }: Prop
                       className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl object-cover border border-white/[0.1] flex-shrink-0"
                     />
                     <div className="min-w-0">
-                      <h4 className="font-semibold text-white text-base sm:text-xl leading-tight truncate">
-                        {event.teacher?.name || "School Admin"}
+                      <h4 className="font-semibold text-white text-sm sm:text-base truncate">
+                        {feed.createdBy?.name || "School Admin"}
                       </h4>
-                      <p className="text-sm text-[rgb(204,213,238)] mt-0.5 truncate">
-                        {event.type || "Event"} -{" "}
-                        {formatRelativeTime(event.eventDate || event.createdAt || new Date().toISOString())}
+                      <p className="text-[11px] sm:text-xs text-[rgb(204,213,238)] mt-0.5">
+                        {formatRelativeTime(feed.createdAt)}
                       </p>
                     </div>
                   </div>
@@ -145,50 +113,50 @@ export default function ParentHomeUpdatesSection({ feeds: _feeds, events }: Prop
                   </button>
                 </header>
 
-                <div className="px-4 py-4 sm:px-5 sm:py-5">
-                  <h5 className="font-bold text-white text-2xl sm:text-3xl leading-tight mb-2 line-clamp-2">
-                    {event.title}
-                  </h5>
-                  <p className="text-gray-300 text-base sm:text-lg leading-relaxed line-clamp-3">
-                    {event.description || "Stay updated with this school event."}
-                  </p>
-                  <span className="mt-4 inline-block rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 px-4 py-1 text-sm font-bold uppercase tracking-wide text-[#A3E635]">
+                <div className="px-3 sm:px-5 py-3 sm:py-4 flex-1">
+                  <h5 className="font-bold text-white text-base sm:text-lg mb-1 sm:mb-2 line-clamp-2">{feed.title}</h5>
+                  <p className="text-gray-300 text-xs sm:text-sm leading-relaxed line-clamp-3">{feed.description}</p>
+                  <span className="inline-block px-3 py-1 rounded-lg text-xs
+                   font-semibold bg-[#A3E635]/10 text-[#A3E635] border border-[#A3E635]/20 uppercase tracking-wide mb-2 mt-2">
                     EVENT
                   </span>
-
-                  {event.photo && (
-                    <div className="mt-4 overflow-hidden rounded-[24px] border border-white/10">
+                  {feed.photo && (
+                    <div className="rounded-xl overflow-hidden border border-white/[0.05]">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={event.photo}
-                        alt={event.title}
-                        className="aspect-[16/8.8] w-full object-cover"
+                        src={feed.photo}
+                        alt={feed.title}
+                        className="w-full aspect-video object-cover hover:scale-105 transition-transform duration-500"
                       />
                     </div>
                   )}
                 </div>
 
-                <div className="border-t border-white/10 px-4 sm:px-5 py-3 text-white/75 text-sm">
-                  <span className="font-semibold">{likesState[event.id]?.count ?? 0} likes</span>
-                </div>
-
-                <footer className="border-t border-white/10 px-4 sm:px-5 py-3">
-                  <button
-                    type="button"
-                    onClick={() => handleLike(event.id)}
-                    aria-pressed={Boolean(likesState[event.id]?.liked)}
-                    className={`flex items-center gap-2 text-lg font-semibold transition ${
-                      likesState[event.id]?.liked ? "text-red-300" : "text-white/70 hover:text-white"
-                    }`}
-                  >
-                    <Heart
-                      className={`h-5 w-5 ${
-                        likesState[event.id]?.liked ? "fill-red-400 text-red-400" : ""
-                      }`}
-                    />
-                    {likesState[event.id]?.liked ? "Liked" : "Like"}
-                  </button>
-                </footer>
+                {feed.id === latestFeed?.id && (
+                  <footer className="border-t border-white/10 px-4 sm:px-6 py-3 sm:py-4">
+                    <div className="flex flex-wrap items-center gap-3 text-sm sm:text-base">
+                      <span className="text-white/70">{likesCount} likes</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLike();
+                        }}
+                        disabled={isLiking}
+                        aria-pressed={likedByMe}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 
+                          text-sm font-medium text-gray-400 hover:text-red-400 hover:bg-white/[0.05] ${
+                          likedByMe
+                            ? "border-red-300/40 bg-red-400/10 text-red-300"
+                            : "border-white/20 text-white/70 hover:border-white/35 hover:text-white"
+                        } ${isLiking ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
+                      >
+                        <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${likedByMe ? "fill-red-400 text-red-400" : ""}`} />
+                        <span className="font-semibold">{likedByMe ? "Liked" : "Like"}</span>
+                      </button>
+                    </div>
+                  </footer>
+                )}
               </article>
             ))}
           </div>
