@@ -226,6 +226,11 @@ export default function CreateHub({ events }: CreateHubProps) {
 
       setShowPopup(true);
       setPopupStage("done");
+      setCertificateFile(null);
+      setCertificateUrl(null);
+      setNamePosition(null);
+      setNameTextStyle(DEFAULT_TEXT_STYLE);
+      setSelectedStudentIds(new Set());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Setup failed");
     } finally {
@@ -404,6 +409,11 @@ export default function CreateHub({ events }: CreateHubProps) {
                 )}
               </div>
             </label>
+            {!certificateUrl && (
+              <div className="mt-4 rounded-xl border border-dashed border-white/20 bg-black/20 h-[200px] sm:h-[220px] lg:h-[240px] flex items-center justify-center text-white/40 text-sm">
+                Upload a certificate first
+              </div>
+            )}
           </div>
 
         </div>
@@ -418,10 +428,10 @@ export default function CreateHub({ events }: CreateHubProps) {
             <p className="mt-2 text-xs text-white/50 mb-3">
               Click on the certificate where the student name should appear
             </p>
-            <div className="mt-3 grid grid-cols-1 lg:grid-cols-[0.8fr_1.2fr] gap-4 items-stretch">
+            <div className="mt-3 grid grid-cols-1 xl:grid-cols-[0.75fr_1.25fr] gap-4 items-stretch">
               {certificateUrl ? (
                 <div
-                  className="relative rounded-xl overflow-hidden border-2 border-white/20 hover:border-lime-400/50 bg-black/30 transition-colors min-h-[200px] sm:min-h-[220px] flex items-center justify-center"
+                  className="relative rounded-xl overflow-hidden border-2 border-white/20 hover:border-lime-400/50 bg-black/30 transition-colors h-[220px] sm:h-[240px] lg:h-[260px] flex items-center justify-center"
                   style={
                     previewImgSize
                       ? { aspectRatio: `${previewImgSize.w} / ${previewImgSize.h}` }
@@ -431,7 +441,7 @@ export default function CreateHub({ events }: CreateHubProps) {
                   <img
                     src={certificateUrl}
                     alt="Certificate preview"
-                    className="w-full h-full object-contain select-none cursor-crosshair"
+                    className="w-full h-full object-cover select-none cursor-crosshair"
                     draggable={false}
                     onClick={handlePreviewClick}
                     onLoad={handlePreviewImgLoad}
@@ -452,13 +462,13 @@ export default function CreateHub({ events }: CreateHubProps) {
                   )}
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-white/20 bg-black/20 aspect-[3/2] min-h-[200px] sm:min-h-[220px] flex items-center justify-center text-white/40 text-sm">
-                  Upload a certificate first
+                <div className="rounded-xl border border-white/10 bg-black/20 h-[220px] sm:h-[240px] lg:h-[260px] flex items-center justify-center text-white/50 text-sm px-4 text-center">
+                  Attach a certificate in section 2 to set the name position.
                 </div>
               )}
 
               {/* Text Style Options */}
-              <div className="space-y-3 rounded-xl border border-white/10 bg-black/20 p-4 h-full">
+              <div className="space-y-3 rounded-xl border border-white/10 bg-black/20 p-4 h-full min-w-0">
                 <span className="text-xs font-medium text-white/70">Text style</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="min-w-0">

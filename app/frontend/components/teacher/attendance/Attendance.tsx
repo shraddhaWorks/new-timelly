@@ -447,10 +447,10 @@ export default function TeacherAttendanceTab() {
             inputClassName="appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:pointer-events-none"
             variant="glass"
           />
-          <div className="flex lg:justify-end sm:col-span-2 lg:col-span-1">
+          <div className="flex sm:col-span-2 lg:col-span-1">
             <AttendanceButton
               variant={liveMode ? "success" : "neutral"}
-              className="w-full sm:w-auto px-6 sm:px-8"
+              className="w-full px-4 sm:px-6 py-2.5 text-sm"
               leftIcon={
                 <CircleDot
                   size={16}

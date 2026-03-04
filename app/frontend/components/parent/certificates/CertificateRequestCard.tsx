@@ -33,7 +33,7 @@ const CertificateRequestCard = ({
   const isRejected = status === "rejected";
 
   return (
-    <div className="w-full max-w-5xl mx-auto ">
+    <div className="w-full">
       <div
         className="relative rounded-3xl p-6 
                    bg-white/5 
