@@ -29,6 +29,8 @@ export default function ProfileModal({
   const name = profileProp?.name ?? session?.user?.name ?? "User";
   const email = profileProp?.email ?? session?.user?.email ?? "";
   const role = profileProp?.role ?? session?.user?.role ?? "";
+  const normalizedRole = role.replace(/\s+/g, "_").toUpperCase();
+  const isSuperAdmin = normalizedRole === "SUPER_ADMIN" || normalizedRole === "SUPERADMIN";
   const phone = profileProp?.phone ?? session?.user?.mobile ?? "";
   const address = profileProp?.address ?? "";
   const status = profileProp?.status ?? "ACTIVE";
@@ -114,15 +116,17 @@ export default function ProfileModal({
         </div>
 
         <div className="mt-6 flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={handleSettings}
-            className="w-full py-3.5 bg-[#C7F000]/22 hover:bg-[#C7F000]/30 text-[#0F172A] border
+          {!isSuperAdmin && (
+            <button
+              type="button"
+              onClick={handleSettings}
+              className="w-full py-3.5 bg-[#C7F000]/22 hover:bg-[#C7F000]/30 text-[#0F172A] border
              border-[#C7F000]/30 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 
             shadow-[0_0_22px_rgba(199,240,0,0.45)]"
-          >
-            <Settings size={18} /> Settings
-          </button>
+            >
+              <Settings size={18} /> Settings
+            </button>
+          )}
           {/* <button
             type="button"
             onClick={handleLogout}

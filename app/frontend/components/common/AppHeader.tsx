@@ -41,6 +41,7 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
   const [liveProfile, setLiveProfile] = useState<HeaderProfile | null>(null);
 
   const { data: session } = useSession();
+  const isSuperAdminPanel = pathname?.startsWith("/frontend/pages/superadmin");
 
   const fetchUnreadCount = useCallback(async () => {
     if (hideSearchAndNotifications) return;
@@ -311,15 +312,17 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
               </button>
             )}
 
-            {/* SETTINGS */}
-            <button
-              type="button"
-              className="p-2 rounded-lg hover:bg-white/10"
-              onClick={openSettings}
-              title="Settings"
-            >
-              <Settings className="text-white" />
-            </button>
+            {/* SETTINGS - hidden only on Super Admin panel */}
+            {!isSuperAdminPanel && (
+              <button
+                type="button"
+                className="p-2 rounded-lg hover:bg-white/10"
+                onClick={openSettings}
+                title="Settings"
+              >
+                <Settings className="text-white" />
+              </button>
+            )}
 
             {/* PROFILE - always show */}
             <button
