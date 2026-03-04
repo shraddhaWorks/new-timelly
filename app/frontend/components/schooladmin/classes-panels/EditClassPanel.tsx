@@ -17,11 +17,18 @@ type ClassRow = {
 interface EditClassPanelProps {
   row: ClassRow;
   onClose: () => void;
+  onSave: (payload: {
+    id: string;
+    name: string;
+    section: string;
+    teacherId?: string;
+  }) => Promise<boolean>;
 }
 
 export default function EditClassPanel({
   row,
   onClose,
+  onSave,
 }: EditClassPanelProps) {
   const [className, setClassName] = useState(row.name);
   const [section, setSection] = useState(row.section.replace("Section ", ""));
@@ -30,6 +37,7 @@ export default function EditClassPanel({
   const [teachers, setTeachers] = useState<{ id: string; name: string }[]>([]);
   const [isLoadingTeachers, setIsLoadingTeachers] = useState(false);
   const [isLoadingClass, setIsLoadingClass] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     let isActive = true;
@@ -128,7 +136,7 @@ export default function EditClassPanel({
           <button
             type="button"
             onClick={onClose}
-            className="h-8 w-8 rounded-lg border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            className="h-8 w-8 rounded-lg border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             aria-label="Close edit class"
           >
             <X size={16} className="mx-auto" />
@@ -197,10 +205,24 @@ export default function EditClassPanel({
 
           <button
             type="button"
-            className="h-[40px] lg:h-[46px] px-5 rounded-lg bg-lime-400 text-black font-semibold flex items-center justify-center gap-2 hover:bg-lime-300 transition text-sm"
+            className="h-[40px] lg:h-[46px] px-5 rounded-lg bg-lime-400 text-black font-semibold flex items-center justify-center gap-2 hover:bg-lime-300 transition text-sm cursor-pointer disabled:opacity-60"
+            disabled={isSaving}
+            onClick={async () => {
+              setIsSaving(true);
+              const ok = await onSave({
+                id: row.id,
+                name: className,
+                section,
+                teacherId,
+              });
+              setIsSaving(false);
+              if (ok) {
+                onClose();
+              }
+            }}
           >
             <Save size={16} />
-            Save
+            {isSaving ? "Saving..." : "Save"}
           </button>
         </div>
       </div>

@@ -44,7 +44,7 @@ export default function CircularNoticeCard({
 
   return (
     <article
-      className={`relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl flex flex-col ${className}`}
+      className={`group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl flex flex-col ${className}`}
     >
       <div className={`absolute top-0 left-0 h-1 w-full ${accentClassName}`} />
 
@@ -61,7 +61,9 @@ export default function CircularNoticeCard({
         </span>
       </div>
 
-      <h4 className="mt-4 text-2xl font-bold text-white leading-tight line-clamp-2">{subject}</h4>
+      <h4 className="mt-4 text-2xl font-bold text-white leading-tight line-clamp-2 transition-colors group-hover:text-lime-400">
+        {subject}
+      </h4>
 
       <div className="mt-4 bg-black/20 rounded-xl p-5 border border-white/5 flex-1">
         <p className="text-base text-white/60 italic leading-relaxed line-clamp-6">{content}</p>

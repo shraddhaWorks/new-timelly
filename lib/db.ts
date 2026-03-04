@@ -1,12 +1,11 @@
-import { PrismaClient } from "@/app/generated/prisma";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
+import { PrismaClient } from "@prisma/client";
 
-// Keep Prisma connection count low in dev/serverless to avoid exhausting pooled sessions.
-// Also append statement timeout for heavier operations.
-const base = process.env.DIRECT_URL || process.env.DATABASE_URL;
+// Prefer DATABASE_URL (port 6543, transaction pooler) for runtime - better for serverless and avoids
+// connection resets. Use DIRECT_URL only for migrations (schema directUrl).
+const base = process.env.DATABASE_URL || process.env.DIRECT_URL;
+
 if (!base) {
-  throw new Error("Missing DATABASE_URL or DIRECT_URL for Prisma.");
+  console.error("DATABASE_URL or DIRECT_URL environment variable is not set");
 }
 
 function withParam(url: string, key: string, value: string) {
@@ -20,20 +19,18 @@ function withParam(url: string, key: string, value: string) {
 let connectionString = base || "";
 if (connectionString) {
   connectionString = withParam(connectionString, "statement_timeout", "120000");
-  connectionString = withParam(connectionString, "connection_limit", "1");
+  connectionString = withParam(connectionString, "connection_limit", "3");
   connectionString = withParam(connectionString, "pool_timeout", "20");
+  connectionString = withParam(connectionString, "connect_timeout", "15");
 }
 
 const prismaClientSingleton = () => {
-  const pool = new Pool({
-    connectionString,
-    max: 1,
-    idleTimeoutMillis: 20000,
-    connectionTimeoutMillis: 20000,
-  });
-  const adapter = new PrismaPg(pool);
+  if (!connectionString) {
+    throw new Error("Database connection string is not configured");
+  }
   return new PrismaClient({
-    adapter,
+    datasourceUrl: connectionString,
+    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
 };
 

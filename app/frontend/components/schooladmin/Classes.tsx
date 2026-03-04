@@ -27,7 +27,7 @@ import EditClassPanel from "./classes-panels/EditClassPanel";
 import DeleteClassPanel from "./classes-panels/DeleteClassPanel";
 import SearchInput from "../common/SearchInput";
 import SelectInput from "../common/SelectInput";
-import InlinePanelTable from "../common/InlinePanelTable";;
+import InlinePanelTable from "../common/InlinePanelTable";
 import Spinner from "../common/Spinner";
 import StatCard from "./StatCard";
 
@@ -58,6 +58,10 @@ export default function SchoolAdminClassesTab() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 6;
+  const [reportStatus, setReportStatus] = useState<
+    "idle" | "downloading" | "success"
+  >("idle");
+  const [savingClassId, setSavingClassId] = useState<string | null>(null);
 
   const loadClasses = async () => {
     setIsLoading(true);
@@ -232,17 +236,128 @@ export default function SchoolAdminClassesTab() {
   ];
 
   const handleReportClick = () => {
-    window.alert("Downloading Classes Report...");
-  };
+    if (classRows.length === 0) {
+      window.alert("No classes available to download.");
+      return;
+    }
+    setReportStatus("downloading");
 
-  const activeRow = activeRowId
-    ? classRows.find((row) => row.id === activeRowId) ?? null
-    : null;
+    const toLocalDateStr = (d: Date) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    };
+
+    const escapeCsv = (value: unknown) => {
+      const raw = value ?? "";
+      return `"${String(raw).replace(/"/g, '""')}"`;
+    };
+
+    const header = [
+      "Class Name",
+      "Section",
+      "Students",
+      "Class Teacher",
+      "Teacher Email",
+    ];
+
+    const lines = classRows.map((row) =>
+      [
+        row.name,
+        row.section,
+        row.students,
+        row.teacher,
+        row.subject,
+      ].map(escapeCsv).join(",")
+    );
+
+    const csvContent = [header.map(escapeCsv).join(","), ...lines].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `classes-report-${toLocalDateStr(new Date())}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setReportStatus("success");
+    window.alert("Classes file downloaded successfully.");
+    setTimeout(() => setReportStatus("idle"), 2000);
+  };
 
   const closePanel = () => {
     setPanelMode(null);
     setActiveRowId(null);
     setMobileEdit(null);
+  };
+
+  const handleTempDelete = async (id: string) => {
+    try {
+      const res = await fetch(`/api/class/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.message || "Failed to delete class.");
+      }
+      setClassRows((prev) => {
+        const next = prev.filter((row) => row.id !== id);
+        setTotalClasses(next.length);
+        setAvgSize(
+          next.length > 0 ? Math.round(totalStudents / next.length) : 0
+        );
+        return next;
+      });
+      closePanel();
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "Failed to delete class.");
+    }
+  };
+
+  const saveClassChanges = async (payload: {
+    id: string;
+    name: string;
+    section: string;
+    teacherId?: string;
+  }) => {
+    setSavingClassId(payload.id);
+    try {
+      const res = await fetch(`/api/class/${payload.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: payload.name,
+          section: payload.section,
+          teacherId: payload.teacherId ?? "",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.message || "Failed to update class.");
+      }
+      const updated = data?.class;
+      if (updated) {
+        setClassRows((prev) =>
+          prev.map((row) =>
+            row.id === payload.id
+              ? {
+                  ...row,
+                  name: updated.name ?? row.name,
+                  section: updated.section
+                    ? `Section ${updated.section}`
+                    : row.section,
+                  teacher: updated.teacher?.name ?? row.teacher,
+                  subject: updated.teacher?.email ?? row.subject,
+                }
+              : row
+          )
+        );
+      }
+      return true;
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "Failed to update class.");
+      return false;
+    } finally {
+      setSavingClassId(null);
+    }
   };
 
   const renderButton = (
@@ -271,7 +386,7 @@ export default function SchoolAdminClassesTab() {
           ) : (
             <button
               onClick={onClick}
-              className="h-10 w-10 flex items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
+              className="h-10 w-10 flex items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 cursor-pointer"
             >
               <Icon size={18} />
             </button>
@@ -327,7 +442,11 @@ export default function SchoolAdminClassesTab() {
                 {renderButton(
                   "report",
                   Download,
-                  "Report",
+                  reportStatus === "downloading"
+                    ? "Downloading..."
+                    : reportStatus === "success"
+                    ? "Downloaded"
+                    : "Report",
                   handleReportClick
                 )}
               </div>
@@ -418,14 +537,20 @@ export default function SchoolAdminClassesTab() {
                     return <ClassDetailsPanel row={row} onClose={closePanel} />;
                   }
                   if (panelMode === "edit") {
-                    return <EditClassPanel row={row} onClose={closePanel} />;
+                    return (
+                      <EditClassPanel
+                        row={row}
+                        onClose={closePanel}
+                        onSave={saveClassChanges}
+                      />
+                    );
                   }
                   if (panelMode === "delete") {
                     return (
                       <DeleteClassPanel
                         row={row}
                         onCancel={closePanel}
-                        onConfirm={closePanel}
+                        onConfirm={() => handleTempDelete(row.id)}
                       />
                     );
                   }
@@ -476,7 +601,7 @@ export default function SchoolAdminClassesTab() {
                       <button
                         type="button"
                         onClick={closePanel}
-                        className="w-full rounded-xl bg-lime-400/30 text-lime-200 border border-lime-400/40 py-2 text-sm font-semibold hover:bg-lime-400/35 transition"
+                        className="w-full rounded-xl bg-lime-400/30 text-lime-200 border border-lime-400/40 py-2 text-sm font-semibold hover:bg-lime-400/35 transition cursor-pointer"
                       >
                         Close
                       </button>
@@ -512,9 +637,26 @@ export default function SchoolAdminClassesTab() {
 
                       <button
                         type="button"
-                        className="w-full rounded-xl bg-lime-400 text-black font-semibold py-2.5 hover:bg-lime-300 transition"
+                      className="w-full rounded-xl bg-lime-400 text-black font-semibold py-2.5 hover:bg-lime-300 transition"
+                        onClick={async () => {
+                          const className = mobileEdit?.className ?? row.name;
+                          const section =
+                            mobileEdit?.section ??
+                            row.section.replace("Section ", "");
+                          const normalizedSection =
+                            section === "—" || section === "â€”" ? "" : section;
+                          const ok = await saveClassChanges({
+                            id: row.id,
+                            name: className,
+                            section: normalizedSection,
+                          });
+                          if (ok) {
+                            closePanel();
+                          }
+                        }}
+                        disabled={savingClassId === row.id}
                       >
-                        Save Changes
+                        {savingClassId === row.id ? "Saving..." : "Save Changes"}
                       </button>
                     </div>
                   ) : (
@@ -548,7 +690,7 @@ export default function SchoolAdminClassesTab() {
                     type="button"
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={safePage === 1}
-                    className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/10"
+                    className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/10 cursor-pointer"
                   >
                     Prev
                   </button>
@@ -559,7 +701,7 @@ export default function SchoolAdminClassesTab() {
                     type="button"
                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                     disabled={safePage === totalPages}
-                    className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/10"
+                    className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/10 cursor-pointer"
                   >
                     Next
                   </button>
@@ -569,6 +711,7 @@ export default function SchoolAdminClassesTab() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }
