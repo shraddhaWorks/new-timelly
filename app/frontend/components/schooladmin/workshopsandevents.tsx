@@ -20,6 +20,7 @@ interface EventItem {
   additionalInfo?: string | null;
   teacher?: { name?: string | null } | null;
   photo?: string | null;
+  maxSeats?: number | null;
   _count?: { registrations: number };
   type?: string | null;
   level?: string | null;
@@ -278,6 +279,7 @@ export default function WorkshopsAndEventsTab() {
           loading={detailsLoading}
           error={detailsError}
           event={eventDetails}
+          showEnrolledStudents
         />
 
         <DeleteEventModal
@@ -343,6 +345,7 @@ export default function WorkshopsAndEventsTab() {
                   location={event.location}
                   mode={event.mode}
                   registrations={event._count?.registrations ?? 0}
+                  maxSeats={event.maxSeats}
                   teacherName={event.teacher?.name ?? ""}
                   status={status}
                   photo={event.photo}

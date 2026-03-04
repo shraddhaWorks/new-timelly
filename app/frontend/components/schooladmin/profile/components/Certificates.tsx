@@ -44,6 +44,7 @@ export const Certificates = ({ certificates = [] }: Props) => {
             </div>
             <a
               href={c.certificateUrl ?? "#"}
+              download
               target="_blank"
               rel="noopener noreferrer"
               className="text-gray-400 hover:text-[#b4f44d] p-2 transition-colors touch-manipulation min-h-[44px] min-w-[44px] inline-flex items-center justify-center"

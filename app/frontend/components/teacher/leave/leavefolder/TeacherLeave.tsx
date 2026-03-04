@@ -55,6 +55,7 @@ export default function TeacherLeave() {
     try {
       const res = await fetch("/api/leaves/my", { credentials: "include" });
       const data = await res.json();
+      //console.log("My Leaves:", data);
       if (res.ok && Array.isArray(data)) setMyLeaves(data);
       else setMyLeaves([]);
     } catch {
@@ -141,7 +142,7 @@ export default function TeacherLeave() {
   };
 
   const handleCancel = async (id: string) => {
-    if (!confirm("Are you sure you want to withdraw this leave request? This cannot be undone.")) return;
+    if (!confirm("Do you really want to withdraw this leave request? This action cannot be undone.")) return;
     setError(null);
     try {
       const res = await fetch(`/api/leaves/${id}`, {
@@ -405,8 +406,8 @@ export default function TeacherLeave() {
                         </span>
                       </td>
                       <td className="px-6 py-5 max-w-[200px]">
-                        <div className="truncate text-sm text-white/80">{leave.reason}</div>
-                        <div className="text-[10px] text-white/30 mt-1 truncate">{leave.remarks || "Awaiting review"}</div>
+                        <div className=" text-sm text-white/80">{leave.reason}</div>
+                        <div className="text-[12px] text-white/30 mt-1 truncate">{leave.remarks || "Approved"}</div>
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex justify-end gap-3">

@@ -189,11 +189,11 @@ export default function ParentMarksTab() {
   }
 
   return (
-    <div className=" min-h-screen text-white">
+    <div className="min-h-screen text-white px-3 sm:px-0 pb-6 overflow-x-hidden">
 
       {/* HEADER */}
-      <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-8 mb-8">
-        <h1 className="text-3xl font-bold mb-2">
+      <div className="rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-4 sm:p-6 md:p-8 mb-4 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">
           Academic Performance
         </h1>
         <p className="text-white/60">
@@ -202,7 +202,7 @@ export default function ParentMarksTab() {
       </div>
 
       {/* STAT CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
 
         {/* Overall Score */}
         <div className="relative rounded-2xl border border-white/10 p-6 backdrop-blur-xl hover:border-lime-400/30 transition">

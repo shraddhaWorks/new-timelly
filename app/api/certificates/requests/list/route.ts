@@ -14,7 +14,21 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
 
-    let schoolId = session.user.schoolId;
+    let schoolId = session.user.schoolId ?? null;
+    let studentIdForFilter = session.user.studentId ?? null;
+
+    // If no studentId in session (e.g. parent dashboard), try to find student linked to this user
+    if (!studentIdForFilter) {
+      const student = await prisma.student.findFirst({
+        where: { userId: session.user.id },
+        select: { id: true, schoolId: true },
+      });
+      if (student) {
+        studentIdForFilter = student.id;
+        if (!schoolId) schoolId = student.schoolId;
+      }
+    }
+
     if (!schoolId) {
       const adminSchool = await prisma.school.findFirst({
         where: { admins: { some: { id: session.user.id } } },
@@ -30,12 +44,12 @@ export async function GET(req: Request) {
     }
 
     const where: any = {
-      schoolId: schoolId,
+      schoolId,
     };
 
-    // For students: only show their own certificate requests
-    if (session.user.studentId) {
-      where.studentId = session.user.studentId;
+    // For students (or parent viewing as student): only show their own certificate requests
+    if (studentIdForFilter) {
+      where.studentId = studentIdForFilter;
     }
 
     if (status) {

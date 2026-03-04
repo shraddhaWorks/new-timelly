@@ -15,8 +15,21 @@ export async function PUT(
     }
 
     const { id } = await params;
-    const schoolId = session.user.schoolId;
-
+    let schoolId = session.user.schoolId;
+    if (!schoolId) {
+      const adminSchool = await prisma.school.findFirst({
+        where: { admins: { some: { id: session.user.id } } },
+        select: { id: true },
+      });
+      schoolId = adminSchool?.id ?? null;
+      if (!schoolId && session.user.role === "TEACHER") {
+        const teacherSchool = await prisma.school.findFirst({
+          where: { teachers: { some: { id: session.user.id } } },
+          select: { id: true },
+        });
+        schoolId = teacherSchool?.id ?? null;
+      }
+    }
     if (!schoolId) {
       return NextResponse.json(
         { message: "School not found in session" },
@@ -34,6 +47,8 @@ export async function PUT(
       additionalInfo,
       photo,
       eventDate,
+      maxSeats,
+      amount,
     } = await req.json();
 
     if (
@@ -74,6 +89,8 @@ export async function PUT(
       parsedEventDate = parsed;
     }
 
+    const eventAmount = typeof amount === "number" && amount >= 0 ? amount : (typeof amount === "string" ? parseFloat(amount) || 0 : 0);
+
     const updated = await prisma.event.update({
       where: { id },
       data: {
@@ -86,6 +103,8 @@ export async function PUT(
         additionalInfo,
         eventDate: parsedEventDate,
         photo: photo ?? null,
+        maxSeats: maxSeats != null && typeof maxSeats === "number" ? maxSeats : null,
+        amount: Math.max(0, eventAmount),
       },
       include: {
         class: {
@@ -125,8 +144,21 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const schoolId = session.user.schoolId;
-
+    let schoolId = session.user.schoolId;
+    if (!schoolId) {
+      const adminSchool = await prisma.school.findFirst({
+        where: { admins: { some: { id: session.user.id } } },
+        select: { id: true },
+      });
+      schoolId = adminSchool?.id ?? null;
+      if (!schoolId && session.user.role === "TEACHER") {
+        const teacherSchool = await prisma.school.findFirst({
+          where: { teachers: { some: { id: session.user.id } } },
+          select: { id: true },
+        });
+        schoolId = teacherSchool?.id ?? null;
+      }
+    }
     if (!schoolId) {
       return NextResponse.json(
         { message: "School not found in session" },

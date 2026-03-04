@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Pencil } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import SelectInput from "../../common/SelectInput";
 import PrimaryButton from "../../common/PrimaryButton";
 import type { Class, FeeStructure } from "./types";
@@ -112,7 +112,7 @@ export default function FeeStructureConfig({
           <div>
             <p className="text-sm font-medium mb-2">Fee Components</p>
             {components.map((c, i) => (
-              <div key={i} className="flex gap-2 mb-2">
+              <div key={i} className="flex gap-2 mb-2 items-center">
                 <input
                   type="text"
                   value={c.name}
@@ -121,6 +121,7 @@ export default function FeeStructureConfig({
                     n[i] = { ...n[i], name: e.target.value };
                     setComponents(n);
                   }}
+                  placeholder="Component name"
                   className="flex-1 rounded-lg bg-black/20 border border-white/10 px-3 py-2 text-sm"
                 />
                 <input
@@ -133,23 +134,58 @@ export default function FeeStructureConfig({
                   }}
                   className="w-24 rounded-lg bg-black/20 border border-white/10 px-3 py-2 text-sm"
                 />
+                <button
+                  type="button"
+                  onClick={() => setComponents(components.filter((_, idx) => idx !== i))}
+                  className="p-2 rounded-lg hover:bg-red-500/20 text-red-400"
+                  title="Remove component"
+                >
+                  <Trash2 size={16} />
+                </button>
               </div>
             ))}
             <button
+              type="button"
               onClick={() => setComponents([...components, { name: "", amount: 0 }])}
-              className="text-sm text-emerald-400"
+              className="text-sm text-emerald-400 hover:text-emerald-300"
             >
               + Add component
             </button>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <PrimaryButton title="Save Structure" onClick={handleSave} />
             <button
+              type="button"
               onClick={() => setEditingId(null)}
               className="px-4 py-2 rounded-xl border border-white/20"
             >
               Cancel
             </button>
+            {editingId !== "new" && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!structureClassId || !confirm("Do you really want to delete this entire class fee structure? Student amounts will be recalculated. This action cannot be undone.")) return;
+                  try {
+                    const res = await fetch(`/api/fees/structure?classId=${encodeURIComponent(structureClassId)}`, {
+                      method: "DELETE",
+                    });
+                    if (!res.ok) {
+                      const d = await res.json();
+                      alert(d.message || "Failed to delete");
+                      return;
+                    }
+                    setEditingId(null);
+                    onSuccess();
+                  } catch (e) {
+                    console.error(e);
+                  }
+                }}
+                className="px-4 py-2 rounded-xl border border-red-500/50 text-red-400 hover:bg-red-500/10"
+              >
+                Delete Structure
+              </button>
+            )}
           </div>
         </div>
       )}

@@ -90,11 +90,26 @@ const CertificateCard = ({ data }: any) => {
         </div>
       </div>
 
-      {/* Hover Overlay */}
-      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
+      {/* Always-visible small download icon for touch/mobile and keyboard users */}
+      {data.url && (
+        <a
+          href={data.url}
+          download
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute top-2 right-2 p-2 bg-white/20 rounded-full text-black/70 hover:bg-white/30 z-20"
+          aria-label="Download certificate"
+        >
+          <Download size={16} />
+        </a>
+      )}
+
+      Hover Overlay (kept for larger desktop button)
+      <div className="absolute inset-0 z-20 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
         {data.url ? (
           <a
             href={data.url}
+            download
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-6 py-3 bg-[#A3E635] text-black font-semibold rounded-full shadow-lg hover:scale-105 transition"

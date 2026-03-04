@@ -5,11 +5,27 @@ import type { TeacherRow, AuditRecord } from "./teacheraudit/types";
 import TeacherAuditHeader from "./teacheraudit/TeacherAuditHeader";
 import TeacherAuditCard from "./teacheraudit/TeacherAuditCard";
 
-import PageHeader from "../common/PageHeader";
 import Spinner from "../common/Spinner";
+
+function getCurrentAcademicYear() {
+  const now = new Date();
+
+  // Academic year starts in June (month index 5)
+  const startYear =
+    now.getMonth() >= 5 ? now.getFullYear() : now.getFullYear() - 1;
+
+  return `${startYear}-${startYear + 1}`;
+}
+
 
 export default function TeacherAuditTab() {
   const [q, setQ] = useState("");
+  const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
+ const currentYear = getCurrentAcademicYear();
+
+const [academicYears, setAcademicYears] = useState([
+  { value: currentYear, label: currentYear },
+]);
   const [loading, setLoading] = useState(true);
   const [teachers, setTeachers] = useState<TeacherRow[]>([]);
   const [expandedTeacherId, setExpandedTeacherId] = useState<string | null>(
@@ -34,27 +50,32 @@ export default function TeacherAuditTab() {
     try {
       const params = new URLSearchParams();
       if (q.trim()) params.set("q", q.trim());
+      if (academicYear && academicYear !== "all") params.set("academicYear", academicYear);
       const res = await fetch(`/api/teacher-audit/teachers?${params.toString()}`);
       const data = await res.json();
+      console.log("Fetched teachers", data);
       setTeachers(data.teachers ?? []);
     } catch {
       setTeachers([]);
     } finally {
       setLoading(false);
     }
-  }, [q]);
+  }, [q, academicYear]);
 
   useEffect(() => {
     const t = setTimeout(() => fetchTeachers(), 300);
     return () => clearTimeout(t);
-  }, [q, fetchTeachers]);
+  }, [q, academicYear, fetchTeachers]);
 
   const loadRecords = useCallback(async (teacherId: string) => {
     try {
+      const params = new URLSearchParams({ take: "50" });
+      if (academicYear && academicYear !== "all") params.set("academicYear", academicYear);
       const res = await fetch(
-        `/api/teacher-audit/${teacherId}/records?take=50`
+        `/api/teacher-audit/${teacherId}/records?${params.toString()}`
       );
       const data = await res.json();
+      //console.log("Loaded records for", teacherId, data);
       setRecordsByTeacher((prev) => ({
         ...prev,
         [teacherId]: data.records ?? [],
@@ -62,7 +83,7 @@ export default function TeacherAuditTab() {
     } catch {
       setRecordsByTeacher((prev) => ({ ...prev, [teacherId]: [] }));
     }
-  }, []);
+  }, [academicYear]);
 
   const openAddForm = (t: TeacherRow, mode: "good" | "bad") => {
     setExpandedTeacherId(t.id);
@@ -80,52 +101,64 @@ export default function TeacherAuditTab() {
     if (!recordsByTeacher[teacherId]) loadRecords(teacherId);
   };
 
-const saveRecord = async () => {
-  const teacherId = expandedTeacherId;
-  if (!teacherId) return;
+  const saveRecord = async () => {
+    const teacherId = expandedTeacherId;
+    if (!teacherId) return;
 
-  setSaving(true);
+    setSaving(true);
 
-  try {
-    const payload = {
-      category: category || "OTHER",
-      customCategory: category ? null : customCategory.trim(),
-      scoreImpact, // ✅ send raw impact
-      ...(description.trim() && { description: description.trim() }),
-    };
+    try {
+      const payload = {
+        category: category || "OTHER",
+        customCategory: category ? null : customCategory.trim(),
+        scoreImpact, // ✅ send raw impact
+        academicYear,
+        ...(description.trim() && { description: description.trim() }),
+      };
 
-    const res = await fetch(`/api/teacher-audit/${teacherId}/records`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+      const res = await fetch(`/api/teacher-audit/${teacherId}/records`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Failed to save");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to save");
 
-    await loadRecords(teacherId);
-    await fetchTeachers();
+      await loadRecords(teacherId);
+      await fetchTeachers();
 
-    setDescription("");
-    setCustomCategory("");
-    setCategory("");
-  } catch (e) {
-    alert(e instanceof Error ? e.message : "Failed to save");
-  } finally {
-    setSaving(false);
-  }
-};
+      setDescription("");
+      setCustomCategory("");
+      setCategory("");
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  };
 
 
-  
+
 
   return (
     <div className="space-y-4 sm:space-y-6 px-3 md:px-0 overflow-x-hidden">
-      <PageHeader
-        title=" Teacher Audit & Appraisal"
-        subtitle="Track performance, acknowledge achievements, and identify areas for
-              improvement."
-        rightSlot={<TeacherAuditHeader searchValue={q} onSearchChange={setQ} onSearchSubmit={() => { }} placeholder="Search teachers..." />}
+      <TeacherAuditHeader
+        searchValue={q}
+        onSearchChange={setQ}
+        academicYear={academicYear}
+        onAcademicYearChange={setAcademicYear}
+        academicYears={academicYears}
+        onAddAcademicYear={(newYear) =>
+          setAcademicYears((prev) => {
+            if (prev.some((y) => y.value === newYear)) return prev;
+            const next = [{ value: newYear, label: newYear }, ...prev];
+            return next.sort((a, b) => parseInt(b.value.slice(0, 4), 10) - parseInt(a.value.slice(0, 4), 10));
+          })
+        }
+        recordCount={teachers.length}
+        onSearchSubmit={() => { }}
+        placeholder="Search teacher..."
       />
 
       <div className="">

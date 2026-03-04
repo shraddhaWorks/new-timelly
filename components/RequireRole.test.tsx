@@ -1,7 +1,7 @@
 "use client";
 
 import { render, screen } from "@testing-library/react";
-import RequireRole from "@/components/RequireRole";
+import RequireRole from "@/app/frontend/auth/RequiredRoles";
 
 const mockReplace = jest.fn();
 
@@ -27,7 +27,7 @@ describe("RequireRole", () => {
         <span>Protected</span>
       </RequireRole>
     );
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    expect(screen.getByText("Verifying Access")).toBeInTheDocument();
     expect(screen.queryByText("Protected")).not.toBeInTheDocument();
   });
 

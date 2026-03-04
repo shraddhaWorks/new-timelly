@@ -25,6 +25,7 @@ type UserMe = {
   name: string | null;
   email: string | null;
   mobile: string | null;
+  address: string | null;
   language: string | null;
   photoUrl: string | null;
 };
@@ -111,7 +112,7 @@ export default function PortalSettingsPanel({ portal }: { portal: PortalVariant 
         timezone: "Asia/Kolkata",
         photoUrl: u.photoUrl ?? session?.user?.image ?? "",
         location: "New Delhi, India",
-        address: parentDetails.address ?? "",
+        address: portal === "parent" ? (parentDetails.address ?? "") : (u.address ?? ""),
         fatherName: parentDetails.fatherName ?? "",
         fatherPhone: parentDetails.fatherPhone ?? "",
       };
@@ -189,6 +190,7 @@ export default function PortalSettingsPanel({ portal }: { portal: PortalVariant 
           body: JSON.stringify({
             name: form.name.trim(),
             mobile: form.mobile.trim() || null,
+            address: form.address?.trim() || null,
             language: form.language,
             photoUrl: photoUrl || null,
           }),
@@ -199,6 +201,14 @@ export default function PortalSettingsPanel({ portal }: { portal: PortalVariant 
         }
         // Update initial form to reflect saved state
         setInitialForm((prev) => prev ? { ...prev, photoUrl } : null);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("profile-updated", {
+              detail: { photoUrl },
+            })
+          );
+          localStorage.setItem("timelly:profile-updated", String(Date.now()));
+        }
         toast.show("Profile photo updated and saved.", "success");
       } catch (error) {
         toast.show(error instanceof Error ? error.message : "Image upload failed.", "error");
@@ -230,6 +240,14 @@ export default function PortalSettingsPanel({ portal }: { portal: PortalVariant 
     setSaving(true);
     try {
       await saveProfile(form, portal);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("profile-updated", {
+            detail: { photoUrl: form.photoUrl || null },
+          })
+        );
+        localStorage.setItem("timelly:profile-updated", String(Date.now()));
+      }
       await savePassword(passwords, passwordDirty, setPasswordSaving);
       localStorage.setItem(prefKey, JSON.stringify(prefs));
       setInitialForm(form);
@@ -334,6 +352,7 @@ async function saveProfile(form: FormState, portal: PortalVariant) {
       body: JSON.stringify({
         name: form.name?.trim() || "",
         mobile: mobile || null,
+        address: form.address?.trim() || null,
         language: form.language || "English",
         photoUrl: form.photoUrl || null,
       }),

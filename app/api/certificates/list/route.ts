@@ -14,8 +14,34 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const studentId = searchParams.get("studentId");
 
-    const schoolId = session.user.schoolId;
+    let schoolId = session.user.schoolId ?? null;
+    let studentIdForFilter = session.user.studentId ?? null;
 
+    // If no studentId in session (e.g. parent dashboard), try student linked to this user
+    if (!studentIdForFilter) {
+      const student = await prisma.student.findFirst({
+        where: { userId: session.user.id },
+        select: { id: true, schoolId: true },
+      });
+      if (student) {
+        studentIdForFilter = student.id;
+        if (!schoolId) schoolId = student.schoolId;
+      }
+    }
+    if (!schoolId && studentIdForFilter) {
+      const student = await prisma.student.findUnique({
+        where: { id: studentIdForFilter },
+        select: { schoolId: true },
+      });
+      schoolId = student?.schoolId ?? null;
+    }
+    if (!schoolId) {
+      const adminSchool = await prisma.school.findFirst({
+        where: { admins: { some: { id: session.user.id } } },
+        select: { id: true },
+      });
+      schoolId = adminSchool?.id ?? null;
+    }
     if (!schoolId) {
       return NextResponse.json(
         { message: "School not found in session" },
@@ -24,15 +50,14 @@ export async function GET(req: Request) {
     }
 
     const where: any = {
-      schoolId: schoolId,
+      schoolId,
     };
 
     // Filter by student
-    if (session.user.studentId) {
-      // For students: only show their own certificates
-      where.studentId = session.user.studentId;
+    if (studentIdForFilter) {
+      where.studentId = studentIdForFilter;
     } else if (studentId) {
-      // For teachers/admins: filter by student if provided
+      // For teachers/admins: filter by student if provided in query
       where.studentId = studentId;
     }
     const certificates = await prisma.certificate.findMany({

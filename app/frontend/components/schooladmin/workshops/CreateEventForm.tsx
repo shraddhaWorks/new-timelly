@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { X, Image as ImageIcon, SquarePen, Save, Trash2, Loader2 } from "lucide-react";
+import { X, Image as ImageIcon, SquarePen, Save, Trash2, Loader2, GraduationCap, Users } from "lucide-react";
 import SearchInput from "../../common/SearchInput";
 import EventSelectField from "./EventSelectField";
 import SuccessPopup from "./SuccessPopup";
 import { uploadImage } from "../../../utils/upload";
+import { useClasses } from "@/hooks/useClasses";
 
 const eventTypeOptions = [
   { id: "workshop", name: "Workshop" },
@@ -42,6 +43,9 @@ interface CreateEventFormProps {
     level?: string | null;
     additionalInfo?: string | null;
     photo?: string | null;
+    maxSeats?: number | null;
+    amount?: number | null;
+    classId?: string | null;
   } | null;
   className?: string;
 }
@@ -61,6 +65,11 @@ export default function CreateEventForm({
   const [mode, setMode] = useState("");
   const [description, setDescription] = useState("");
   const [additionalInfo, setAdditionalInfo] = useState("");
+  const [maxSeats, setMaxSeats] = useState<string>("");
+  const [amount, setAmount] = useState<string>("0");
+  const [classId, setClassId] = useState("");
+  const [studentIds, setStudentIds] = useState<string[]>([]);
+  const [classStudents, setClassStudents] = useState<{ id: string; user?: { name?: string | null }; class?: { name: string; section: string | null } }[]>([]);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [photoUploading, setPhotoUploading] = useState(false);
@@ -70,6 +79,22 @@ export default function CreateEventForm({
   const [successTitle, setSuccessTitle] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const isEditing = Boolean(initialEvent?.id);
+  const { classes } = useClasses();
+
+  useEffect(() => {
+    if (!classId) {
+      setClassStudents([]);
+      setStudentIds([]);
+      return;
+    }
+    fetch(`/api/class/students?classId=${encodeURIComponent(classId)}`, { credentials: "include" })
+      .then((res) => res.json())
+      .then((data) => {
+        setClassStudents(data.students ?? []);
+        setStudentIds([]);
+      })
+      .catch(() => setClassStudents([]));
+  }, [classId]);
 
   const toDateInputValue = (value?: string | null) => {
     if (!value) return "";
@@ -98,10 +123,13 @@ export default function CreateEventForm({
     setLocation(initialEvent.location ?? "");
     setMode(initialEvent.mode ?? "");
     setAdditionalInfo(initialEvent.additionalInfo ?? "");
+    setMaxSeats(initialEvent.maxSeats != null ? String(initialEvent.maxSeats) : "");
+    setAmount(initialEvent.amount != null ? String(initialEvent.amount) : "0");
     setDate(toDateInputValue(initialEvent.eventDate));
     setTime(toTimeInputValue(initialEvent.eventDate));
     setPhotoFile(null);
     setPhotoDataUrl(initialEvent.photo ?? null);
+    setClassId(initialEvent.classId ?? "");
   }, [initialEvent]);
 
   useEffect(() => {
@@ -143,6 +171,10 @@ export default function CreateEventForm({
           additionalInfo,
           eventDate,
           photo: photoDataUrl || null,
+          maxSeats: maxSeats ? parseInt(maxSeats, 10) : null,
+          amount: amount ? parseFloat(amount) : 0,
+          classId: classId || null,
+          studentIds: studentIds.length > 0 ? studentIds : undefined,
         }),
       });
 
@@ -161,6 +193,10 @@ export default function CreateEventForm({
         setMode("");
         setDescription("");
         setAdditionalInfo("");
+        setMaxSeats("");
+        setAmount("0");
+        setClassId("");
+        setStudentIds([]);
         setPhotoFile(null);
         setPhotoDataUrl(null);
       }
@@ -236,6 +272,60 @@ export default function CreateEventForm({
             variant="glass"
           />
 
+          <div className="text-xs font-bold text-white/50 uppercase tracking-wider mt-4">
+            Target Audience
+          </div>
+          <div>
+            <label className="block text-xs sm:text-sm mb-1 text-white/70 flex items-center gap-1.5">
+              <GraduationCap size={14} /> Target Class (optional)
+            </label>
+            <p className="text-xs text-white/50 mb-2">Restrict to a class, or select specific students below.</p>
+            <select
+              value={classId}
+              onChange={(e) => setClassId(e.target.value)}
+              className="w-full rounded-xl bg-black/30 border border-white/20 text-sm text-white px-4 py-3 focus:outline-none focus:border-lime-400/60"
+            >
+              <option value="" className="text-black">All classes (open to all)</option>
+              {classes.map((c) => (
+                <option key={c.id} value={c.id} className="text-black">
+                  {c.name}{c.section ? ` - ${c.section}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+          {classStudents.length > 0 && (
+            <div>
+              <label className="block text-xs sm:text-sm mb-1 text-white/70 flex items-center gap-1.5">
+                <Users size={14} /> Pre-register students (optional)
+              </label>
+              <p className="text-xs text-white/50 mb-2">Select specific students to pre-register for this event.</p>
+              <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 rounded-xl bg-black/20 border border-white/10">
+                {classStudents.map((s) => {
+                  const sel = studentIds.includes(s.id);
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() =>
+                        setStudentIds((prev) =>
+                          sel ? prev.filter((id) => id !== s.id) : [...prev, s.id]
+                        )
+                      }
+                      className={`px-3 py-1.5 rounded-lg text-xs border transition-all ${
+                        sel ? "bg-lime-400/20 text-lime-400 border-lime-400/50" : "bg-white/5 text-gray-400 border-white/10"
+                      }`}
+                    >
+                      {s.user?.name ?? "Student"}
+                    </button>
+                  );
+                })}
+              </div>
+              {studentIds.length > 0 && (
+                <p className="text-xs text-lime-400/80 mt-1">{studentIds.length} student(s) selected</p>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <EventSelectField
               label="Type"
@@ -285,6 +375,16 @@ export default function CreateEventForm({
             Schedule & Media
           </div>
 
+          <SearchInput
+            label="Amount (₹) - 0 for free"
+            placeholder="0"
+            value={amount}
+            onChange={setAmount}
+            variant="glass"
+            type="number"
+            inputClassName="[&::-webkit-inner-spin-button]:appearance-none"
+          />
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SearchInput
               label="Date"
@@ -321,6 +421,19 @@ export default function CreateEventForm({
               options={modeOptions}
               placeholder="Select mode"
             />
+            <div>
+              <label className="block text-xs sm:text-sm mb-1 text-white/70">
+                Max Seats (optional)
+              </label>
+              <input
+                type="number"
+                min={1}
+                placeholder="Unlimited if empty"
+                value={maxSeats}
+                onChange={(e) => setMaxSeats(e.target.value.replace(/\D/g, ""))}
+                className="w-full rounded-xl bg-black/30 border border-white/20 text-sm text-white placeholder-white/40 px-4 py-3 focus:outline-none focus:ring-0 focus:border-lime-400/60"
+              />
+            </div>
           </div>
 
           <div>

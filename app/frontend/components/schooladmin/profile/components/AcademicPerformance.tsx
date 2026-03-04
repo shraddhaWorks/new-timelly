@@ -1,5 +1,6 @@
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, CartesianGrid } from "recharts";
-import { TrendingUp, ChevronDown } from "lucide-react";
+import { TrendingUp } from "lucide-react";
+import SelectInput from "../../../common/SelectInput";
 
 type Props = {
   data?: Array<{ subject: string; score: number }>;
@@ -16,11 +17,12 @@ export const AcademicPerformance = ({ data = [] }: Props) => {
           Academic Performance
         </h3>
         
-        <div className="relative">
-          <select className="appearance-none bg-white/5 text-gray-200 text-sm border border-white/20 rounded-2xl pl-6 pr-10 py-3 outline-none min-w-[140px]">
-            <option>Midterm</option>
-          </select>
-          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+        <div className="min-w-[140px]">
+          <SelectInput
+            value="Midterm"
+            options={[{ label: "Midterm", value: "Midterm" }]}
+            bgColor="black"
+          />
         </div>
       </div>
 

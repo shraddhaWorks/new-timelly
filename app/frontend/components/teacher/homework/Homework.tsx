@@ -1,14 +1,29 @@
 "use client";
 
 import { useMemo, useRef, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 import useHomeworkPage from "./useHomeworkPage";
 import HomeworkForm from "./HomeworkForm";
 import HomeworkStats from "./HomeworkStats";
 import HomeworkFilterBar from "./HomeworkFilterBar";
 import HomeworkList from "./HomeworkList";
+import HomeworkSubmissionsView from "./HomeworkSubmissionsView";
 
 export default function TeacherHomeworkTab() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const view = searchParams.get("view");
+  const homeworkId = searchParams.get("id");
+
+  const handleBackFromSubmissions = () => {
+    router.push("/frontend/pages/teacher?tab=homework");
+  };
+
+  const handleViewSubmissions = (id: string) => {
+    router.push(`/frontend/pages/teacher?tab=homework&view=submissions&id=${id}`);
+  };
+
   const {
     session,
     status,
@@ -94,6 +109,16 @@ export default function TeacherHomeworkTab() {
     return count > 0 ? Math.round(totalPct / count) : 0;
   }, [filteredHomeworks]);
 
+  if (view === "submissions" && homeworkId) {
+    return (
+      <div className="min-h-screen w-full overflow-x-hidden p-4 md:p-6 lg:p-10 text-white">
+        <div className="max-w-7xl mx-auto">
+          <HomeworkSubmissionsView homeworkId={homeworkId} onBack={handleBackFromSubmissions} />
+        </div>
+      </div>
+    );
+  }
+
   if (status === "loading" || loading) {
     return (
       <div className="min-h-screen w-full overflow-x-hidden p-4 md:p-6 lg:p-10 text-white">
@@ -169,6 +194,7 @@ export default function TeacherHomeworkTab() {
           onToggle={toggleExpanded}
           onEdit={handleEditClick}
           onDelete={handleDelete}
+          onViewSubmissions={handleViewSubmissions}
         />
       </div>
 

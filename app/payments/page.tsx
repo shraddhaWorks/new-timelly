@@ -487,7 +487,7 @@ export default function Page() {
                       <h4 className="font-semibold text-white text-sm flex items-center gap-2">
                         💰 Update Fees
                       </h4>
-                      <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                         <div className="space-y-2">
                           <label className="text-[#808080] block">Total Fee</label>
                           <input

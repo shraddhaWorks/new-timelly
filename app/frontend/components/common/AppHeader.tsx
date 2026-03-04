@@ -1,7 +1,7 @@
 "use client";
 
 import { Bell, Search, Settings } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import SectionHeader from "./SectionHeader";
@@ -36,10 +36,115 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [modalProfile, setModalProfile] = useState<HeaderProfile | undefined>(profile);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [liveProfile, setLiveProfile] = useState<HeaderProfile | null>(null);
 
   const { data: session } = useSession();
-  const displayName = (profile?.name && profile.name.trim()) ? profile.name : (session?.user?.name ?? "User");
-  const avatarUrl = (profile?.image != null && profile.image !== "") ? profile.image : (session?.user?.image ?? AVATAR_URL);
+
+  const fetchUnreadCount = useCallback(async () => {
+    if (hideSearchAndNotifications) return;
+    try {
+      const res = await fetch("/api/notifications?take=1", { credentials: "include" });
+      const data = await res.json();
+      if (res.ok && typeof data.unreadCount === "number") {
+        setUnreadCount(data.unreadCount);
+      }
+    } catch {
+      // ignore
+    }
+  }, [hideSearchAndNotifications]);
+
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 60000); // refresh every 60s
+    return () => clearInterval(interval);
+  }, [fetchUnreadCount]);
+  const displayName = (liveProfile?.name && liveProfile.name.trim())
+    ? liveProfile.name
+    : (profile?.name && profile.name.trim())
+      ? profile.name
+      : (session?.user?.name ?? "User");
+  const avatarUrl = (liveProfile?.image != null && liveProfile.image !== "")
+    ? liveProfile.image
+    : (profile?.image != null && profile.image !== "")
+      ? profile.image
+      : (session?.user?.image ?? AVATAR_URL);
+
+  const refreshLiveProfile = useCallback(async () => {
+    try {
+      const res = await fetch("/api/user/me", { credentials: "include", cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok || !data?.user) return;
+      const user = data.user as {
+        id?: string;
+        name?: string;
+        role?: string;
+        email?: string;
+        mobile?: string;
+        address?: string | null;
+        photoUrl?: string | null;
+      };
+      setLiveProfile({
+        name: user.name ?? profile?.name ?? session?.user?.name ?? "User",
+        subtitle: user.role ?? profile?.subtitle ?? session?.user?.role ?? "",
+        image: user.photoUrl ?? profile?.image ?? session?.user?.image ?? AVATAR_URL,
+        email: user.email ?? profile?.email ?? session?.user?.email ?? "",
+        phone: user.mobile ?? profile?.phone ?? session?.user?.mobile ?? "",
+        userId: user.id ?? profile?.userId,
+        address: user.address ?? profile?.address,
+        status: profile?.status,
+      });
+    } catch {
+      // ignore
+    }
+  }, [
+    profile?.address,
+    profile?.email,
+    profile?.image,
+    profile?.name,
+    profile?.phone,
+    profile?.status,
+    profile?.subtitle,
+    profile?.userId,
+    session?.user?.email,
+    session?.user?.image,
+    session?.user?.mobile,
+    session?.user?.name,
+    session?.user?.role,
+  ]);
+
+  useEffect(() => {
+    refreshLiveProfile();
+  }, [refreshLiveProfile]);
+
+  useEffect(() => {
+    const onUpdated = () => {
+      void refreshLiveProfile();
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "timelly:profile-updated") {
+        void refreshLiveProfile();
+      }
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void refreshLiveProfile();
+      }
+    };
+    window.addEventListener("teacher-profile-updated", onUpdated);
+    window.addEventListener("profile-updated", onUpdated);
+    window.addEventListener("focus", onUpdated);
+    window.addEventListener("storage", onStorage);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("teacher-profile-updated", onUpdated);
+      window.removeEventListener("profile-updated", onUpdated);
+      window.removeEventListener("focus", onUpdated);
+      window.removeEventListener("storage", onStorage);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [refreshLiveProfile]);
 
   const openSettings = () => {
     if (pathname?.startsWith("/frontend/pages/")) {
@@ -84,13 +189,76 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
     }
   };
 
+  useEffect(() => {
+    if (!showProfile) return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await fetch("/api/user/me", { credentials: "include" });
+        const data = await res.json();
+        if (cancelled || !res.ok || !data?.user) return;
+
+        const user = data.user as {
+          id?: string;
+          name?: string;
+          photoUrl?: string | null;
+          role?: string;
+          email?: string;
+          mobile?: string;
+          address?: string | null;
+        };
+
+        let address = user.address ?? profile?.address ?? undefined;
+        const role = user.role ?? profile?.subtitle ?? session?.user?.role ?? "";
+        if (!address && role === "STUDENT") {
+          try {
+            const parentRes = await fetch("/api/student/parent-details", { credentials: "include" });
+            const parentData = await parentRes.json();
+            if (parentRes.ok && parentData?.address) {
+              address = parentData.address;
+            }
+          } catch {
+            // keep fallback
+          }
+        }
+
+        setModalProfile({
+          name: user.name ?? liveProfile?.name ?? profile?.name ?? session?.user?.name ?? "User",
+          subtitle: profile?.subtitle ?? role,
+          image: user.photoUrl ?? liveProfile?.image ?? profile?.image ?? session?.user?.image ?? AVATAR_URL,
+          email: user.email ?? liveProfile?.email ?? profile?.email ?? session?.user?.email ?? "",
+          phone: user.mobile ?? liveProfile?.phone ?? profile?.phone ?? session?.user?.mobile ?? "",
+          userId: user.id ?? liveProfile?.userId ?? profile?.userId,
+          address: address ?? liveProfile?.address,
+          status: profile?.status,
+        });
+      } catch {
+        setModalProfile(liveProfile ?? profile);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    showProfile,
+    liveProfile,
+    profile,
+    session?.user?.email,
+    session?.user?.image,
+    session?.user?.mobile,
+    session?.user?.name,
+    session?.user?.role,
+  ]);
+
   return (
     <>
       <header className="sticky top-0 z-40 bg-white/5 backdrop-blur-xl border-b border-white/10">
-        <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4">
+        <div className="flex items-center justify-between px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 md:py-4 gap-2">
 
           {/* LEFT */}
-          <div>
+          <div className="min-w-0 flex-1">
             <SectionHeader title={title} />
             <p className="text-xs pl-1.5 text-white/60 hidden md:block">
               Welcome back, {displayName.split(" ")[0]}
@@ -98,7 +266,7 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
           </div>
 
           {/* RIGHT */}
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-1 sm:gap-2 md:gap-4 flex-shrink-0">
 
             {/* SEARCH - hidden for Super Admin */}
             {!hideSearchAndNotifications && (
@@ -128,11 +296,18 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
             {/* NOTIFICATIONS - hidden for Super Admin */}
             {!hideSearchAndNotifications && (
               <button
-                onClick={() => setShowNotifications(true)}
+                onClick={() => {
+                  setShowNotifications(true);
+                  fetchUnreadCount();
+                }}
                 className="relative p-2 rounded-lg hover:bg-white/10"
               >
                 <Bell className="text-white" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-lime-400 rounded-full" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-red-500 text-[10px] font-bold text-white rounded-full">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
               </button>
             )}
 
@@ -171,25 +346,26 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
 
       {/* PANELS */}
       {showNotifications && (
-        <NotificationPanel onClose={() => setShowNotifications(false)} />
+        <NotificationPanel
+          onClose={() => {
+            setShowNotifications(false);
+            fetchUnreadCount();
+          }}
+        />
       )}
 
       {showProfile && (
         <ProfileModal
-          profile={
-            profile
-              ? {
-                  name: profile.name,
-                  image: profile.image,
-                  role: profile.subtitle,
-                  email: profile.email,
-                  phone: profile.phone,
-                  userId: profile.userId,
-                  address: profile.address,
-                  status: profile.status,
-                }
-              : undefined
-          }
+          profile={modalProfile ? {
+            name: modalProfile.name,
+            image: modalProfile.image,
+            role: modalProfile.subtitle,
+            email: modalProfile.email,
+            phone: modalProfile.phone,
+            userId: modalProfile.userId,
+            address: modalProfile.address,
+            status: modalProfile.status,
+          } : undefined}
           onClose={() => setShowProfile(false)}
           onOpenSettings={() => {
             setShowProfile(false);

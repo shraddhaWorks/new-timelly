@@ -95,29 +95,29 @@ export default function TeacherParentChatTab() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br">
-      <div className="flex flex-1 gap-6 overflow-hidden h-[90vh]">
+    <div className="min-h-screen bg-gradient-to-br flex flex-col px-3 sm:px-0 pb-20 lg:pb-6 overflow-x-hidden">
+      <div className="flex flex-1 flex-col sm:flex-row gap-4 sm:gap-6 overflow-hidden min-h-0">
 
         {/* ================= Sidebar ================= */}
         <div
           className={`backdrop-blur-xl bg-white/5 border border-white/10 
-          rounded-2xl flex-col overflow-hidden
+          rounded-xl sm:rounded-2xl flex flex-col overflow-hidden
           ${activeChat ? "hidden lg:flex" : "flex"}
-          w-full lg:w-96`}
+          w-full lg:w-96 min-h-[280px] lg:min-h-0`}
         >
 
           {/* Tabs */}
-          <div className="p-3 flex gap-2 border-b border-white/10">
+          <div className="p-3 sm:p-4 flex flex-wrap gap-2 border-b border-white/10 shrink-0">
             {(["all", "approved", "pending"] as const).map(
               (tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-1.5 rounded-full text-xs capitalize transition
+                  className={`px-2.5 sm:px-4 py-2 sm:py-1.5 rounded-lg sm:rounded-full text-xs capitalize transition touch-manipulation shrink-0 min-h-[40px] sm:min-h-0
                     ${
                       activeTab === tab
                         ? "bg-lime-400 text-black font-semibold"
-                        : "bg-white/10 text-gray-300 hover:bg-white/20"
+                        : "bg-white/10 text-gray-300 hover:bg-white/20 active:bg-white/25"
                     }`}
                 >
                   {tab}
@@ -127,12 +127,12 @@ export default function TeacherParentChatTab() {
           </div>
 
           {/* Search */}
-          <div className="p-4 border-b border-white/10">
-            <SearchInput icon={Search} />
+          <div className="p-3 sm:p-4 border-b border-white/10 shrink-0">
+            <SearchInput icon={Search} placeholder="Search conversations..." />
           </div>
 
           {/* Chat List */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 sm:p-3 space-y-2 overscroll-contain min-h-0">
             {loading ? (
               <div className="text-center text-gray-400 text-sm">
                 Loading...
@@ -146,14 +146,14 @@ export default function TeacherParentChatTab() {
                 <button
                   key={chat.id}
                   onClick={() => setActiveChatId(chat.id)}
-                  className="w-full p-3 rounded-xl flex gap-3 
-                  bg-white/5 hover:bg-white/15 
-                  transition-all duration-200 text-left"
+                  className="w-full p-2.5 sm:p-3 rounded-xl flex gap-2 sm:gap-3 
+                  bg-white/5 hover:bg-white/15 active:bg-white/20
+                  transition-all duration-200 text-left touch-manipulation"
                 >
                   <img
                     src={chat.avatar}
                     alt={chat.parent}
-                    className="w-12 h-12 rounded-full object-cover shrink-0"
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover shrink-0"
                   />
 
                   <div className="flex-1 min-w-0">
@@ -183,8 +183,8 @@ export default function TeacherParentChatTab() {
           </div>
 
           {/* Bottom Button */}
-          <div className="p-4 border-t border-white/10">
-            <button  onClick={() => setShowModal(true)}  className="w-full bg-lime-400 text-black font-semibold py-2 rounded-xl hover:bg-lime-300 transition">
+          <div className="p-3 sm:p-4 border-t border-white/10 shrink-0">
+            <button onClick={() => setShowModal(true)} className="w-full bg-lime-400 text-black font-semibold py-3 sm:py-2 rounded-xl hover:bg-lime-300 active:bg-lime-200 transition touch-manipulation">
               New Chat Request
             </button>
             
@@ -199,8 +199,8 @@ export default function TeacherParentChatTab() {
             )}
         {/* ================= Chat Window ================= */}
         <div
-          className={`flex-1 backdrop-blur-xl bg-white/5 border border-white/10 
-          rounded-2xl overflow-hidden
+          className={`flex-1 min-w-0 min-h-[300px] sm:min-h-0 backdrop-blur-xl bg-white/5 border border-white/10 
+          rounded-xl sm:rounded-2xl overflow-hidden flex flex-col
           ${activeChat ? "flex" : "hidden lg:flex"}`}
         >
           {activeChat ? (

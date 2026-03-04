@@ -94,15 +94,16 @@ export default function ParentHomeTab() {
   }
 
   return (
-    <div className="space-y-6 md:space-y-8 pb-6">
+    <div className="space-y-4 sm:space-y-6 md:space-y-8 pb-4 sm:pb-6">
       <PageHeader
         title={
-          <span className="inline-flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 sm:gap-2">
             Home
-            <Sun className="h-5 w-5 text-yellow-300" />
+            <Sun className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-300 flex-shrink-0" />
           </span>
         }
         subtitle={`${getGreeting()}! Welcome back, here's what's happening with ${data.studentName}`}
+        compact
       />
 
       <ParentHomeStats

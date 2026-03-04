@@ -23,18 +23,36 @@ export async function POST(req: Request) {
 
     const { certificateType, reason } = body;
 
-    if (!session.user.studentId) {
+    // Resolve student: use session.studentId or find student linked to this user (e.g. parent dashboard uses same user as student)
+    let studentId = session.user.studentId ?? null;
+    if (!studentId) {
+      const student = await prisma.student.findFirst({
+        where: { userId: session.user.id },
+        select: { id: true, schoolId: true },
+      });
+      if (student) {
+        studentId = student.id;
+      }
+    }
+    if (!studentId) {
       return NextResponse.json(
-        { message: "Student record not found" },
+        { message: "Student record not found. Only students can request certificates." },
         { status: 400 }
       );
     }
 
-    const schoolId = session.user.schoolId;
-
+    // Resolve schoolId from session or from student record
+    let schoolId = session.user.schoolId ?? null;
+    if (!schoolId) {
+      const student = await prisma.student.findUnique({
+        where: { id: studentId },
+        select: { schoolId: true },
+      });
+      schoolId = student?.schoolId ?? null;
+    }
     if (!schoolId) {
       return NextResponse.json(
-        { message: "School not found in session" },
+        { message: "School not found" },
         { status: 400 }
       );
     }
@@ -43,11 +61,11 @@ export async function POST(req: Request) {
     // They can have multiple pending requests and multiple approved certificates
     // No restrictions - students may need multiple certificates of different or same types
 
-    // Create certificate request
+    // Create certificate request (certificateType not in schema yet - stored in reason or future migration)
     const certificateRequest = await prisma.transferCertificate.create({
       data: {
         reason: reason || null,
-        studentId: session.user.studentId,
+        studentId,
         requestedById: session.user.id,
         schoolId,
         status: "PENDING",

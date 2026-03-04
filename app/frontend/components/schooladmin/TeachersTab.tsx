@@ -11,24 +11,15 @@ import StatCard from "../common/statCard";
 import DataTable from "../common/TableLayout";
 import TeacherStatCard from "./teachersTab/teacherStatCard";
 import AppointTeacher from "./teachersTab/AppointTeacher";
-import TeachersList from "./teachersTab/TeachersList";
+import TeachersList, { TeacherRow } from "./teachersTab/TeachersList";
+import EditTeacher from "./teachersTab/EditTeacher";
+import Spinner from "../common/Spinner";
 
 const DEFAULT_AVATAR = "https://randomuser.me/api/portraits/lego/1.jpg";
 const ATTENDANCE_STATUSES = ["PRESENT", "ABSENT", "LATE", "ON_LEAVE"] as const;
 type AttendanceStatus = typeof ATTENDANCE_STATUSES[number];
 
 /* ================= Types ================= */
-
-interface TeacherRow {
-  id: string;
-  teacherId: string;
-  name: string;
-  avatar: string;
-  subject: string;
-  attendance: number;
-  phone: string;
-  status: "Active" | "On Leave";
-}
 
 /* ================= Mobile Card Component ================= */
 
@@ -100,6 +91,7 @@ const SchoolAdminTeacherTab = () => {
   const [page, setPage] = useState(1);
   const [teachers, setTeachers] = useState<TeacherRow[]>([]);
   const [teachersLoading, setTeachersLoading] = useState(true);
+  const [editingTeacher, setEditingTeacher] = useState<TeacherRow | null>(null);
   const [attendanceDate, setAttendanceDate] = useState(todayStr);
   const [attendanceMap, setAttendanceMap] = useState<Record<string, AttendanceStatus>>({});
   const [attendanceLoading, setAttendanceLoading] = useState(false);
@@ -185,9 +177,19 @@ const SchoolAdminTeacherTab = () => {
   );
 
   const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to remove this teacher from the list? Contact admin for permanent removal.")) {
+    if (confirm("Do you really want to remove this teacher from the list? Contact admin for permanent removal. This action cannot be undone.")) {
       setTeachers((prev) => prev.filter((t) => t.id !== id));
     }
+  };
+
+  const handleEditTeacher = (teacher: TeacherRow) => {
+    setEditingTeacher(teacher);
+  };
+
+  const handleSaveTeacher = (updatedTeacher: TeacherRow) => {
+    setTeachers((prev) =>
+      prev.map((t) => (t.id === updatedTeacher.id ? { ...t, ...updatedTeacher } : t))
+    );
   };
 
   const setTeacherAttendance = (teacherId: string, status: AttendanceStatus) => {
@@ -404,14 +406,7 @@ const SchoolAdminTeacherTab = () => {
   ];
 
   return (
-    <div className="  w-full
-  max-w-screen-2xl
-  mx-auto
-  px-4
-  sm:px-6
-  lg:px-8
-  space-y-6
-  min-w-0">
+    <div className="w-full max-w-screen-2xl mx-auto space-y-4 sm:space-y-6 min-w-0 overflow-x-hidden px-2 sm:px-0 pb-20 lg:pb-0">
 
       <PageHeader
         title="Teachers"
@@ -430,11 +425,7 @@ const SchoolAdminTeacherTab = () => {
       />
 
       {/* ===== Stats Cards ===== */}
-      <div className="  grid
-    gap-4
-    grid-cols-1
-    sm:grid-cols-2
-    lg:grid-cols-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
           title="Total Present"
           value={<>{presentCount} <span className="text-sm text-lime-400">/ {teachers.length}</span></>}
@@ -469,7 +460,7 @@ const SchoolAdminTeacherTab = () => {
   shadow-[0_20px_60px_rgba(0,0,0,0.45)]
   overflow-hidden">
 
-        <div className="px-4 md:p-5 border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="px-3 sm:px-4 md:p-5 border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
           <div>
             <h3 className="text-lg font-bold text-gray-100 flex items-center gap-2">
               <Calendar size={18} />
@@ -480,7 +471,7 @@ const SchoolAdminTeacherTab = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
             <input
               type="date"
               value={attendanceDate}
@@ -499,7 +490,7 @@ const SchoolAdminTeacherTab = () => {
 
         <div className="p-4 md:p-5">
           {attendanceLoading ? (
-            <div className="text-center py-8 text-gray-400">Loading attendance...</div>
+            <div className="text-center py-8 text-gray-400"><Spinner/></div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {teachers.map((t) => {
@@ -566,22 +557,27 @@ const SchoolAdminTeacherTab = () => {
           totalPages={totalPages}
           setPage={setPage}
           onDelete={handleDelete}
+          onEditTeacher={handleEditTeacher}
         />
       </div>
+
+      {editingTeacher && (
+        <EditTeacher
+          teacher={editingTeacher}
+          onClose={() => setEditingTeacher(null)}
+          onSave={(t) => {
+            handleSaveTeacher(t);
+            setEditingTeacher(null);
+          }}
+        />
+      )}
 
 
       {/* ================= Teachers List ================= */}
 
-      <div className="flex justify-end pt-2">
-      
+      <div className="w-full min-w-0">
+        <AppointTeacher />
       </div>
-     <div className="w-full min-w-0">
-  <div className="w-full overflow-x-auto">
-    <div className="min-w-[900px]">
-      <AppointTeacher />
-    </div>
-  </div>
-</div>
       </div>
     </div>
   );

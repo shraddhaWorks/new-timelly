@@ -1,6 +1,7 @@
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
 import { getServerSession } from "next-auth";
+import { createNotification } from "@/lib/notificationService";
 
 interface Params {
   id: string;
@@ -105,6 +106,13 @@ export async function PATCH(
         approverId: session.user.id
       }
     });
+
+    createNotification(
+      updatedLeave.teacherId,
+      "LEAVE",
+      "Leave approved",
+      type === "CONDITIONAL" && remarks ? `Your leave was conditionally approved: ${remarks}` : "Your leave request has been approved"
+    ).catch(() => {});
 
     // 5️⃣ Success
     return new Response(JSON.stringify(updatedLeave), {

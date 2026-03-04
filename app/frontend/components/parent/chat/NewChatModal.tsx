@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
+import SelectInput from "../../common/SelectInput";
 
 type Teacher = {
   id: string;
@@ -108,18 +109,19 @@ export default function NewChatModal({ onClose, onSuccess }: Props) {
             ) : teacherError ? (
               <p className="text-red-400 text-sm py-2">{teacherError}</p>
             ) : (
-              <select
-                value={selectedTeacherId}
-                onChange={(e) => setSelectedTeacherId(e.target.value)}
-                className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-lime-400/50 outline-none"
-              >
-                <option value="">Select a teacher</option>
-                {teachers.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name ?? "Teacher"} {t.subject ? `- ${t.subject}` : ""}
-                  </option>
-                ))}
-              </select>
+             <SelectInput
+  value={selectedTeacherId}
+  onChange={setSelectedTeacherId}
+  options={[
+    { label: "Select a teacher", value: "", disabled: false },
+    ...teachers.map((t) => ({
+      label: `${t.name ?? "Teacher"} ${t.subject ? `- ${t.subject}` : ""}`,
+      value: t.id,
+    })),
+  ]}
+  bgColor="black"
+/>
+
             )}
           </div>
 
@@ -128,15 +130,17 @@ export default function NewChatModal({ onClose, onSuccess }: Props) {
             <label className="text-xs text-gray-400 block mb-2">
               TOPIC
             </label>
-            <select
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-lime-400/50 outline-none"
-            >
-              <option>Academic Performance</option>
-              <option>Attendance</option>
-              <option>Behavior</option>
-            </select>
+            <SelectInput
+  value={topic}
+  onChange={setTopic}
+  options={[
+    { label: "Academic Performance" },
+    { label: "Attendance" },
+    { label: "Behavior" },
+  ]}
+  bgColor="black"
+/>
+
           </div>
 
           {/* Message */}

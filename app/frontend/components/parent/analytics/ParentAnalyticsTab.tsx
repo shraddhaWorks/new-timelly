@@ -12,7 +12,6 @@ import StatCard from "./StatCard";
 import PerformanceOverview from "./PerformanceOverview";
 import AttendanceAnalysis from "./AttendanceAnalysis";
 import ProfileCard from "./ProfileCard";
-import BestQualities from "./BestQualities";
 import HomeworkTasks from "./HomeworkTasks";
 import RecentUpdates from "./RecentUpdates";
 import UpcomingWorkshops from "./UpcomingWorkshops";
@@ -213,7 +212,7 @@ export default function ParentAnalyticsTab() {
             score={data.stats.grade.score}
             rank={data.stats.grade.rank}
           />
-          <BestQualities />
+          {/* <BestQualities /> */}
         </div>
       </div>
     </div>

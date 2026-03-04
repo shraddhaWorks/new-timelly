@@ -3,12 +3,28 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
 import { randomBytes } from "crypto";
+import {
+  createNotificationsForUserIds,
+  getSchoolUserIds,
+} from "@/lib/notificationService";
 
 function generateId(): string {
   const prefix = "c";
   const timestamp = Date.now().toString(36);
   const random = randomBytes(5).toString("hex");
   return `${prefix}${timestamp}${random}`;
+}
+
+async function getSchoolId(session: { user: { id: string; schoolId?: string | null } }) {
+  let schoolId = session.user.schoolId;
+  if (!schoolId) {
+    const adminSchool = await prisma.school.findFirst({
+      where: { admins: { some: { id: session.user.id } } },
+      select: { id: true },
+    });
+    schoolId = adminSchool?.id ?? null;
+  }
+  return schoolId;
 }
 
 export async function POST(req: Request) {
@@ -19,17 +35,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
+    const schoolId = await getSchoolId(session);
+
     const body = await req.json();
     const title =
       typeof body.title === "string" ? body.title.trim() : "";
     const description =
       typeof body.description === "string" ? body.description.trim() : "";
+    const photosRaw = Array.isArray(body.photos) ? body.photos : [];
+    const photos = photosRaw.filter((p: unknown): p is string => typeof p === "string" && !!p);
     const photo =
-      typeof body.photo === "string" && body.photo
-        ? body.photo
-        : typeof body.mediaUrl === "string" && body.mediaUrl
-          ? body.mediaUrl
-          : null;
+      photos[0] ??
+      (typeof body.photo === "string" && body.photo ? body.photo : null) ??
+      (typeof body.mediaUrl === "string" && body.mediaUrl ? body.mediaUrl : null);
 
     if (!title || !description) {
       return NextResponse.json(
@@ -37,8 +55,6 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-
-    const schoolId = session.user.schoolId as string | undefined;
 
     if (!schoolId) {
       return NextResponse.json(
@@ -59,7 +75,8 @@ export async function POST(req: Request) {
         data: {
           title,
           description,
-          photo,
+          photo: photo || null,
+          photos: photos.length > 0 ? photos : [],
           likes: 0,
           schoolId,
           createdById: userId,
@@ -71,6 +88,18 @@ export async function POST(req: Request) {
         },
       });
 
+      try {
+        const userIds = await getSchoolUserIds(schoolId);
+        await createNotificationsForUserIds(
+          userIds.filter((id) => id !== userId),
+          "NEWS",
+          "New post",
+          title.length > 60 ? title.slice(0, 60) + "…" : title
+        );
+      } catch (nErr) {
+        console.warn("News notification creation failed:", nErr);
+      }
+
       return NextResponse.json(
         {
           message: "News feed created successfully",
@@ -79,6 +108,7 @@ export async function POST(req: Request) {
             title: newsFeed.title,
             description: newsFeed.description,
             photo: newsFeed.photo,
+            photos: (newsFeed as { photos?: string[] }).photos ?? photos,
             likes: newsFeed.likes,
             createdBy: newsFeed.createdBy ?? createdBy,
             createdAt: newsFeed.createdAt.toISOString(),
@@ -96,9 +126,10 @@ export async function POST(req: Request) {
     const now = new Date();
     const isoNow = now.toISOString();
 
+    const photosArr = photos.length > 0 ? photos : (photo ? [photo] : []);
     await prisma.$executeRawUnsafe(
-      `INSERT INTO "NewsFeed" (id, title, description, photo, likes, "schoolId", "createdById", "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, $4, 0, $5, $6, $7::timestamptz, $8::timestamptz)`,
+      `INSERT INTO "NewsFeed" (id, title, description, photo, photos, likes, "schoolId", "createdById", "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, $9::text[], 0, $5, $6, $7::timestamptz, $8::timestamptz)`,
       id,
       title,
       description,
@@ -106,7 +137,8 @@ export async function POST(req: Request) {
       schoolId,
       userId,
       isoNow,
-      isoNow
+      isoNow,
+      photosArr
     );
 
     return NextResponse.json(
@@ -117,6 +149,7 @@ export async function POST(req: Request) {
           title,
           description,
           photo,
+          photos,
           likes: 0,
           createdBy,
           createdAt: isoNow,

@@ -44,9 +44,10 @@ function ParentDashboardInner() {
     name: "Parent",
     subtitle: "Parent",
     image: null as string | null,
-    email: "",
-    phone: "",
-    address: "",
+    email: undefined as string | undefined,
+    phone: undefined as string | undefined,
+    address: undefined as string | undefined,
+    userId: undefined as string | undefined,
   });
 
   const renderTabContent = () => {
@@ -92,20 +93,21 @@ function ParentDashboardInner() {
           fetch("/api/student/parent-details"),
         ]);
         const userData = await userRes.json();
-        const parentData = await parentDetailsRes.json();
+        const parentData = await parentDetailsRes.json().catch(() => ({}));
         if (cancelled || !userRes.ok) return;
 
         const u = userData.user;
-        if (!u) return;
-
-        setProfile({
-          name: u.name ?? "Parent",
-          subtitle: "Parent",
-          image: u.photoUrl ?? null,
-          email: u.email ?? "",
-          phone: u.mobile ?? parentData?.fatherPhone ?? "",
-          address: parentData?.address ?? "",
-        });
+        if (u) {
+          setProfile({
+            name: u.name ?? "Parent",
+            subtitle: "Parent",
+            image: u.photoUrl ?? null,
+            email: u.email ?? undefined,
+            phone: u.mobile ?? undefined,
+            address: parentDetailsRes.ok ? parentData?.address ?? undefined : undefined,
+            userId: u.id ?? undefined,
+          });
+        }
       } catch {
         // fallback default
       }
@@ -123,6 +125,7 @@ function ParentDashboardInner() {
         title={title}
         menuItems={PARENT_MENU_ITEMS}
         profile={profile}
+        enableSwitchAccounts
       >
         {renderTabContent()}
       </AppLayout>

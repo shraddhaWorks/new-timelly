@@ -194,6 +194,14 @@ export default function TeacherProfileTab() {
         };
         setProfileData(mappedProfile);
         setDraftData(mappedProfile);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("profile-updated", {
+              detail: { userId: user.id, photoUrl: mappedProfile.avatarUrl },
+            })
+          );
+          localStorage.setItem("timelly:profile-updated", String(Date.now()));
+        }
 
         if (mappedClasses.length > 0) {
           const totalStudents = mappedClasses.reduce((sum, c) => sum + c.students, 0);
@@ -212,6 +220,14 @@ export default function TeacherProfileTab() {
         }
       } else {
         setProfileData(draftData);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("profile-updated", {
+              detail: { photoUrl: draftData.avatarUrl },
+            })
+          );
+          localStorage.setItem("timelly:profile-updated", String(Date.now()));
+        }
       }
 
       setActiveTab("overview");

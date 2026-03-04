@@ -1,7 +1,7 @@
 "use client";
 
 import { GraduationCap, UserPlus, Trash2, Pencil } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 
 const DEFAULT_AVATAR =
   "https://randomuser.me/api/portraits/lego/1.jpg";
@@ -12,7 +12,13 @@ type ClassItem = {
   name: string;
   section: string | null;
   teacherId: string | null;
-  teacher?: { id: string; name: string | null; email: string | null } | null;
+  teacher?: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    teacherId?: string | null;
+    photoUrl?: string | null;
+  } | null;
 };
 
 type TeacherItem = {
@@ -48,50 +54,91 @@ export default function AppointTeacher() {
   const [editingClassId, setEditingClassId] = useState<string | null>(null);
 
   /* ================= FETCH ================= */
-  useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
+  const loadData = useCallback(
+    async (cancelledRef?: { current: boolean }) => {
       setLoading(true);
+      try {
+        const [classRes, teacherRes] = await Promise.all([
+          fetch("/api/class/list", {
+            credentials: "include",
+            cache: "no-store",
+          }),
+          fetch("/api/teacher/list", {
+            credentials: "include",
+            cache: "no-store",
+          }),
+        ]);
 
-      const [classRes, teacherRes] = await Promise.all([
-        fetch("/api/class/list", { credentials: "include" }),
-        fetch("/api/teacher/list", { credentials: "include" }),
-      ]);
+        if (cancelledRef?.current) return;
 
-      if (cancelled) return;
+        const classData = await classRes.json();
+        const teacherData = await teacherRes.json();
 
-      const classData = await classRes.json();
-      const teacherData = await teacherRes.json();
+        if (classData.classes) setClasses(classData.classes);
+        if (teacherData.teachers) setTeachers(teacherData.teachers);
+      } finally {
+        if (!cancelledRef?.current) setLoading(false);
+      }
+    },
+    []
+  );
 
-      if (classData.classes) setClasses(classData.classes);
-      if (teacherData.teachers) setTeachers(teacherData.teachers);
-
-      setLoading(false);
-    })();
-
+  useEffect(() => {
+    const cancelledRef = { current: false };
+    loadData(cancelledRef);
     return () => {
-      cancelled = true;
+      cancelledRef.current = true;
     };
-  }, []);
+  }, [loadData]);
+
+  useEffect(() => {
+    const refresh = () => {
+      void loadData();
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "timelly:profile-updated") {
+        void loadData();
+      }
+    };
+    window.addEventListener("teacher-profile-updated", refresh);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("teacher-profile-updated", refresh);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, [loadData]);
 
   /* ================= DATA ================= */
+  const teachersById = useMemo(
+    () =>
+      new Map(
+        teachers.map((teacher) => [teacher.id, teacher] as const)
+      ),
+    [teachers]
+  );
+
   const appointments: AppointmentRow[] = useMemo(() => {
     return classes
       .filter((c) => c.teacherId && c.teacher)
-      .map((c) => ({
-        classId: c.id,
-        className: [c.name, c.section]
-          .filter(Boolean)
-          .join(c.section ? " - " : ""),
-        teacherName: c.teacher!.name || "Teacher",
-        teacherCode:
-          (c.teacher as { teacherId?: string }).teacherId ||
-          c.teacher!.id.slice(0, 6).toUpperCase(),
-        teacherEmail: c.teacher!.email || "-",
-        avatar: DEFAULT_AVATAR,
-      }));
-  }, [classes]);
+      .map((c) => {
+        const photoFromClass = c.teacher?.photoUrl || null;
+        const photoFromTeacherList = c.teacherId
+          ? teachersById.get(c.teacherId)?.photoUrl || null
+          : null;
+
+        return {
+          classId: c.id,
+          className: [c.name, c.section]
+            .filter(Boolean)
+            .join(c.section ? " - " : ""),
+          teacherName: c.teacher!.name || "Teacher",
+          teacherCode:
+            c.teacher?.teacherId || c.teacher!.id.slice(0, 6).toUpperCase(),
+          teacherEmail: c.teacher!.email || "-",
+          avatar: photoFromClass || photoFromTeacherList || DEFAULT_AVATAR,
+        };
+      });
+  }, [classes, teachersById]);
 
   const classOptions = classes.map((c) => ({
     value: c.id,
@@ -129,12 +176,7 @@ export default function AppointTeacher() {
       setSelectedTeacherId("");
       setEditingClassId(null);
 
-      // refresh list
-      const listRes = await fetch("/api/class/list", {
-        credentials: "include",
-      });
-      const listData = await listRes.json();
-      if (listData.classes) setClasses(listData.classes);
+      await loadData();
     } catch (e) {
       window.alert(e instanceof Error ? e.message : "Failed.");
     } finally {
@@ -161,7 +203,7 @@ export default function AppointTeacher() {
 
   // REMOVE
   const handleRemove = async (classId: string) => {
-    if (!confirm("Remove class teacher?")) return;
+    if (!confirm("Do you really want to remove this class teacher? This action cannot be undone.")) return;
 
     setRemovingId(classId);
 
@@ -172,12 +214,7 @@ export default function AppointTeacher() {
       body: JSON.stringify({ teacherId: null }),
     });
 
-    const listRes = await fetch("/api/class/list", {
-      credentials: "include",
-    });
-
-    const listData = await listRes.json();
-    if (listData.classes) setClasses(listData.classes);
+    await loadData();
 
     setRemovingId(null);
   };
@@ -185,34 +222,32 @@ export default function AppointTeacher() {
   /* ================= UI ================= */
 
   return (
-    <div className="w-full max-w-6xl mx-auto bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 text-white">
-
+    <div className="w-full max-w-6xl mx-auto bg-white/5 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-white/10 text-white overflow-hidden">
       {/* HEADER */}
-      <div className="p-6">
-        <h2 className="text-lg font-bold flex items-center gap-2">
-          <GraduationCap className="text-lime-400" />
+      <div className="p-4 sm:p-5 md:p-6">
+        <h2 className="text-base sm:text-lg font-bold flex items-center gap-2">
+          <GraduationCap className="text-lime-400 w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
           Appoint Class Teacher
         </h2>
-        <p className="text-sm text-white/60 mt-1">
+        <p className="text-xs sm:text-sm text-white/60 mt-0.5 sm:mt-1">
           Assign one class teacher per class.
         </p>
       </div>
 
       {/* FORM */}
-      <div className="border-y border-white/10 p-6 bg-[#0F172A]/50">
+      <div className="border-t border-white/10 p-4 sm:p-5 md:p-6 bg-[#0F172A]/50">
         {loading ? (
-          <p className="text-white/50">Loading...</p>
+          <p className="text-white/50 text-sm">Loading...</p>
         ) : (
-          <div className="flex flex-col md:flex-row gap-4">
-
+          <div className="flex flex-col gap-3 sm:gap-4">
             <select
               value={selectedClassId}
               onChange={(e) => setSelectedClassId(e.target.value)}
-              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3"
+              className="flex-1 bg-black/20 border border-white/10 rounded-xl px-4 py-3"
             >
-              <option value="">-- Select Class --</option>
+              <option value="" className="text-white bg-slate-800">-- Select Class --</option>
               {classOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
+                <option key={opt.value} value={opt.value} className=" bg-slate-800  text-white" >
                   {opt.label}
                 </option>
               ))}
@@ -221,11 +256,11 @@ export default function AppointTeacher() {
             <select
               value={selectedTeacherId}
               onChange={(e) => setSelectedTeacherId(e.target.value)}
-              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3"
+              className="flex-1 border border-white/10 rounded-xl px-4 py-3  bg-black/20"
             >
-              <option value="">-- Select Teacher --</option>
+              <option value="" className="text-white bg-slate-800">-- Select Teacher --</option>
               {teacherOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
+                <option key={opt.value} value={opt.value} className="text-white bg-slate-800 ">
                   {opt.label}
                 </option>
               ))}
@@ -234,7 +269,7 @@ export default function AppointTeacher() {
             <button
               onClick={handleAssign}
               disabled={!selectedClassId || !selectedTeacherId || assigning}
-              className="px-6 py-3 rounded-xl font-semibold flex items-center gap-2 bg-lime-500 text-black hover:bg-lime-400 disabled:opacity-40"
+              className="w-full sm:w-auto px-6 py-3 rounded-lg sm:rounded-xl font-semibold flex items-center justify-center gap-2 bg-lime-500 text-black hover:bg-lime-400 disabled:opacity-40 text-sm sm:text-base"
             >
               <UserPlus size={18} />
               {assigning
@@ -263,9 +298,10 @@ export default function AppointTeacher() {
         )}
       </div>
 
-      {/* TABLE */}
-      <div className="p-6 overflow-x-auto">
-        <table className="w-full min-w-[560px] text-sm">
+      {/* TABLE (md+) */}
+      <div className="hidden md:block overflow-x-auto">
+        <div className="min-w-[600px] p-4 sm:p-6">
+        <table className="w-full text-sm">
           <thead className="text-gray-400">
             <tr>
               <th className="text-left py-2">Class</th>
@@ -284,6 +320,9 @@ export default function AppointTeacher() {
                   <img
                     src={item.avatar}
                     className="w-7 h-7 rounded-full"
+                    onError={(e) => {
+                      e.currentTarget.src = DEFAULT_AVATAR;
+                    }}
                   />
                   {item.teacherName}
                 </td>
@@ -294,7 +333,6 @@ export default function AppointTeacher() {
 
                 <td className="py-3 text-right">
                   <div className="flex justify-end gap-3">
-
                     <button onClick={() => handleEdit(item)}>
                       <Pencil
                         size={16}
@@ -306,18 +344,69 @@ export default function AppointTeacher() {
                       disabled={removingId === item.classId}
                       onClick={() => handleRemove(item.classId)}
                     >
-                      <Trash2
-                        size={16}
-                        className="text-red-400"
-                      />
+                      <Trash2 size={16} className="text-red-400" />
                     </button>
-
                   </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        </div>
+      </div>
+
+      {/* CARDS (mobile) */}
+      <div className="md:hidden border-t border-white/10 p-4 space-y-3">
+        {appointments.length === 0 ? (
+          <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center text-white/50 text-sm">
+            No class teachers appointed yet. Select a class and teacher above to assign.
+          </div>
+        ) : (
+        appointments.map((item) => (
+          <div
+            key={item.classId}
+            className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3"
+          >
+            <div className="flex items-start gap-3">
+              <img
+                src={item.avatar}
+                className="h-9 w-9 rounded-full"
+                onError={(e) => {
+                  e.currentTarget.src = DEFAULT_AVATAR;
+                }}
+              />
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold text-white">
+                  {item.className}
+                </div>
+                <div className="mt-1 text-xs text-white/60">
+                  {item.teacherEmail}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3 text-sm text-white/80">
+              {item.teacherName}
+            </div>
+
+            <div className="mt-4 flex items-center justify-end gap-3">
+              <button onClick={() => handleEdit(item)}>
+                <Pencil
+                  size={16}
+                  className="text-lime-400 hover:text-lime-300"
+                />
+              </button>
+
+              <button
+                disabled={removingId === item.classId}
+                onClick={() => handleRemove(item.classId)}
+              >
+                <Trash2 size={16} className="text-red-400" />
+              </button>
+            </div>
+          </div>
+        ))
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
   CalendarDays,
   Clock,
@@ -7,8 +8,14 @@ import {
   Users,
   Info,
   X,
+  Loader2,
+  CheckCircle,
+  UserPlus,
+  Award,
+  Download,
 } from "lucide-react";
 import { AVATAR_URL } from "../../../constants/images";
+import PayButton from "../../common/PayButton";
 
 interface EventDetailsModalProps {
   open: boolean;
@@ -26,9 +33,22 @@ interface EventDetailsModalProps {
     level?: string | null;
     additionalInfo?: string | null;
     photo?: string | null;
+    maxSeats?: number | null;
+    amount?: number | null;
+    isRegistered?: boolean;
+    registration?: { id: string; paymentStatus: string } | null;
     teacher?: { name?: string | null; email?: string | null; photoUrl?: string | null } | null;
     _count?: { registrations: number };
+    workshopCertificate?: {
+      id: string;
+      title: string;
+      certificateUrl: string | null;
+      issuedDate: string;
+    } | null;
   } | null;
+  showEnrollAction?: boolean;
+  showEnrolledStudents?: boolean;
+  onEnrollSuccess?: () => void;
 }
 
 function formatDate(dateString?: string | null) {
@@ -58,13 +78,68 @@ export default function EventDetailsModal({
   loading,
   error,
   event,
+  showEnrollAction = false,
+  showEnrolledStudents = false,
+  onEnrollSuccess,
 }: EventDetailsModalProps) {
+  const [enrollLoading, setEnrollLoading] = useState(false);
+  const [enrollError, setEnrollError] = useState<string | null>(null);
+  const [enrolled, setEnrolled] = useState(false);
+  const [enrolledStudents, setEnrolledStudents] = useState<
+    Array<{ id: string; registrationId: string; name: string | null; email: string | null; class: string | null; paymentStatus: string }>
+  >([]);
+
+  useEffect(() => {
+    if (open && showEnrolledStudents && event?.id) {
+      fetch(`/api/events/${event.id}/registrations`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.students) setEnrolledStudents(data.students);
+          else setEnrolledStudents([]);
+        })
+        .catch(() => setEnrolledStudents([]));
+    } else {
+      setEnrolledStudents([]);
+    }
+  }, [open, showEnrolledStudents, event?.id]);
+
   if (!open) return null;
 
   const isUpcoming = event?.eventDate
     ? new Date(event.eventDate).getTime() >= Date.now()
     : true;
   const statusLabel = isUpcoming ? "Upcoming" : "Completed";
+
+  const isRegistered = event?.isRegistered ?? enrolled;
+  const registration = event?.registration ?? null;
+  const eventAmount = event?.amount ?? 0;
+  const needsPayment = isRegistered && eventAmount > 0 && registration?.paymentStatus === "PENDING";
+  const enrolledCount = event?._count?.registrations ?? 0;
+  const maxSeats = event?.maxSeats ?? null;
+  const isFull = maxSeats != null && maxSeats > 0 && enrolledCount >= maxSeats;
+  const canEnroll = showEnrollAction && isUpcoming && !isRegistered && !isFull;
+
+  const handleEnroll = async () => {
+    if (!event?.id || !canEnroll) return;
+    setEnrollLoading(true);
+    setEnrollError(null);
+    try {
+      const res = await fetch("/api/events/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ eventId: event.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || "Enrollment failed");
+      setEnrolled(true);
+      onEnrollSuccess?.();
+    } catch (err) {
+      setEnrollError(err instanceof Error ? err.message : "Failed to enroll");
+    } finally {
+      setEnrollLoading(false);
+    }
+  };
   const instructorImage =
     event?.teacher?.photoUrl && event.teacher.photoUrl.trim() !== ""
       ? event.teacher.photoUrl
@@ -175,6 +250,43 @@ export default function EventDetailsModal({
                     </div>
                   </div>
 
+                  {showEnrolledStudents && enrolledStudents.length > 0 && (
+                    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 sm:px-5 sm:py-4">
+                      <div className="text-xs uppercase tracking-wide text-white/50 mb-3">
+                        Enrolled Students ({enrolledStudents.length})
+                      </div>
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {enrolledStudents.map((s) => {
+                          const paid = s.paymentStatus === "PAID" || s.paymentStatus === "SUCCESS";
+                          return (
+                            <div
+                              key={s.registrationId}
+                              className="flex justify-between items-center py-2 border-b border-white/5 last:border-0"
+                            >
+                              <div>
+                                <p className="text-sm font-medium text-white">
+                                  {s.name || "—"}
+                                </p>
+                                <p className="text-xs text-gray-400">
+                                  {s.class || s.email || "—"}
+                                </p>
+                              </div>
+                              <span
+                                className={`text-xs px-2 py-1 rounded ${
+                                  paid
+                                    ? "bg-emerald-500/20 text-emerald-400"
+                                    : "bg-amber-500/20 text-amber-400"
+                                }`}
+                              >
+                                {paid ? "Paid" : "Pending"}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 sm:px-5 sm:py-4">
                     <div className="text-xs uppercase tracking-wide text-white/50">
                       Event Stats
@@ -182,21 +294,104 @@ export default function EventDetailsModal({
                     <div className="mt-3 space-y-3 text-sm text-white/70">
                       <div className="flex items-center justify-between">
                         <span>Total Seats</span>
-                        <span className="text-white">50</span>
+                        <span className="text-white">
+                          {maxSeats != null ? maxSeats : "Unlimited"}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span>Enrolled</span>
-                        <span className="text-lime-300">45</span>
+                        <span className="text-lime-300">{enrolledCount}</span>
                       </div>
-                      <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                        <div className="h-full w-[90%] rounded-full bg-lime-400" />
-                      </div>
+                      {maxSeats != null && maxSeats > 0 && (
+                        <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-lime-400 transition-all"
+                            style={{
+                              width: `${Math.min(100, (enrolledCount / maxSeats) * 100)}%`,
+                            }}
+                          />
+                        </div>
+                      )}
                       <div className="flex items-center justify-between pt-1">
                         <span>Fee</span>
-                        <span className="text-white">Free</span>
+                        <span className="text-white">
+                          {eventAmount > 0 ? `₹${eventAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "Free"}
+                        </span>
                       </div>
                     </div>
                   </div>
+
+                  {showEnrollAction && event?.workshopCertificate && (
+                    <div className="rounded-2xl border border-lime-400/20 bg-lime-400/5 px-4 py-3 sm:px-5 sm:py-4">
+                      <div className="flex items-center gap-2 text-lime-400 font-semibold mb-2">
+                        <Award size={18} />
+                        Your Certificate
+                      </div>
+                      <p className="text-sm text-white/70 mb-3">{event.workshopCertificate.title}</p>
+                      {event.workshopCertificate.certificateUrl ? (
+                        <a
+                          href={event.workshopCertificate.certificateUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 rounded-xl bg-lime-400 px-4 py-2.5 text-sm font-semibold text-black hover:bg-lime-300 transition"
+                        >
+                          <Download size={16} />
+                          Download Certificate
+                        </a>
+                      ) : (
+                        <span className="text-sm text-white/50">Certificate is being prepared</span>
+                      )}
+                    </div>
+                  )}
+
+                  {showEnrollAction && (
+                    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 sm:px-5 sm:py-4">
+                      {enrollError && (
+                        <div className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+                          {enrollError}
+                        </div>
+                      )}
+                      {isRegistered ? (
+                        needsPayment ? (
+                          <div className="space-y-3">
+                            <p className="text-sm text-white/70">Complete payment to confirm enrollment</p>
+                            <PayButton
+                              amount={eventAmount}
+                              returnPath="/frontend/pages/parent?tab=workshops"
+                              eventRegistrationId={registration?.id}
+                              onSuccess={onEnrollSuccess}
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 text-lime-400">
+                            <CheckCircle size={18} />
+                            <span className="text-sm font-medium">You are enrolled</span>
+                          </div>
+                        )
+                      ) : isFull ? (
+                        <div className="text-sm text-white/60">Workshop is full</div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleEnroll}
+                          disabled={enrollLoading}
+                          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-lime-400 px-4 py-3 text-sm font-semibold text-black hover:bg-lime-300 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {enrollLoading ? (
+                            <>
+                              <Loader2 size={18} className="animate-spin" />
+                              Enrolling...
+                            </>
+                          ) : (
+                            <>
+                              <UserPlus size={18} />
+                              Enroll in Workshop
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </>

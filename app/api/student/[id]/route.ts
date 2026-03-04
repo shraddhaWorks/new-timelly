@@ -180,3 +180,141 @@ export async function GET(_req: Request, context: RouteParams) {
     );
   }
 }
+
+async function resolveSchoolId(session: { user: { id: string; schoolId?: string | null; role: string } }) {
+  let schoolId = session.user.schoolId;
+  if (!schoolId) {
+    const adminSchool = await prisma.school.findFirst({
+      where: { admins: { some: { id: session.user.id } } },
+      select: { id: true },
+    });
+    schoolId = adminSchool?.id ?? null;
+  }
+  return schoolId;
+}
+
+export async function PUT(req: Request, context: RouteParams) {
+  const resolved = "then" in context.params ? await context.params : context.params;
+  const id = resolved.id;
+
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+  if (session.user.role !== "SCHOOLADMIN" && session.user.role !== "SUPERADMIN") {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
+  const schoolId = await resolveSchoolId(session);
+  if (!schoolId) {
+    return NextResponse.json({ message: "School not found" }, { status: 400 });
+  }
+
+  try {
+    const student = await prisma.student.findFirst({
+      where: { id, schoolId },
+      include: { user: { select: { id: true } } },
+    });
+    if (!student) {
+      return NextResponse.json({ message: "Student not found" }, { status: 404 });
+    }
+
+    const body = await req.json();
+    const name = typeof body.name === "string" ? body.name.trim() : undefined;
+    const fatherName = typeof body.fatherName === "string" ? body.fatherName.trim() : undefined;
+    const classId = typeof body.classId === "string" ? (body.classId || null) : undefined;
+    const rollNo = typeof body.rollNo === "string" ? body.rollNo.trim() || null : undefined;
+    const phoneNo = typeof body.phoneNo === "string" ? body.phoneNo.trim() : undefined;
+    const email = typeof body.email === "string" ? body.email.trim() : undefined;
+    const address = typeof body.address === "string" ? body.address.trim() || null : undefined;
+    const gender = typeof body.gender === "string" ? body.gender.trim() || null : undefined;
+    const previousSchool = typeof body.previousSchool === "string" ? body.previousSchool.trim() || null : undefined;
+
+    if (name !== undefined && name.length < 2) {
+      return NextResponse.json({ message: "Name must be at least 2 characters" }, { status: 400 });
+    }
+
+    if (classId !== undefined && classId) {
+      const cls = await prisma.class.findFirst({
+        where: { id: classId, schoolId },
+      });
+      if (!cls) {
+        return NextResponse.json({ message: "Class not found" }, { status: 400 });
+      }
+    }
+
+    const userUpdate: { name?: string; email?: string } = {};
+    if (name !== undefined) userUpdate.name = name;
+    if (email !== undefined) userUpdate.email = email;
+
+    const studentUpdate: Record<string, unknown> = {};
+    if (fatherName !== undefined) studentUpdate.fatherName = fatherName;
+    if (classId !== undefined) studentUpdate.classId = classId;
+    if (rollNo !== undefined) studentUpdate.rollNo = rollNo;
+    if (phoneNo !== undefined) studentUpdate.phoneNo = phoneNo;
+    if (address !== undefined) studentUpdate.address = address;
+    if (gender !== undefined) studentUpdate.gender = gender;
+    if (previousSchool !== undefined) studentUpdate.previousSchool = previousSchool;
+
+    if (Object.keys(userUpdate).length > 0 && student.user) {
+      await prisma.user.update({
+        where: { id: student.user.id },
+        data: userUpdate,
+      });
+    }
+
+    if (Object.keys(studentUpdate).length > 0) {
+      await prisma.student.update({
+        where: { id },
+        data: studentUpdate as Record<string, never>,
+      });
+    }
+
+    return NextResponse.json({ message: "Student updated successfully" }, { status: 200 });
+  } catch (error: unknown) {
+    console.error("Student update error:", error);
+    return NextResponse.json(
+      { message: error instanceof Error ? error.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(_req: Request, context: RouteParams) {
+  const resolved = "then" in context.params ? await context.params : context.params;
+  const id = resolved.id;
+
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+  if (session.user.role !== "SCHOOLADMIN" && session.user.role !== "SUPERADMIN") {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
+  const schoolId = await resolveSchoolId(session);
+  if (!schoolId) {
+    return NextResponse.json({ message: "School not found" }, { status: 400 });
+  }
+
+  try {
+    const student = await prisma.student.findFirst({
+      where: { id, schoolId },
+      select: { id: true, userId: true },
+    });
+    if (!student) {
+      return NextResponse.json({ message: "Student not found" }, { status: 404 });
+    }
+
+    await prisma.student.delete({ where: { id } });
+    await prisma.user.delete({ where: { id: student.userId } });
+
+    return NextResponse.json({ message: "Student deleted successfully" }, { status: 200 });
+  } catch (error: unknown) {
+    console.error("Student delete error:", error);
+    return NextResponse.json(
+      { message: error instanceof Error ? error.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

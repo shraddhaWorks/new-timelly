@@ -27,6 +27,8 @@ type Props = {
   children?: React.ReactNode;
   /** When true, header hides search and notification (e.g. for Super Admin) */
   hideSearchAndNotifications?: boolean;
+  /** When true, shows Switch accounts in sidebar (student portal) */
+  enableSwitchAccounts?: boolean;
 };
 
 export default function AppLayout({
@@ -36,6 +38,7 @@ export default function AppLayout({
   activeTab,
   children,
   hideSearchAndNotifications = false,
+  enableSwitchAccounts = false,
 }: Props) {
   const [showMore, setShowMore] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -50,6 +53,7 @@ export default function AppLayout({
             profile={profile}
             activeTab={activeTab}
             onLogoutRequest={() => setShowLogoutConfirm(true)}
+            enableSwitchAccounts={enableSwitchAccounts}
           />
         </aside>
 
@@ -61,7 +65,7 @@ export default function AppLayout({
             hideSearchAndNotifications={hideSearchAndNotifications}
           />
 
-          <main className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar p-3 sm:p-4 md:p-6 min-h-0">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar px-3 py-3 sm:p-4 md:p-6 min-h-0">
             {children}
           </main>
         </div>

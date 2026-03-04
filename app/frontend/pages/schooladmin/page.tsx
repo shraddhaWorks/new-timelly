@@ -26,7 +26,15 @@ import SchoolAdminCircularsTab from "../../components/schooladmin/circularTab";
 function SchoolAdminContent() {
   const tab = useSearchParams().get("tab") ?? "dashboard";
   const title = SCHOOLADMIN_TAB_TITLES[tab] ?? tab.toUpperCase();
-  const [profile, setProfile] = useState<{ name: string; subtitle?: string; image?: string | null }>({
+  const [profile, setProfile] = useState<{
+    name: string;
+    subtitle?: string;
+    image?: string | null;
+    email?: string;
+    phone?: string;
+    address?: string;
+    userId?: string;
+  }>({
     name: "School Admin",
     subtitle: "School Admin",
   });
@@ -44,6 +52,10 @@ function SchoolAdminContent() {
             name: u.name ?? "School Admin",
             subtitle: "School Admin",
             image: u.photoUrl ?? null,
+            email: u.email ?? undefined,
+            phone: u.mobile ?? undefined,
+            address: u.address ?? undefined,
+            userId: u.id ?? undefined,
           });
         }
       } catch {
@@ -87,7 +99,7 @@ function SchoolAdminContent() {
       case "analysis":
         return <SchoolAdminAnalysisTab />;
       case "fees":
-        return <SchoolAdminFeesTab />;;
+        return <SchoolAdminFeesTab />;
       case "settings":
         return <SchoolAdminSettingsTab />;
       default:
@@ -96,7 +108,7 @@ function SchoolAdminContent() {
   }
 
   return (
-    <RequiredRoles allowedRoles={["SCHOOLADMIN"]}>
+    <RequiredRoles allowedRoles={["SCHOOLADMIN", "SUPERADMIN"]}>
       <AppLayout
         activeTab={tab}
         title={title}

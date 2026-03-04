@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
+import { createNotification } from "@/lib/notificationService";
 
 export async function POST(req: Request) {
   try {
@@ -11,7 +12,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const { templateId, studentId, title, description, certificateUrl } = await req.json();
+    const { templateId, studentId, title, description, certificateUrl, eventId } = await req.json();
 
     if (!templateId || !studentId || !title) {
       return NextResponse.json(
@@ -20,8 +21,14 @@ export async function POST(req: Request) {
       );
     }
 
-    const schoolId = session.user.schoolId;
-
+    let schoolId = session.user.schoolId;
+    if (!schoolId) {
+      const adminSchool = await prisma.school.findFirst({
+        where: { admins: { some: { id: session.user.id } } },
+        select: { id: true },
+      });
+      schoolId = adminSchool?.id ?? null;
+    }
     if (!schoolId) {
       return NextResponse.json(
         { message: "School not found in session" },
@@ -59,6 +66,18 @@ export async function POST(req: Request) {
       );
     }
 
+    if (eventId) {
+      const event = await prisma.event.findFirst({
+        where: { id: eventId, schoolId },
+      });
+      if (!event) {
+        return NextResponse.json(
+          { message: "Event not found or doesn't belong to your school" },
+          { status: 404 }
+        );
+      }
+    }
+
     const certificate = await prisma.certificate.create({
       data: {
         title,
@@ -85,6 +104,15 @@ export async function POST(req: Request) {
         },
       },
     });
+
+    if (certificate.student?.user?.id) {
+      createNotification(
+        certificate.student.user.id,
+        "CERTIFICATES",
+        "Certificate issued",
+        `${title} has been issued to you`
+      ).catch(() => {});
+    }
 
     return NextResponse.json(
       { message: "Certificate assigned successfully", certificate },

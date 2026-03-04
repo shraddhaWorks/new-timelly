@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
+import {
+  createNotificationsForUserIds,
+  getSchoolUserIds,
+} from "@/lib/notificationService";
 
 export async function POST(req: Request) {
   try {
@@ -11,7 +15,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const { title, description, type, level,location,mode,additionalInfo,photo, eventDate, classId , } = await req.json();
+    const { title, description, type, level, location, mode, additionalInfo, photo, eventDate, classId, studentIds, maxSeats, amount } = await req.json();
 
     if (!title || !description || !type || !level || !location || !mode || !additionalInfo) {
       return NextResponse.json(
@@ -59,6 +63,8 @@ export async function POST(req: Request) {
       parsedEventDate = parsed;
     }
 
+    const eventAmount = typeof amount === "number" && amount >= 0 ? amount : (typeof amount === "string" ? parseFloat(amount) || 0 : 0);
+
     const event = await prisma.event.create({
       data: {
         title,
@@ -73,6 +79,8 @@ export async function POST(req: Request) {
         classId: classId || null,
         teacherId,
         schoolId,
+        maxSeats: maxSeats != null && typeof maxSeats === "number" ? maxSeats : null,
+        amount: Math.max(0, eventAmount),
       },
       include: {
         class: {
@@ -86,6 +94,31 @@ export async function POST(req: Request) {
         },
       },
     });
+
+    // Pre-register selected students
+    const ids = Array.isArray(studentIds) ? studentIds.filter((id): id is string => typeof id === "string" && !!id) : [];
+    if (ids.length > 0) {
+      await prisma.eventRegistration.createMany({
+        data: ids.map((studentId) => ({
+          eventId: event.id,
+          studentId,
+          paymentStatus: "PENDING",
+        })),
+        skipDuplicates: true,
+      });
+    }
+
+    try {
+      const userIds = await getSchoolUserIds(schoolId);
+      await createNotificationsForUserIds(
+        userIds.filter((id) => id !== teacherId),
+        "WORKSHOPS",
+        "New workshop/event",
+        title.length > 80 ? title.slice(0, 80) + "…" : title
+      );
+    } catch (nErr) {
+      console.warn("Workshop notification failed:", nErr);
+    }
 
     return NextResponse.json(
       { message: "Event created successfully", event },

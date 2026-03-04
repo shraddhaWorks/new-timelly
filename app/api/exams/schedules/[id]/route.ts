@@ -182,3 +182,38 @@ export async function PUT(
     );
   }
 }
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    if (session.user.role !== "SCHOOLADMIN" && session.user.role !== "TEACHER") {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
+    const schoolId = await resolveSchoolId(session);
+    if (!schoolId) return NextResponse.json({ message: "School not found" }, { status: 400 });
+
+    const { id } = await params;
+    const schedule = await prisma.examSchedule.findUnique({
+      where: { id },
+      include: { term: { select: { id: true, schoolId: true } } },
+    });
+
+    if (!schedule || !schedule.term || schedule.term.schoolId !== schoolId) {
+      return NextResponse.json({ message: "Exam schedule not found" }, { status: 404 });
+    }
+
+    await prisma.examSchedule.delete({ where: { id } });
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (e: unknown) {
+    console.error("Exams schedule DELETE [id]:", e);
+    return NextResponse.json(
+      { message: e instanceof Error ? e.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
