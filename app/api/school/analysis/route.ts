@@ -41,13 +41,20 @@ export async function GET(req: Request) {
     const yearParam = searchParams.get("year");
     const classIdParam = searchParams.get("classId");
     const classId = classIdParam && classIdParam.trim() ? classIdParam.trim() : null;
-    const year = yearParam ? parseInt(yearParam, 10) : new Date().getFullYear();
-    const currentYear = new Date().getFullYear();
-    const validYear = Number.isNaN(year) ? currentYear : Math.max(currentYear - 5, Math.min(currentYear + 1, year));
 
-    const yearStart = new Date(validYear, 0, 1);
-    const yearEnd = new Date(validYear, 11, 31, 23, 59, 59);
-    const availableYears = [currentYear, currentYear - 1, currentYear - 2, currentYear - 3];
+    // compute academic year start based on parameter or current date
+    const now = new Date();
+    let startYear = yearParam ? parseInt(yearParam, 10) : NaN;
+    if (Number.isNaN(startYear)) {
+      // if after April we already in next academic year, otherwise previous
+      startYear = now.getMonth() >= 4 ? now.getFullYear() : now.getFullYear() - 1;
+    }
+
+    const yearStart = new Date(startYear, 5, 1); // June 1 of startYear
+    const yearEnd = new Date(startYear + 1, 4, 31, 23, 59, 59); // May 31 of next year
+
+    // available years: only current and optionally next after April
+    const availableYears: number[] = [startYear];
 
     const baseStudentWhere = {
       schoolId,
@@ -75,40 +82,43 @@ export async function GET(req: Request) {
       amount: byMonth[i] ?? 0,
     }));
 
-    // Enrollment growth - student count by year (createdAt)
+    // Enrollment growth - only current academic year's student count
     const enrollmentByYear: { year: number; count: number }[] = [];
-    for (let y = currentYear - 3; y <= currentYear; y++) {
-      const yEnd = new Date(y, 11, 31, 23, 59, 59);
-      const count = await prisma.student.count({
-        where: {
-          ...baseStudentWhere,
-          createdAt: { lte: yEnd },
-        },
-      });
-      enrollmentByYear.push({ year: y, count });
-    }
+    const countForYear = await prisma.student.count({
+      where: baseStudentWhere,
+    });
+    enrollmentByYear.push({ year: startYear, count: countForYear });
 
     // Attendance for selected year - aggregate
-    const attendanceRecords = await prisma.attendance.groupBy({
-      by: ["status"],
+    // fetch raw attendance records so we can separate students vs teachers
+    const attendanceRecords = await prisma.attendance.findMany({
       where: {
         class: { schoolId, ...(classId ? { id: classId } : {}) },
         date: { gte: yearStart, lte: yearEnd },
       },
-      _count: true,
+      select: { status: true, studentId: true, teacherId: true },
     });
-    const attByStatus = attendanceRecords.reduce(
-      (acc, r) => {
-        acc[r.status] = r._count;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-    const present = attByStatus["PRESENT"] ?? 0;
-    const absent = attByStatus["ABSENT"] ?? 0;
-    const late = attByStatus["LATE"] ?? 0;
-    const total = present + absent + late;
-    const studentAttendancePct = total > 0 ? Math.round(((present + late) / total) * 100) : 0;
+
+    let studentPresent = 0;
+    let studentTotal = 0;
+    let teacherPresent = 0;
+    let teacherTotal = 0;
+
+    attendanceRecords.forEach((r) => {
+      if (r.studentId) {
+        studentTotal++;
+        if (r.status === "PRESENT" || r.status === "LATE") studentPresent++;
+      }
+      if (r.teacherId) {
+        teacherTotal++;
+        if (r.status === "PRESENT" || r.status === "LATE") teacherPresent++;
+      }
+    });
+
+    const studentAttendancePct =
+      studentTotal > 0 ? Math.round(((studentPresent) / studentTotal) * 100) : 0;
+    const teacherAttendancePct =
+      teacherTotal > 0 ? Math.round(((teacherPresent) / teacherTotal) * 100) : 0;
 
     // Subject performance - avg (marks/totalMarks)*100 per subject
     const marks = await prisma.mark.findMany({
@@ -169,12 +179,13 @@ export async function GET(req: Request) {
         id,
         name: teacher?.name ?? "Unknown",
         subject: teacher?.subjects?.[0] ?? teacher?.subject ?? "—",
-        rating: count > 0 ? Math.round((sum / count) * 10) / 10 : 0,
+        // convert average percent (0-100) to 0-5 scale
+        rating: count > 0 ? Math.round(((sum / count) / 20) * 10) / 10 : 0,
       }))
       .filter((t) => t.rating > 0)
       .sort((a, b) => b.rating - a.rating);
 
-    // Avg teacher rating - average of top teachers or overall marks avg
+    // Avg teacher rating use 0-5 scale
     const avgTeacherRating = topTeachers.length > 0
       ? Math.round((topTeachers.reduce((s, t) => s + t.rating, 0) / topTeachers.length) * 10) / 10
       : 0;
@@ -197,7 +208,7 @@ export async function GET(req: Request) {
     return NextResponse.json({
       availableYears,
       classes,
-      selectedYear: validYear,
+      selectedYear: startYear,
       stats: {
         feesCollected,
         totalEnrollment,
@@ -213,7 +224,7 @@ export async function GET(req: Request) {
         enrollmentGrowth: enrollmentByYear,
         attendance: {
           students: studentAttendancePct,
-          teachers: 0,
+          teachers: teacherAttendancePct,
         },
         subjectPerformance,
       },
