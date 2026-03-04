@@ -178,7 +178,7 @@ export default function EditClassPanel({
           <button
             type="button"
             onClick={onClose}
-            className="h-8 w-8 rounded-lg border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            className="h-8 w-8 rounded-lg border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             aria-label="Close edit class"
           >
             <X size={16} className="mx-auto" />

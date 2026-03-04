@@ -80,13 +80,13 @@ export default function TeacherDashboard() {
                 <p className="text-gray-400 text-sm md:text-base max-w-2xl">
                     Welcome back to your dashboard. You have{" "}
                     <span className="text-lime-300 font-semibold">
-                        {stats.totalClasses}
+                        {stats.totalClasses} classes
                     </span>{" "}
-                    classes scheduled for today and{" "}
+                    scheduled for today and{" "}
                     <span className="text-lime-300 font-semibold">
-                        {stats.pendingChats}
+                        {stats.pendingChats} new messages
                     </span>{" "}
-                    new messages from parents.
+                    from parents.
                 </p>
             </div>
 
