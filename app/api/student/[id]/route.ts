@@ -134,9 +134,13 @@ export async function GET(_req: Request, context: RouteParams) {
         phone: student.phoneNo ?? "",
         fatherName: student.fatherName ?? "",
         motherName: (student as { motherName?: string | null }).motherName ?? "",
+        gender: student.gender ?? "",
         fatherOccupation: (student as { fatherOccupation?: string | null }).fatherOccupation ?? "",
         motherOccupation: (student as { motherOccupation?: string | null }).motherOccupation ?? "",
         fatherPhone: student.phoneNo ?? "",
+        previousSchool: student.previousSchool ?? "",
+        // status isn’t stored on the model yet; show Active by default
+        status: "Active",
         class: student.class
           ? {
               id: student.class.id,
