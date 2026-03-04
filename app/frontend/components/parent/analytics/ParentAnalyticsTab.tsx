@@ -16,6 +16,7 @@ import HomeworkTasks from "./HomeworkTasks";
 import RecentUpdates from "./RecentUpdates";
 import UpcomingWorkshops from "./UpcomingWorkshops";
 import Spinner from "../../common/Spinner";
+import { AVATAR_URL } from "@/app/frontend/constants/images";
 
 interface AnalyticsData {
   student: {
@@ -65,10 +66,32 @@ interface AnalyticsData {
   workshops: Array<{ title: string; date: string }>;
 }
 
+interface HomeworkApiItem {
+  id: string;
+  subject: string;
+  title: string;
+  dueDate: string | null;
+  hasSubmitted?: boolean;
+}
+
+interface EventApiItem {
+  id: string;
+  title: string;
+  description?: string | null;
+  eventDate?: string | null;
+  mode?: string | null;
+  photo?: string | null;
+  maxSeats?: number | null;
+  teacher?: { name?: string | null } | null;
+  _count?: { registrations?: number };
+}
+
 export default function ParentAnalyticsTab() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [homeworkApiData, setHomeworkApiData] = useState<HomeworkApiItem[]>([]);
+  const [eventsApiData, setEventsApiData] = useState<EventApiItem[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -93,6 +116,39 @@ export default function ParentAnalyticsTab() {
         setError(e instanceof Error ? e.message : "Failed to load analytics");
       } finally {
         if (active) setLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    (async () => {
+      try {
+        const [homeworkRes, eventsRes] = await Promise.all([
+          fetch("/api/homework/list", { credentials: "include" }),
+          fetch("/api/events/list", { credentials: "include" }),
+        ]);
+
+        if (!active) return;
+
+        const [homeworkJson, eventsJson] = await Promise.all([
+          homeworkRes.json().catch(() => ({})),
+          eventsRes.json().catch(() => ({})),
+        ]);
+
+        if (homeworkRes.ok) {
+          setHomeworkApiData(Array.isArray(homeworkJson?.homeworks) ? homeworkJson.homeworks : []);
+        }
+        if (eventsRes.ok) {
+          setEventsApiData(Array.isArray(eventsJson?.events) ? eventsJson.events : []);
+        }
+      } catch {
+        if (!active) return;
       }
     })();
 
@@ -138,6 +194,72 @@ export default function ParentAnalyticsTab() {
     const date = new Date(dateStr);
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
+
+  const getDueLabel = (dueDate: string | null) => {
+    if (!dueDate) return "No due date";
+    const now = new Date();
+    const due = new Date(dueDate);
+    const diffDays = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (Number.isNaN(diffDays)) return "No due date";
+    if (diffDays < 0) return "Overdue";
+    if (diffDays === 0) return "Due Today";
+    if (diffDays === 1) return "Due Tomorrow";
+    return `Due: ${diffDays} days`;
+  };
+
+  const homeworkTasks = homeworkApiData
+    .filter((hw) => !hw.hasSubmitted)
+    .slice(0, 3)
+    .map((hw) => ({
+      subject: hw.subject || "Homework",
+      title: hw.title || "Untitled homework",
+      dueLabel: getDueLabel(hw.dueDate),
+    }));
+
+  const pendingHomeworkCount = homeworkTasks.length;
+
+  const recentUpdates = eventsApiData.slice(0, 3).map((event) => {
+    const kind = event.mode?.trim() || "event";
+    const dateLabel = event.eventDate
+      ? new Date(event.eventDate).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        })
+      : "TBD";
+
+    return {
+      title: event.title || "School Update",
+      kind,
+      dateLabel,
+    };
+  });
+
+  const workshops = eventsApiData
+    .map((event) => {
+      const date = event.eventDate ? new Date(event.eventDate) : null;
+      const registrations = event._count?.registrations ?? 0;
+      const seatsLeft =
+        typeof event.maxSeats === "number" && event.maxSeats >= 0
+          ? Math.max(event.maxSeats - registrations, 0)
+          : null;
+
+      return {
+        id: event.id,
+        title: event.title || "Workshop",
+        teacher: event.teacher?.name || "School Faculty",
+        dateLabel: date
+          ? date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+          : "Date TBD",
+        timeLabel: date
+          ? date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+          : "Time TBD",
+        seatsLabel: seatsLeft === null ? "Seats info unavailable" : `${seatsLeft} seats available`,
+        mode: event.mode?.trim() || "Offline",
+        image: event.photo?.trim() || AVATAR_URL,
+      };
+    })
+    .slice(0, 2);
 
   return (
     <div className="space-y-6 text-white">
@@ -193,12 +315,10 @@ export default function ParentAnalyticsTab() {
 
           {/* Homework and Recent Updates */}
           <div className="grid md:grid-cols-2 gap-6">
-            <HomeworkTasks tasks={data.homeworkTasks} />
-            <RecentUpdates updates={data.recentUpdates} />
+            <HomeworkTasks tasks={homeworkTasks} pendingCount={pendingHomeworkCount} />
+            <RecentUpdates updates={recentUpdates} newCount={recentUpdates.length} />
           </div>
 
-          {/* Upcoming Workshops */}
-          <UpcomingWorkshops workshops={data.workshops} />
         </div>
 
         {/* Right Profile */}
@@ -213,6 +333,11 @@ export default function ParentAnalyticsTab() {
             rank={data.stats.grade.rank}
           />
           {/* <BestQualities /> */}
+        </div>
+
+        {/* Upcoming Workshops */}
+        <div className="lg:col-span-4">
+          <UpcomingWorkshops workshops={workshops} />
         </div>
       </div>
     </div>

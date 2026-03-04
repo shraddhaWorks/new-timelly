@@ -60,6 +60,7 @@ function StatTile({
 /* ================= MAIN ================= */
 
 export default function ParentWorkshopsTab() {
+  const PAGE_SIZE = 3;
   const verifiedRef = useRef(false);
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
@@ -71,6 +72,7 @@ export default function ParentWorkshopsTab() {
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [detailsError, setDetailsError] = useState<string | null>(null);
   const [eventDetails, setEventDetails] = useState<EventItem | null>(null);
+  const [page, setPage] = useState(1);
 
   /* ================= FETCH EVENTS ================= */
 
@@ -170,6 +172,22 @@ export default function ParentWorkshopsTab() {
     );
   }, [events, query]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredEvents.length / PAGE_SIZE));
+  const paginatedEvents = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredEvents.slice(start, start + PAGE_SIZE);
+  }, [filteredEvents, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, events.length]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
   /* ================= STATS ================= */
 
   const stats = useMemo(() => {
@@ -255,7 +273,7 @@ export default function ParentWorkshopsTab() {
 
         {/* EVENTS GRID (AUTO RESPONSIVE) */}
         <div className="grid gap-5 grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
-          {filteredEvents.map((event) => {
+          {paginatedEvents.map((event) => {
             const dateValue = event.eventDate
               ? new Date(event.eventDate)
               : null;
@@ -291,6 +309,32 @@ export default function ParentWorkshopsTab() {
             );
           })}
         </div>
+
+        {!loadingEvents && !eventsError && filteredEvents.length > 0 && totalPages > 1 && (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+            <span className="text-xs text-white/60">
+              Page {page} of {totalPages}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="rounded-full px-4 py-2 text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="rounded-full px-4 py-2 text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* MODAL */}
         <EventDetailsModal
