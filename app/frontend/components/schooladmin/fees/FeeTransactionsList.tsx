@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RotateCcw, Search } from "lucide-react";
 import SelectInput from "../../common/SelectInput";
+import SearchInput from "../../common/SearchInput";
 import RefundModal, { type TransactionItem } from "./RefundModal";
 import type { Student } from "./types";
 
@@ -11,19 +12,36 @@ interface FeeTransactionsListProps {
   onSuccess: () => void;
 }
 
-export default function FeeTransactionsList({ students, onSuccess }: FeeTransactionsListProps) {
+interface ClassItem {
+  id: string;
+  name: string;
+  section: string | null;
+}
+
+interface ClassDetailStudent {
+  id: string;
+  admissionNumber: string;
+  user?: { name?: string | null } | null;
+  class?: { section?: string | null } | null;
+}
+
+export default function FeeTransactionsList({ students: _students, onSuccess }: FeeTransactionsListProps) {
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedStudent, setSelectedStudent] = useState("");
+  const [classLoading, setClassLoading] = useState(false);
+  const [sectionLoading, setSectionLoading] = useState(false);
+  const [classes, setClasses] = useState<ClassItem[]>([]);
+  const [selectedClassId, setSelectedClassId] = useState("");
+  const [selectedSection, setSelectedSection] = useState("");
+  const [selectedYear, setSelectedYear] = useState("");
+  const [studentSearch, setStudentSearch] = useState("");
+  const [classStudents, setClassStudents] = useState<ClassDetailStudent[]>([]);
   const [refundTarget, setRefundTarget] = useState<TransactionItem | null>(null);
 
   const fetchTransactions = async () => {
     setLoading(true);
     try {
-      const url = selectedStudent
-        ? `/api/fees/transactions?studentId=${encodeURIComponent(selectedStudent)}`
-        : "/api/fees/transactions";
-      const res = await fetch(url);
+      const res = await fetch("/api/fees/transactions");
       const data = await res.json();
       if (res.ok) {
         setTransactions(data.transactions || []);
@@ -37,12 +55,117 @@ export default function FeeTransactionsList({ students, onSuccess }: FeeTransact
     }
   };
 
+  const fetchClasses = async () => {
+    setClassLoading(true);
+    try {
+      const res = await fetch("/api/class/list");
+      const data = await res.json();
+      if (res.ok) {
+        setClasses(Array.isArray(data.classes) ? data.classes : []);
+      } else {
+        setClasses([]);
+      }
+    } catch {
+      setClasses([]);
+    } finally {
+      setClassLoading(false);
+    }
+  };
+
+  const fetchClassDetails = async (classId: string) => {
+    if (!classId) {
+      setClassStudents([]);
+      setSelectedSection("");
+      return;
+    }
+    setSectionLoading(true);
+    try {
+      const res = await fetch(`/api/class/${encodeURIComponent(classId)}`);
+      const data = await res.json();
+      if (res.ok && data.class) {
+        setSelectedSection("");
+        setClassStudents(Array.isArray(data.class.students) ? data.class.students : []);
+      } else {
+        setSelectedSection("");
+        setClassStudents([]);
+      }
+    } catch {
+      setSelectedSection("");
+      setClassStudents([]);
+    } finally {
+      setSectionLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchClasses();
+  }, []);
+
   useEffect(() => {
     fetchTransactions();
-  }, [selectedStudent]);
+  }, []);
+
+  useEffect(() => {
+    fetchClassDetails(selectedClassId);
+  }, [selectedClassId]);
+
+  const selectedClass = useMemo(
+    () => classes.find((c) => c.id === selectedClassId) ?? null,
+    [classes, selectedClassId]
+  );
+
+  const sectionOptions = useMemo(() => {
+    if (!selectedClass) return [];
+    const sectionFromClass = selectedClass.section || "";
+    const sectionFromStudents = Array.from(
+      new Set(
+        classStudents
+          .map((s) => s.class?.section || "")
+          .filter((x) => x !== "")
+      )
+    );
+    const unique = Array.from(new Set([sectionFromClass, ...sectionFromStudents].filter(Boolean)));
+    return [
+      { label: "All Sections", value: "" },
+      ...unique.map((s) => ({ label: s, value: s })),
+    ];
+  }, [selectedClass, classStudents]);
+
+  const yearOptions = useMemo(() => {
+    const years = Array.from(
+      new Set(
+        transactions.map((t) => String(new Date(t.createdAt).getFullYear()))
+      )
+    ).sort((a, b) => Number(b) - Number(a));
+    return [
+      { label: "All Years", value: "" },
+      ...years.map((y) => ({ label: y, value: y })),
+    ];
+  }, [transactions]);
+
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter((t) => {
+      const txClassName = t.student.class?.name || "";
+      const txSection = t.student.class?.section || "";
+      const txYear = String(new Date(t.createdAt).getFullYear());
+      const txStudentName = t.student.user?.name || "";
+      const txAdmission = t.student.admissionNumber || "";
+
+      const matchClass = selectedClass ? txClassName === selectedClass.name : true;
+      const matchSection = selectedSection ? txSection === selectedSection : true;
+      const matchYear = selectedYear ? txYear === selectedYear : true;
+      const search = studentSearch.trim().toLowerCase();
+      const matchStudent =
+        !search ||
+        txStudentName.toLowerCase().includes(search) ||
+        txAdmission.toLowerCase().includes(search);
+
+      return matchClass && matchSection && matchYear && matchStudent;
+    });
+  }, [transactions, selectedClass, selectedSection, selectedYear, studentSearch]);
 
   return (
-    <section className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-6">
+    <section className="w-full bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-6">
       <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
         <RotateCcw className="w-5 h-5 text-amber-400" />
         Fee Transactions & Refunds
@@ -50,35 +173,60 @@ export default function FeeTransactionsList({ students, onSuccess }: FeeTransact
       <p className="text-sm text-gray-400 mb-4">
         View successful payments and process refunds when needed.
       </p>
-      <div className="flex flex-wrap gap-2 mb-4">
-        <div className="flex-1 min-w-[180px]">
-          <SelectInput
-            label="Filter by student"
-            value={selectedStudent}
-            onChange={setSelectedStudent}
-            options={[
-              { label: "All students", value: "" },
-              ...students.map((s) => ({
-                label: `${s.user?.name || s.admissionNumber} (${s.class?.name || "-"})`,
-                value: s.id,
-              })),
-            ]}
-          />
-        </div>
-        <div className="flex items-end">
-          <button
-            onClick={fetchTransactions}
-            disabled={loading}
-            className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 flex items-center gap-2 text-sm"
-          >
-            <Search size={16} />
-            Refresh
-          </button>
+      <div className="w-full rounded-2xl border border-white/10 bg-white/5 p-4 mb-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+          <div>
+            <SearchInput
+              label="Search Student"
+              value={studentSearch}
+              onChange={setStudentSearch}
+              icon={Search}
+              showSearchIcon
+              placeholder="Name or ID..."
+              variant="glass"
+            />
+          </div>
+          <div>
+            <SelectInput
+              label="Year"
+              value={selectedYear}
+              onChange={setSelectedYear}
+              options={yearOptions}
+            />
+          </div>
+          <div>
+            <SelectInput
+              label="Class"
+              value={selectedClassId}
+              onChange={setSelectedClassId}
+              disabled={classLoading}
+              options={[
+                { label: "All Classes", value: "" },
+                ...classes.map((c) => ({
+                  label: c.name,
+                  value: c.id,
+                })),
+              ]}
+            />
+          </div>
+          <div>
+            <SelectInput
+              label="Section"
+              value={selectedSection}
+              onChange={setSelectedSection}
+              disabled={!selectedClassId || sectionLoading}
+              options={
+                selectedClassId
+                  ? sectionOptions
+                  : [{ label: "All Sections", value: "" }]
+              }
+            />
+          </div>
         </div>
       </div>
       {loading ? (
         <div className="py-8 text-center text-gray-400">Loading transactions...</div>
-      ) : transactions.length === 0 ? (
+      ) : filteredTransactions.length === 0 ? (
         <div className="py-8 text-center text-gray-400">No transactions found</div>
       ) : (
         <div className="overflow-x-auto -mx-1">
@@ -95,7 +243,7 @@ export default function FeeTransactionsList({ students, onSuccess }: FeeTransact
               </tr>
             </thead>
             <tbody>
-              {transactions.map((t) => (
+              {filteredTransactions.map((t) => (
                 <tr
                   key={t.id}
                   className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]"
