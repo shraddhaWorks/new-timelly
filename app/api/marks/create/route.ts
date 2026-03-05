@@ -24,9 +24,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const { studentId, classId, subject, marks, totalMarks, suggestions } = await req.json();
+    const {
+      studentId,
+      classId,
+      subject,
+      marks,
+      totalMarks,
+      suggestions,
+      examType,
+    } = await req.json();
 
-    if (!studentId || !classId || !subject || marks === undefined || totalMarks === undefined) {
+    if (
+      !studentId ||
+      !classId ||
+      !subject ||
+      marks === undefined ||
+      totalMarks === undefined
+    ) {
       return NextResponse.json(
         { message: "Missing required fields: studentId, classId, subject, marks, totalMarks" },
         { status: 400 }
@@ -81,6 +95,11 @@ export async function POST(req: Request) {
       );
     }
 
+    const examTypeValue =
+      typeof examType === "string" && examType.trim()
+        ? examType.trim().toUpperCase()
+        : null;
+
     const grade = calculateGrade(marks, totalMarks);
 
     const mark = await prisma.mark.create({
@@ -93,6 +112,7 @@ export async function POST(req: Request) {
         grade,
         suggestions: suggestions || null,
         teacherId,
+        examType: examTypeValue,
       },
       include: {
         student: {

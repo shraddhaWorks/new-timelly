@@ -17,6 +17,7 @@ interface Mark {
   marks: number;
   totalMarks: number;
   grade: string | null;
+  examType?: string | null;
   createdAt?: string;
 }
 

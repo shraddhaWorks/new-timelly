@@ -230,6 +230,7 @@ model School {
   studentLeaveRequests StudentLeaveRequest[]
   circulars            Circular[]
   examTerms            ExamTerm[]
+  examTypes            ExamType[]
 
   createdAt DateTime @default(now())
 
@@ -523,6 +524,7 @@ model Mark {
   totalMarks  Float
   grade       String? // "A+", "A", "B+", "B", "C", "D", "F"
   suggestions String? @db.Text // Teacher's comments/suggestions
+  examType    String?  // e.g. "TERM 1", "HALF YEARLY" (always CAPS)
 
   // Relations
   studentId String
@@ -539,6 +541,20 @@ model Mark {
 
   @@index([studentId])
   @@index([classId])
+  @@index([examType])
+}
+
+model ExamType {
+  id       String @id @default(cuid())
+  name     String // stored in CAPS only
+
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([schoolId, name])
+  @@index([schoolId])
 }
 
 // =====================

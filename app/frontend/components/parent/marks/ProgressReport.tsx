@@ -14,6 +14,7 @@ interface Mark {
   marks: number;
   totalMarks: number;
   grade: string | null;
+  examType?: string | null;
   createdAt?: string;
 }
 
@@ -28,6 +29,7 @@ interface StudentInfo {
 interface ProgressReportProps {
   marks: Mark[];
   studentInfo: StudentInfo | null;
+  examTypeFilter?: string;
 }
 
 type Subject = {
@@ -72,7 +74,7 @@ function calculateGrade(marks: number, totalMarks: number): string {
   return "D";
 }
 
-const ProgressReport = ({ marks, studentInfo }: ProgressReportProps) => {
+const ProgressReport = ({ marks, studentInfo, examTypeFilter }: ProgressReportProps) => {
   const subjects: Subject[] = useMemo(() => {
     const subjectMap = new Map<string, Mark>();
     marks.forEach((mark) => {
@@ -128,7 +130,9 @@ const ProgressReport = ({ marks, studentInfo }: ProgressReportProps) => {
             </div>
 
             <span className="px-3 py-1 text-xs rounded-lg bg-lime-400/10 text-lime-400 border border-lime-400/20 font-semibold">
-              Term 1 - 2026
+              {examTypeFilter && examTypeFilter !== "ALL"
+                ? examTypeFilter
+                : "All exams"}
             </span>
           </div>
         </div>
