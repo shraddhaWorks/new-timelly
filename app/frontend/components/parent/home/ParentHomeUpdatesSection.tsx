@@ -95,8 +95,8 @@ export default function ParentHomeUpdatesSection({ feeds, events }: Props) {
                   <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={event.photo || "https://i.pravatar.cc/120?img=11"}
-                      alt={event.teacher?.name ?? "School"}
+                      src={feed.createdBy?.photoUrl || "https://i.pravatar.cc/120?img=11"}
+                      alt={feed.createdBy?.name ?? "School"}
                       className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl object-cover border border-white/[0.1] flex-shrink-0"
                     />
                     <div className="min-w-0">
@@ -145,11 +145,10 @@ export default function ParentHomeUpdatesSection({ feeds, events }: Props) {
                         disabled={isLiking}
                         aria-pressed={likedByMe}
                         className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 
-                          text-sm font-medium text-gray-400 hover:text-red-400 hover:bg-white/[0.05] ${
-                          likedByMe
+                          text-sm font-medium text-gray-400 hover:text-red-400 hover:bg-white/[0.05] ${likedByMe
                             ? "border-red-300/40 bg-red-400/10 text-red-300"
                             : "border-white/20 text-white/70 hover:border-white/35 hover:text-white"
-                        } ${isLiking ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
+                          } ${isLiking ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
                       >
                         <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${likedByMe ? "fill-red-400 text-red-400" : ""}`} />
                         <span className="font-semibold">{likedByMe ? "Liked" : "Like"}</span>
