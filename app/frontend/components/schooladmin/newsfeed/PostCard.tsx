@@ -8,9 +8,11 @@ import type { NewsFeedItem } from "../../../hooks/useNewsFeeds";
 interface PostCardProps {
   post: NewsFeedItem;
   onLike: (id: string) => void;
+
 }
 
 export default function PostCard({ post, onLike }: PostCardProps) {
+  const photoUrl = post.createdBy?.photoUrl ?? "https://ui-avatars.com/api/?name=School&background=random&color=fff&size=128";
   const authorName = post.createdBy?.name ?? "School";
   const timeStr = formatRelativeTime(post.createdAt);
 
@@ -28,7 +30,7 @@ export default function PostCard({ post, onLike }: PostCardProps) {
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
           <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/20 flex-shrink-0 overflow-hidden ring-2 ring-white/10">
             <div className="w-full h-full flex items-center justify-center text-white/90 text-sm font-semibold">
-              {authorName[0]?.toUpperCase() ?? "?"}
+              <img src= { photoUrl} alt={authorName} className="w-full h-full object-cover" />
             </div>
           </div>
           <div className="min-w-0">

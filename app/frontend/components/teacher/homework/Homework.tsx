@@ -23,6 +23,7 @@ export default function TeacherHomeworkTab() {
   const handleViewSubmissions = (id: string) => {
     router.push(`/frontend/pages/teacher?tab=homework&view=submissions&id=${id}`);
   };
+  
 
   const {
     session,

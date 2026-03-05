@@ -24,6 +24,7 @@ export interface ClassOption {
   section: string | null;
 }
 
+
 export type HomeworkFilter = "all" | "active" | "closed";
 
 export const SUBJECT_OPTIONS = [

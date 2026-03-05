@@ -106,7 +106,7 @@ export async function GET() {
         where: { schoolId },
         include: {
           createdBy: {
-            select: { id: true, name: true, email: true },
+            select: { id: true, name: true, email: true , photoUrl: true},
           },
         },
         orderBy: { createdAt: "desc" },
@@ -137,8 +137,8 @@ export async function GET() {
         schoolId: f.schoolId,
         createdById: f.createdById,
         createdBy: f.createdBy
-          ? { id: f.createdBy.id, name: f.createdBy.name, email: f.createdBy.email }
-          : { id: f.createdById, name: null, email: null },
+          ? { id: f.createdBy.id, name: f.createdBy.name, email: f.createdBy.email, photoUrl: f.createdBy.photoUrl }
+          : { id: f.createdById, name: null, email: null, photoUrl: null },
         createdAt: f.createdAt.toISOString(),
         updatedAt: f.updatedAt.toISOString(),
         likedByMe: likedSet.has(f.id),

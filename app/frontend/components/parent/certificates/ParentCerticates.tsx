@@ -383,7 +383,7 @@ export default function ParentCertificatesTab() {
                     >
                       <option value="" className="text-gray-700 bg-white">Select type</option>
                       {certificateTypes.map((opt) => (
-                        <option key={opt.value} value={opt.value} className="text-black bg-white">
+                        <option key={opt.value} value={opt.value} className="text-white bg-gray-900">
                           {opt.label}
                         </option>
                       ))}

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import Spinner from "../../common/Spinner";
+import PageHeader from "../../common/PageHeader";
 
 type StudentProfile = {
   student: {
@@ -318,16 +319,26 @@ export default function ParentProfile() {
     <div className="min-h-screen p-3 sm:p-5 md:p-6 pb-20 sm:pb-6 overflow-x-hidden">
       <main className="max-w-6xl mx-auto space-y-5 md:space-y-7">
         {/* Header: student name + overview */}
-        <section className="rounded-xl sm:rounded-2xl md:rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-3 sm:p-4 md:p-6 lg:p-8">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4">
-            <div className="min-w-0">
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white truncate">Student Profile</h1>
-              <p className="text-white/60 text-xs sm:text-sm mt-0.5 sm:mt-1 hidden sm:block">Manage student records and information</p>
-            </div>
-
-          </div>
-        </section>
-
+        <PageHeader
+  title="Student Profile"
+  subtitle="Manage student records and information"
+  rightSlot={
+    <button
+      onClick={generatePdf}
+      disabled={pdfLoading}
+      className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl 
+                 bg-lime-400/10 border border-lime-400/40 
+                 text-lime-300 text-sm font-medium
+                 hover:bg-lime-400/20 hover:shadow-lg 
+                 transition-all duration-200 
+                 disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      <Download className="w-4 h-4" />
+      {pdfLoading ? "Generating..." : "Download Report"}
+    </button>
+  }
+  
+/>
         {/* Profile card: image + name + tags */}
         <section className="rounded-xl sm:rounded-2xl md:rounded-3xl  somu p-3 sm:p-4 md:p-6 lg:p-8 transition-all duration-200 hover:border-white/20">
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 sm:gap-6">
@@ -552,7 +563,6 @@ export default function ParentProfile() {
           </div>
 
         </section>
-
 
       </main>
     </div>

@@ -326,9 +326,9 @@ export default function CircularForm({ onClose, onSuccess }: Props) {
                         onChange={(e) => setForm({ ...form, classId: e.target.value })}
                         className="w-full max-w-xs bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-gray-200 focus:outline-none focus:border-lime-400/50"
                     >
-                        <option value="" className="bg-slate-800">All classes (school-wide)</option>
+                        <option value="" className="bg-gray-900 text-white">All classes (school-wide)</option>
                         {classes.map((c) => (
-                            <option key={c.id} value={c.id} className="bg-slate-800">
+                            <option key={c.id} value={c.id} className="bg-gray-900 text-white">
                                 {c.name}{c.section ? ` - ${c.section}` : ""}
                             </option>
                         ))}

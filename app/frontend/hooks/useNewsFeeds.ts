@@ -10,7 +10,7 @@ export interface NewsFeedItem {
   photos?: string[];
   likes: number;
   likedByMe: boolean;
-  createdBy: { id: string; name: string | null; email: string | null };
+  createdBy: { id: string; name: string | null; email: string | null; photoUrl?: string | null };
   createdAt: string;
 }
 
@@ -25,6 +25,7 @@ export function useNewsFeeds() {
     try {
       const res = await fetch("/api/newsfeed/list", { credentials: "same-origin" });
       const data = await res.json();
+      console.log("Fetched news feeds:", data);
       if (!res.ok) throw new Error(data.message || "Failed to load news feed");
       const list = Array.isArray(data.newsFeeds) ? data.newsFeeds : [];
       setFeeds(
@@ -42,6 +43,7 @@ export function useNewsFeeds() {
                   id: String((f.createdBy as { id?: unknown }).id ?? ""),
                   name: (f.createdBy as { name?: string | null }).name ?? null,
                   email: (f.createdBy as { email?: string | null }).email ?? null,
+                  photoUrl: (f.createdBy as { photoUrl?: string | null }).photoUrl ?? null,
                 }
               : { id: "", name: null, email: null },
           createdAt: typeof f.createdAt === "string" ? f.createdAt : new Date().toISOString(),
