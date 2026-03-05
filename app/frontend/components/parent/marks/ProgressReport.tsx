@@ -4,7 +4,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BookOpen, Calculator, Target, TrendingUp, Trophy, Microscope, Languages, Globe, Laptop } from "lucide-react";
+import {
+  BookOpen,
+  Calculator,
+  Target,
+  TrendingUp,
+  Trophy,
+  Microscope,
+  Languages,
+  Globe,
+  Laptop,
+  ChevronDown,
+} from "lucide-react";
 import StatCard from "../../common/statCard";
 import StudentPerformanceCard from "./StudentPerformanceCard";
 
@@ -30,6 +41,8 @@ interface ProgressReportProps {
   marks: Mark[];
   studentInfo: StudentInfo | null;
   examTypeFilter?: string;
+  examTypeOptions?: string[];
+  onExamTypeChange?: (value: string) => void;
 }
 
 type Subject = {
@@ -74,7 +87,13 @@ function calculateGrade(marks: number, totalMarks: number): string {
   return "D";
 }
 
-const ProgressReport = ({ marks, studentInfo, examTypeFilter }: ProgressReportProps) => {
+const ProgressReport = ({
+  marks,
+  studentInfo,
+  examTypeFilter,
+  examTypeOptions,
+  onExamTypeChange,
+}: ProgressReportProps) => {
   const subjects: Subject[] = useMemo(() => {
     const subjectMap = new Map<string, Mark>();
     marks.forEach((mark) => {
@@ -93,9 +112,8 @@ const ProgressReport = ({ marks, studentInfo, examTypeFilter }: ProgressReportPr
     }));
   }, [marks]);
 
-  const [animatedScores, setAnimatedScores] = useState<number[]>(
-    subjects.map(() => 0)
-  );
+  const [animatedScores, setAnimatedScores] = useState<number[]>(subjects.map(() => 0));
+  const [examTypeMenuOpen, setExamTypeMenuOpen] = useState(false);
 
   const { totalMarks, totalMax, percentage } = useMemo(() => {
     const totalMarks = subjects.reduce((acc, s) => acc + s.score, 0);
@@ -113,6 +131,12 @@ const ProgressReport = ({ marks, studentInfo, examTypeFilter }: ProgressReportPr
     return () => clearTimeout(timer);
   }, [subjects]);
 
+  const currentExamLabel =
+    examTypeFilter && examTypeFilter !== "ALL" ? examTypeFilter : "All exams";
+
+  const availableExamTypes =
+    examTypeOptions && examTypeOptions.length > 0 ? examTypeOptions : ["ALL"];
+
   return (
     <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto">
       <div className="mt-6 sm:mt-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg overflow-hidden animate-fade-in">
@@ -129,11 +153,40 @@ const ProgressReport = ({ marks, studentInfo, examTypeFilter }: ProgressReportPr
               </p>
             </div>
 
-            <span className="px-3 py-1 text-xs rounded-lg bg-lime-400/10 text-lime-400 border border-lime-400/20 font-semibold">
-              {examTypeFilter && examTypeFilter !== "ALL"
-                ? examTypeFilter
-                : "All exams"}
-            </span>
+            {onExamTypeChange && availableExamTypes.length > 0 && (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setExamTypeMenuOpen((v) => !v)}
+                  className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl bg-black/40 border border-white/15 text-xs sm:text-sm font-semibold text-white hover:border-lime-400/40 hover:bg-black/60 transition-colors"
+                >
+                  {currentExamLabel}
+                  <ChevronDown className="w-4 h-4 text-white/60" />
+                </button>
+
+                {examTypeMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-40 sm:w-44 bg-[#050816] border border-white/10 rounded-xl shadow-xl py-1 z-20">
+                    {Array.from(new Set(availableExamTypes)).map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => {
+                          onExamTypeChange(opt);
+                          setExamTypeMenuOpen(false);
+                        }}
+                        className={`block w-full text-left px-3 py-1.5 text-xs sm:text-sm ${
+                          (examTypeFilter || "ALL") === opt
+                            ? "bg-lime-400/10 text-lime-300"
+                            : "text-white/80 hover:bg-white/5"
+                        }`}
+                      >
+                        {opt === "ALL" ? "All exams" : opt}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

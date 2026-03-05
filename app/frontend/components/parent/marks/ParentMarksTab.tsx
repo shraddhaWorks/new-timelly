@@ -224,28 +224,6 @@ export default function ParentMarksTab() {
               Track {studentName}'s marks and grades
             </p>
           </div>
-          {examTypeOptions.length > 1 && (
-            <div className="flex flex-col gap-1.5 min-w-[180px]">
-              <label className="text-xs font-medium text-white/60">
-                EXAM TYPE
-              </label>
-              <select
-                value={examTypeFilter}
-                onChange={(e) => setExamTypeFilter(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl bg-black/40 border border-white/10 text-white text-sm focus:outline-none focus:border-lime-400/50"
-              >
-                {examTypeOptions.map((opt) => (
-                  <option
-                    key={opt}
-                    value={opt}
-                    className="bg-[#0f0f0f]"
-                  >
-                    {opt === "ALL" ? "All exams" : opt}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
         </div>
       </div>
 
@@ -347,6 +325,8 @@ export default function ParentMarksTab() {
           marks={filteredMarks}
           studentInfo={studentInfo}
           examTypeFilter={examTypeFilter}
+          examTypeOptions={examTypeOptions}
+          onExamTypeChange={setExamTypeFilter}
         />
       </div>
       <div>

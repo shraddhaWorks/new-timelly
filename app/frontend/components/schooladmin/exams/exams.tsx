@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { BookOpen, Calendar, CheckCircle2, Plus } from "lucide-react";
+import { BookOpen, Calendar, CheckCircle2, Plus, Trash2 } from "lucide-react";
 import PageHeader from "../../common/PageHeader";
 import Spinner from "../../common/Spinner";
 import { ChevronDown } from "lucide-react";
@@ -75,6 +75,47 @@ export default function ExamsTab() {
             setExamTypes([]);
         } finally {
             setExamTypesLoading(false);
+        }
+    };
+
+    const deleteExamType = async (name: string) => {
+        const upperName = name.trim().toUpperCase();
+        if (!upperName) return;
+
+        if (examTypes.length <= 1) {
+            const confirmed = window.confirm(
+                `\"${upperName}\" is the only exam type.\n\nAre you sure you want to delete it?`
+            );
+            if (!confirmed) return;
+        } else {
+            const confirmed = window.confirm(
+                `Are you sure you want to delete exam type \"${upperName}\"?`
+            );
+            if (!confirmed) return;
+        }
+
+        setExamTypeError("");
+        setExamTypeSaving(true);
+        try {
+            const res = await fetch(`/api/exam-types?name=${encodeURIComponent(upperName)}`, {
+                method: "DELETE",
+                credentials: "include",
+            });
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+                setExamTypeError(
+                    data?.message || "Failed to delete exam type. It may be in use."
+                );
+                return;
+            }
+
+            await fetchExamTypes();
+        } catch (e) {
+            console.error("Failed to delete exam type", e);
+            setExamTypeError("Failed to delete exam type");
+        } finally {
+            setExamTypeSaving(false);
         }
     };
 
@@ -266,12 +307,21 @@ export default function ExamsTab() {
                         <span className="text-xs text-white/50">No exam types found.</span>
                     ) : (
                         examTypes.map((t) => (
-                            <span
+                            <div
                                 key={t}
-                                className="px-3 py-1.5 rounded-full text-xs font-bold bg-white/5 border border-white/10 text-white/80"
+                                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold bg-white/5 border border-white/10 text-white/80"
                             >
-                                {t}
-                            </span>
+                                <span>{t}</span>
+                                <button
+                                    type="button"
+                                    disabled={examTypeSaving}
+                                    onClick={() => deleteExamType(t)}
+                                    className="ml-1 inline-flex items-center justify-center rounded-full p-0.5 hover:bg-red-500/20 disabled:opacity-50"
+                                    title="Delete exam type"
+                                >
+                                    <Trash2 className="w-3 h-3 text-red-400" />
+                                </button>
+                            </div>
                         ))
                     )}
                 </div>

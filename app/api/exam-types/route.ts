@@ -57,20 +57,14 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
 
-    const [customTypes, termNames] = await Promise.all([
-      prisma.$queryRaw<Array<{ name: string | null }>>`
-        SELECT "name" FROM "ExamType" WHERE "schoolId" = ${schoolId}
-      `,
-      prisma.$queryRaw<Array<{ name: string | null }>>`
-        SELECT DISTINCT "name" FROM "ExamTerm" WHERE "schoolId" = ${schoolId}
-      `,
-    ]);
+    const customTypes = await prisma.$queryRaw<
+      Array<{ name: string | null }>
+    >`
+      SELECT "name" FROM "ExamType" WHERE "schoolId" = ${schoolId}
+    `;
 
     const names = new Set<string>();
     DEFAULT_EXAM_TYPES.forEach((n) => names.add(n));
-    termNames.forEach((t) => {
-      if (t.name) names.add(t.name.trim().toUpperCase());
-    });
     customTypes.forEach((t) => {
       if (t.name) names.add(t.name.trim().toUpperCase());
     });
@@ -140,6 +134,87 @@ export async function POST(req: Request) {
     return NextResponse.json({ examType: { id, name, schoolId } }, { status: 201 });
   } catch (e: unknown) {
     console.error("Exam types POST:", e);
+    return NextResponse.json(
+      { message: e instanceof Error ? e.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    const role = session.user.role;
+    if (role !== "SCHOOLADMIN") {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
+    const schoolId = await resolveSchoolId(session);
+    if (!schoolId) {
+      return NextResponse.json({ message: "School not found" }, { status: 400 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const nameParam = searchParams.get("name");
+    const name =
+      typeof nameParam === "string" ? nameParam.trim().toUpperCase() : "";
+
+    if (!name) {
+      return NextResponse.json(
+        { message: "Exam type name is required" },
+        { status: 400 }
+      );
+    }
+
+    // Ensure there will still be at least one exam type available (including defaults/terms)
+    const customTypes = await prisma.$queryRaw<
+      Array<{ name: string | null }>
+    >`
+      SELECT "name" FROM "ExamType" WHERE "schoolId" = ${schoolId}
+    `;
+
+    const currentNames = new Set<string>();
+    customTypes.forEach((t) => {
+      if (t.name) currentNames.add(t.name.trim().toUpperCase());
+    });
+
+    if (!currentNames.has(name)) {
+      return NextResponse.json(
+        { message: "Exam type not found" },
+        { status: 404 }
+      );
+    }
+
+    // Protect built-in defaults from deletion
+    if (DEFAULT_EXAM_TYPES.includes(name)) {
+      return NextResponse.json(
+        { message: "Default exam types cannot be deleted" },
+        { status: 400 }
+      );
+    }
+
+    // Delete only custom exam types; default/term-based types are virtual
+    const deleted = await prisma.examType.deleteMany({
+      where: {
+        schoolId,
+        name,
+      },
+    });
+
+    if (deleted.count === 0) {
+      return NextResponse.json(
+        { message: "This exam type could not be deleted" },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (e: unknown) {
+    console.error("Exam types DELETE:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }
