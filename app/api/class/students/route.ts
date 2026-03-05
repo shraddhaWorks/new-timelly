@@ -56,7 +56,7 @@ export async function GET(req: Request) {
       where,
       include: {
         user: {
-          select: { id: true, name: true, email: true },
+          select: { id: true, name: true, email: true, photoUrl: true },
         },
         class: {
           select: { id: true, name: true, section: true },

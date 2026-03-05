@@ -23,7 +23,7 @@ type ClassOption = { id: string; name: string; section: string | null };
 type StudentApi = {
   id: string;
   rollNo: string | null;
-  user: { id: string; name: string | null; email: string | null };
+  user: { id: string; name: string | null; email: string | null; photoUrl?: string | null };
   class?: { id: string; name: string; section: string | null };
 };
 type MarkApi = {
@@ -34,6 +34,11 @@ type MarkApi = {
   totalMarks: number;
   grade: string | null;
   createdAt: string;
+};
+type ExamApi = {
+  termId?: string;
+  name?: string;
+  subject?: string;
 };
 
 const DEFAULT_SUBJECTS = [
@@ -51,6 +56,7 @@ const EXAM_TYPES = ["Term 1", "Term 2", "Final"];
 
 export default function TeacherMarksTab() {
   const [classes, setClasses] = useState<ClassOption[]>([]);
+  const [examTypeOptions, setExamTypeOptions] = useState<string[]>(EXAM_TYPES);
   const [form, setForm] = useState({
     classId: "",
     classLabel: "",
@@ -78,7 +84,6 @@ export default function TeacherMarksTab() {
       })()
     : ["Section A"];
   const subjectOptions = DEFAULT_SUBJECTS;
-  const examTypeOptions = EXAM_TYPES;
 
   const fetchClasses = useCallback(async () => {
     try {
@@ -124,12 +129,13 @@ export default function TeacherMarksTab() {
       });
       const newRows: StudentRow[] = students.map((s) => {
         const name = s.user?.name ?? "Student";
+        const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=40&background=4ade80&color=fff`;
         const mark = markByStudent[s.id];
         return {
           id: s.id,
           rollNo: s.rollNo ?? "--",
           name,
-          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=40&background=4ade80&color=fff`,
+          avatar: s.user?.photoUrl?.trim() || fallbackAvatar,
           marks: mark ? (mark.marks as number) : "",
           maxMarks: form.maxMarks,
           markId: mark?.id,
@@ -143,6 +149,49 @@ export default function TeacherMarksTab() {
     }
   }, [form.classId, form.subject]);
 
+  const fetchExamTypes = useCallback(async () => {
+    if (!form.classId) {
+      setExamTypeOptions(EXAM_TYPES);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/exams/terms?classId=${encodeURIComponent(form.classId)}`, {
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        setExamTypeOptions(EXAM_TYPES);
+        return;
+      }
+      const data = await res.json();
+      const exams: ExamApi[] = Array.isArray(data.exams) ? data.exams : [];
+      const matching = exams.filter((e) => !form.subject || e.subject === form.subject);
+      const names = Array.from(
+        new Set(
+          (matching.length ? matching : exams)
+            .map((e) => (typeof e.name === "string" ? e.name.trim() : ""))
+            .filter(Boolean)
+        )
+      );
+
+      if (names.length > 0) {
+        setExamTypeOptions(names);
+        setForm((prev) => ({
+          ...prev,
+          examType: names.includes(prev.examType) ? prev.examType : names[0],
+        }));
+        return;
+      }
+
+      setExamTypeOptions(EXAM_TYPES);
+      setForm((prev) => ({
+        ...prev,
+        examType: EXAM_TYPES.includes(prev.examType) ? prev.examType : EXAM_TYPES[0],
+      }));
+    } catch {
+      setExamTypeOptions(EXAM_TYPES);
+    }
+  }, [form.classId, form.subject]);
+
   useEffect(() => {
     fetchClasses();
   }, [fetchClasses]);
@@ -150,6 +199,10 @@ export default function TeacherMarksTab() {
   useEffect(() => {
     fetchStudentsAndMarks();
   }, [fetchStudentsAndMarks]);
+
+  useEffect(() => {
+    fetchExamTypes();
+  }, [fetchExamTypes]);
 
   useEffect(() => {
     setPage(1);
