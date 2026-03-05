@@ -282,6 +282,7 @@ export default function ParentProfile() {
       {pdfLoading ? "Generating..." : "Download Report"}
     </button>
   }
+  
 />
         {/* Profile card: image + name + tags */}
         <section className="rounded-xl sm:rounded-2xl md:rounded-3xl  somu p-3 sm:p-4 md:p-6 lg:p-8 transition-all duration-200 hover:border-white/20">

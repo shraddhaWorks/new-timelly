@@ -27,6 +27,7 @@ export default function useHomeworkPage() {
         const d = await hwRes.json();
         setHomeworks(d.homeworks ?? []);
       }
+      
       if (classRes.ok) {
         const c = await classRes.json();
         setClasses(c.classes ?? []);

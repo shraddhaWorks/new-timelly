@@ -38,6 +38,7 @@ export default function HomeworkSubmissionsView({ homeworkId, onBack }: Homework
         setSubmissions([]);
         return;
       }
+      
       setHomeworkTitle(data.homework?.title ?? "Submissions");
       setSubmissions(data.submissions ?? []);
     } catch {
