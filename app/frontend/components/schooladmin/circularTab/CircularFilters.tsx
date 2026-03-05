@@ -83,7 +83,7 @@ export default function CircularFilters({
             className="flex-1 sm:flex-initial min-w-0 max-w-full sm:max-w-[180px] px-3 py-2 rounded-xl bg-black/20 text-white text-sm border border-white/10 focus:outline-none focus:ring-1 focus:ring-lime-400/50"
           >
             {RECIPIENT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value} className="bg-slate-800">
+              <option key={opt.value} value={opt.value} className="bg-gray-900 text-white">
                 {opt.label}
               </option>
             ))}
@@ -97,9 +97,9 @@ export default function CircularFilters({
             onChange={(e) => onClassId(e.target.value)}
             className="flex-1 sm:flex-initial min-w-0 max-w-full sm:max-w-[200px] px-3 py-2 rounded-xl bg-black/20 text-white text-sm border border-white/10 focus:outline-none focus:ring-1 focus:ring-lime-400/50"
           >
-            <option value="" className="bg-slate-800">All Classes</option>
+            <option value="" className="bg-gray-900 text-white">All Classes</option>
             {classes.map((c) => (
-              <option key={c.id} value={c.id} className="bg-slate-800">
+              <option key={c.id} value={c.id} className="bg-gray-900 text-white">
                 {c.name}{c.section ? ` - ${c.section}` : ""}
               </option>
             ))}
