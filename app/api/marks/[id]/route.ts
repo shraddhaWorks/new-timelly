@@ -28,7 +28,8 @@ export async function PUT(
 
     const { id } = await params;
     const markId = id;
-    const { subject, marks, totalMarks, suggestions } = await req.json();
+    const { subject, marks, totalMarks, suggestions, examType } =
+      await req.json();
 
     const existingMark = await prisma.mark.findUnique({
       where: { id: markId },
@@ -67,6 +68,12 @@ export async function PUT(
     if (marks !== undefined) updateData.marks = marks;
     if (totalMarks !== undefined) updateData.totalMarks = totalMarks;
     if (suggestions !== undefined) updateData.suggestions = suggestions;
+    if (examType !== undefined) {
+      updateData.examType =
+        typeof examType === "string" && examType.trim()
+          ? examType.trim().toUpperCase()
+          : null;
+    }
 
     // Recalculate grade if marks changed
     if (marks !== undefined || totalMarks !== undefined) {

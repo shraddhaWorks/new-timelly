@@ -17,6 +17,7 @@ interface Mark {
   marks: number;
   totalMarks: number;
   grade: string | null;
+   examType?: string | null;
   createdAt?: string;
 }
 
@@ -53,6 +54,7 @@ export default function ParentMarksTab() {
   const [rank, setRank] = useState<number | null>(null);
   const [totalStudents, setTotalStudents] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [examTypeFilter, setExamTypeFilter] = useState<string>("ALL");
 
   useEffect(() => {
     (async () => {
@@ -150,8 +152,25 @@ export default function ParentMarksTab() {
     })();
   }, []);
 
+  const examTypeOptions = useMemo(() => {
+    const types = new Set<string>();
+    marks.forEach((m) => {
+      if (m.examType && m.examType.trim()) {
+        types.add(m.examType.trim());
+      }
+    });
+    return ["ALL", ...Array.from(types).sort()];
+  }, [marks]);
+
+  const filteredMarks = useMemo(() => {
+    if (examTypeFilter === "ALL") return marks;
+    return marks.filter(
+      (m) => (m.examType || "").trim() === examTypeFilter
+    );
+  }, [marks, examTypeFilter]);
+
   const stats = useMemo(() => {
-    if (marks.length === 0) {
+    if (filteredMarks.length === 0) {
       return {
         overallScore: 0,
         overallGrade: "N/A",
@@ -161,8 +180,11 @@ export default function ParentMarksTab() {
       };
     }
 
-    const totalMarks = marks.reduce((sum, m) => sum + m.marks, 0);
-    const totalMaxMarks = marks.reduce((sum, m) => sum + m.totalMarks, 0);
+    const totalMarks = filteredMarks.reduce((sum, m) => sum + m.marks, 0);
+    const totalMaxMarks = filteredMarks.reduce(
+      (sum, m) => sum + m.totalMarks,
+      0
+    );
     const overallScore = totalMaxMarks > 0 ? (totalMarks / totalMaxMarks) * 100 : 0;
     const overallGrade = calculateGrade(overallScore);
     const gradeLabel = getGradeLabel(overallScore);
@@ -174,7 +196,7 @@ export default function ParentMarksTab() {
       totalMarks: Math.round(totalMarks),
       totalMaxMarks: Math.round(totalMaxMarks),
     };
-  }, [marks]);
+  }, [filteredMarks]);
 
   const studentName = studentInfo?.name || "Student";
 
@@ -193,12 +215,16 @@ export default function ParentMarksTab() {
 
       {/* HEADER */}
       <div className="rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-4 sm:p-6 md:p-8 mb-4 sm:mb-8">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">
-          Academic Performance
-        </h1>
-        <p className="text-white/60">
-          Track {studentName}'s marks and grades
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">
+              Academic Performance
+            </h1>
+            <p className="text-white/60">
+              Track {studentName}'s marks and grades
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* STAT CARDS */}
@@ -295,10 +321,16 @@ export default function ParentMarksTab() {
 
       </div>
       <div>
-        <ProgressReport marks={marks} studentInfo={studentInfo} />
+        <ProgressReport
+          marks={filteredMarks}
+          studentInfo={studentInfo}
+          examTypeFilter={examTypeFilter}
+          examTypeOptions={examTypeOptions}
+          onExamTypeChange={setExamTypeFilter}
+        />
       </div>
       <div>
-        <SubjectPerformance marks={marks} />
+        <SubjectPerformance marks={filteredMarks} />
       </div>
     </div>
   );

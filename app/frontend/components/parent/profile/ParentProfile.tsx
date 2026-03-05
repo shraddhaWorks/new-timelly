@@ -14,6 +14,7 @@ import {
   User,
   Phone,
   FileText,
+  ChevronDown,
 } from "lucide-react";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import Spinner from "../../common/Spinner";
@@ -63,10 +64,22 @@ export default function ParentProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
-  const [selectedTerm, setSelectedTerm] = useState("Term 1");
+  const [examTypeFilter, setExamTypeFilter] = useState<string>("ALL");
   // compute academic year string based on current date
   const [academicYear, setAcademicYear] = useState("");
   const studentId = (session?.user as { studentId?: string | null })?.studentId ?? null;
+
+  type Mark = {
+    id: string;
+    subject: string;
+    marks: number;
+    totalMarks: number;
+    grade?: string | null;
+    examType?: string | null;
+    createdAt?: string;
+  };
+
+  const [marks, setMarks] = useState<Mark[]>([]);
 
   const fetchData = useCallback(async () => {
     if (!studentId) {
@@ -77,11 +90,12 @@ export default function ParentProfile() {
     setLoading(true);
     setError(null);
     try {
-      const [userRes, studentRes, homeworkRes, eventsRes] = await Promise.all([
+      const [userRes, studentRes, homeworkRes, eventsRes, marksRes] = await Promise.all([
         fetch("/api/user/me", { credentials: "include" }),
         fetch(`/api/student/${studentId}`, { credentials: "include" }),
         fetch("/api/homework/list", { credentials: "include" }),
         fetch("/api/events/list", { credentials: "include" }),
+        fetch("/api/marks/view", { credentials: "include" }),
       ]);
       if (userRes.ok) {
         const d = await userRes.json();
@@ -108,6 +122,10 @@ export default function ParentProfile() {
         const now = new Date();
         const upcoming = list.filter((e: any) => e.eventDate && new Date(e.eventDate) >= now).length;
         setUpcomingEvents(upcoming);
+      }
+      if (marksRes.ok) {
+        const d = await marksRes.json();
+        setMarks(d.marks ?? []);
       }
       // Academic year calc
       const yr = new Date().getFullYear();
@@ -229,7 +247,44 @@ export default function ParentProfile() {
   if (!profile) return null;
 
   const s = profile.student;
-  const filteredPerformance = profile.academicPerformance;
+
+  const examTypeOptions = (() => {
+    const types = new Set<string>();
+    marks.forEach((m) => {
+      if (m.examType && m.examType.trim()) {
+        types.add(m.examType.trim());
+      }
+    });
+    return ["ALL", ...Array.from(types).sort()];
+  })();
+
+  const filteredMarks = (() => {
+    if (examTypeFilter === "ALL") return marks;
+    return marks.filter(
+      (m) => (m.examType || "").trim() === examTypeFilter
+    );
+  })();
+
+  const filteredPerformance =
+    filteredMarks.length > 0
+      ? (() => {
+          const bySubject = new Map<
+            string,
+            { total: number; max: number }
+          >();
+          filteredMarks.forEach((m) => {
+            const key = m.subject;
+            const existing = bySubject.get(key) || { total: 0, max: 0 };
+            existing.total += m.marks;
+            existing.max += m.totalMarks;
+            bySubject.set(key, existing);
+          });
+          return Array.from(bySubject.entries()).map(([subject, agg]) => ({
+            subject,
+            score: agg.max > 0 ? Math.round((agg.total / agg.max) * 100) : 0,
+          }));
+        })()
+      : profile.academicPerformance;
   const photoUrl = s.photoUrl || user?.photoUrl || null;
   const attendancePct =
     profile.attendanceTrends.length > 0
@@ -238,11 +293,11 @@ export default function ParentProfile() {
       )
       : 0;
   const overallGrade =
-    profile.academicPerformance.length > 0
+    filteredPerformance.length > 0
       ? (() => {
         const avg = Math.round(
-          profile.academicPerformance.reduce((a, x) => a + x.score, 0) /
-          profile.academicPerformance.length
+          filteredPerformance.reduce((a, x) => a + x.score, 0) /
+          filteredPerformance.length
         );
         if (avg >= 90) return "A+";
         if (avg >= 80) return "A";
@@ -359,7 +414,24 @@ export default function ParentProfile() {
                   Academic Performance
                 </h2>
 
-
+                {examTypeOptions.length > 1 && (
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next =
+                          examTypeFilter === "ALL" && examTypeOptions.length > 1
+                            ? examTypeOptions[1]
+                            : "ALL";
+                        setExamTypeFilter(next);
+                      }}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-black/40 border border-white/15 text-xs sm:text-sm font-semibold text-white"
+                    >
+                      {examTypeFilter === "ALL" ? "All exams" : examTypeFilter}
+                      <ChevronDown className="w-4 h-4 text-white/60" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-6 min-h-[340px] mt-8">

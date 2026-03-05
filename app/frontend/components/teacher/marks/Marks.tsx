@@ -35,11 +35,6 @@ type MarkApi = {
   grade: string | null;
   createdAt: string;
 };
-type ExamApi = {
-  termId?: string;
-  name?: string;
-  subject?: string;
-};
 
 const DEFAULT_SUBJECTS = [
   "Mathematics",
@@ -52,17 +47,18 @@ const DEFAULT_SUBJECTS = [
   "Biology",
   "Computer Science",
 ];
-const EXAM_TYPES = ["Term 1", "Term 2", "Final"];
+const DEFAULT_EXAM_TYPES = ["TERM 1", "TERM 2", "FINAL"];
 
 export default function TeacherMarksTab() {
   const [classes, setClasses] = useState<ClassOption[]>([]);
-  const [examTypeOptions, setExamTypeOptions] = useState<string[]>(EXAM_TYPES);
+  const [examTypeOptions, setExamTypeOptions] =
+    useState<string[]>(DEFAULT_EXAM_TYPES);
   const [form, setForm] = useState({
     classId: "",
     classLabel: "",
     section: "",
     subject: "Mathematics",
-    examType: "Term 1",
+    examType: "TERM 1",
     maxMarks: 100,
   });
   const [activeBtn, setActiveBtn] = useState<null | "save" | "import" | "export">(null);
@@ -113,9 +109,17 @@ export default function TeacherMarksTab() {
     }
     setLoading(true);
     try {
+      const params = new URLSearchParams({
+        classId: form.classId,
+        subject: form.subject,
+      });
+      if (form.examType) {
+        params.append("examType", form.examType);
+      }
+
       const [studentsRes, marksRes] = await Promise.all([
         fetch(`/api/class/students?classId=${encodeURIComponent(form.classId)}`),
-        fetch(`/api/marks/view?classId=${encodeURIComponent(form.classId)}&subject=${encodeURIComponent(form.subject)}`),
+        fetch(`/api/marks/view?${params.toString()}`),
       ]);
       const studentsData = await studentsRes.json();
       const marksData = await marksRes.json();
@@ -147,50 +151,31 @@ export default function TeacherMarksTab() {
     } finally {
       setLoading(false);
     }
-  }, [form.classId, form.subject]);
+  }, [form.classId, form.subject, form.examType]);
 
   const fetchExamTypes = useCallback(async () => {
-    if (!form.classId) {
-      setExamTypeOptions(EXAM_TYPES);
-      return;
-    }
     try {
-      const res = await fetch(`/api/exams/terms?classId=${encodeURIComponent(form.classId)}`, {
-        cache: "no-store",
-      });
+      const res = await fetch("/api/exam-types", { cache: "no-store" });
       if (!res.ok) {
-        setExamTypeOptions(EXAM_TYPES);
+        setExamTypeOptions(DEFAULT_EXAM_TYPES);
         return;
       }
       const data = await res.json();
-      const exams: ExamApi[] = Array.isArray(data.exams) ? data.exams : [];
-      const matching = exams.filter((e) => !form.subject || e.subject === form.subject);
-      const names = Array.from(
-        new Set(
-          (matching.length ? matching : exams)
-            .map((e) => (typeof e.name === "string" ? e.name.trim() : ""))
-            .filter(Boolean)
-        )
-      );
-
-      if (names.length > 0) {
-        setExamTypeOptions(names);
-        setForm((prev) => ({
-          ...prev,
-          examType: names.includes(prev.examType) ? prev.examType : names[0],
-        }));
-        return;
-      }
-
-      setExamTypeOptions(EXAM_TYPES);
+      const names: string[] = Array.isArray(data.examTypes)
+        ? data.examTypes
+        : DEFAULT_EXAM_TYPES;
+      setExamTypeOptions(names);
       setForm((prev) => ({
         ...prev,
-        examType: EXAM_TYPES.includes(prev.examType) ? prev.examType : EXAM_TYPES[0],
+        examType:
+          names.includes(prev.examType) || !names.length
+            ? prev.examType
+            : names[0],
       }));
     } catch {
-      setExamTypeOptions(EXAM_TYPES);
+      setExamTypeOptions(DEFAULT_EXAM_TYPES);
     }
-  }, [form.classId, form.subject]);
+  }, []);
 
   useEffect(() => {
     fetchClasses();
@@ -226,6 +211,10 @@ export default function TeacherMarksTab() {
     }
     if (key === "section") {
       setForm((prev) => ({ ...prev, section: value }));
+      return;
+    }
+    if (key === "examType") {
+      setForm((prev) => ({ ...prev, examType: value.toUpperCase() }));
       return;
     }
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -278,12 +267,17 @@ export default function TeacherMarksTab() {
           subject: form.subject,
           marks: Number(row.marks),
           totalMarks: row.maxMarks,
+          examType: form.examType || null,
         };
         if (row.markId) {
           const res = await fetch(`/api/marks/${row.markId}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ marks: payload.marks, totalMarks: payload.totalMarks }),
+            body: JSON.stringify({
+              marks: payload.marks,
+              totalMarks: payload.totalMarks,
+              examType: payload.examType,
+            }),
           });
           if (!res.ok) hasError = true;
         } else {

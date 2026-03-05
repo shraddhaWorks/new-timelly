@@ -15,6 +15,7 @@ export async function GET(req: Request) {
     const classId = searchParams.get("classId");
     const studentId = searchParams.get("studentId");
     const subject = searchParams.get("subject");
+    const examType = searchParams.get("examType");
 
     const schoolId = session.user.schoolId;
 
@@ -46,6 +47,9 @@ export async function GET(req: Request) {
 
     if (subject) {
       where.subject = subject;
+    }
+    if (examType) {
+      where.examType = examType.toUpperCase();
     }
     const marks = await prisma.mark.findMany({
       where,

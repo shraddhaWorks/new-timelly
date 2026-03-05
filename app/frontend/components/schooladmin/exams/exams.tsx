@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { BookOpen, Calendar, CheckCircle2 } from "lucide-react";
+import { BookOpen, Calendar, CheckCircle2, Plus, Trash2 } from "lucide-react";
 import PageHeader from "../../common/PageHeader";
 import Spinner from "../../common/Spinner";
 import { ChevronDown } from "lucide-react";
@@ -49,6 +49,12 @@ interface ClassData {
 }
 
 export default function ExamsTab() {
+    const [examTypes, setExamTypes] = useState<string[]>([]);
+    const [examTypesLoading, setExamTypesLoading] = useState(true);
+    const [newExamType, setNewExamType] = useState("");
+    const [examTypeError, setExamTypeError] = useState("");
+    const [examTypeSaving, setExamTypeSaving] = useState(false);
+
     const [rawData, setRawData] = useState<TermData[]>([]);
     const [classes, setClasses] = useState<ClassData[]>([]);
     const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
@@ -56,6 +62,101 @@ export default function ExamsTab() {
     const [selectedSubject, setSelectedSubject] = useState<string>("all");
     const [loading, setLoading] = useState(true);
     const [showAllSchedules, setShowAllSchedules] = useState(false);
+
+    const fetchExamTypes = async () => {
+        setExamTypesLoading(true);
+        try {
+            const res = await fetch("/api/exam-types", { cache: "no-store", credentials: "include" });
+            const data = await res.json();
+            const list: string[] = Array.isArray(data.examTypes) ? data.examTypes : [];
+            setExamTypes(list);
+        } catch (e) {
+            console.error("Failed to load exam types", e);
+            setExamTypes([]);
+        } finally {
+            setExamTypesLoading(false);
+        }
+    };
+
+    const deleteExamType = async (name: string) => {
+        const upperName = name.trim().toUpperCase();
+        if (!upperName) return;
+
+        if (examTypes.length <= 1) {
+            const confirmed = window.confirm(
+                `\"${upperName}\" is the only exam type.\n\nAre you sure you want to delete it?`
+            );
+            if (!confirmed) return;
+        } else {
+            const confirmed = window.confirm(
+                `Are you sure you want to delete exam type \"${upperName}\"?`
+            );
+            if (!confirmed) return;
+        }
+
+        setExamTypeError("");
+        setExamTypeSaving(true);
+        try {
+            const res = await fetch(`/api/exam-types?name=${encodeURIComponent(upperName)}`, {
+                method: "DELETE",
+                credentials: "include",
+            });
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+                setExamTypeError(
+                    data?.message || "Failed to delete exam type. It may be in use."
+                );
+                return;
+            }
+
+            await fetchExamTypes();
+        } catch (e) {
+            console.error("Failed to delete exam type", e);
+            setExamTypeError("Failed to delete exam type");
+        } finally {
+            setExamTypeSaving(false);
+        }
+    };
+
+    const addExamType = async () => {
+        const name = newExamType.trim().toUpperCase();
+        if (!name) {
+            setExamTypeError("Enter exam type name");
+            return;
+        }
+        if (examTypes.some((t) => t.toUpperCase() === name)) {
+            setExamTypeError("This exam type name already exists");
+            return;
+        }
+
+        setExamTypeError("");
+        setExamTypeSaving(true);
+        try {
+            const res = await fetch("/api/exam-types", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ name }),
+            });
+            const data = await res.json();
+            if (res.status === 409) {
+                setExamTypeError("This exam type name already exists");
+                return;
+            }
+            if (!res.ok) {
+                setExamTypeError(data?.message || "Failed to add exam type");
+                return;
+            }
+            setNewExamType("");
+            await fetchExamTypes();
+        } catch (e) {
+            console.error("Failed to add exam type", e);
+            setExamTypeError("Failed to add exam type");
+        } finally {
+            setExamTypeSaving(false);
+        }
+    };
 
     useEffect(() => {
         const fetchExams = async () => {
@@ -82,6 +183,10 @@ export default function ExamsTab() {
             }
         };
         fetchExams();
+    }, []);
+
+    useEffect(() => {
+        fetchExamTypes();
     }, []);
 
     const filteredDataByClass = useMemo(() => {
@@ -163,6 +268,64 @@ export default function ExamsTab() {
                 }
                 className="somu border-none !bg-white/5 mb-6"
             />
+
+            {/* EXAM TYPES MANAGER */}
+            <div className="somu border-none !bg-white/5 rounded-3xl p-5 mb-6">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h3 className="text-lg font-bold">Exam Types</h3>
+                        <p className="text-xs text-white/50">CAPS only. Duplicate names are not allowed.</p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+                        <input
+                            value={newExamType}
+                            onChange={(e) => setNewExamType(e.target.value.toUpperCase())}
+                            placeholder="e.g. HALF YEARLY, MID 1"
+                            className="px-4 py-2.5 rounded-2xl bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-[#B4F42A]/50 uppercase"
+                        />
+                        <button
+                            type="button"
+                            onClick={addExamType}
+                            disabled={examTypeSaving}
+                            className="px-4 py-2.5 rounded-2xl bg-[#B4F42A] text-black text-sm font-bold inline-flex items-center justify-center gap-2 disabled:opacity-60"
+                        >
+                            <Plus size={16} />
+                            {examTypeSaving ? "Saving..." : "Add"}
+                        </button>
+                    </div>
+                </div>
+
+                {examTypeError && (
+                    <p className="mt-2 text-xs font-bold text-red-400">{examTypeError}</p>
+                )}
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                    {examTypesLoading ? (
+                        <span className="text-xs text-white/50">Loading exam types...</span>
+                    ) : examTypes.length === 0 ? (
+                        <span className="text-xs text-white/50">No exam types found.</span>
+                    ) : (
+                        examTypes.map((t) => (
+                            <div
+                                key={t}
+                                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold bg-white/5 border border-white/10 text-white/80"
+                            >
+                                <span>{t}</span>
+                                <button
+                                    type="button"
+                                    disabled={examTypeSaving}
+                                    onClick={() => deleteExamType(t)}
+                                    className="ml-1 inline-flex items-center justify-center rounded-full p-0.5 hover:bg-red-500/20 disabled:opacity-50"
+                                    title="Delete exam type"
+                                >
+                                    <Trash2 className="w-3 h-3 text-red-400" />
+                                </button>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-3 space-y-4">
