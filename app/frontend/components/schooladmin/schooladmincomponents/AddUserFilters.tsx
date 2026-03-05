@@ -62,7 +62,7 @@ export default function FilterBar({
           >
             <option value="">{filter.placeholder}</option>
             {filter.options.map((opt) => (
-              <option key={opt.value} value={opt.value}>
+              <option key={opt.value} value={opt.value} className="text-white bg-gray-900">
                 {opt.label}
               </option>
             ))}

@@ -245,9 +245,9 @@ export default function AppointTeacher() {
               onChange={(e) => setSelectedClassId(e.target.value)}
               className="flex-1 bg-black/20 border border-white/10 rounded-xl px-4 py-3"
             >
-              <option value="" className="text-white bg-slate-800">-- Select Class --</option>
+              <option value="" className="text-white bg-gray-900 text-white">-- Select Class --</option>
               {classOptions.map((opt) => (
-                <option key={opt.value} value={opt.value} className=" bg-slate-800  text-white" >
+                <option key={opt.value} value={opt.value} className=" bg-gray-900 text-white  text-white" >
                   {opt.label}
                 </option>
               ))}
@@ -258,9 +258,9 @@ export default function AppointTeacher() {
               onChange={(e) => setSelectedTeacherId(e.target.value)}
               className="flex-1 border border-white/10 rounded-xl px-4 py-3  bg-black/20"
             >
-              <option value="" className="text-white bg-slate-800">-- Select Teacher --</option>
+              <option value="" className="text-white bg-gray-900 text-white">-- Select Teacher --</option>
               {teacherOptions.map((opt) => (
-                <option key={opt.value} value={opt.value} className="text-white bg-slate-800 ">
+                <option key={opt.value} value={opt.value} className="text-white bg-gray-900 text-white ">
                   {opt.label}
                 </option>
               ))}
