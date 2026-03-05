@@ -34,6 +34,7 @@ export default function HomeworkFilterBar({
           </button>
         ))}
       </div>
+      
 
       <div className="relative w-full lg:w-80">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />

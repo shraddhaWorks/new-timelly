@@ -154,7 +154,6 @@ export default function HomeworkCard({
                 </a>
               )}
             </div>
-
             <div className="bg-black/20 rounded-xl p-5 space-y-4 border border-white/5">
               <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">
                 Submission Status
