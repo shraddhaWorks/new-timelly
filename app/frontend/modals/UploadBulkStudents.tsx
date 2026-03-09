@@ -4,10 +4,27 @@ import { toast } from "../services/toast.service";
 import { assignStudentsToClass } from "../services/student.service";
 import { PRIMARY_COLOR } from "../constants/colors";
 
-
 export default function UploadCSVModal({ classId, onClose, onSuccess }: any) {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const handleDownloadTemplate = () => {
+    // CSV template matching /api/student/bulk-upload expected columns
+    const csvContent = `name,fatherName,rollNo,aadhaarNo,gender,dob,previousSchool,class,section,totalFee,discountPercent,phoneNo,email,address
+Rahul Sharma,Rajesh Sharma,STU001,123412341234,Male,2015-06-15,Little Stars School,1, A,30000,10,9876543210,parent1@example.com,"123, MG Road, Delhi"
+Anita Verma,Sunil Verma,STU002,567856785678,Female,2014-09-20,Sunrise Public School,2, B,28000,0,9876501234,parent2@example.com,"45, Park Street, Mumbai"`;
+
+    const element = document.createElement("a");
+    element.setAttribute(
+      "href",
+      "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent)
+    );
+    element.setAttribute("download", "student-bulk-template.csv");
+    element.style.display = "none";
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
 
   const handleUpload = async () => {
     if (!file) {
@@ -92,14 +109,40 @@ export default function UploadCSVModal({ classId, onClose, onSuccess }: any) {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-xl w-[400px]">
-        <h3 className="font-semibold mb-4">Upload Students CSV</h3>
+        <h3 className="font-semibold mb-2">Upload Students CSV / Excel</h3>
+        <p className="text-xs text-gray-500 mb-3">
+          Required columns:{" "}
+          <span className="font-medium">name</span>,{" "}
+          <span className="font-medium">fatherName</span>,{" "}
+          <span className="font-medium">aadhaarNo</span>,{" "}
+          <span className="font-medium">phoneNo</span>,{" "}
+          <span className="font-medium">dob</span>,{" "}
+          <span className="font-medium">totalFee</span>. Optional:{" "}
+          <span className="font-medium">rollNo</span>,{" "}
+          <span className="font-medium">gender</span>,{" "}
+          <span className="font-medium">previousSchool</span>,{" "}
+          <span className="font-medium">class</span>,{" "}
+          <span className="font-medium">section</span>,{" "}
+          <span className="font-medium">discountPercent</span>,{" "}
+          <span className="font-medium">email</span>,{" "}
+          <span className="font-medium">address</span>. DOB format: YYYY-MM-DD.
+        </p>
 
-        <input
-          type="file"
-          accept=".csv,.xlsx"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
-          className="border border-gray-300 rounded-lg px-3 py-2 w-full"
-        />
+        <div className="flex flex-col gap-2">
+          <input
+            type="file"
+            accept=".csv,.xlsx"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            className="border border-gray-300 rounded-lg px-3 py-2 w-full"
+          />
+          <button
+            type="button"
+            onClick={handleDownloadTemplate}
+            className="self-start text-xs text-blue-600 hover:underline"
+          >
+            Download student template
+          </button>
+        </div>
 
         <div className="flex justify-end gap-3 mt-4">
           <button onClick={onClose} className="border px-4 py-2 rounded border-gray-300">
