@@ -10,9 +10,10 @@ export default function UploadCSVModal({ classId, onClose, onSuccess }: any) {
 
   const handleDownloadTemplate = () => {
     // CSV template matching /api/student/bulk-upload expected columns
-    const csvContent = `name,fatherName,rollNo,aadhaarNo,gender,dob,previousSchool,class,section,totalFee,discountPercent,phoneNo,email,address
-Rahul Sharma,Rajesh Sharma,STU001,123412341234,Male,2015-06-15,Little Stars School,1, A,30000,10,9876543210,parent1@example.com,"123, MG Road, Delhi"
-Anita Verma,Sunil Verma,STU002,567856785678,Female,2014-09-20,Sunrise Public School,2, B,28000,0,9876501234,parent2@example.com,"45, Park Street, Mumbai"`;
+    // NOTE: Age & Status are derived/for reference only; they are not stored.
+    const csvContent = `name,fatherName,rollNo,aadhaarNo,gender,dob,previousSchool,class,section,status,phoneNo,email,address,totalFee,discountPercent
+Rahul Sharma,Rajesh Sharma,STU001,123412341234,Male,2015-06-15,Little Stars School,1,"A",Active,9876543210,parent1@example.com,"123, MG Road, Delhi",30000,10
+Anita Verma,Sunil Verma,STU002,567856785678,Female,2014-09-20,Happy Kids School,2,"B",Active,9876501234,parent2@example.com,"45, Park Street, Mumbai",28000,0`;
 
     const element = document.createElement("a");
     element.setAttribute(
@@ -111,21 +112,15 @@ Anita Verma,Sunil Verma,STU002,567856785678,Female,2014-09-20,Sunrise Public Sch
       <div className="bg-white p-6 rounded-xl w-[400px]">
         <h3 className="font-semibold mb-2">Upload Students CSV / Excel</h3>
         <p className="text-xs text-gray-500 mb-3">
-          Required columns:{" "}
-          <span className="font-medium">name</span>,{" "}
+          Required columns: <span className="font-medium">name</span>,{" "}
           <span className="font-medium">fatherName</span>,{" "}
-          <span className="font-medium">aadhaarNo</span>,{" "}
           <span className="font-medium">phoneNo</span>,{" "}
-          <span className="font-medium">dob</span>,{" "}
-          <span className="font-medium">totalFee</span>. Optional:{" "}
-          <span className="font-medium">rollNo</span>,{" "}
-          <span className="font-medium">gender</span>,{" "}
-          <span className="font-medium">previousSchool</span>,{" "}
-          <span className="font-medium">class</span>,{" "}
-          <span className="font-medium">section</span>,{" "}
-          <span className="font-medium">discountPercent</span>,{" "}
-          <span className="font-medium">email</span>,{" "}
-          <span className="font-medium">address</span>. DOB format: YYYY-MM-DD.
+          <span className="font-medium">aadhaarNo</span>,{" "}
+          <span className="font-medium">dob</span>. Optional:{" "}
+          <span className="font-medium">address</span>,{" "}
+          <span className="font-medium">totalFee</span>,{" "}
+          <span className="font-medium">discountPercent</span>. DOB format:
+          YYYY-MM-DD.
         </p>
 
         <div className="flex flex-col gap-2">
