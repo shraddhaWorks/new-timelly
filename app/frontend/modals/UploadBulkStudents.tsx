@@ -9,11 +9,12 @@ export default function UploadCSVModal({ classId, onClose, onSuccess }: any) {
   const [loading, setLoading] = useState(false);
 
   const handleDownloadTemplate = () => {
-    // CSV template matching /api/student/bulk-upload expected columns
-    // NOTE: Age & Status are derived/for reference only; they are not stored.
-    const csvContent = `name,fatherName,rollNo,aadhaarNo,gender,dob,previousSchool,class,section,status,phoneNo,email,address,totalFee,discountPercent
-Rahul Sharma,Rajesh Sharma,STU001,123412341234,Male,2015-06-15,Little Stars School,1,"A",Active,9876543210,parent1@example.com,"123, MG Road, Delhi",30000,10
-Anita Verma,Sunil Verma,STU002,567856785678,Female,2014-09-20,Happy Kids School,2,"B",Active,9876501234,parent2@example.com,"45, Park Street, Mumbai",28000,0`;
+    // CSV/Excel template matching /api/student/bulk-upload expected columns.
+    // Required: name, fatherName, phoneNo (10 digits), aadhaarNo (12 digits), dob (YYYY-MM-DD), totalFee, discountPercent (0-100).
+    // Optional: rollNo, gender, previousSchool, class, section, email, address.
+    const csvContent = `name,fatherName,rollNo,aadhaarNo,gender,dob,previousSchool,class,section,totalFee,discountPercent,phoneNo,email,address
+Rahul Sharma,Rajesh Sharma,STU001,123412341234,Male,2015-06-15,Little Stars School,CSE,A,30000,10,9876543210,parent1@example.com,"123, MG Road, Delhi"
+Anita Verma,Sunil Verma,STU002,567856785678,Female,2014-09-20,Happy Kids School,CSE,A,28000,0,9876501234,parent2@example.com,"45, Park Street, Mumbai"`;
 
     const element = document.createElement("a");
     element.setAttribute(
@@ -63,13 +64,22 @@ Anita Verma,Sunil Verma,STU002,567856785678,Female,2014-09-20,Happy Kids School,
         return;
       }
 
-      //  filter only unassigned students
+      // Filter only unassigned students (file may have assigned some via class/section)
       const unassignedStudents = studentsData.students.filter(
         (student: any) => !student.class
       );
 
       if (unassignedStudents.length === 0) {
-        toast.error("No unassigned students found");
+        // All uploaded students were already assigned (e.g. via class/section in file)
+        if (uploadData.createdCount > 0) {
+          toast.success(
+            `${uploadData.createdCount} students added & assigned successfully`
+          );
+          onSuccess();
+          onClose();
+        } else {
+          toast.error("No unassigned students found");
+        }
         return;
       }
 

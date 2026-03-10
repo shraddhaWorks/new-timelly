@@ -73,7 +73,7 @@ export async function POST(req: Request) {
 
         const rawPhone = row.phoneNo ?? row.contactNumber ?? "";
         const rawAadhaar = row.aadhaarNo ?? "";
-        const phoneNo = String(rawPhone).replace(/\.0$/, "").trim();
+        const phoneNo = String(rawPhone).replace(/\.0$/, "").trim().replace(/\s/g, "");
         const aadhaarNoRaw = String(rawAadhaar).replace(/\.0$/, "").trim();
         const aadhaarNo = aadhaarNoRaw.replace(/[\s-]/g, "");
 
@@ -135,30 +135,21 @@ export async function POST(req: Request) {
           throw new Error("Aadhaar number already exists. Please check the Aadhaar number.");
         }
 
-        // Optional: Class + Section mapping
-        const className = row.class || row.className || "";
-        const section = row.section || "";
+        // Optional: Class + Section mapping — if not found, student is created unassigned
+        const className = String(row.class ?? row.className ?? "").trim();
+        const section = String(row.section ?? "").trim();
         let classId: string | null = null;
         if (className) {
           const match = classes.find((c) => {
             const sameName =
-              (c.name || "").trim().toLowerCase() ===
-              String(className).trim().toLowerCase();
+              (c.name || "").trim().toLowerCase() === className.toLowerCase();
             const sameSection =
               !section ||
-              ((c.section || "").trim().toLowerCase() ===
-                String(section).trim().toLowerCase());
+              (c.section || "").trim().toLowerCase() === section.toLowerCase();
             return sameName && sameSection;
           });
-
-          if (!match) {
-            throw new Error(
-              `Class/Section not found for "${className}"${
-                section ? ` - "${section}"` : ""
-              }`
-            );
-          }
-          classId = match.id;
+          if (match) classId = match.id;
+          // If no match, leave classId null (unassigned) instead of throwing
         }
 
         // Each student is created in its own short transaction
