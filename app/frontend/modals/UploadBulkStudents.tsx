@@ -9,10 +9,12 @@ export default function UploadCSVModal({ classId, onClose, onSuccess }: any) {
   const [loading, setLoading] = useState(false);
 
   const handleDownloadTemplate = () => {
-    // CSV template matching /api/student/bulk-upload expected columns
+    // CSV/Excel template matching /api/student/bulk-upload expected columns.
+    // Required: name, fatherName, phoneNo (10 digits), aadhaarNo (12 digits), dob (YYYY-MM-DD), totalFee, discountPercent (0-100).
+    // Optional: rollNo, gender, previousSchool, class, section, email, address.
     const csvContent = `name,fatherName,rollNo,aadhaarNo,gender,dob,previousSchool,class,section,totalFee,discountPercent,phoneNo,email,address
-Rahul Sharma,Rajesh Sharma,STU001,123412341234,Male,2015-06-15,Little Stars School,1, A,30000,10,9876543210,parent1@example.com,"123, MG Road, Delhi"
-Anita Verma,Sunil Verma,STU002,567856785678,Female,2014-09-20,Sunrise Public School,2, B,28000,0,9876501234,parent2@example.com,"45, Park Street, Mumbai"`;
+Rahul Sharma,Rajesh Sharma,STU001,123412341234,Male,2015-06-15,Little Stars School,CSE,A,30000,10,9876543210,parent1@example.com,"123, MG Road, Delhi"
+Anita Verma,Sunil Verma,STU002,567856785678,Female,2014-09-20,Happy Kids School,CSE,A,28000,0,9876501234,parent2@example.com,"45, Park Street, Mumbai"`;
 
     const element = document.createElement("a");
     element.setAttribute(
@@ -62,13 +64,22 @@ Anita Verma,Sunil Verma,STU002,567856785678,Female,2014-09-20,Sunrise Public Sch
         return;
       }
 
-      //  filter only unassigned students
+      // Filter only unassigned students (file may have assigned some via class/section)
       const unassignedStudents = studentsData.students.filter(
         (student: any) => !student.class
       );
 
       if (unassignedStudents.length === 0) {
-        toast.error("No unassigned students found");
+        // All uploaded students were already assigned (e.g. via class/section in file)
+        if (uploadData.createdCount > 0) {
+          toast.success(
+            `${uploadData.createdCount} students added & assigned successfully`
+          );
+          onSuccess();
+          onClose();
+        } else {
+          toast.error("No unassigned students found");
+        }
         return;
       }
 
@@ -111,21 +122,15 @@ Anita Verma,Sunil Verma,STU002,567856785678,Female,2014-09-20,Sunrise Public Sch
       <div className="bg-white p-6 rounded-xl w-[400px]">
         <h3 className="font-semibold mb-2">Upload Students CSV / Excel</h3>
         <p className="text-xs text-gray-500 mb-3">
-          Required columns:{" "}
-          <span className="font-medium">name</span>,{" "}
+          Required columns: <span className="font-medium">name</span>,{" "}
           <span className="font-medium">fatherName</span>,{" "}
-          <span className="font-medium">aadhaarNo</span>,{" "}
           <span className="font-medium">phoneNo</span>,{" "}
-          <span className="font-medium">dob</span>,{" "}
-          <span className="font-medium">totalFee</span>. Optional:{" "}
-          <span className="font-medium">rollNo</span>,{" "}
-          <span className="font-medium">gender</span>,{" "}
-          <span className="font-medium">previousSchool</span>,{" "}
-          <span className="font-medium">class</span>,{" "}
-          <span className="font-medium">section</span>,{" "}
-          <span className="font-medium">discountPercent</span>,{" "}
-          <span className="font-medium">email</span>,{" "}
-          <span className="font-medium">address</span>. DOB format: YYYY-MM-DD.
+          <span className="font-medium">aadhaarNo</span>,{" "}
+          <span className="font-medium">dob</span>. Optional:{" "}
+          <span className="font-medium">address</span>,{" "}
+          <span className="font-medium">totalFee</span>,{" "}
+          <span className="font-medium">discountPercent</span>. DOB format:
+          YYYY-MM-DD.
         </p>
 
         <div className="flex flex-col gap-2">
