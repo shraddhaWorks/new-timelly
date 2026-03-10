@@ -22,6 +22,10 @@ type SchoolFormState = {
   city: string;
   district: string;
   state: string;
+  // SaaS config (optional) for this school decided by superadmin
+  billingMode?: "PARENT_SUBSCRIPTION" | "SCHOOL_PAID";
+  parentSubscriptionAmount?: string;
+  parentSubscriptionTrialDays?: string;
 };
 export type { SchoolFormState };
 

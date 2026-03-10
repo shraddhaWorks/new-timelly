@@ -19,6 +19,8 @@ import ParentLeavesTab from "../../components/parent/leaves/LeaveApplications";
 import ParentSettingsTab from "../../components/parent/settings/ParentSettings";
 import ParentAnalyticsTab from "../../components/parent/analytics/ParentAnalyticsTab";
 import Spinner from "../../components/common/Spinner";
+import ParentSubscriptionTab from "../../components/parent/subscription/ParentSubscriptionTab";
+import { Lock } from "lucide-react";
 
 const PARENT_TAB_TITLES: Record<string, string> = {
   dashboard: "Home",
@@ -33,7 +35,20 @@ const PARENT_TAB_TITLES: Record<string, string> = {
   certificates: "Certificates",
   leave: "Leave Application",
   settings: "Settings",
-  analytics: "Analytics"
+  analytics: "Analytics",
+  subscription: "Subscription",
+};
+
+type SubscriptionStatusResponse = {
+  status: "ACTIVE" | "EXPIRED";
+  isTrial: boolean;
+  billingMode: string;
+  amount: number;
+  remainingDays: number | null;
+  expiresAt: string | null;
+  trialDays?: number;
+  deactivated?: boolean;
+  message?: string;
 };
 
 function ParentDashboardInner() {
@@ -50,10 +65,13 @@ function ParentDashboardInner() {
     userId: undefined as string | undefined,
   });
 
+  const [subStatus, setSubStatus] = useState<SubscriptionStatusResponse | null>(null);
+  const [loadingSub, setLoadingSub] = useState(true);
+
   const renderTabContent = () => {
     switch (tab) {
       case "analytics":
-        return <ParentAnalyticsTab />
+        return <ParentAnalyticsTab />;
       case "dashboard":
         return <ParentHomeTab />;
       case "profile":
@@ -68,6 +86,8 @@ function ParentDashboardInner() {
         return <ParentExamsTab />;
       case "fees":
         return <ParentFeesTab />;
+      case "subscription":
+        return <ParentSubscriptionTab />;
       case "chat":
         return <ParentChatsTab />;
       case "workshops":
@@ -118,6 +138,36 @@ function ParentDashboardInner() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoadingSub(true);
+        const res = await fetch("/api/parent/subscription/status", { credentials: "include" });
+        const data = await res.json();
+        if (!cancelled && res.ok) {
+          setSubStatus(data as SubscriptionStatusResponse);
+        }
+      } catch {
+        if (!cancelled) setSubStatus(null);
+      } finally {
+        if (!cancelled) setLoadingSub(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const isLocked =
+    subStatus &&
+    subStatus.billingMode === "PARENT_SUBSCRIPTION" &&
+    subStatus.status !== "ACTIVE" &&
+    !subStatus.isTrial;
+
+  const shouldLockThisTab =
+    isLocked && !["fees", "subscription"].includes(tab);
+
   return (
     <RequiredRoles allowedRoles={["STUDENT"]}>
       <AppLayout
@@ -127,7 +177,38 @@ function ParentDashboardInner() {
         profile={profile}
         enableSwitchAccounts
       >
-        {renderTabContent()}
+        <div className={`relative min-h-[70vh] ${shouldLockThisTab ? "overflow-hidden" : ""}`}>
+          <div className={shouldLockThisTab ? "pointer-events-none blur-sm" : ""}>
+            {renderTabContent()}
+          </div>
+          {shouldLockThisTab && !loadingSub && (
+            <div className="fixed inset-0 z-30 flex items-center justify-center px-4">
+              <div className="max-w-sm w-full rounded-2xl bg-black/80 border border-white/15 p-6 text-center text-white shadow-xl">
+                <div className="flex justify-center mb-3">
+                  <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center">
+                    <Lock className="w-5 h-5 text-lime-300" />
+                  </div>
+                </div>
+                <h3 className="text-base font-semibold mb-1">Subscription required</h3>
+                <p className="text-xs text-white/70 mb-3">
+                  To enjoy all Timelly features for your child, please activate your parent subscription.
+                </p>
+                <p className="text-[11px] text-white/60 mb-4">
+                  Once subscribed, attendance, homework, analytics and more will be fully unlocked for you.
+                </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    (window.location.href = "/frontend/pages/parent?tab=subscription")
+                  }
+                  className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold rounded-lg bg-lime-400 text-black hover:bg-lime-300"
+                >
+                  Go to Subscription
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </AppLayout>
     </RequiredRoles>
   );

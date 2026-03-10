@@ -27,6 +27,10 @@ export async function GET(req: Request) {
         address: true,
         location: true,
         createdAt: true,
+        isActive: true,
+        billingMode: true,
+        parentSubscriptionAmount: true,
+        parentSubscriptionTrialDays: true,
         _count: { select: { students: true, teachers: true, classes: true } },
         admins: {
           take: 1,
@@ -55,11 +59,15 @@ export async function GET(req: Request) {
       name: s.name,
       address: s.address ?? "",
       location: s.location ?? "",
-      isActive: true,
+      isActive: s.isActive,
+      createdAt: s.createdAt,
       studentCount: s._count.students,
       teacherCount: s._count.teachers,
       classCount: s._count.classes,
       turnover: turnoverBySchool[s.id] ?? 0,
+      billingMode: s.billingMode ?? "PARENT_SUBSCRIPTION",
+      parentSubscriptionAmount: s.parentSubscriptionAmount ?? null,
+      parentSubscriptionTrialDays: s.parentSubscriptionTrialDays ?? 0,
       admin: s.admins[0]
         ? {
             id: s.admins[0].id,

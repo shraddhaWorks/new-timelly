@@ -10,4 +10,13 @@ export type SidebarItem = {
   icon: any;
   action?: "logout";
   permission?: Permission;
+  /**
+   * When true, this menu item requires an active parent subscription
+   * (used only in parent portal).
+   */
+  requiresSubscription?: boolean;
+  /**
+   * When true, item is visually disabled and not clickable.
+   */
+  disabled?: boolean;
 };

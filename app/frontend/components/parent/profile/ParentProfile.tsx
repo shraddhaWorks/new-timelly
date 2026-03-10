@@ -382,7 +382,8 @@ export default function ParentProfile() {
                 </div>
               </div>
             </div>
-            <div className="shrink-0 flex justify-center md:justify-end">
+            <div className="shrink-0 flex flex-col items-stretch gap-4 md:items-end md:justify-between">
+              {/* Avatar */}
               <div className="relative h-24 w-24 sm:h-32 sm:w-32 md:h-44 md:w-44 lg:h-52 lg:w-52 rounded-xl sm:rounded-2xl overflow-hidden border-2 border-white/20 bg-white/5 transition-all duration-200 hover:border-lime-400/40 hover:shadow-lg">
                 {photoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element

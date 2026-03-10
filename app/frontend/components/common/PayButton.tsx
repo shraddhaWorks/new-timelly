@@ -11,6 +11,8 @@ interface PayButtonProps {
   returnPath?: string;
   /** For workshop payments, pass event registration id so enrollment is updated on success */
   eventRegistrationId?: string;
+  /** Optional override for API endpoint (default: /api/payment/create-order) */
+  endpoint?: string;
 }
 
 export default function PayButton({
@@ -18,6 +20,7 @@ export default function PayButton({
   onSuccess,
   returnPath,
   eventRegistrationId,
+  endpoint = "/api/payment/create-order",
 }: PayButtonProps) {
   const [loading, setLoading] = useState(false);
 
@@ -27,7 +30,7 @@ export default function PayButton({
     try {
       const normalizedAmount = Number(amount.toFixed(2));
 
-      const res = await fetch("/api/payment/create-order", {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
