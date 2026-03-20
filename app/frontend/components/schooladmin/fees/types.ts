@@ -8,7 +8,7 @@ export interface Student {
   id: string;
   admissionNumber: string;
   user: { name: string | null; email: string | null };
-  class: { name: string; section: string | null } | null;
+  class: { id: string; name: string; section: string | null } | null;
 }
 
 export interface FeeSummary {
@@ -25,6 +25,9 @@ export interface FeeRecord {
   finalFee: number;
   amountPaid: number;
   remainingFee: number;
+  // Comma-separated fee head names (e.g., Tuition, Lab) that still have due.
+  feeTypes?: string;
+  feeTypeDueAmount?: number;
   discountPercent: number;
   installments: number;
   student: {

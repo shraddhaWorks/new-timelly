@@ -30,11 +30,15 @@ export async function POST(req: Request) {
     );
   }
 
+  // Guarded above: `studentId` is required for students.
+  const studentAllocId = session.user.studentId as string;
+
   try {
     const body = await req.json();
     const rawAmount = body.amount;
     const returnPath = (body.return_path as string) || "/payments";
     const eventRegistrationId = typeof body.event_registration_id === "string" && body.event_registration_id ? body.event_registration_id : null;
+    const feeSelection = Array.isArray(body.fee_selection) ? body.fee_selection : undefined;
 
     const amountNumber =
       typeof rawAmount === "string" ? parseFloat(rawAmount) : rawAmount;
@@ -64,7 +68,10 @@ export async function POST(req: Request) {
     const student = await prisma.student.findUnique({
       where: { id: session.user.studentId },
       select: {
+        id: true,
         schoolId: true,
+        classId: true,
+        class: { select: { id: true, section: true } },
         phoneNo: true,
         fatherName: true,
         user: { select: { name: true, email: true } },
@@ -72,6 +79,235 @@ export async function POST(req: Request) {
     });
     if (!student) {
       return NextResponse.json({ error: "Student not found" }, { status: 404 });
+    }
+
+    // If this is a FEES payment, we will pre-create allocations for the pending payment.
+    // Allocations only affect due-by-head after payment is verified and marked SUCCESS.
+    let allocationsToCreate:
+      | Array<{
+          headType: "BASE_COMPONENT" | "EXTRA_FEE";
+          componentIndex?: number | null;
+          componentName?: string | null;
+          extraFeeId?: string | null;
+          allocatedAmount: number;
+        }>
+      | null = null;
+
+    if (!eventRegistrationId) {
+      const fee = await prisma.studentFee.findUnique({
+        where: { studentId: session.user.studentId },
+        select: { amountPaid: true, finalFee: true, totalFee: true, remainingFee: true },
+      });
+
+      if (!fee) {
+        return NextResponse.json(
+          { error: "Fee record not found for this student" },
+          { status: 404 }
+        );
+      }
+
+      type SelectedHead =
+        | { headType: "BASE_COMPONENT"; componentIndex: number }
+        | { headType: "EXTRA_FEE"; extraFeeId: string };
+
+      const normalizedSelectedHeads: SelectedHead[] = Array.isArray(feeSelection)
+        ? feeSelection
+            .map((h: any): SelectedHead | null => {
+              if (!h || typeof h !== "object") return null;
+              if (h.headType === "BASE_COMPONENT" && typeof h.componentIndex === "number") {
+                return { headType: "BASE_COMPONENT", componentIndex: h.componentIndex };
+              }
+              if (h.headType === "EXTRA_FEE" && typeof h.extraFeeId === "string") {
+                return { headType: "EXTRA_FEE", extraFeeId: h.extraFeeId };
+              }
+              return null;
+            })
+            .filter((x): x is SelectedHead => x !== null)
+        : [];
+
+      if (normalizedSelectedHeads.length === 0) {
+        return NextResponse.json({ error: "Please select at least one fee type before paying." }, { status: 400 });
+      }
+
+      const discountRatio = fee.totalFee > 0 ? fee.finalFee / fee.totalFee : 0;
+
+      const classId = student.classId ?? null;
+      const classSection = student.class?.section ?? null;
+
+      const classFeeStructure = classId
+        ? await prisma.classFeeStructure.findUnique({
+            where: { classId },
+            select: { components: true },
+          })
+        : null;
+
+      const baseComponents =
+        ((classFeeStructure?.components as Array<{ name: string; amount: number }> | null) ?? []).map(
+          (c) => ({
+            name: String(c.name),
+            amount: Number(c.amount) || 0,
+          })
+        );
+
+      const extraFees = await prisma.extraFee.findMany({
+        where: {
+          schoolId: student.schoolId,
+          OR: [
+            { targetType: "SCHOOL" },
+            ...(classId ? [{ targetType: "CLASS", targetClassId: classId }] : []),
+            ...(classId && classSection
+              ? [
+                  {
+                    targetType: "SECTION",
+                    targetClassId: classId,
+                    targetSection: classSection,
+                  },
+                ]
+              : []),
+            { targetType: "STUDENT", targetStudentId: student.id },
+          ],
+        },
+        select: { id: true, name: true, amount: true, targetType: true },
+      });
+
+      const getHeadKey = (h: SelectedHead) => {
+        if (h.headType === "BASE_COMPONENT") return `BASE:${h.componentIndex}`;
+        return `EXTRA:${h.extraFeeId}`;
+      };
+
+      type Head = { key: string; headType: "BASE_COMPONENT" | "EXTRA_FEE"; snapshotDue: number; componentIndex?: number; componentName?: string; extraFeeId?: string };
+
+      const allHeads: Head[] = [
+        ...baseComponents.map((c, idx): Head => ({
+          key: `BASE:${idx}`,
+          headType: "BASE_COMPONENT",
+          snapshotDue: c.amount * discountRatio,
+          componentIndex: idx,
+          componentName: c.name,
+        })),
+        ...extraFees.map((ef): Head => ({
+          key: `EXTRA:${ef.id}`,
+          headType: "EXTRA_FEE",
+          snapshotDue: Number(ef.amount) * discountRatio,
+          extraFeeId: ef.id,
+        })),
+      ];
+
+      const [paymentAllocations, refundAllocations] = await Promise.all([
+        prisma.paymentFeeAllocation.findMany({
+          where: { studentId: student.id, allocationType: "PAYMENT", payment: { status: "SUCCESS" } },
+          select: { headType: true, componentIndex: true, extraFeeId: true, allocatedAmount: true },
+        }),
+        prisma.paymentFeeAllocation.findMany({
+          where: { studentId: student.id, allocationType: "REFUND", payment: { status: "SUCCESS" } },
+          select: { headType: true, componentIndex: true, extraFeeId: true, allocatedAmount: true },
+        }),
+      ]);
+
+      const netPaidByHead = new Map<string, number>();
+      for (const a of paymentAllocations) {
+        const key =
+          a.headType === "BASE_COMPONENT" ? `BASE:${a.componentIndex}` : `EXTRA:${a.extraFeeId}`;
+        netPaidByHead.set(key, (netPaidByHead.get(key) ?? 0) + a.allocatedAmount);
+      }
+      for (const a of refundAllocations) {
+        const key =
+          a.headType === "BASE_COMPONENT" ? `BASE:${a.componentIndex}` : `EXTRA:${a.extraFeeId}`;
+        netPaidByHead.set(key, (netPaidByHead.get(key) ?? 0) - a.allocatedAmount);
+      }
+
+      const allocationsNetTotal = Array.from(netPaidByHead.values()).reduce((s, v) => s + v, 0);
+      const legacyPaidTotal = Math.max(fee.amountPaid - allocationsNetTotal, 0);
+      const totalSnapshotDue = Math.max(fee.finalFee, 0);
+
+      const headsWithDueBefore = allHeads.map((h) => {
+        const paidAlloc = netPaidByHead.get(h.key) ?? 0;
+        const paidLegacy = totalSnapshotDue > 0 ? legacyPaidTotal * (h.snapshotDue / totalSnapshotDue) : 0;
+        const dueBefore = Math.max(h.snapshotDue - (paidAlloc + paidLegacy), 0);
+        return { ...h, dueBefore, paidAlloc, paidLegacy };
+      });
+
+      const selectedHeadKeys = new Set<string>(
+        normalizedSelectedHeads.length > 0 ? normalizedSelectedHeads.map(getHeadKey) : headsWithDueBefore.map((h) => h.key)
+      );
+
+      const selectedHeads = headsWithDueBefore.filter((h) => selectedHeadKeys.has(h.key));
+      const unselectedHeads = headsWithDueBefore.filter((h) => !selectedHeadKeys.has(h.key));
+
+      const selectedDueSum = selectedHeads.reduce((s, h) => s + h.dueBefore, 0);
+      const unselectedDueSum = unselectedHeads.reduce((s, h) => s + h.dueBefore, 0);
+      const totalDueSum = headsWithDueBefore.reduce((s, h) => s + h.dueBefore, 0);
+
+      if (totalDueSum <= 0.00001) {
+        return NextResponse.json({ error: "Nothing due for this student" }, { status: 400 });
+      }
+
+      const allocateProportional = (
+        amountToAlloc: number,
+        heads: Array<{ key: string; dueBefore: number }>
+      ): Map<string, number> => {
+        const sum = heads.reduce((s, h) => s + h.dueBefore, 0);
+        const out = new Map<string, number>();
+        if (amountToAlloc <= 0 || sum <= 0) return out;
+        const eligible = heads.filter((h) => h.dueBefore > 0);
+        if (eligible.length === 0) return out;
+        let remaining = amountToAlloc;
+        for (let i = 0; i < eligible.length; i++) {
+          const h = eligible[i];
+        const value =
+          i === eligible.length - 1
+            ? Math.min(remaining, h.dueBefore)
+            : (amountToAlloc * h.dueBefore) / sum;
+        out.set(h.key, (out.get(h.key) ?? 0) + value);
+        remaining -= value;
+        }
+        return out;
+      };
+
+      const allocateSelected = Math.min(amountNumber, selectedDueSum);
+      const spill = amountNumber - allocateSelected;
+
+      const allocationsByKey = new Map<string, number>();
+
+      for (const [k, v] of allocateProportional(allocateSelected, selectedHeads)) {
+        allocationsByKey.set(k, v);
+      }
+
+      if (spill > 0.00001) {
+        if (unselectedDueSum <= 0) {
+          return NextResponse.json(
+            { error: "No other fee heads to allocate spill amount" },
+            { status: 400 }
+          );
+        }
+        for (const [k, v] of allocateProportional(spill, unselectedHeads)) {
+          allocationsByKey.set(k, (allocationsByKey.get(k) ?? 0) + v);
+        }
+      }
+
+      allocationsToCreate = Array.from(allocationsByKey.entries())
+        .filter(([, v]) => v > 0.00001)
+        .map(([key, allocatedAmount]) => {
+          if (key.startsWith("BASE:")) {
+            const componentIndex = Number(key.slice("BASE:".length));
+            const componentName = baseComponents[componentIndex]?.name ?? `Component ${componentIndex + 1}`;
+            return {
+              headType: "BASE_COMPONENT" as const,
+              componentIndex,
+              componentName,
+              extraFeeId: null,
+              allocatedAmount,
+            };
+          }
+          const extraFeeId = key.slice("EXTRA:".length);
+          return {
+            headType: "EXTRA_FEE" as const,
+            componentIndex: null,
+            componentName: null,
+            extraFeeId,
+            allocatedAmount,
+          };
+        });
     }
 
     const useGlobalOnly = process.env.HYPERPG_USE_GLOBAL_CREDENTIALS === "true" || process.env.HYPERPG_USE_GLOBAL_CREDENTIALS === "1";
@@ -209,16 +445,35 @@ export async function POST(req: Request) {
     }
 
     // Store Payment in DB (status PENDING) - will be updated on verify
-    await prisma.payment.create({
-      data: {
-        studentId: session.user.studentId,
-        amount: amountNumber,
-        gateway: "HYPERPG",
-        hyperpgOrderId: data.id || null,
-        status: "PENDING",
-        transactionId: orderId,
-        ...(eventRegistrationId && { eventRegistrationId }),
-      } as Prisma.PaymentUncheckedCreateInput,
+    const payment = await prisma.$transaction(async (tx) => {
+      const payment = await tx.payment.create({
+        data: {
+          studentId: session.user.studentId,
+          amount: amountNumber,
+          gateway: "HYPERPG",
+          hyperpgOrderId: data.id || null,
+          status: "PENDING",
+          transactionId: orderId,
+          ...(eventRegistrationId && { eventRegistrationId }),
+        } as Prisma.PaymentUncheckedCreateInput,
+      });
+
+      if (!eventRegistrationId && allocationsToCreate && allocationsToCreate.length > 0) {
+        await tx.paymentFeeAllocation.createMany({
+          data: allocationsToCreate.map((a) => ({
+            paymentId: payment.id,
+            studentId: studentAllocId,
+            allocationType: "PAYMENT",
+            allocatedAmount: a.allocatedAmount,
+            headType: a.headType,
+            componentIndex: a.componentIndex ?? null,
+            componentName: a.componentName ?? null,
+            extraFeeId: a.extraFeeId ?? null,
+          })),
+        });
+      }
+
+      return payment;
     });
 
     return NextResponse.json({

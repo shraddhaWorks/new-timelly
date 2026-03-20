@@ -82,6 +82,76 @@ export async function GET() {
       )) as { id: string; paymentId: string; amount: number; status: string; createdAt: Date }[];
     }
 
+    // Due amount per fee head (base components + applicable extra fees)
+    const discountRatio = fee.totalFee > 0 ? fee.finalFee / fee.totalFee : 0;
+
+    const baseComponents =
+      ((components?.components as Array<{ name: string; amount: number }>) || []).map((c) => ({
+        name: String(c.name),
+        amount: Number(c.amount) || 0,
+      }));
+
+    type HeadKey =
+      | { key: string; headType: "BASE_COMPONENT"; componentIndex: number; label: string; snapshotDue: number }
+      | { key: string; headType: "EXTRA_FEE"; extraFeeId: string; label: string; snapshotDue: number };
+
+    const heads: HeadKey[] = [
+      ...baseComponents.map((c, idx) => ({
+        key: `BASE:${idx}`,
+        headType: "BASE_COMPONENT" as const,
+        componentIndex: idx,
+        label: c.name,
+        snapshotDue: c.amount * discountRatio,
+      })),
+      ...extraFees.map((ef) => ({
+        key: `EXTRA:${ef.id}`,
+        headType: "EXTRA_FEE" as const,
+        extraFeeId: ef.id,
+        label: ef.name,
+        snapshotDue: Number(ef.amount) * discountRatio,
+      })),
+    ];
+
+    const [paymentAllocations, refundAllocations] = await Promise.all([
+      prisma.paymentFeeAllocation.findMany({
+        where: { studentId, allocationType: "PAYMENT", payment: { status: "SUCCESS" } },
+        select: { headType: true, componentIndex: true, extraFeeId: true, allocatedAmount: true },
+      }),
+      prisma.paymentFeeAllocation.findMany({
+        where: { studentId, allocationType: "REFUND", payment: { status: "SUCCESS" } },
+        select: { headType: true, componentIndex: true, extraFeeId: true, allocatedAmount: true },
+      }),
+    ]);
+
+    const netPaidByHead = new Map<string, number>();
+    for (const a of paymentAllocations) {
+      const key =
+        a.headType === "BASE_COMPONENT" ? `BASE:${a.componentIndex}` : `EXTRA:${a.extraFeeId}`;
+      netPaidByHead.set(key, (netPaidByHead.get(key) ?? 0) + a.allocatedAmount);
+    }
+    for (const a of refundAllocations) {
+      const key =
+        a.headType === "BASE_COMPONENT" ? `BASE:${a.componentIndex}` : `EXTRA:${a.extraFeeId}`;
+      netPaidByHead.set(key, (netPaidByHead.get(key) ?? 0) - a.allocatedAmount);
+    }
+
+    const allocationsNetTotal = Array.from(netPaidByHead.values()).reduce((s, v) => s + v, 0);
+    const legacyPaidTotal = Math.max(fee.amountPaid - allocationsNetTotal, 0);
+    const totalSnapshotDue = Math.max(fee.finalFee, 0);
+
+    const dueHeads = heads.map((h) => {
+      const paidAlloc = netPaidByHead.get(h.key) ?? 0;
+      const paidLegacy = totalSnapshotDue > 0 ? legacyPaidTotal * (h.snapshotDue / totalSnapshotDue) : 0;
+      const paidBefore = Math.max(paidAlloc + paidLegacy, 0);
+      const dueBefore = Math.max(h.snapshotDue - paidBefore, 0);
+      return {
+        key: h.key,
+        headType: h.headType,
+        label: h.label,
+        dueBefore,
+      };
+    });
+
     const perInstallment = fee.finalFee / Math.max(fee.installments, 1);
     const baseDue = new Date(new Date().getFullYear(), 6, 15); // Jul 15
     const installments =
@@ -118,6 +188,7 @@ export async function GET() {
         payments,
         refunds,
         installmentsList: installments,
+        dueHeads,
       },
     };
     return NextResponse.json(payload);

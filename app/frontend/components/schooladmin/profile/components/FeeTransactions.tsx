@@ -13,6 +13,8 @@ type Props = {
     method: string;
     createdAt: string;
     transactionId: string | null;
+    feeTypeName?: string;
+    feeTypeAmount?: number;
   }>;
 };
 
@@ -48,6 +50,7 @@ export const FeeTransactions = ({ fee, payments }: Props) => {
             <tr className="text-[11px] text-gray-400 font-bold tracking-wider uppercase border-b border-white/5">
               <th className="pb-4 font-medium">DATE</th>
               <th className="pb-4 font-medium">DESCRIPTION</th>
+              <th className="pb-4 font-medium">FEE TYPE</th>
               <th className="pb-4 font-medium">METHOD</th>
               <th className="pb-4 font-medium">STATUS</th>
               <th className="pb-4 font-medium text-right">AMOUNT</th>
@@ -60,13 +63,16 @@ export const FeeTransactions = ({ fee, payments }: Props) => {
                   {new Date(p.createdAt).toISOString().slice(0, 10)}
                 </td>
                 <td className="py-4 sm:py-5 font-bold text-gray-100">Fee payment</td>
+                <td className="py-4 sm:py-5 text-gray-400">{p.feeTypeName || "-"}</td>
                 <td className="py-4 sm:py-5 text-gray-400">{p.method || "-"}</td>
                 <td className="py-4 sm:py-5">
                   <span className="bg-lime-400/20 text-lime-400 text-[10px] font-bold px-3 py-1 rounded-full uppercase">
                     {p.status || "Paid"}
                   </span>
                 </td>
-                <td className="py-4 sm:py-5 text-right font-bold text-white whitespace-nowrap">₹{p.amount.toLocaleString("en-IN")}</td>
+                <td className="py-4 sm:py-5 text-right font-bold text-white whitespace-nowrap">
+                  ₹{(typeof p.feeTypeAmount === "number" ? p.feeTypeAmount : p.amount).toLocaleString("en-IN")}
+                </td>
               </tr>
             ))}
           </tbody>

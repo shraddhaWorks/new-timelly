@@ -20,6 +20,7 @@ export default function FeeStructureConfig({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [structureClassId, setStructureClassId] = useState("");
   const [components, setComponents] = useState<Array<{ name: string; amount: number }>>([]);
+  const [saving, setSaving] = useState(false);
 
   const startEdit = (s: FeeStructure) => {
     setEditingId(s.id);
@@ -40,11 +41,24 @@ export default function FeeStructureConfig({
 
   const handleSave = async () => {
     if (!structureClassId || components.length === 0) return;
+    if (saving) return;
+    const normalizedComponents = components
+      .map((c) => ({
+        name: String(c.name ?? "").trim(),
+        amount: typeof c.amount === "number" ? c.amount : Number(c.amount),
+      }))
+      .filter((c) => c.name.length > 0 && Number.isFinite(c.amount));
+
+    if (normalizedComponents.length === 0) {
+      alert("Please enter valid fee components (name + numeric amount).");
+      return;
+    }
     try {
+      setSaving(true);
       const res = await fetch("/api/fees/structure", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ classId: structureClassId, components }),
+        body: JSON.stringify({ classId: structureClassId, components: normalizedComponents }),
       });
       if (!res.ok) {
         const d = await res.json();
@@ -55,6 +69,8 @@ export default function FeeStructureConfig({
       onSuccess();
     } catch (e) {
       console.error(e);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -153,7 +169,11 @@ export default function FeeStructureConfig({
             </button>
           </div>
           <div className="flex flex-wrap gap-2">
-            <PrimaryButton title="Save Structure" onClick={handleSave} />
+            <PrimaryButton
+              title={saving ? "Saving..." : "Save Structure"}
+              loading={saving}
+              onClick={handleSave}
+            />
             <button
               type="button"
               onClick={() => setEditingId(null)}

@@ -77,7 +77,13 @@ export default function FeesTab() {
         <FeeStatCards stats={stats} />
 
         <div className="grid md:grid-cols-2 gap-6">
-          <OfflinePaymentForm students={students} onSuccess={fetchData} />
+          <OfflinePaymentForm
+            classes={classes}
+            structures={structures}
+            extraFees={extraFees}
+            students={students}
+            onSuccess={fetchData}
+          />
           <AddExtraFeeForm classes={classes} students={students} onSuccess={fetchData} />
         </div>
 

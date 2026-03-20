@@ -13,6 +13,12 @@ interface PayButtonProps {
   eventRegistrationId?: string;
   /** Optional override for API endpoint (default: /api/payment/create-order) */
   endpoint?: string;
+  /** Optional fee selection when paying for fees (base components + extra fees) */
+  feeSelection?: Array<
+    | { headType: "BASE_COMPONENT"; componentIndex: number; componentName?: string }
+    | { headType: "EXTRA_FEE"; extraFeeId: string }
+  >;
+  disabled?: boolean;
 }
 
 export default function PayButton({
@@ -21,6 +27,8 @@ export default function PayButton({
   returnPath,
   eventRegistrationId,
   endpoint = "/api/payment/create-order",
+  feeSelection,
+  disabled,
 }: PayButtonProps) {
   const [loading, setLoading] = useState(false);
 
@@ -37,6 +45,7 @@ export default function PayButton({
           amount: normalizedAmount,
           ...(returnPath && { return_path: returnPath }),
           ...(eventRegistrationId && { event_registration_id: eventRegistrationId }),
+          ...(feeSelection && feeSelection.length > 0 ? { fee_selection: feeSelection } : {}),
         }),
       });
 
@@ -71,7 +80,7 @@ export default function PayButton({
   return (
     <motion.button
       type="button"
-      disabled={loading}
+      disabled={loading || disabled}
       whileHover={loading ? {} : { scale: 1.05, y: -2 }}
       whileTap={loading ? {} : { scale: 0.95 }}
       onClick={payNow}

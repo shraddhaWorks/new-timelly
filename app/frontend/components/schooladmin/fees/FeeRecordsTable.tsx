@@ -54,6 +54,7 @@ export default function FeeRecordsTable({ fees, classes }: FeeRecordsTableProps)
             <tr className="text-left text-gray-400 border-b border-white/10">
               <th className="py-3">Student</th>
               <th className="py-3">Class</th>
+              <th className="py-3">Fee Type</th>
               <th className="py-3">Total</th>
               <th className="py-3">Paid</th>
               <th className="py-3">Pending</th>
@@ -67,6 +68,11 @@ export default function FeeRecordsTable({ fees, classes }: FeeRecordsTableProps)
                 <td className="py-3">
                   {f.student.class
                     ? `${f.student.class.name}${f.student.class.section ? `-${f.student.class.section}` : ""}`
+                    : "-"}
+                </td>
+                <td className="py-3 text-gray-300">
+                  {f.feeTypes
+                    ? `${f.feeTypes}${typeof f.feeTypeDueAmount === "number" ? ` (₹${f.feeTypeDueAmount.toLocaleString()})` : ""}`
                     : "-"}
                 </td>
                 <td className="py-3">₹{f.finalFee.toLocaleString()}</td>
