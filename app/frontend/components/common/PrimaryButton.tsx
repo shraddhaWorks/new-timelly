@@ -6,7 +6,7 @@ interface ButtonProps {
   onClick?:()=>void
 }
 
-export default function PrimaryButton({ title, loading,onClick }: ButtonProps) {
+export default function PrimaryButton({ title, loading = false, onClick }: ButtonProps) {
   return (
     <motion.button
       onClick={onClick}
@@ -19,7 +19,7 @@ export default function PrimaryButton({ title, loading,onClick }: ButtonProps) {
        shadow-lg shadow-lime-400/20
        w-full py-3"
     >
-      {loading ? "Logging in..." : title}
+      {title}
     </motion.button>
   );
 }

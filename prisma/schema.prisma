@@ -998,12 +998,51 @@ model Payment {
 
   eventRegistrationId String? // When paying for workshop, links to EventRegistration
 
+  feeAllocations PaymentFeeAllocation[]
+
   refunds Refund[]
   subscriptions ParentSubscription[]
 
   createdAt DateTime @default(now())
 
   @@index([studentId])
+}
+
+// Tracks how a payment amount was distributed across individual fee "heads"
+// (base components like tuition/hostel/dress, and extra fees like uniform/bus).
+//
+// This enables "due per head" so that admin/student UI can decrement due only
+// for the selected heads instead of only reducing the overall remaining fee.
+model PaymentFeeAllocation {
+  id String @id @default(cuid())
+
+  paymentId String
+  payment   Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  // Snapshot of student id to speed up allocation queries (denormalized)
+  studentId String
+
+  // BASE_COMPONENT -> componentIndex/componentName
+  // EXTRA_FEE -> extraFeeId
+  headType String // "BASE_COMPONENT" | "EXTRA_FEE"
+
+  componentIndex Int?
+  componentName  String?
+  extraFeeId     String?
+
+  // allocationType:
+  // - "PAYMENT" for the original payment distribution
+  // - "REFUND" for refunded amount distribution (decreases paid)
+  allocationType String // "PAYMENT" | "REFUND"
+
+  allocatedAmount Float // stored as positive amount; net paid is PAYMENT - REFUND
+
+  createdAt DateTime @default(now())
+
+  @@index([paymentId])
+  @@index([studentId, headType])
+  @@index([componentIndex])
+  @@index([extraFeeId])
 }
 
 model ParentSubscription {

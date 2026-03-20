@@ -194,6 +194,50 @@ export async function POST(req: Request) {
     const reasonVal = typeof reason === "string" ? reason : null;
     const refundId = crypto.randomUUID();
 
+    // If this payment has per-head allocations, create matching REFUND allocations.
+    // This lets due-by-head calculations increase due for the same heads proportionally.
+    const originalAllocations = await prisma.paymentFeeAllocation.findMany({
+      where: { paymentId, allocationType: "PAYMENT" },
+      select: {
+        headType: true,
+        componentIndex: true,
+        componentName: true,
+        extraFeeId: true,
+        allocatedAmount: true,
+      },
+    });
+
+    const scale = payment.amount > 0 ? amount / payment.amount : 0;
+    const refundAllocationsToCreate =
+      originalAllocations.length > 0 && scale > 0
+        ? (() => {
+            const scaled = originalAllocations.map((a) => ({
+              headType: a.headType,
+              componentIndex: a.componentIndex,
+              componentName: a.componentName,
+              extraFeeId: a.extraFeeId,
+              allocatedAmount: a.allocatedAmount * scale,
+            }));
+
+            const scaledTotal = scaled.reduce((s, a) => s + a.allocatedAmount, 0);
+            const diff = amount - scaledTotal;
+            if (Math.abs(diff) > 0.00001 && scaled.length > 0) {
+              scaled[scaled.length - 1] = { ...scaled[scaled.length - 1], allocatedAmount: scaled[scaled.length - 1].allocatedAmount + diff };
+            }
+
+            return scaled.map((a) => ({
+              paymentId,
+              studentId: payment.studentId,
+              allocationType: "REFUND",
+              allocatedAmount: Math.max(a.allocatedAmount, 0),
+              headType: a.headType,
+              componentIndex: a.componentIndex,
+              componentName: a.componentName,
+              extraFeeId: a.extraFeeId,
+            }));
+          })()
+        : [];
+
     await prisma.$transaction([
       prisma.$executeRawUnsafe(
         'INSERT INTO "Refund" (id, "paymentId", amount, reason, status, "createdAt") VALUES ($1, $2, $3, $4, $5, NOW())',
@@ -203,6 +247,13 @@ export async function POST(req: Request) {
         reasonVal,
         "SUCCESS"
       ),
+      ...(refundAllocationsToCreate.length > 0
+        ? [
+            prisma.paymentFeeAllocation.createMany({
+              data: refundAllocationsToCreate,
+            }),
+          ]
+        : []),
       prisma.studentFee.update({
         where: { studentId: payment.studentId },
         data: { amountPaid: newAmountPaid, remainingFee: newRemaining },

@@ -10,12 +10,14 @@ export async function GET() {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
+    const studentId = session.user.studentId;
     const student = await prisma.student.findUnique({
-      where: { id: session.user.studentId },
+      where: { id: studentId },
       select: {
         id: true,
         school: {
           select: {
+            id: true,
             billingMode: true,
             parentSubscriptionAmount: true,
             parentSubscriptionTrialDays: true,
@@ -54,14 +56,16 @@ export async function GET() {
     const billingMode = (student.school.billingMode ?? "PARENT_SUBSCRIPTION") as
       | "PARENT_SUBSCRIPTION"
       | "SCHOOL_PAID";
-    const amount =
-      typeof student.school.parentSubscriptionAmount === "number"
-        ? student.school.parentSubscriptionAmount
-        : defaultAmount;
     const trialDays =
       typeof student.school.parentSubscriptionTrialDays === "number"
         ? student.school.parentSubscriptionTrialDays
         : defaultTrialDays;
+
+    // Default amount shown on UI; can be overridden by ParentSubscription row.
+    const defaultAmountForUI =
+      typeof student.school.parentSubscriptionAmount === "number"
+        ? student.school.parentSubscriptionAmount
+        : defaultAmount;
 
     if (billingMode === "SCHOOL_PAID") {
       // School has already paid centrally – parents don't need to subscribe.
@@ -70,7 +74,7 @@ export async function GET() {
           status: "ACTIVE" as const,
           isTrial: false,
           billingMode,
-          amount,
+          amount: defaultAmountForUI,
           trialDays,
           remainingDays: null,
           expiresAt: null,
@@ -80,17 +84,51 @@ export async function GET() {
       );
     }
 
-    // Parent-subscription mode: treat as not yet subscribed so UI shows pay button.
+    // Parent-subscription mode: compute based on the actual ParentSubscription record.
+    const now = new Date();
+
+    const parentSub = await prisma.parentSubscription.findFirst({
+      where: {
+        studentId,
+        schoolId: student.school.id,
+      },
+      orderBy: { currentPeriodEnd: "desc" },
+    });
+
+    const trialActive =
+      !!parentSub?.isTrial &&
+      !!parentSub.trialEndsAt &&
+      parentSub.trialEndsAt.getTime() > now.getTime();
+
+    const active =
+      parentSub?.status === "ACTIVE" &&
+      !!parentSub?.currentPeriodEnd &&
+      parentSub.currentPeriodEnd.getTime() > now.getTime();
+
+    const isActiveNow = active || trialActive;
+    const status = isActiveNow ? ("ACTIVE" as const) : ("EXPIRED" as const);
+    const isTrial = trialActive;
+
+    const remainingDays = (() => {
+      if (!isActiveNow) return 0;
+      const end = isTrial ? parentSub?.trialEndsAt : parentSub?.currentPeriodEnd;
+      if (!end) return 0;
+      const diffMs = end.getTime() - now.getTime();
+      return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    })();
+
+    const amount = typeof parentSub?.amount === "number" && parentSub.amount > 0 ? parentSub.amount : defaultAmountForUI;
+
     return NextResponse.json(
       {
-        status: "EXPIRED" as const,
-        isTrial: false,
+        status,
+        isTrial,
         billingMode,
         amount,
         trialDays,
-        remainingDays: 0,
-        expiresAt: null,
-        invoiceUrl: null,
+        remainingDays,
+        expiresAt: parentSub?.currentPeriodEnd ? parentSub.currentPeriodEnd.toISOString() : null,
+        invoiceUrl: parentSub?.invoiceUrl ?? null,
       },
       { status: 200 }
     );

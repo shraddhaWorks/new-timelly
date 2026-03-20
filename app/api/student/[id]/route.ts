@@ -56,6 +56,79 @@ export async function GET(_req: Request, context: RouteParams) {
       take: 20,
     });
 
+    // For each payment row, show which fee heads were allocated
+    // (e.g., Tuition, Lab, Uniform, etc.) by using PaymentFeeAllocation.
+    const paymentIds = payments.map((p) => p.id);
+    const paymentAllocations =
+      paymentIds.length > 0
+        ? await prisma.paymentFeeAllocation.findMany({
+            where: {
+              paymentId: { in: paymentIds },
+              allocationType: "PAYMENT",
+            },
+            select: {
+              paymentId: true,
+              headType: true,
+              componentIndex: true,
+              componentName: true,
+              extraFeeId: true,
+              allocatedAmount: true,
+            },
+          })
+        : [];
+
+    const extraFeeIds = Array.from(
+      new Set(
+        paymentAllocations
+          .filter((a) => a.headType === "EXTRA_FEE" && !!a.extraFeeId)
+          .map((a) => a.extraFeeId as string)
+      )
+    );
+
+    const extraFees =
+      extraFeeIds.length > 0
+        ? await prisma.extraFee.findMany({
+            where: { id: { in: extraFeeIds } },
+            select: { id: true, name: true },
+          })
+        : [];
+
+    const extraFeeNameById = new Map(extraFees.map((ef) => [ef.id, ef.name]));
+
+    const feeHeadAmountsByPaymentId = new Map<string, Map<string, number>>();
+
+    for (const a of paymentAllocations) {
+      if (a.allocatedAmount <= 0.00001) continue;
+
+      let label: string | null = null;
+      if (a.headType === "BASE_COMPONENT") {
+        if (a.componentName) label = a.componentName;
+        else if (typeof a.componentIndex === "number") label = `Component ${a.componentIndex + 1}`;
+        else label = "Base Component";
+      } else if (a.headType === "EXTRA_FEE") {
+        label = a.extraFeeId ? extraFeeNameById.get(a.extraFeeId) ?? "Extra Fee" : "Extra Fee";
+      }
+
+      if (!label) continue;
+
+      const perPayment = feeHeadAmountsByPaymentId.get(a.paymentId) ?? new Map<string, number>();
+      feeHeadAmountsByPaymentId.set(a.paymentId, perPayment);
+      perPayment.set(label, (perPayment.get(label) ?? 0) + a.allocatedAmount);
+    }
+
+    const feeTypeNameAmountByPaymentId = new Map<string, { name: string; amount: number }>();
+    for (const [paymentId, headMap] of feeHeadAmountsByPaymentId.entries()) {
+      let bestName = "-";
+      let bestAmount = 0;
+      for (const [name, amount] of headMap.entries()) {
+        if (amount > bestAmount) {
+          bestAmount = amount;
+          bestName = name;
+        }
+      }
+      if (bestAmount > 0.00001) feeTypeNameAmountByPaymentId.set(paymentId, { name: bestName, amount: bestAmount });
+    }
+
     const attendances = await prisma.attendance.findMany({
       where: { studentId: id },
       orderBy: { date: "desc" },
@@ -165,6 +238,8 @@ export async function GET(_req: Request, context: RouteParams) {
         method: p.gateway ?? "—",
         createdAt: p.createdAt instanceof Date ? p.createdAt.toISOString() : String(p.createdAt),
         transactionId: p.transactionId ?? null,
+        feeTypeName: feeTypeNameAmountByPaymentId.get(p.id)?.name,
+        feeTypeAmount: feeTypeNameAmountByPaymentId.get(p.id)?.amount,
       })),
       attendanceTrends,
       academicPerformance,

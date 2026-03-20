@@ -35,3 +35,8 @@ export const SETTINGS_CARD_BG = "rgba(255, 255, 255, 0.06)";
 export const SETTINGS_INPUT_BG = "rgba(80, 60, 100, 0.35)";
 export const SETTINGS_TEXT_MAIN = "#FFFFFF";
 export const SETTINGS_TEXT_MUTED = "rgba(255, 255, 255, 0.7)";
+
+// Parent dashboard background (extracted from your provided design)
+export const PARENT_DASHBOARD_BG_BASE = "#000000";
+export const PARENT_DASHBOARD_BG_PURPLE_BLOB = "#5606ff";
+export const PARENT_DASHBOARD_BG_CORAL_BLOB = "#fe8989";

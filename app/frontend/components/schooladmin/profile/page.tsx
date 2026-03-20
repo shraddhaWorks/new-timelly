@@ -42,6 +42,8 @@ type StudentDetail = {
     method: string;
     createdAt: string;
     transactionId: string | null;
+    feeTypeName?: string;
+    feeTypeAmount?: number;
   }>;
   attendanceTrends: Array<{ month: string; present: number; total: number; pct: number }>;
   academicPerformance: Array<{ subject: string; score: number }>;

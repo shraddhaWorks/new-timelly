@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -54,6 +54,12 @@ interface FeeData {
   amountPaid: number;
   remainingFee: number;
   installments: number;
+  dueHeads?: Array<{
+    key: string;
+    headType: "BASE_COMPONENT" | "EXTRA_FEE";
+    label: string;
+    dueBefore: number;
+  }>;
   components?: Array<{ name: string; amount: number }>;
   extraFees?: ExtraFeeItem[];
   payments: PaymentItem[];
@@ -140,6 +146,12 @@ export default function ParentFeesTab() {
     fetchFee();
   }, [fetchFee]);
 
+  const dueByKey = useMemo(() => {
+    const m = new Map<string, number>();
+    (fee?.dueHeads ?? []).forEach((h) => m.set(h.key, Number(h.dueBefore) || 0));
+    return m;
+  }, [fee]);
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto h-full flex flex-col gap-6">
@@ -170,25 +182,51 @@ export default function ParentFeesTab() {
 
   const remainingAmount = fee.remainingFee;
 
-  // Selected fees amount (when user picks specific items)
+  // Selected fees "due" amount (when user picks specific items)
   const selectedAmount = (() => {
     let sum = 0;
-    fee.components?.forEach((c, i) => {
-      if (selectedComponents.has(i)) sum += c.amount || 0;
+    fee.components?.forEach((_, i) => {
+      if (selectedComponents.has(i)) sum += dueByKey.get(`BASE:${i}`) ?? 0;
     });
     fee.extraFees?.forEach((ef) => {
-      if (selectedExtraIds.has(ef.id)) sum += ef.amount || 0;
+      if (selectedExtraIds.has(ef.id)) sum += dueByKey.get(`EXTRA:${ef.id}`) ?? 0;
     });
     return sum;
   })();
-  const useSelectedFees = selectedAmount > 0 && selectedAmount <= remainingAmount;
-  const basePayable = useSelectedFees ? selectedAmount : remainingAmount;
+
+  const hasFeeSelection = selectedComponents.size > 0 || selectedExtraIds.size > 0;
+  const selectedDueSum = selectedAmount;
+  const maxPayable = hasFeeSelection ? Math.min(selectedDueSum, remainingAmount) : 0;
+
+  const basePayable = hasFeeSelection ? maxPayable : 0;
   const suggestedPayable = plan === 1 ? basePayable : basePayable / plan;
+  const canPay = hasFeeSelection && maxPayable >= 1;
   // Editable amount: use custom if valid, else suggested
   const customNum = customAmount.trim() === "" ? null : parseFloat(customAmount);
-  const payable = customNum != null && !isNaN(customNum) && customNum > 0 && customNum <= remainingAmount
-    ? Math.min(customNum, remainingAmount)
-    : suggestedPayable;
+  const payable =
+    customNum != null && !isNaN(customNum) && customNum > 0 && customNum <= maxPayable
+      ? Math.min(customNum, maxPayable)
+      : suggestedPayable;
+
+  const feeSelection = (() => {
+    const selection: Array<
+      | { headType: "BASE_COMPONENT"; componentIndex: number; componentName: string }
+      | { headType: "EXTRA_FEE"; extraFeeId: string }
+    > = [];
+
+    fee.components?.forEach((c, i) => {
+      if (selectedComponents.has(i)) {
+        selection.push({ headType: "BASE_COMPONENT", componentIndex: i, componentName: c.name || `Component ${i + 1}` });
+      }
+    });
+    fee.extraFees?.forEach((ef) => {
+      if (selectedExtraIds.has(ef.id)) {
+        selection.push({ headType: "EXTRA_FEE", extraFeeId: ef.id });
+      }
+    });
+
+    return selection;
+  })();
   const progress = fee.finalFee > 0 ? Math.min((fee.amountPaid / fee.finalFee) * 100, 100) : 0;
 
   return (
@@ -258,7 +296,9 @@ export default function ParentFeesTab() {
                         />
                         <span className="text-sm text-gray-300 truncate">{c.name || `Component ${i + 1}`}</span>
                       </div>
-                      <span className="text-sm font-medium text-white shrink-0 ml-2">₹{(c.amount || 0).toLocaleString()}</span>
+                      <span className="text-sm font-medium text-white shrink-0 ml-2">
+                        ₹{(dueByKey.get(`BASE:${i}`) ?? 0).toLocaleString()}
+                      </span>
                     </label>
                   ))}
                   {fee.extraFees?.map((ef) => (
@@ -282,7 +322,9 @@ export default function ParentFeesTab() {
                         />
                         <span className="text-sm text-gray-300 truncate">{ef.name}</span>
                       </div>
-                      <span className="text-sm font-medium text-white shrink-0 ml-2">₹{(ef.amount || 0).toLocaleString()}</span>
+                      <span className="text-sm font-medium text-white shrink-0 ml-2">
+                        ₹{(dueByKey.get(`EXTRA:${ef.id}`) ?? 0).toLocaleString()}
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -340,20 +382,26 @@ export default function ParentFeesTab() {
                   <input
                     type="number"
                     min={1}
-                    max={remainingAmount}
+                    max={maxPayable}
                     step={1}
                     value={customAmount}
                     onChange={(e) => setCustomAmount(e.target.value)}
-                    placeholder={`Max: ₹${remainingAmount.toLocaleString()}`}
+                    placeholder={hasFeeSelection ? `Max: ₹${maxPayable.toLocaleString()}` : "Select fee types to continue"}
+                    disabled={!canPay}
                     className="w-full rounded-xl bg-black/20 border border-white/10 px-4 py-3 text-lg font-semibold text-lime-400 focus:outline-none focus:ring-2 focus:ring-lime-500/50"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Enter amount as per your budget (max ₹{remainingAmount.toLocaleString()})
+                    Enter amount as per your budget (max ₹{maxPayable.toLocaleString()})
                   </p>
+                  {!canPay ? (
+                    <p className="text-xs text-amber-400 mt-2">Select at least one fee type before paying.</p>
+                  ) : null}
                 </div>
                 <div className="w-full">
                   <PayButton
                     amount={payable}
+                    feeSelection={feeSelection}
+                    disabled={!canPay}
                     onSuccess={() => {
                       fetchFee();
                       setCustomAmount("");
