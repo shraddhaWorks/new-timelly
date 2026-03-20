@@ -9,12 +9,14 @@ import Dashboard from "../../components/superadmin/Dashboard";
 import AddSchool from "../../components/superadmin/AddSchool";
 import Schools from "../../components/superadmin/Schools";
 import Transactions from "../../components/superadmin/Transactions";
+import Subscriptions from "../../components/superadmin/Subscriptions";
 import RequiredRoles from "../../auth/RequiredRoles";
 
 const SUPERADMIN_TAB_TITLES: Record<string, string> = {
   dashboard: "Dashboard",
   addschool: "Add School",
   schools: "Schools",
+  subscriptions: "Subscriptions",
   transactions: "Transactions",
 };
 
@@ -89,6 +91,8 @@ function SuperAdminContent() {
         return <AddSchool />;
       case "schools":
         return <Schools />;
+      case "subscriptions":
+        return <Subscriptions />;
       case "transactions":
         return <Transactions />;
       default:

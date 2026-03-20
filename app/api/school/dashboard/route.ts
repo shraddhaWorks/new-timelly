@@ -24,16 +24,38 @@ export async function GET() {
     if (!schoolId) {
       const adminSchool = await prisma.school.findFirst({
         where: { admins: { some: { id: session.user.id } } },
-        select: { id: true },
+        select: { id: true, isActive: true },
       });
-      schoolId = adminSchool?.id ?? null;
-    }
-
-    if (!schoolId) {
-      return NextResponse.json(
-        { message: "School not found in session" },
-        { status: 400 }
-      );
+      if (!adminSchool) {
+        return NextResponse.json(
+          { message: "School not found in session" },
+          { status: 400 }
+        );
+      }
+      if (adminSchool.isActive === false) {
+        return NextResponse.json(
+          { message: "Your school's Timelly access is deactivated. Please contact Timelly support." },
+          { status: 403 }
+        );
+      }
+      schoolId = adminSchool.id;
+    } else {
+      const school = await prisma.school.findUnique({
+        where: { id: schoolId },
+        select: { id: true, isActive: true },
+      });
+      if (!school) {
+        return NextResponse.json(
+          { message: "School not found" },
+          { status: 400 }
+        );
+      }
+      if (school.isActive === false) {
+        return NextResponse.json(
+          { message: "Your school's Timelly access is deactivated. Please contact Timelly support." },
+          { status: 403 }
+        );
+      }
     }
 
     const now = new Date();

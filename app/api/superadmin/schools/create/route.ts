@@ -23,6 +23,16 @@ export async function POST(req: Request) {
     const location = typeof body.location === "string" ? body.location.trim() : "";
     const phone = typeof body.phone === "string" ? body.phone.trim() : "";
 
+    const billingModeRaw = typeof body.billingMode === "string" ? body.billingMode.trim() : "";
+    const parentSubscriptionAmount =
+      typeof body.parentSubscriptionAmount === "number" && !Number.isNaN(body.parentSubscriptionAmount)
+        ? body.parentSubscriptionAmount
+        : undefined;
+    const parentSubscriptionTrialDays =
+      typeof body.parentSubscriptionTrialDays === "number" && !Number.isNaN(body.parentSubscriptionTrialDays)
+        ? body.parentSubscriptionTrialDays
+        : undefined;
+
     if (!schoolName || !email || !password) {
       return NextResponse.json(
         { message: "schoolName, email and password are required" },
@@ -62,8 +72,19 @@ export async function POST(req: Request) {
           address: address || schoolName,
           location: location || "",
           admins: { connect: { id: user.id } },
+          billingMode: billingModeRaw === "SCHOOL_PAID" ? "SCHOOL_PAID" : "PARENT_SUBSCRIPTION",
+          parentSubscriptionAmount: parentSubscriptionAmount,
+          parentSubscriptionTrialDays: parentSubscriptionTrialDays ?? 0,
         },
-        select: { id: true, name: true, address: true, location: true },
+        select: {
+          id: true,
+          name: true,
+          address: true,
+          location: true,
+          billingMode: true,
+          parentSubscriptionAmount: true,
+          parentSubscriptionTrialDays: true,
+        },
       });
 
       await tx.user.update({

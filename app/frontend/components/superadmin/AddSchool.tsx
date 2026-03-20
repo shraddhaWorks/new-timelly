@@ -45,6 +45,9 @@ export default function AddSchool() {
     city: "",
     district: "",
     state: "",
+    billingMode: "PARENT_SUBSCRIPTION",
+    parentSubscriptionAmount: "",
+    parentSubscriptionTrialDays: "",
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -133,6 +136,13 @@ export default function AddSchool() {
           address: [form.addressLine, form.area, form.city, form.district, form.state].filter(Boolean).join(", ") || form.schoolName,
           location: form.area || form.city || "",
           phone: form.phone || undefined,
+          billingMode: form.billingMode,
+          parentSubscriptionAmount: form.parentSubscriptionAmount
+            ? parseFloat(form.parentSubscriptionAmount)
+            : undefined,
+          parentSubscriptionTrialDays: form.parentSubscriptionTrialDays
+            ? parseInt(form.parentSubscriptionTrialDays, 10)
+            : undefined,
         }),
         signal: controller.signal,
       });
@@ -183,6 +193,9 @@ export default function AddSchool() {
       city: "",
       district: "",
       state: "",
+      billingMode: "PARENT_SUBSCRIPTION",
+      parentSubscriptionAmount: "",
+      parentSubscriptionTrialDays: "",
     });
 
     setErrors({});
@@ -252,6 +265,71 @@ return (
               error={errors.password}
               icon={Lock}
             />
+          </div>
+        </FormSection>
+
+        <FormSection title="Subscription Settings (SaaS)">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+            <div>
+              <p className="text-sm font-medium text-white mb-2">Billing Mode</p>
+              <p className="text-xs text-white/60 mb-3">
+                Choose how this school pays for Timelly.
+              </p>
+              <div className="inline-flex rounded-xl bg-white/5 border border-white/10 p-1">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setForm((prev) => ({
+                      ...prev,
+                      billingMode: "SCHOOL_PAID",
+                      parentSubscriptionAmount: "",
+                      parentSubscriptionTrialDays: "",
+                    }))
+                  }
+                  className={`px-3 py-2 text-xs sm:text-sm rounded-lg font-medium ${
+                    form.billingMode === "SCHOOL_PAID"
+                      ? "bg-lime-400 text-black"
+                      : "text-white/70 hover:bg-white/5"
+                  }`}
+                >
+                  School Paid (no parent subscription)
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setForm((prev) => ({
+                      ...prev,
+                      billingMode: "PARENT_SUBSCRIPTION",
+                    }))
+                  }
+                  className={`ml-1 px-3 py-2 text-xs sm:text-sm rounded-lg font-medium ${
+                    form.billingMode === "PARENT_SUBSCRIPTION"
+                      ? "bg-lime-400 text-black"
+                      : "text-white/70 hover:bg-white/5"
+                  }`}
+                >
+                  Parent Subscription (per annum)
+                </button>
+              </div>
+            </div>
+            {form.billingMode === "PARENT_SUBSCRIPTION" && (
+              <>
+                <SearchInput
+                  label="Parent Subscription Amount (₹)"
+                  placeholder="e.g. 2999"
+                  value={form.parentSubscriptionAmount || ""}
+                  onChange={handleChange("parentSubscriptionAmount")}
+                  icon={Globe}
+                />
+                <SearchInput
+                  label="Free Trial Days"
+                  placeholder="e.g. 14"
+                  value={form.parentSubscriptionTrialDays || ""}
+                  onChange={handleChange("parentSubscriptionTrialDays")}
+                  icon={Hash}
+                />
+              </>
+            )}
           </div>
         </FormSection>
 

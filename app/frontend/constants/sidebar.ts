@@ -43,6 +43,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
         href: "/frontend/pages/parent?tab=analytics",
         icon: ChartColumn,
         permission: Permission.ANALYTICS,
+    requiresSubscription: true,
     },
     {
         label: "Home",
@@ -50,6 +51,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
         href: "/frontend/pages/parent?tab=dashboard",
         icon: House,
         permission: Permission.HOME,
+    requiresSubscription: true,
     },
     {
         label: "Profile",
@@ -57,6 +59,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
         href: "/frontend/pages/parent?tab=profile",
         icon: User,
         permission: Permission.PROFILE,
+        requiresSubscription: false,
     },
     {
         label: "Homework",
@@ -64,6 +67,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
         href: "/frontend/pages/parent?tab=homework",
         icon: BookOpen,
         permission: Permission.HOMEWORK,
+    requiresSubscription: true,
     },
     {
         label: "Attendance",
@@ -71,6 +75,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
         href: "/frontend/pages/parent?tab=attendance",
         icon: Calendar,
         permission: Permission.ATTENDANCE,
+    requiresSubscription: true,
     },
     {
         label: "Marks",
@@ -78,6 +83,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
         href: "/frontend/pages/parent?tab=marks",
         icon: Award,
         permission: Permission.MARKS,
+    requiresSubscription: true,
     },
     {
         label: "Exams & Syllabus",
@@ -85,6 +91,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
         href: "/frontend/pages/parent?tab=exams",
         icon: ClipboardList,
         permission: Permission.EXAMS,
+    requiresSubscription: true,
     },
     {
         label: "Chat",
@@ -92,6 +99,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
         href: "/frontend/pages/parent?tab=chat",
         icon: MessageCircle,
         permission: Permission.CHAT,
+    requiresSubscription: true,
     },
     {
         label: "Workshops",
@@ -99,6 +107,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
         href: "/frontend/pages/parent?tab=workshops",
         icon: Briefcase,
         permission: Permission.WORKSHOPS,
+    requiresSubscription: true,
     },
     {
         label: "Certificates",
@@ -106,6 +115,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
         href: "/frontend/pages/parent?tab=certificates",
         icon: FileText,
         permission: Permission.CERTIFICATES,
+    requiresSubscription: true,
     },
     {
         label: "Fees",
@@ -113,6 +123,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
         href: "/frontend/pages/parent?tab=fees",
         icon: CreditCard,
         permission: Permission.FEES,
+    requiresSubscription: false,
     },
     {
         label: "Leave Application",
@@ -120,6 +131,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
         href: "/frontend/pages/parent?tab=leave",
         icon: CalendarClock,
         permission: Permission.STUDENT_LEAVE,
+    requiresSubscription: true,
     },
     {
         label: "Settings",
@@ -127,6 +139,15 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
         href: "/frontend/pages/parent?tab=settings",
         icon: Settings,
         permission: Permission.SETTINGS,
+    requiresSubscription: false,
+    },
+    {
+        label: "Subscription",
+        tab: "subscription",
+        href: "/frontend/pages/parent?tab=subscription",
+        icon: CreditCard,
+        permission: Permission.FEES,
+        requiresSubscription: false,
     },
     {
         label: "Logout",
@@ -389,6 +410,13 @@ export const SUPERADMIN_SIDEBAR_ITEMS: SidebarItem[] = [
         href: "/frontend/pages/superadmin?tab=schools",
         tab: "schools",
         icon: Users,
+        permission: Permission.SCHOOLS,
+    },
+    {
+        label: "Subscriptions",
+        href: "/frontend/pages/superadmin?tab=subscriptions",
+        tab: "subscriptions",
+        icon: Settings2,
         permission: Permission.SCHOOLS,
     },
     {

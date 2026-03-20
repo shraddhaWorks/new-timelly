@@ -53,6 +53,12 @@ enum ExamTermStatus {
   COMPLETED
 }
 
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
 enum TeacherAuditCategory {
   TEACHING_METHOD
   PUNCTUALITY
@@ -231,6 +237,15 @@ model School {
   circulars            Circular[]
   examTerms            ExamTerm[]
   examTypes            ExamType[]
+
+  // SaaS / billing configuration
+  // PARENT_SUBSCRIPTION -> each parent subscribes individually
+  // SCHOOL_PAID         -> school has paid centrally; parents get access without subscription
+  billingMode               String                @default("PARENT_SUBSCRIPTION")
+  parentSubscriptionAmount  Float?
+  parentSubscriptionTrialDays Int?               @default(0)
+
+  parentSubscriptions   ParentSubscription[]
 
   createdAt DateTime @default(now())
 
@@ -436,6 +451,9 @@ model Student {
   // Payments / Fees
   fee      StudentFee?
   payments Payment[]
+
+  // Parent SaaS subscription entries for this student/parent
+  subscriptions ParentSubscription[]
 
   createdAt              DateTime                @default(now())
 
@@ -973,15 +991,49 @@ model Payment {
 
   status String @default("PENDING") // PENDING | SUCCESS | FAILED
 
+  // purpose of payment: FEES | EVENT | PARENT_SUBSCRIPTION | OTHER
+  purpose String @default("FEES")
+
   transactionId String? // Our order_id (TMLxxx) for lookups
 
   eventRegistrationId String? // When paying for workshop, links to EventRegistration
 
   refunds Refund[]
+  subscriptions ParentSubscription[]
 
   createdAt DateTime @default(now())
 
   @@index([studentId])
+}
+
+model ParentSubscription {
+  id String @id @default(cuid())
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  schoolId String
+  school   School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  status    SubscriptionStatus @default(ACTIVE)
+  isTrial   Boolean            @default(false)
+  startedAt DateTime           @default(now())
+  trialEndsAt       DateTime?
+  currentPeriodEnd  DateTime
+
+  amount   Float   @default(0)
+  currency String  @default("INR")
+
+  paymentId String?
+  payment   Payment? @relation(fields: [paymentId], references: [id])
+
+  invoiceUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId, status])
+  @@index([schoolId])
 }
 
 model Refund {
