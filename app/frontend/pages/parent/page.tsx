@@ -21,7 +21,6 @@ import ParentAnalyticsTab from "../../components/parent/analytics/ParentAnalytic
 import Spinner from "../../components/common/Spinner";
 import ParentSubscriptionTab from "../../components/parent/subscription/ParentSubscriptionTab";
 import { Lock } from "lucide-react";
-import { GlobalBackground } from "../../components/common/GlobalBackground";
 
 const PARENT_TAB_TITLES: Record<string, string> = {
   dashboard: "Home",
@@ -184,7 +183,6 @@ function ParentDashboardInner() {
         enableSwitchAccounts
       >
         <div className="relative min-h-[70vh]">
-          <GlobalBackground />
           <div className={blurBackground}>{renderTabContent()}</div>
 
           {showSubscriptionModal && (
