@@ -21,6 +21,7 @@ import ParentAnalyticsTab from "../../components/parent/analytics/ParentAnalytic
 import Spinner from "../../components/common/Spinner";
 import ParentSubscriptionTab from "../../components/parent/subscription/ParentSubscriptionTab";
 import { Lock } from "lucide-react";
+import { GlobalBackground } from "../../components/common/GlobalBackground";
 
 const PARENT_TAB_TITLES: Record<string, string> = {
   dashboard: "Home",
@@ -168,6 +169,11 @@ function ParentDashboardInner() {
   const shouldLockThisTab =
     isLocked && !["fees", "subscription"].includes(tab);
 
+  // User request: when subscription is required, show the popup card,
+  // but do NOT show it on the fees page.
+  const showSubscriptionModal = isLocked && !loadingSub && tab !== "fees";
+  const blurBackground = showSubscriptionModal ? "blur-sm" : "";
+
   return (
     <RequiredRoles allowedRoles={["STUDENT"]}>
       <AppLayout
@@ -177,36 +183,39 @@ function ParentDashboardInner() {
         profile={profile}
         enableSwitchAccounts
       >
-        <div className={`relative min-h-[70vh] ${shouldLockThisTab ? "overflow-hidden" : ""}`}>
-          <div className={shouldLockThisTab ? "pointer-events-none blur-sm" : ""}>
-            {renderTabContent()}
-          </div>
-          {shouldLockThisTab && !loadingSub && (
-            <div className="fixed inset-0 z-30 flex items-center justify-center px-4">
-              <div className="max-w-sm w-full rounded-2xl bg-black/80 border border-white/15 p-6 text-center text-white shadow-xl">
-                <div className="flex justify-center mb-3">
-                  <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center">
-                    <Lock className="w-5 h-5 text-lime-300" />
+        <div className="relative min-h-[70vh]">
+          <GlobalBackground />
+          <div className={blurBackground}>{renderTabContent()}</div>
+
+          {showSubscriptionModal && (
+            <>
+              <div className="fixed inset-0 z-30 bg-black/20 pointer-events-none" />
+              <div className="fixed left-1/2 top-1/2 z-40 -translate-x-1/2 -translate-y-1/2 px-4 w-full max-w-sm">
+                <div className="max-w-sm w-full rounded-2xl bg-black/80 border border-white/15 p-6 text-center text-white shadow-xl">
+                  <div className="flex justify-center mb-3">
+                    <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center">
+                      <Lock className="w-5 h-5 text-lime-300" />
+                    </div>
                   </div>
+                  <h3 className="text-base font-semibold mb-1">Subscription required</h3>
+                  <p className="text-xs text-white/70 mb-3">
+                    To enjoy all Timelly features for your child, please activate your parent subscription.
+                  </p>
+                  <p className="text-[11px] text-white/60 mb-4">
+                    Once subscribed, attendance, homework, analytics and more will be fully unlocked for you.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      (window.location.href = "/frontend/pages/parent?tab=subscription")
+                    }
+                    className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold rounded-lg bg-lime-400 text-black hover:bg-lime-300"
+                  >
+                    Go to Subscription
+                  </button>
                 </div>
-                <h3 className="text-base font-semibold mb-1">Subscription required</h3>
-                <p className="text-xs text-white/70 mb-3">
-                  To enjoy all Timelly features for your child, please activate your parent subscription.
-                </p>
-                <p className="text-[11px] text-white/60 mb-4">
-                  Once subscribed, attendance, homework, analytics and more will be fully unlocked for you.
-                </p>
-                <button
-                  type="button"
-                  onClick={() =>
-                    (window.location.href = "/frontend/pages/parent?tab=subscription")
-                  }
-                  className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold rounded-lg bg-lime-400 text-black hover:bg-lime-300"
-                >
-                  Go to Subscription
-                </button>
               </div>
-            </div>
+            </>
           )}
         </div>
       </AppLayout>
