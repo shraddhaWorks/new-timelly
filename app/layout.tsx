@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Inter, Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/context/AuthContext";
+import { GlobalBackground } from "./frontend/components/common/GlobalBackground";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -37,6 +38,7 @@ export default function RootLayout({
           antialiased
         `}
       >
+        <GlobalBackground />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
