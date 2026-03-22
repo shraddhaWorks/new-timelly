@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
 import type { ExtraFee } from "./types";
+import { schoolAdminStudentDetailsFeesUrl } from "./studentDetailsNav";
 
 interface ExtraFeesListProps {
   extraFees: ExtraFee[];
@@ -38,6 +40,7 @@ export default function ExtraFeesList({
   students,
   onSuccess,
 }: ExtraFeesListProps) {
+  const router = useRouter();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editAmount, setEditAmount] = useState("");
@@ -135,7 +138,28 @@ export default function ExtraFeesList({
                     <span className="text-white">₹{ef.amount.toLocaleString()}</span>
                   )}
                 </td>
-                <td className="py-3 text-gray-400">
+                <td
+                  className={`py-3 text-gray-400 ${
+                    ef.targetType === "STUDENT" && ef.targetStudentId
+                      ? "cursor-pointer select-none underline-offset-2 hover:underline hover:text-gray-200"
+                      : ""
+                  }`}
+                  title={
+                    ef.targetType === "STUDENT" && ef.targetStudentId
+                      ? "Double-click to open student fee details"
+                      : undefined
+                  }
+                  onMouseEnter={() => {
+                    if (ef.targetType === "STUDENT" && ef.targetStudentId) {
+                      router.prefetch(schoolAdminStudentDetailsFeesUrl(ef.targetStudentId));
+                    }
+                  }}
+                  onDoubleClick={() => {
+                    if (ef.targetType === "STUDENT" && ef.targetStudentId) {
+                      router.push(schoolAdminStudentDetailsFeesUrl(ef.targetStudentId));
+                    }
+                  }}
+                >
                   {targetLabel(ef, classes, students)}
                 </td>
                 <td className="py-3">
