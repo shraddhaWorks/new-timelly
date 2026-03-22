@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useState } from "react";
+import { Suspense, useEffect, useLayoutEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AcademicPerformance } from "./components/AcademicPerformance";
 import { FeeTransactions } from "./components/FeeTransactions";
@@ -66,7 +66,7 @@ type StudentOption = {
   section: string | null;
 };
 
-export default function StudentDetailsPage() {
+function StudentDetailsPageContent() {
   const searchParams = useSearchParams();
   const studentIdFromUrl = searchParams.get("studentId");
   const focusFromUrl = searchParams.get("focus");
@@ -340,5 +340,19 @@ export default function StudentDetailsPage() {
         <div className="text-center py-12 text-gray-400">No students found.</div>
       )}
     </div>
+  );
+}
+
+export default function StudentDetailsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[40vh] items-center justify-center text-white/70">
+          <Spinner />
+        </div>
+      }
+    >
+      <StudentDetailsPageContent />
+    </Suspense>
   );
 }
