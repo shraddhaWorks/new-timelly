@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AcademicPerformance } from "./components/AcademicPerformance";
 import { FeeTransactions } from "./components/FeeTransactions";
 import { ProfileSidebar } from "./components/ProfileSidebar";
@@ -66,8 +67,13 @@ type StudentOption = {
 };
 
 export default function StudentDetailsPage() {
+  const searchParams = useSearchParams();
+  const studentIdFromUrl = searchParams.get("studentId");
+  const focusFromUrl = searchParams.get("focus");
+
   const [students, setStudents] = useState<StudentOption[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  /** Seed from URL so `/api/student/:id` runs immediately instead of waiting for the full student list. */
+  const [selectedId, setSelectedId] = useState<string | null>(studentIdFromUrl);
   const [detail, setDetail] = useState<StudentDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -94,7 +100,6 @@ export default function StudentDetailsPage() {
             section: s.class?.section ?? null,
           }));
           setStudents(list);
-          if (list.length > 0 && !selectedId) setSelectedId(list[0].id);
         }
         if (!cancelled && classesRes.ok) {
           const c = await classesRes.json();
@@ -106,6 +111,27 @@ export default function StudentDetailsPage() {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    if (students.length === 0) return;
+    if (studentIdFromUrl && students.some((s) => s.id === studentIdFromUrl)) {
+      setSelectedId(studentIdFromUrl);
+      return;
+    }
+    if (studentIdFromUrl) {
+      setSelectedId(students[0].id);
+      return;
+    }
+    setSelectedId((prev) => (prev && students.some((s) => s.id === prev) ? prev : students[0].id));
+  }, [students, studentIdFromUrl]);
+
+  useLayoutEffect(() => {
+    if (loading || !detail || focusFromUrl !== "fees") return;
+    document.getElementById("student-profile-fees-section")?.scrollIntoView({
+      behavior: "instant",
+      block: "start",
+    });
+  }, [loading, detail, focusFromUrl]);
 
   useEffect(() => {
     if (!selectedId) {

@@ -26,7 +26,10 @@ export const FeeTransactions = ({ fee, payments }: Props) => {
   const hasAny = hasFee || activePayments.length > 0;
 
   return (
-    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-4 sm:p-6 mt-6 overflow-hidden min-w-0 -mx-1 sm:mx-0">
+    <div
+      id="student-profile-fees-section"
+      className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-4 sm:p-6 mt-6 overflow-hidden min-w-0 -mx-1 sm:mx-0 scroll-mt-24"
+    >
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 sm:mb-8">
         <h3 className="text-lg font-semibold text-white flex items-center gap-2">
           <Receipt className="w-5 h-5 text-lime-400 flex-shrink-0" /> Fee Details & Transactions

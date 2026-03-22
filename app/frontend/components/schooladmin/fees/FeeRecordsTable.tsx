@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import SelectInput from "../../common/SelectInput";
 import type { Class, FeeRecord } from "./types";
+import { schoolAdminStudentDetailsFeesUrl } from "./studentDetailsNav";
 
 interface FeeRecordsTableProps {
   fees: FeeRecord[];
@@ -11,6 +13,7 @@ interface FeeRecordsTableProps {
 }
 
 export default function FeeRecordsTable({ fees, classes }: FeeRecordsTableProps) {
+  const router = useRouter();
   const [searchName, setSearchName] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
 
@@ -64,7 +67,14 @@ export default function FeeRecordsTable({ fees, classes }: FeeRecordsTableProps)
           <tbody>
             {filteredFees.map((f) => (
               <tr key={f.id} className="border-b border-white/5">
-                <td className="py-3">{f.student.user?.name || "-"}</td>
+                <td
+                  className="py-3 cursor-pointer select-none underline-offset-2 hover:underline text-white/95"
+                  title="Double-click to open student fee details"
+                  onMouseEnter={() => router.prefetch(schoolAdminStudentDetailsFeesUrl(f.student.id))}
+                  onDoubleClick={() => router.push(schoolAdminStudentDetailsFeesUrl(f.student.id))}
+                >
+                  {f.student.user?.name || "-"}
+                </td>
                 <td className="py-3">
                   {f.student.class
                     ? `${f.student.class.name}${f.student.class.section ? `-${f.student.class.section}` : ""}`

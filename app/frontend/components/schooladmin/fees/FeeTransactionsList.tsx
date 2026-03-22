@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { RotateCcw, Search } from "lucide-react";
 import SelectInput from "../../common/SelectInput";
 import SearchInput from "../../common/SearchInput";
 import RefundModal, { type TransactionItem } from "./RefundModal";
 import type { Student } from "./types";
+import { schoolAdminStudentDetailsFeesUrl } from "./studentDetailsNav";
 
 interface FeeTransactionsListProps {
   students: Student[];
@@ -26,6 +28,7 @@ interface ClassDetailStudent {
 }
 
 export default function FeeTransactionsList({ students: _students, onSuccess }: FeeTransactionsListProps) {
+  const router = useRouter();
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [classLoading, setClassLoading] = useState(false);
@@ -255,7 +258,12 @@ export default function FeeTransactionsList({ students: _students, onSuccess }: 
                       year: "numeric",
                     })}
                   </td>
-                  <td className="py-3 text-white font-medium">
+                  <td
+                    className="py-3 text-white font-medium cursor-pointer select-none underline-offset-2 hover:underline"
+                    title="Double-click to open student fee details"
+                    onMouseEnter={() => router.prefetch(schoolAdminStudentDetailsFeesUrl(t.student.id))}
+                    onDoubleClick={() => router.push(schoolAdminStudentDetailsFeesUrl(t.student.id))}
+                  >
                     {t.student.user?.name || t.student.admissionNumber || "-"}
                   </td>
                   <td className="py-3 text-gray-400">
