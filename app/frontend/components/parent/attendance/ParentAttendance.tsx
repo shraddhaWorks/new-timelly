@@ -11,6 +11,8 @@ import {
   ChevronRight,
   Clock3,
   XCircle,
+  Download,
+  Loader2,
 } from "lucide-react";
 import PageHeader from "../../common/PageHeader";
 import StatCard from "../../common/statCard";
@@ -34,6 +36,9 @@ import {
   WEEK_DAYS,
 } from "./attendanceUtils";
 import Spinner from "../../common/Spinner";
+import { generatePDF } from "@/lib/pdfUtils";
+import AttendanceReportTemplate, { type AttendanceReportData } from "../../pdf/AttendanceReportTemplate";
+import { useRef } from "react";
 
 type StatCardConfig = {
   key: string;
@@ -60,6 +65,8 @@ export default function ParentAttendanceTab() {
   const [studentClassLabel, setStudentClassLabel] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
 
   const getAcademicYearRange = (seedDate = new Date()) => {
     const year = seedDate.getFullYear();
@@ -281,6 +288,40 @@ export default function ParentAttendanceTab() {
     ? `Track ${studentName}'s attendance record (${studentClassLabel})`
     : `Track ${studentName}'s attendance record`;
 
+  const handleDownloadReport = async () => {
+    try {
+      setGeneratingPdf(true);
+      setTimeout(async () => {
+        try {
+          await generatePDF(reportRef, `Attendance_Report_${studentName.replace(/\s+/g, '_')}.pdf`);
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setGeneratingPdf(false);
+        }
+      }, 500);
+    } catch (err) {
+      console.error(err);
+      setGeneratingPdf(false);
+    }
+  };
+
+  const reportData: AttendanceReportData = useMemo(() => ({
+    studentName,
+    studentClass: studentClassLabel,
+    dateGenerated: new Date(),
+    summary: {
+      present: academicYearSummary.present,
+      absent: academicYearSummary.absent,
+      late: academicYearSummary.late,
+      total: academicYearSummary.total,
+      presentRate: academicYearSummary.presentRate,
+    }
+  }), [studentName, studentClassLabel, academicYearSummary]);
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -318,7 +359,23 @@ export default function ParentAttendanceTab() {
 
   return (
     <div className="space-y-4 md:space-y-6 pb-20 md:pb-0">
-      <PageHeader title="Attendance" subtitle={headerSubtitle} />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <PageHeader title="Attendance" subtitle={headerSubtitle} />
+        {!loading && !error && mounted && (
+          <button
+            onClick={handleDownloadReport}
+            disabled={generatingPdf}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors font-medium text-sm border border-white/10 disabled:opacity-50"
+          >
+            {generatingPdf ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+            Download Report
+          </button>
+        )}
+      </div>
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {statCards.map((card) => (
           <StatCard key={card.key} className="bg-[rgba(255,255,255,0.05)] backdrop-blur-xl
@@ -458,6 +515,11 @@ export default function ParentAttendanceTab() {
           )}
         </div>
       </section>
+
+      {/* Hidden Attendance Report Template for PDF Generation */}
+      <div className="pointer-events-none opacity-0 fixed -top-[10000px] -left-[10000px]">
+        {mounted && <AttendanceReportTemplate ref={reportRef} data={reportData} />}
+      </div>
     </div>
   );
 }

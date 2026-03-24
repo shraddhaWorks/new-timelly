@@ -6,10 +6,15 @@ import {
   Trophy,
   Award,
   Target,
+  Download,
+  Loader2,
 } from "lucide-react";
 import ProgressReport from "./ProgressReport";
 import SubjectPerformance from "./SubjetPerformance";
 import Spinner from "../../common/Spinner";
+import { generatePDF } from "@/lib/pdfUtils";
+import MarksReportTemplate, { type MarksReportData } from "../../pdf/MarksReportTemplate";
+import { useRef } from "react";
 
 interface Mark {
   id: string;
@@ -55,6 +60,8 @@ export default function ParentMarksTab() {
   const [totalStudents, setTotalStudents] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [examTypeFilter, setExamTypeFilter] = useState<string>("ALL");
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     (async () => {
@@ -200,6 +207,42 @@ export default function ParentMarksTab() {
 
   const studentName = studentInfo?.name || "Student";
 
+  const handleDownloadReport = async () => {
+    try {
+      setGeneratingPdf(true);
+      setTimeout(async () => {
+        try {
+          await generatePDF(reportRef, `Marks_Report_${studentName.replace(/\s+/g, '_')}.pdf`);
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setGeneratingPdf(false);
+        }
+      }, 500);
+    } catch (err) {
+      console.error(err);
+      setGeneratingPdf(false);
+    }
+  };
+
+  const reportData: MarksReportData = useMemo(() => ({
+    studentName,
+    studentClass: studentInfo?.class || "N/A",
+    dateGenerated: new Date(),
+    overallScore: stats.overallScore,
+    overallGrade: stats.overallGrade,
+    totalMarks: stats.totalMarks,
+    totalMaxMarks: stats.totalMaxMarks,
+    rank,
+    marks: filteredMarks.map(m => ({
+      subject: m.subject,
+      marks: m.marks,
+      totalMarks: m.totalMarks,
+      grade: m.grade,
+      examType: m.examType,
+    }))
+  }), [studentName, studentInfo, stats, rank, filteredMarks]);
+
   if (loading) {
     return (
       <div className="p-6 lg:p-10 min-h-screen text-white flex items-center justify-center">
@@ -224,6 +267,18 @@ export default function ParentMarksTab() {
               Track {studentName}'s marks and grades
             </p>
           </div>
+          <button
+            onClick={handleDownloadReport}
+            disabled={generatingPdf}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors font-medium text-sm border border-white/10 disabled:opacity-50"
+          >
+            {generatingPdf ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+            Download Report
+          </button>
         </div>
       </div>
 
@@ -331,6 +386,11 @@ export default function ParentMarksTab() {
       </div>
       <div>
         <SubjectPerformance marks={filteredMarks} />
+      </div>
+
+      {/* Hidden Marks Report Template for PDF Generation */}
+      <div className="pointer-events-none opacity-0 fixed -top-[10000px] -left-[10000px]">
+        <MarksReportTemplate ref={reportRef} data={reportData} />
       </div>
     </div>
   );

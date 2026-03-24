@@ -10,9 +10,13 @@ import {
   AlertCircle,
   IndianRupee,
   Shield,
+  Download,
+  Loader2
 } from "lucide-react";
 import PageHeader from "../../common/PageHeader";
 import PayButton from "@/app/frontend/components/common/PayButton";
+import { generatePDF } from "@/lib/pdfUtils";
+import InvoiceTemplate, { type InvoiceData } from "../../pdf/InvoiceTemplate";
 
 interface InstallmentItem {
   installmentNumber: number;
@@ -76,6 +80,10 @@ export default function ParentFeesTab() {
   const [selectedComponents, setSelectedComponents] = useState<Set<number>>(new Set());
   const [selectedExtraIds, setSelectedExtraIds] = useState<Set<string>>(new Set());
   const [customAmount, setCustomAmount] = useState<string>("");
+  const [studentInfo, setStudentInfo] = useState<{name: string, class: string} | null>(null);
+  const [generatingPdfId, setGeneratingPdfId] = useState<string | null>(null);
+  const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
+  const invoiceRef = useRef<HTMLDivElement>(null);
   const verifiedRef = useRef(false);
 
   const fetchFee = useCallback(async () => {
@@ -87,9 +95,32 @@ export default function ParentFeesTab() {
       if (!res.ok) {
         setError(data.message || "Failed to load fee details");
         setFee(null);
-        return;
+      } else {
+        setFee(data.fee);
       }
-      setFee(data.fee);
+
+      // Fetch student info for invoice
+      try {
+        const userRes = await fetch("/api/user/me");
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          if (userData.user?.studentId) {
+            const studentRes = await fetch(`/api/student/${userData.user.studentId}`);
+            if (studentRes.ok) {
+              const studentData = await studentRes.json();
+              const student = studentData.student;
+              if (student) {
+                setStudentInfo({
+                  name: student.user?.name || student.name || "Student",
+                  class: student.class?.name || "N/A"
+                });
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch student info for invoice", e);
+      }
     } catch {
       setError("Something went wrong");
       setFee(null);
@@ -151,6 +182,40 @@ export default function ParentFeesTab() {
     (fee?.dueHeads ?? []).forEach((h) => m.set(h.key, Number(h.dueBefore) || 0));
     return m;
   }, [fee]);
+
+  const handleDownloadInvoice = async (transaction: PaymentItem) => {
+    if (generatingPdfId) return;
+    try {
+      setGeneratingPdfId(transaction.id);
+      
+      const payload: InvoiceData = {
+        studentName: studentInfo?.name || "Student",
+        studentClass: studentInfo?.class || "N/A",
+        receiptNo: `REC-${transaction.id.substring(0, 8).toUpperCase()}`,
+        transactionId: transaction.transactionId || transaction.id,
+        date: transaction.createdAt,
+        amount: transaction.amount,
+        status: transaction.status,
+      };
+      
+      setInvoiceData(payload);
+      
+      // Wait for React to render the template
+      setTimeout(async () => {
+        try {
+          await generatePDF(invoiceRef, `Invoice_${payload.receiptNo}.pdf`);
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setGeneratingPdfId(null);
+        }
+      }, 500);
+      
+    } catch (err) {
+      console.error("Failed to prepare invoice", err);
+      setGeneratingPdfId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -485,15 +550,31 @@ export default function ParentFeesTab() {
                         {new Date(t.createdAt).toLocaleString("en-IN")}
                       </p>
                     </div>
-                    <span
-                      className={`text-xs px-2 py-1 rounded ${
-                        t.status === "SUCCESS"
-                          ? "bg-emerald-500/20 text-emerald-400"
-                          : "bg-amber-500/20 text-amber-400"
-                      }`}
-                    >
-                      {t.status}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`text-xs px-2 py-1 rounded ${
+                          t.status === "SUCCESS"
+                            ? "bg-emerald-500/20 text-emerald-400"
+                            : "bg-amber-500/20 text-amber-400"
+                        }`}
+                      >
+                        {t.status}
+                      </span>
+                      {t.status === "SUCCESS" && (
+                        <button
+                          onClick={() => handleDownloadInvoice(t as PaymentItem)}
+                          disabled={generatingPdfId === t.id}
+                          className="p-1.5 rounded-md bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                          title="Download Invoice"
+                        >
+                          {generatingPdfId === t.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-lime-400" />
+                          ) : (
+                            <Download className="w-4 h-4" />
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div
@@ -517,6 +598,11 @@ export default function ParentFeesTab() {
             })()}
           </div>
         </motion.div>
+      </div>
+
+      {/* Hidden Invoice Template for PDF Generation */}
+      <div className="pointer-events-none opacity-0 fixed -top-[10000px] -left-[10000px]">
+        <InvoiceTemplate ref={invoiceRef} invoiceData={invoiceData} />
       </div>
     </div>
   );
