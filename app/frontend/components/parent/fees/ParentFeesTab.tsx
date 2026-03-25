@@ -34,6 +34,11 @@ interface PaymentItem {
   createdAt: string;
   transactionId?: string;
   gateway?: string;
+  hyperpgStatus?: string | null;
+  hyperpgStatusId?: number | null;
+  hyperpgTxnId?: string | null;
+  hyperpgRefunded?: boolean | null;
+  hyperpgAmountRefunded?: number | null;
 }
 
 interface RefundItem {
@@ -551,15 +556,23 @@ export default function ParentFeesTab() {
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span
-                        className={`text-xs px-2 py-1 rounded ${
-                          t.status === "SUCCESS"
-                            ? "bg-emerald-500/20 text-emerald-400"
-                            : "bg-amber-500/20 text-amber-400"
-                        }`}
-                      >
-                        {t.status}
-                      </span>
+                      <div className="flex flex-col items-end gap-1">
+                        <span
+                          className={`text-xs px-2 py-1 rounded ${
+                            t.status === "SUCCESS"
+                              ? "bg-emerald-500/20 text-emerald-400"
+                              : "bg-amber-500/20 text-amber-400"
+                          }`}
+                        >
+                          {t.status}
+                        </span>
+                        {t.hyperpgStatus ? (
+                          <span className="text-[10px] text-gray-500">
+                            {t.hyperpgStatus}
+                            {typeof t.hyperpgStatusId === "number" ? ` (${t.hyperpgStatusId})` : ""}
+                          </span>
+                        ) : null}
+                      </div>
                       {t.status === "SUCCESS" && (
                         <button
                           onClick={() => handleDownloadInvoice(t as PaymentItem)}

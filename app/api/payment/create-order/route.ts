@@ -367,7 +367,7 @@ export async function POST(req: Request) {
       description: eventRegistrationId ? "Workshop payment - Timelly" : "Fee payment - Timelly",
       customer_id: customerId,
       order_id: orderId,
-      return_url: "http://hyperpg.in/",
+      return_url: returnUrl,
       send_mail: false,
       send_sms: false,
       send_whatsapp: false,
@@ -421,7 +421,7 @@ export async function POST(req: Request) {
       );
     }
 
-    let data: { payment_links?: { web?: string }; id?: string };
+    let data: { payment_links?: { web?: string }; id?: string; status?: string; status_id?: number };
     try {
       data = JSON.parse(errText);
     } catch {
@@ -452,6 +452,8 @@ export async function POST(req: Request) {
           amount: amountNumber,
           gateway: "HYPERPG",
           hyperpgOrderId: data.id || null,
+          hyperpgStatus: data.status || null,
+          hyperpgStatusId: typeof data.status_id === "number" ? data.status_id : null,
           status: "PENDING",
           transactionId: orderId,
           ...(eventRegistrationId && { eventRegistrationId }),

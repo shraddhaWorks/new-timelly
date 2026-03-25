@@ -271,7 +271,17 @@ export default function FeeTransactionsList({ students: _students, onSuccess }: 
                       ? `${t.student.class.name}${t.student.class.section ? `-${t.student.class.section}` : ""}`
                       : "-"}
                   </td>
-                  <td className="py-3 text-gray-400">{t.gateway}</td>
+                  <td className="py-3 text-gray-400">
+                    <div className="flex flex-col">
+                      <span>{t.gateway}</span>
+                      {t.hyperpgStatus ? (
+                        <span className="text-xs text-gray-500">
+                          {t.hyperpgStatus}
+                          {typeof t.hyperpgStatusId === "number" ? ` (${t.hyperpgStatusId})` : ""}
+                        </span>
+                      ) : null}
+                    </div>
+                  </td>
                   <td className="py-3 text-emerald-400">₹{t.amount.toLocaleString()}</td>
                   <td className="py-3">
                     {t.refundable < t.amount ? (

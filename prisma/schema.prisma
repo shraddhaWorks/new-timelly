@@ -988,6 +988,13 @@ model Payment {
 
   hyperpgOrderId String? // HyperPG order id from session response
   hyperpgTxnId   String? // HyperPG txn_id from order status
+  // Gateway order status tracking (from Order Status API / webhooks)
+  hyperpgStatus          String?
+  hyperpgStatusId        Int?
+  hyperpgRefunded        Boolean @default(false)
+  hyperpgAmountRefunded  Float   @default(0)
+  hyperpgEffectiveAmount Float?
+  hyperpgLastUpdatedAt   DateTime?
 
   status String @default("PENDING") // PENDING | SUCCESS | FAILED
 
@@ -1073,6 +1080,17 @@ model ParentSubscription {
 
   @@index([studentId, status])
   @@index([schoolId])
+}
+
+model PaymentWebhookEvent {
+  id String @id
+
+  eventName      String?
+  orderId        String?
+  hyperpgOrderId String?
+
+  receivedAt DateTime @default(now())
+  payload    Json
 }
 
 model Refund {
