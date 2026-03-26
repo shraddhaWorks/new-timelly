@@ -13,6 +13,10 @@ interface ReceiptData {
   currency: string;
   status: string;
   gateway: string;
+  gatewayStatus?: string | null;
+  gatewayStatusId?: number | null;
+  refunded?: boolean | null;
+  amountRefunded?: number | null;
   createdAt: string;
   student: {
     name: string | null;
@@ -120,6 +124,15 @@ function PaymentSuccessContent() {
             <Row label="Payment ID" value={receipt.paymentId} />
             <Row label="Amount" value={`₹${receipt.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`} />
             <Row label="Status" value={receipt.status} />
+            {receipt.gatewayStatus ? (
+              <Row
+                label="Gateway Status"
+                value={`${receipt.gatewayStatus}${typeof receipt.gatewayStatusId === "number" ? ` (${receipt.gatewayStatusId})` : ""}`}
+              />
+            ) : null}
+            {typeof receipt.amountRefunded === "number" && receipt.amountRefunded > 0 ? (
+              <Row label="Refunded" value={`₹${receipt.amountRefunded.toLocaleString("en-IN")}`} />
+            ) : null}
             <Row label="Gateway" value={receipt.gateway} />
             <Row label="Date & Time" value={dateStr} />
           </div>

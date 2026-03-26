@@ -306,6 +306,13 @@ export const TEACHER_MENU_ITEMS: SidebarItem[] = [
         permission: Permission.DASHBOARD,
     },
     {
+        label: "Admission",
+        tab: "admission",
+        href: "/frontend/pages/teacher?tab=admission",
+        icon: UserPlus,
+        permission: Permission.ADMISSION,
+    },
+    {
         label: "Classes",
         tab: "classes",
         href: "/frontend/pages/teacher?tab=classes",

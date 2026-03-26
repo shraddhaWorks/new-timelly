@@ -141,25 +141,55 @@ export async function POST(req: Request) {
     });
 
     if (existing) {
-      // Update PENDING payment to SUCCESS
-      const payment = await prisma.payment.update({
-        where: { id: existing.id },
-        data: {
-          status: "SUCCESS",
-          hyperpgOrderId: hyperpgId || existing.hyperpgOrderId,
-          hyperpgTxnId: orderStatus.txn_id || existing.hyperpgTxnId,
-        },
-      });
+      const payment = await prisma.$transaction(async (tx) => {
+        const before = await tx.payment.findUnique({
+          where: { id: existing.id },
+          select: { status: true, amount: true, studentId: true, eventRegistrationId: true },
+        });
 
-      // If workshop payment, update EventRegistration
-      if (existing.eventRegistrationId) {
-        await prisma.eventRegistration.update({
-          where: { id: existing.eventRegistrationId },
+        const updated = await tx.payment.update({
+          where: { id: existing.id },
           data: {
-            paymentStatus: "PAID",
-            paymentId: payment.id,
+            status: "SUCCESS",
+            hyperpgOrderId: hyperpgId || existing.hyperpgOrderId,
+            hyperpgTxnId: orderStatus.txn_id || existing.hyperpgTxnId,
+            hyperpgStatus: typeof orderStatus.status === "string" ? orderStatus.status : null,
+            hyperpgStatusId: typeof orderStatus.status_id === "number" ? orderStatus.status_id : null,
+            hyperpgRefunded: typeof orderStatus.refunded === "boolean" ? orderStatus.refunded : undefined,
+            hyperpgAmountRefunded: typeof orderStatus.amount_refunded === "number" ? orderStatus.amount_refunded : undefined,
+            hyperpgEffectiveAmount: typeof orderStatus.effective_amount === "number" ? orderStatus.effective_amount : undefined,
+            hyperpgLastUpdatedAt: new Date(),
           },
         });
+
+        const transitioned = before?.status !== "SUCCESS";
+        if (transitioned) {
+          if (before?.eventRegistrationId) {
+            await tx.eventRegistration.update({
+              where: { id: before.eventRegistrationId },
+              data: { paymentStatus: "PAID", paymentId: updated.id },
+            });
+          } else {
+            const fee = await tx.studentFee.findUnique({
+              where: { studentId: before?.studentId ?? studentId },
+              select: { amountPaid: true, finalFee: true },
+            });
+            if (fee) {
+              const newAmountPaid = fee.amountPaid + (before?.amount ?? amountNum);
+              const newRemaining = Math.max(fee.finalFee - newAmountPaid, 0);
+              await tx.studentFee.update({
+                where: { studentId: before?.studentId ?? studentId },
+                data: { amountPaid: newAmountPaid, remainingFee: newRemaining },
+              });
+            }
+          }
+        }
+
+        return updated;
+      });
+
+      // If workshop payment, return eventRegistration status
+      if (existing.eventRegistrationId) {
         return NextResponse.json(
           { payment, eventRegistration: { paymentStatus: "PAID" } },
           { status: 200 }
@@ -209,6 +239,12 @@ export async function POST(req: Request) {
         gateway: "HYPERPG",
         hyperpgOrderId: orderStatus.id || null,
         hyperpgTxnId: orderStatus.txn_id || null,
+        hyperpgStatus: typeof orderStatus.status === "string" ? orderStatus.status : null,
+        hyperpgStatusId: typeof orderStatus.status_id === "number" ? orderStatus.status_id : null,
+        hyperpgRefunded: typeof orderStatus.refunded === "boolean" ? orderStatus.refunded : false,
+        hyperpgAmountRefunded: typeof orderStatus.amount_refunded === "number" ? orderStatus.amount_refunded : 0,
+        hyperpgEffectiveAmount: typeof orderStatus.effective_amount === "number" ? orderStatus.effective_amount : null,
+        hyperpgLastUpdatedAt: new Date(),
         status: "SUCCESS",
       },
     });

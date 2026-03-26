@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
@@ -14,16 +14,11 @@ function getEmailFromUrl(): string {
 
 export default function LoginForm() {
   const searchParams = useSearchParams();
-  const emailFromParams = searchParams.get("email") ?? "";
-  const [email, setEmail] = useState("");
+  const emailFromParams = searchParams?.get("email") ?? "";
+  const emailParam = useMemo(() => emailFromParams || getEmailFromUrl(), [emailFromParams]);
+  const [email, setEmail] = useState(emailParam);
   const [password, setPassword] = useState("");
-  const emailParam = emailFromParams || getEmailFromUrl();
   const isSwitchAccount = Boolean(emailParam?.trim());
-
-  useEffect(() => {
-    const fromUrl = getEmailFromUrl() || emailFromParams;
-    if (fromUrl) setEmail(fromUrl);
-  }, [emailFromParams]);
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);

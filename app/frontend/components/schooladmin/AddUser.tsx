@@ -7,7 +7,6 @@ import { useDebounce } from "@/app/frontend/hooks/useDebounce";
 import PageHeader from "../common/PageHeader";
 import DataTable from "../common/TableLayout";
 import PageTabs from "../schooladmin/schooladmincomponents/PageHeaderTabs";
-import FilterBar from "../schooladmin/schooladmincomponents/AddUserFilters";
 import SearchInput from "../common/SearchInput";
 import UserForm from "./schooladmincomponents/UserForm";
 import DeleteConfirmation from "../common/DeleteConfirmation";
@@ -27,10 +26,6 @@ export default function AddUser() {
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
-  const [filters, setFilters] = useState({
-    role: "",
-    status: "",
-  });
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     userId: string;
@@ -46,7 +41,7 @@ export default function AddUser() {
   useEffect(() => {
     if (activeTab !== "all") return;
     setPage(1);
-  }, [debouncedSearch, filters.role, activeTab]);
+  }, [debouncedSearch, activeTab]);
 
   useEffect(() => {
     if (activeTab !== "all") return;
@@ -54,8 +49,8 @@ export default function AddUser() {
     const params = new URLSearchParams();
     params.set("page", page.toString());
     params.set("pageSize", "5");
+    params.set("role", "TEACHER");
     if (debouncedSearch) params.set("search", debouncedSearch);
-    if (filters.role) params.set("role", filters.role);
 
     setLoading(true);
     fetch(`/api/user/all?${params.toString()}`)
@@ -71,7 +66,7 @@ export default function AddUser() {
       })
       .catch((err) => console.error("Failed to fetch users:", err))
       .finally(() => setLoading(false));
-  }, [page, debouncedSearch, filters, activeTab]);
+  }, [page, debouncedSearch, activeTab]);
 
   const handleEdit = (user: IUser) => {
     router.push(`?tab=add-user&view=add&userId=${user.id}`);
@@ -211,24 +206,8 @@ export default function AddUser() {
                 />
               </div>
 
-              <div className="w-full md:w-[220px]">
-                <FilterBar
-                  filters={[
-                    {
-                      key: "role",
-                      placeholder: "All Roles",
-                      options: [
-                        { label: "Admin", value: "SCHOOLADMIN" },
-                        { label: "Teacher", value: "TEACHER" },
-                        { label: "Student", value: "STUDENT" },
-                      ],
-                    },
-                  ]}
-                  filterValues={filters}
-                  onFilterChange={(key, value) =>
-                    setFilters((prev) => ({ ...prev, [key]: value }))
-                  }
-                />
+              <div className="w-full md:w-[220px] text-xs text-white/60 md:text-right">
+                Showing teachers only
               </div>
             </div>
           </div>

@@ -19,11 +19,13 @@ import TeacherParentChatTab from "../../components/teacher/parentchat/ParentChat
 import TeacherLeavesTab from "../../components/teacher/leave/Leave";
 import TeacherProfileTab from "../../components/teacher/profile/Profile";
 import TeacherSettingsTab from "../../components/teacher/settings/Settings";
+import TeacherAdmissionTab from "../../components/teacher/admission/Admission";
 import NewsFeed from "../../components/schooladmin/Newsfeed";
 
 
 const TEACHER_TAB_TITLES = {
   dashboard: "Dashboard",
+  admission: "Admission",
   attendance: "Attendance",
   marks: "Marks",
   classes: "Classes",
@@ -55,6 +57,8 @@ function TeacherDashboardInner() {
     switch (tab) {
       case "dashboard":
         return <TeacherDashboard />;
+      case "admission":
+        return <TeacherAdmissionTab />;
       case "classes":
         return <TeacherClasses />;
       case "marks":

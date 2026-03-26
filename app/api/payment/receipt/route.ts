@@ -72,6 +72,10 @@ export async function GET(req: Request) {
       currency: "INR",
       status: payment.status,
       gateway: payment.gateway,
+      gatewayStatus: payment.hyperpgStatus || null,
+      gatewayStatusId: typeof payment.hyperpgStatusId === "number" ? payment.hyperpgStatusId : null,
+      refunded: typeof payment.hyperpgRefunded === "boolean" ? payment.hyperpgRefunded : null,
+      amountRefunded: typeof payment.hyperpgAmountRefunded === "number" ? payment.hyperpgAmountRefunded : null,
       createdAt: payment.createdAt,
       student: payment.student
         ? {

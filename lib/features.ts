@@ -5,6 +5,7 @@
 
 export const FEATURES = [
   { id: "dashboard", label: "Dashboard", description: "Overview and analytics" },
+  { id: "admission", label: "Admission", description: "Student admission applications" },
   { id: "marks-entry", label: "Marks Entry", description: "Enter and manage student marks" },
   { id: "marks-view", label: "Marks View", description: "View marks and reports" },
   { id: "attendance-mark", label: "Attendance Mark", description: "Mark daily attendance" },
@@ -36,6 +37,7 @@ export function getDefaultFeaturesForRole(role: "TEACHER" | "SCHOOLADMIN"): Feat
   if (role === "SCHOOLADMIN") return [...FEATURE_IDS];
   return [
     "dashboard",
+    "admission",
     "marks-entry",
     "marks-view",
     "attendance-mark",

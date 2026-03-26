@@ -8,6 +8,11 @@ export interface TransactionItem {
   amount: number;
   gateway: string;
   transactionId: string | null;
+  hyperpgStatus?: string | null;
+  hyperpgStatusId?: number | null;
+  hyperpgTxnId?: string | null;
+  hyperpgRefunded?: boolean | null;
+  hyperpgAmountRefunded?: number | null;
   createdAt: string;
   student: {
     id: string;

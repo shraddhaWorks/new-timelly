@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
+import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName } from "@/lib/schoolEmail";
+import { randomUUID } from "crypto";
 
 export async function POST(req: Request) {
   try {
@@ -55,6 +57,7 @@ export async function POST(req: Request) {
     });
 
     const {
+      applicationId,
       name,
       fatherName,
       aadhaarNo,
@@ -68,38 +71,102 @@ export async function POST(req: Request) {
       rollNo,
       gender: genderInput,
       previousSchool: previousSchoolInput,
+      // Optional admission fields to store alongside the student
+      previousSchoolAddress,
+      parentOccupation,
+      officeAddress,
+      parentAadharNo,
+      parentWhatsapp,
+      bankAccountNo,
+      houseNo,
+      street,
+      city,
+      town,
+      state,
+      pinCode,
+      firstLanguage,
+      nationality,
+      languagesAtHome,
+      caste,
+      religion,
+      emergencyFatherNo,
+      emergencyMotherNo,
+      emergencyGuardianNo,
     } = body;
 
+    let effectiveName = name;
+    let effectiveFatherName = fatherName;
+    let effectiveAadhaarNo = aadhaarNo;
+    let effectivePhoneNo = phoneNo;
+    let effectiveEmailInput = emailInput;
+    let effectiveDob = dob;
+    let effectiveClassIdInput = classIdInput;
+    let effectiveAddressInput = addressInput;
+    let effectiveTotalFeeInput = totalFeeInput;
+    let effectiveDiscountPercentInput = discountPercentInput;
+    let effectiveRollNo = rollNo;
+    let effectiveGenderInput = genderInput;
+    let effectivePreviousSchoolInput = previousSchoolInput;
+
+    let applicationToLink: { id: string } | null = null;
+    if (typeof applicationId === "string" && applicationId.trim()) {
+      const app = await prisma.studentApplication.findFirst({
+        where: { id: applicationId.trim(), schoolId },
+        include: { class: { select: { id: true } } },
+      });
+      if (!app) {
+        return NextResponse.json({ message: "Admission application not found" }, { status: 400 });
+      }
+      if (app.studentId) {
+        return NextResponse.json({ message: "This application is already converted to a student" }, { status: 400 });
+      }
+
+      const fullName = `${app.firstName} ${app.middleName ? `${app.middleName} ` : ""}${app.lastName}`.trim();
+      effectiveName = fullName;
+      effectiveFatherName = app.parentName;
+      effectiveAadhaarNo = app.aadharNo;
+      effectivePhoneNo = app.parentPhone;
+      effectiveEmailInput = app.parentEmail;
+      effectiveDob = app.dateOfBirth.toISOString();
+      effectiveClassIdInput = app.classId ?? null;
+      effectiveAddressInput = `${app.houseNo}, ${app.street}, ${app.town ? `${app.town}, ` : ""}${app.city}, ${app.state} - ${app.pinCode}`;
+      effectiveTotalFeeInput = app.totalFee ?? effectiveTotalFeeInput;
+      effectiveDiscountPercentInput = app.discountPercent ?? effectiveDiscountPercentInput;
+      effectiveGenderInput = app.gender === "MALE" ? "Male" : "Female";
+      effectivePreviousSchoolInput = app.previousSchoolName;
+      applicationToLink = { id: app.id };
+    }
+
     // Validate all required fields
-    if (!name || typeof name !== "string" || !name.trim()) {
+    if (!effectiveName || typeof effectiveName !== "string" || !effectiveName.trim()) {
       console.error("Validation failed: Student name is required", { name, type: typeof name });
       return NextResponse.json(
         { message: "Student name is required" },
         { status: 400 }
       );
     }
-    if (!dob) {
+    if (!effectiveDob) {
       console.error("Validation failed: Date of birth is required", { dob, type: typeof dob });
       return NextResponse.json(
         { message: "Date of birth (dob) is required" },
         { status: 400 }
       );
     }
-    if (!fatherName || typeof fatherName !== "string" || !fatherName.trim()) {
+    if (!effectiveFatherName || typeof effectiveFatherName !== "string" || !effectiveFatherName.trim()) {
       console.error("Validation failed: Father's name is required", { fatherName, type: typeof fatherName });
       return NextResponse.json(
         { message: "Father's name is required" },
         { status: 400 }
       );
     }
-    if (!aadhaarNo || typeof aadhaarNo !== "string" || !aadhaarNo.trim()) {
+    if (!effectiveAadhaarNo || typeof effectiveAadhaarNo !== "string" || !effectiveAadhaarNo.trim()) {
       console.error("Validation failed: Aadhaar number is required", { aadhaarNo: aadhaarNo ? "***" : undefined, type: typeof aadhaarNo });
       return NextResponse.json(
         { message: "Aadhaar number is required" },
         { status: 400 }
       );
     }
-    if (!phoneNo || typeof phoneNo !== "string" || !phoneNo.trim()) {
+    if (!effectivePhoneNo || typeof effectivePhoneNo !== "string" || !effectivePhoneNo.trim()) {
       console.error("Validation failed: Phone number is required", { phoneNo, type: typeof phoneNo });
       return NextResponse.json(
         { message: "Phone number is required" },
@@ -108,24 +175,24 @@ export async function POST(req: Request) {
     }
 
     // Normalize classId - convert empty string to null
-    const classId = classIdInput && typeof classIdInput === "string" && classIdInput.trim() 
-      ? classIdInput.trim() 
+    const classId = effectiveClassIdInput && typeof effectiveClassIdInput === "string" && effectiveClassIdInput.trim() 
+      ? effectiveClassIdInput.trim() 
       : null;
 
     // Validate and parse totalFee
     let totalFee: number;
-    if (typeof totalFeeInput === "number") {
-      totalFee = totalFeeInput;
-    } else if (typeof totalFeeInput === "string" && totalFeeInput.trim()) {
-      totalFee = Number(totalFeeInput);
-    } else if (totalFeeInput === null || totalFeeInput === undefined || totalFeeInput === "") {
+    if (typeof effectiveTotalFeeInput === "number") {
+      totalFee = effectiveTotalFeeInput;
+    } else if (typeof effectiveTotalFeeInput === "string" && effectiveTotalFeeInput.trim()) {
+      totalFee = Number(effectiveTotalFeeInput);
+    } else if (effectiveTotalFeeInput === null || effectiveTotalFeeInput === undefined || effectiveTotalFeeInput === "") {
       console.error("Validation failed: totalFee is required", { totalFeeInput, type: typeof totalFeeInput });
       return NextResponse.json(
         { message: "totalFee is required and must be a number" },
         { status: 400 }
       );
     } else {
-      totalFee = Number(totalFeeInput);
+      totalFee = Number(effectiveTotalFeeInput);
     }
     if (Number.isNaN(totalFee) || totalFee <= 0) {
       console.error("Validation failed: totalFee must be a positive number", { totalFee, totalFeeInput });
@@ -137,10 +204,10 @@ export async function POST(req: Request) {
 
     // Validate and parse discountPercent
     let safeDiscount: number;
-    if (typeof discountPercentInput === "number") {
-      safeDiscount = discountPercentInput;
-    } else if (typeof discountPercentInput === "string" && discountPercentInput.trim()) {
-      safeDiscount = Number(discountPercentInput);
+    if (typeof effectiveDiscountPercentInput === "number") {
+      safeDiscount = effectiveDiscountPercentInput;
+    } else if (typeof effectiveDiscountPercentInput === "string" && effectiveDiscountPercentInput.trim()) {
+      safeDiscount = Number(effectiveDiscountPercentInput);
     } else {
       safeDiscount = 0;
     }
@@ -152,7 +219,7 @@ export async function POST(req: Request) {
     }
 
     // Validate DOB is a valid date
-    const dobDate = new Date(dob);
+    const dobDate = new Date(effectiveDob);
     if (isNaN(dobDate.getTime())) {
       console.error("Validation failed: Invalid date of birth format");
       return NextResponse.json(
@@ -187,7 +254,7 @@ export async function POST(req: Request) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Check for duplicate aadhaar number before transaction
-    const aadhaarTrimmed = String(aadhaarNo).trim();
+    const aadhaarTrimmed = String(effectiveAadhaarNo).trim();
     // Remove any spaces or dashes from aadhaar number for validation
     const aadhaarCleaned = aadhaarTrimmed.replace(/[\s-]/g, "");
     if (aadhaarCleaned.length < 12) {
@@ -211,6 +278,13 @@ export async function POST(req: Request) {
 
     const student = await prisma.$transaction(
       async (tx) => {
+        const [school, emailSettings] = await Promise.all([
+          tx.school.findUnique({ where: { id: schoolId }, select: { name: true } }),
+          tx.schoolSettings.findUnique({ where: { schoolId }, select: { emailDomain: true } }),
+        ]);
+        const schoolDomain =
+          normalizeEmailDomain(emailSettings?.emailDomain) ?? schoolDomainFromName(school?.name ?? "school");
+
         const year = new Date().getFullYear();
         let settings = await tx.schoolSettings.findUnique({ where: { schoolId } });
         if (!settings) {
@@ -245,13 +319,14 @@ export async function POST(req: Request) {
               : String(nextNum);
 
         const emailTrimmed =
-          typeof emailInput === "string" && emailInput.trim().length > 0
-            ? emailInput.trim()
+          typeof effectiveEmailInput === "string" && effectiveEmailInput.trim().length > 0
+            ? effectiveEmailInput.trim()
             : null;
+        const nameLocal = emailLocalPartFromFullName(effectiveName);
         let userEmail =
           emailTrimmed && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed)
             ? emailTrimmed
-            : `${admissionNumber.replaceAll("/", "")}@${String(settings.admissionPrefix).toLowerCase()}.in`;
+            : `${nameLocal}@${schoolDomain}`;
 
         // Check if email already exists and generate alternative if needed
         let existingUser = await tx.user.findUnique({
@@ -262,7 +337,7 @@ export async function POST(req: Request) {
           // Generate alternative email if conflict
           let counter = 1;
           do {
-            userEmail = `${admissionNumber.replaceAll("/", "")}_${counter}@${String(settings.admissionPrefix).toLowerCase()}.in`;
+            userEmail = `${nameLocal}.${counter}@${schoolDomain}`;
             existingUser = await tx.user.findUnique({
               where: { email: userEmail },
               select: { id: true },
@@ -276,7 +351,7 @@ export async function POST(req: Request) {
 
         const user = await tx.user.create({
           data: {
-            name,
+            name: effectiveName,
             email: userEmail,
             password: hashedPassword,
             role: Role.STUDENT,
@@ -285,16 +360,16 @@ export async function POST(req: Request) {
         });
 
         const address =
-          typeof addressInput === "string" && addressInput.trim()
-            ? addressInput.trim()
+          typeof effectiveAddressInput === "string" && effectiveAddressInput.trim()
+            ? effectiveAddressInput.trim()
             : null;
         const gender =
-          typeof genderInput === "string" && genderInput.trim()
-            ? genderInput.trim()
+          typeof effectiveGenderInput === "string" && effectiveGenderInput.trim()
+            ? effectiveGenderInput.trim()
             : null;
         const previousSchool =
-          typeof previousSchoolInput === "string" && previousSchoolInput.trim()
-            ? previousSchoolInput.trim()
+          typeof effectivePreviousSchoolInput === "string" && effectivePreviousSchoolInput.trim()
+            ? effectivePreviousSchoolInput.trim()
             : null;
 
         const studentRecord = await tx.student.create({
@@ -307,16 +382,26 @@ export async function POST(req: Request) {
             address,
             gender,
             previousSchool,
-            fatherName: String(fatherName).trim(),
+            fatherName: String(effectiveFatherName).trim(),
             aadhaarNo: aadhaarCleaned,
-            phoneNo: String(phoneNo).trim(),
-            rollNo: finalRollNo,
+            phoneNo: String(effectivePhoneNo).trim(),
+            rollNo:
+              typeof effectiveRollNo === "string" && effectiveRollNo.trim()
+                ? effectiveRollNo.trim()
+                : finalRollNo,
           },
           include: {
             user: { select: { id: true, name: true, email: true } },
             class: true,
           },
         });
+
+        if (applicationToLink) {
+          await tx.studentApplication.update({
+            where: { id: applicationToLink.id },
+            data: { studentId: studentRecord.id },
+          });
+        }
 
         const finalFee = totalFee * (1 - safeDiscount / 100);
         await tx.studentFee.create({
@@ -330,6 +415,66 @@ export async function POST(req: Request) {
             installments: 3,
           },
         });
+
+        // Create (or link) StudentApplication to keep all admission fields for this student.
+        // This lets the "Student creation section" store full admission data without expanding Student table.
+        if (!applicationToLink) {
+          const classRow = classId
+            ? await tx.class.findUnique({ where: { id: classId }, select: { name: true, section: true } })
+            : null;
+
+          const year2 = new Date().getFullYear();
+          const appNo = `APP/${year2}/${randomUUID().slice(0, 8).toUpperCase()}`;
+
+          await tx.studentApplication.create({
+            data: {
+              schoolId,
+              classId: classId ?? null,
+              className: classRow?.name ?? null,
+              section: classRow?.section ?? null,
+              studentId: studentRecord.id,
+              applicationNo: appNo,
+              fedenaNo: null,
+              admissionNo: null,
+              gradeSought: "GRADE_1",
+              boardingType: "SEMI_RESIDENTIAL",
+              totalFee,
+              discountPercent: safeDiscount,
+              rollNo: typeof effectiveRollNo === "string" && effectiveRollNo.trim() ? effectiveRollNo.trim() : null,
+              firstName: String(effectiveName).split(" ")[0] || "Student",
+              middleName: null,
+              lastName: String(effectiveName).split(" ").slice(1).join(" ") || "Student",
+              gender: String(effectiveGenderInput || "Male").toLowerCase().startsWith("f") ? "FEMALE" : "MALE",
+              dateOfBirth: dobDate,
+              aadharNo: aadhaarCleaned,
+              firstLanguage: typeof firstLanguage === "string" && firstLanguage.trim() ? firstLanguage.trim() : "English",
+              nationality: typeof nationality === "string" && nationality.trim() ? nationality.trim() : "Indian",
+              languagesAtHome:
+                typeof languagesAtHome === "string" && languagesAtHome.trim() ? languagesAtHome.trim() : "English",
+              caste: typeof caste === "string" && caste.trim() ? caste.trim() : null,
+              religion: typeof religion === "string" && religion.trim() ? religion.trim() : null,
+              houseNo: typeof houseNo === "string" && houseNo.trim() ? houseNo.trim() : (typeof effectiveAddressInput === "string" && effectiveAddressInput.trim() ? effectiveAddressInput.trim() : "-"),
+              street: typeof street === "string" && street.trim() ? street.trim() : "-",
+              city: typeof city === "string" && city.trim() ? city.trim() : "-",
+              town: typeof town === "string" && town.trim() ? town.trim() : null,
+              state: typeof state === "string" && state.trim() ? state.trim() : "-",
+              pinCode: typeof pinCode === "string" && pinCode.trim() ? pinCode.trim() : "-",
+              parentName: String(effectiveFatherName).trim(),
+              parentOccupation: typeof parentOccupation === "string" && parentOccupation.trim() ? parentOccupation.trim() : "-",
+              officeAddress: typeof officeAddress === "string" && officeAddress.trim() ? officeAddress.trim() : "-",
+              parentPhone: String(effectivePhoneNo).trim(),
+              parentEmail: typeof effectiveEmailInput === "string" && effectiveEmailInput.trim() ? effectiveEmailInput.trim() : userEmail,
+              parentAadharNo: typeof parentAadharNo === "string" && parentAadharNo.trim() ? parentAadharNo.trim() : `${aadhaarCleaned.slice(0, 8)}0000`,
+              parentWhatsapp: typeof parentWhatsapp === "string" && parentWhatsapp.trim() ? parentWhatsapp.trim() : String(effectivePhoneNo).trim(),
+              bankAccountNo: typeof bankAccountNo === "string" && bankAccountNo.trim() ? bankAccountNo.trim() : "-",
+              previousSchoolName: typeof effectivePreviousSchoolInput === "string" && effectivePreviousSchoolInput.trim() ? effectivePreviousSchoolInput.trim() : "-",
+              previousSchoolAddress: typeof previousSchoolAddress === "string" && previousSchoolAddress.trim() ? previousSchoolAddress.trim() : "-",
+              emergencyFatherNo: typeof emergencyFatherNo === "string" && emergencyFatherNo.trim() ? emergencyFatherNo.trim() : String(effectivePhoneNo).trim(),
+              emergencyMotherNo: typeof emergencyMotherNo === "string" && emergencyMotherNo.trim() ? emergencyMotherNo.trim() : String(effectivePhoneNo).trim(),
+              emergencyGuardianNo: typeof emergencyGuardianNo === "string" && emergencyGuardianNo.trim() ? emergencyGuardianNo.trim() : String(effectivePhoneNo).trim(),
+            },
+          });
+        }
 
         return studentRecord;
       },

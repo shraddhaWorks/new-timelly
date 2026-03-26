@@ -5,6 +5,7 @@ import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
 import * as XLSX from "xlsx";
+import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName } from "@/lib/schoolEmail";
 
 export async function POST(req: Request) {
   try {
@@ -61,6 +62,13 @@ export async function POST(req: Request) {
       where: { schoolId },
       select: { id: true, name: true, section: true },
     });
+
+    const [school, settings] = await Promise.all([
+      prisma.school.findUnique({ where: { id: schoolId }, select: { name: true } }),
+      prisma.schoolSettings.findUnique({ where: { schoolId }, select: { emailDomain: true } }),
+    ]);
+    const schoolDomain =
+      normalizeEmailDomain(settings?.emailDomain) ?? schoolDomainFromName(school?.name ?? "school");
 
     const year = new Date().getFullYear();
 
@@ -209,12 +217,8 @@ export async function POST(req: Request) {
               typeof row.email === "string" && row.email.trim().length > 0
                 ? row.email.trim()
                 : null;
-            const admissionLocalPart = admissionNumber
-              .replaceAll("/", "")
-              .toLowerCase();
-            const fallbackEmail = `${admissionLocalPart}@${String(
-              updatedSettings.admissionPrefix
-            ).toLowerCase()}.in`;
+            const nameLocalPart = emailLocalPartFromFullName(name);
+            const fallbackEmail = `${nameLocalPart}@${schoolDomain}`;
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             let userEmail =
               emailTrimmed && emailRegex.test(emailTrimmed)
@@ -229,9 +233,7 @@ export async function POST(req: Request) {
             if (existingUser) {
               let counter = 1;
               do {
-                userEmail = `${admissionLocalPart}_${counter}@${String(
-                  settings.admissionPrefix
-                ).toLowerCase()}.in`;
+                userEmail = `${nameLocalPart}.${counter}@${schoolDomain}`;
                 existingUser = await tx.user.findUnique({
                   where: { email: userEmail },
                   select: { id: true },

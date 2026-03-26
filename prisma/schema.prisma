@@ -253,6 +253,7 @@ model School {
   settings           SchoolSettings?
   classFeeStructures ClassFeeStructure[]
   extraFees          ExtraFee[]
+  studentApplications StudentApplication[]
 }
 
 model SchoolSettings {
@@ -262,6 +263,9 @@ model SchoolSettings {
   admissionPrefix  String @default("ADM") // e.g. ADM -> ADM/2026/001
   rollNoPrefix     String @default("") // optional prefix for roll numbers
   admissionCounter Int    @default(0) // last used number for admission
+
+  // Email domain override for auto-generated emails (e.g. "myschool.in")
+  emailDomain String?
 
   // Tenant payment credentials - payments go to school's account. Fallback to global env if not set.
 
@@ -336,6 +340,7 @@ model Class {
   marks        Mark[]
   events       Event[]
   homeworks    Homework[]
+  studentApplications StudentApplication[]
 
   examTerms         ExamTerm[]
   feeStructure      ClassFeeStructure?
@@ -457,6 +462,7 @@ model Student {
 
   createdAt              DateTime                @default(now())
 
+  application StudentApplication?
 }
 
 // =====================
@@ -988,6 +994,13 @@ model Payment {
 
   hyperpgOrderId String? // HyperPG order id from session response
   hyperpgTxnId   String? // HyperPG txn_id from order status
+  // Gateway order status tracking (from Order Status API / webhooks)
+  hyperpgStatus          String?
+  hyperpgStatusId        Int?
+  hyperpgRefunded        Boolean @default(false)
+  hyperpgAmountRefunded  Float   @default(0)
+  hyperpgEffectiveAmount Float?
+  hyperpgLastUpdatedAt   DateTime?
 
   status String @default("PENDING") // PENDING | SUCCESS | FAILED
 
@@ -1075,6 +1088,17 @@ model ParentSubscription {
   @@index([schoolId])
 }
 
+model PaymentWebhookEvent {
+  id String @id
+
+  eventName      String?
+  orderId        String?
+  hyperpgOrderId String?
+
+  receivedAt DateTime @default(now())
+  payload    Json
+}
+
 model Refund {
   id        String   @id @default(cuid())
   paymentId String
@@ -1087,3 +1111,112 @@ model Refund {
   @@index([paymentId])
 }
 
+model StudentApplication {
+  id String @id @default(uuid())
+
+  schoolId String
+  school   School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  classId String?
+  class   Class?  @relation(fields: [classId], references: [id], onDelete: SetNull)
+
+  // Snapshot values for admissions (even if Class changes later)
+  className String?
+  section   String?
+
+  // Filled when application is converted to a Student
+  studentId String?  @unique
+  student   Student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+
+  // Admission Details
+  applicationNo String  @unique
+  fedenaNo      String? @unique
+  admissionNo   String? @unique
+
+  gradeSought  Grade
+  boardingType BoardingType
+
+  // Fees (for bulk upload compatibility)
+  totalFee         Float?
+  discountPercent  Float?
+
+  // Optional identifiers (for bulk upload compatibility)
+  rollNo String?
+
+  // Personal Info
+  firstName     String
+  middleName    String?
+  lastName      String
+  gender        Gender
+  dateOfBirth   DateTime
+  aadharNo      String @unique
+
+  firstLanguage   String
+  nationality     String
+  languagesAtHome String
+  caste           String?
+  religion        String?
+
+  // Address
+  houseNo String
+  street  String
+  city    String
+  town    String?
+  state   String
+  pinCode String
+
+  // Parent Details
+  parentName       String
+  parentOccupation String
+  officeAddress    String
+  parentPhone      String
+  parentEmail      String
+  parentAadharNo   String @unique
+  parentWhatsapp   String
+  bankAccountNo    String
+
+  // Academic History
+  previousSchoolName    String
+  previousSchoolAddress String
+
+  // Emergency Contacts
+  emergencyFatherNo   String
+  emergencyMotherNo   String
+  emergencyGuardianNo String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([schoolId])
+  @@index([classId])
+  @@index([studentId])
+  @@index([gradeSought])
+  @@index([boardingType])
+  @@index([createdAt])
+}
+
+// ENUMS
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum BoardingType {
+  SEMI_RESIDENTIAL
+  REGULAR_BOARDER
+}
+
+enum Grade {
+  LKG
+  UKG
+  GRADE_1
+  GRADE_2
+  GRADE_3
+  GRADE_4
+  GRADE_5
+  GRADE_6
+  GRADE_7
+  GRADE_8
+  GRADE_9
+  GRADE_11
+}
