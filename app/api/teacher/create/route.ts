@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
+import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName } from "@/lib/schoolEmail";
 
 export async function POST(req: Request) {
   try {
@@ -24,9 +25,9 @@ export async function POST(req: Request) {
 
     const { name, email, password, mobile, allowedFeatures } = await req.json();
 
-    if (!name || !email || !password) {
+    if (!name || !password) {
       return NextResponse.json(
-        { message: "Name, email and password are required" },
+        { message: "Name and password are required" },
         { status: 400 }
       );
     }
@@ -37,10 +38,30 @@ export async function POST(req: Request) {
         ? allowedFeatures
         : [];
 
+    const [school, settings] = await Promise.all([
+      prisma.school.findUnique({ where: { id: schoolId }, select: { name: true } }),
+      prisma.schoolSettings.findUnique({ where: { schoolId }, select: { emailDomain: true } }),
+    ]);
+    const schoolDomain =
+      normalizeEmailDomain(settings?.emailDomain) ?? schoolDomainFromName(school?.name ?? "school");
+
+    const emailTrimmed = typeof email === "string" && email.trim() ? email.trim() : "";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const local = emailLocalPartFromFullName(String(name));
+    let userEmail = emailTrimmed && emailRegex.test(emailTrimmed) ? emailTrimmed : `${local}@${schoolDomain}`;
+    let counter = 1;
+    while (await prisma.user.findUnique({ where: { email: userEmail }, select: { id: true } })) {
+      userEmail = `${local}.${counter}@${schoolDomain}`;
+      counter++;
+      if (counter > 1000) {
+        return NextResponse.json({ message: "Unable to generate unique email" }, { status: 400 });
+      }
+    }
+
     const teacher = await prisma.user.create({
       data: {
         name,
-        email,
+        email: userEmail,
         password: hashedPassword,
         role: Role.TEACHER,
         schoolId,

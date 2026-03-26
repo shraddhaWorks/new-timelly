@@ -38,6 +38,7 @@ interface UserFormProps {
 
 const AVAILABLE_FEATURES_FOR_TEACHERS = [
   { key: Permission.DASHBOARD, label: "Dashboard" },
+  { key: Permission.ADMISSION, label: "Admission" },
   { key: Permission.CLASSES, label: "Classes" },
   { key: Permission.HOMEWORK, label: "Homework" },
   { key: Permission.MARKS, label: "Marks" },
@@ -60,6 +61,8 @@ export default function UserForm({ mode = "create", initialData }: UserFormProps
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [schoolEmailDomain, setSchoolEmailDomain] = useState<string | null>(null);
+  const [emailSettingsLoading, setEmailSettingsLoading] = useState(false);
 
   const [formData, setFormData] = useState<UserFormData>(
     initialData || {
@@ -148,6 +151,27 @@ export default function UserForm({ mode = "create", initialData }: UserFormProps
     fetchClasses();
   }, [formData.role]);
 
+  useEffect(() => {
+    let active = true;
+    setEmailSettingsLoading(true);
+    (async () => {
+      try {
+        const res = await fetch("/api/school/settings", { credentials: "include" });
+        const data = await res.json();
+        if (!active) return;
+        const domain = typeof data?.settings?.emailDomain === "string" ? data.settings.emailDomain.trim() : "";
+        setSchoolEmailDomain(domain || null);
+      } catch (_) {
+        // ignore: domain preview is optional
+      } finally {
+        if (active) setEmailSettingsLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const handleChange = (field: keyof UserFormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setError(null);
@@ -165,14 +189,6 @@ export default function UserForm({ mode = "create", initialData }: UserFormProps
   const validateForm = (): boolean => {
     if (!formData.name.trim()) {
       setError("Full name is required");
-      return false;
-    }
-    if (!formData.email.trim()) {
-      setError("Email is required");
-      return false;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      setError("Invalid email format");
       return false;
     }
     if (!formData.username.trim()) {
@@ -212,7 +228,6 @@ export default function UserForm({ mode = "create", initialData }: UserFormProps
 
       const payload: Record<string, unknown> = {
         name: formData.name,
-        email: formData.email,
         role: formData.role,
         designation: formData.designation,
         username: formData.username,
@@ -315,14 +330,12 @@ export default function UserForm({ mode = "create", initialData }: UserFormProps
               icon={<Briefcase className="w-4 h-4" />}
             />
 
-            <InputField
-              label="Email Address"
-              value={formData.email}
-              onChange={(v) => handleChange("email", v)}
-              placeholder="user@timelly.school"
-              icon={<Mail className="w-4 h-4" />}
-              required
-            />
+            <div className="md:col-span-2">
+              <p className="text-[11px] text-white/50">
+                Email is auto-generated from full name using your school email domain
+                {emailSettingsLoading ? "" : schoolEmailDomain ? ` (${schoolEmailDomain})` : ""}.
+              </p>
+            </div>
             <InputField
               label="Username"
               value={formData.username}

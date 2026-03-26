@@ -18,6 +18,7 @@ interface RequireFeatureProps {
  */
 const TAB_TO_FEATURE_MAP: Record<string, FeatureId> = {
   dashboard: "dashboard",
+  admission: "admission",
   attendance: "attendance-view",
   "attendance-view": "attendance-view",
   "attendance-mark": "attendance-mark",

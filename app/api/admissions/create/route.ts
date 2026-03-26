@@ -1,0 +1,141 @@
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/authOptions";
+import prisma from "@/lib/db";
+import { assertCanManageAdmissions, getSessionSchoolId } from "../_utils";
+import { randomUUID } from "crypto";
+
+function requiredString(value: unknown, field: string) {
+  if (typeof value !== "string" || !value.trim()) {
+    const err = new Error(`${field} is required`);
+    (err as any).statusCode = 400;
+    throw err;
+  }
+  return value.trim();
+}
+
+function optionalString(value: unknown) {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== "string") return null;
+  const v = value.trim();
+  return v ? v : null;
+}
+
+export async function POST(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+
+    assertCanManageAdmissions(session.user.role);
+
+    const schoolId = await getSessionSchoolId(session);
+    if (!schoolId) return NextResponse.json({ message: "School not found in session" }, { status: 400 });
+
+    const body = await req.json();
+
+    const classId =
+      typeof body.classId === "string" && body.classId.trim() ? body.classId.trim() : null;
+    let className: string | null = null;
+    let section: string | null = null;
+    if (classId) {
+      const classExists = await prisma.class.findUnique({
+        where: { id: classId },
+        select: { id: true, schoolId: true, name: true, section: true },
+      });
+      if (!classExists) {
+        return NextResponse.json({ message: "Class not found" }, { status: 400 });
+      }
+      if (classExists.schoolId !== schoolId) {
+        return NextResponse.json({ message: "Class does not belong to your school" }, { status: 400 });
+      }
+      className = classExists.name;
+      section = classExists.section ?? null;
+    }
+
+    const dateOfBirthRaw = requiredString(body.dateOfBirth, "dateOfBirth");
+    const dob = new Date(dateOfBirthRaw);
+    if (Number.isNaN(dob.getTime())) {
+      return NextResponse.json({ message: "Invalid dateOfBirth" }, { status: 400 });
+    }
+
+    const applicationNo =
+      optionalString(body.applicationNo) ??
+      `APP/${new Date().getFullYear()}/${randomUUID().slice(0, 8).toUpperCase()}`;
+
+    const created = await prisma.studentApplication.create({
+      data: {
+        schoolId,
+        classId,
+        className,
+        section,
+        applicationNo,
+        fedenaNo: optionalString(body.fedenaNo),
+        admissionNo: optionalString(body.admissionNo),
+        gradeSought: body.gradeSought,
+        boardingType: body.boardingType,
+        totalFee:
+          typeof body.totalFee === "number"
+            ? body.totalFee
+            : typeof body.totalFee === "string" && body.totalFee.trim()
+            ? Number(body.totalFee)
+            : null,
+        discountPercent:
+          typeof body.discountPercent === "number"
+            ? body.discountPercent
+            : typeof body.discountPercent === "string" && body.discountPercent.trim()
+            ? Number(body.discountPercent)
+            : null,
+        firstName: requiredString(body.firstName, "firstName"),
+        middleName: optionalString(body.middleName),
+        lastName: requiredString(body.lastName, "lastName"),
+        gender: body.gender,
+        dateOfBirth: dob,
+        aadharNo: requiredString(body.aadharNo, "aadharNo"),
+        firstLanguage: requiredString(body.firstLanguage, "firstLanguage"),
+        nationality: requiredString(body.nationality, "nationality"),
+        languagesAtHome: requiredString(body.languagesAtHome, "languagesAtHome"),
+        caste: optionalString(body.caste),
+        religion: optionalString(body.religion),
+        houseNo: requiredString(body.houseNo, "houseNo"),
+        street: requiredString(body.street, "street"),
+        city: requiredString(body.city, "city"),
+        town: optionalString(body.town),
+        state: requiredString(body.state, "state"),
+        pinCode: requiredString(body.pinCode, "pinCode"),
+        parentName: requiredString(body.parentName, "parentName"),
+        parentOccupation: requiredString(body.parentOccupation, "parentOccupation"),
+        officeAddress: requiredString(body.officeAddress, "officeAddress"),
+        parentPhone: requiredString(body.parentPhone, "parentPhone"),
+        parentEmail: requiredString(body.parentEmail, "parentEmail"),
+        parentAadharNo: requiredString(body.parentAadharNo, "parentAadharNo"),
+        parentWhatsapp: requiredString(body.parentWhatsapp, "parentWhatsapp"),
+        bankAccountNo: requiredString(body.bankAccountNo, "bankAccountNo"),
+        previousSchoolName: requiredString(body.previousSchoolName, "previousSchoolName"),
+        previousSchoolAddress: requiredString(body.previousSchoolAddress, "previousSchoolAddress"),
+        emergencyFatherNo: requiredString(body.emergencyFatherNo, "emergencyFatherNo"),
+        emergencyMotherNo: requiredString(body.emergencyMotherNo, "emergencyMotherNo"),
+        emergencyGuardianNo: requiredString(body.emergencyGuardianNo, "emergencyGuardianNo"),
+      },
+      select: {
+        id: true,
+        applicationNo: true,
+        createdAt: true,
+      },
+    });
+
+    return NextResponse.json({ message: "Admission saved", application: created }, { status: 201 });
+  } catch (e: unknown) {
+    const err = e as { message?: string; code?: string; meta?: any; statusCode?: number };
+
+    if (err?.code === "P2002") {
+      const field = Array.isArray(err?.meta?.target) ? err.meta.target[0] : undefined;
+      return NextResponse.json({ message: `Duplicate value for ${field ?? "a unique field"}` }, { status: 400 });
+    }
+
+    return NextResponse.json(
+      { message: err?.message ?? "Internal server error" },
+      { status: err?.statusCode ?? 500 }
+    );
+  }
+}
+

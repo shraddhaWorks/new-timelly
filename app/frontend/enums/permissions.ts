@@ -7,6 +7,7 @@ export enum Permission {
   CHAT = "CHAT",
   FEES = "FEES",
   CERTIFICATES = "CERTIFICATES",
+  ADMISSION = "ADMISSION",
 
   // School Admin
   CLASSES = "CLASSES",

@@ -55,6 +55,7 @@ export async function PUT(req: Request) {
     const {
       admissionPrefix,
       rollNoPrefix,
+      emailDomain,
 
       hyperpgMerchantId,
       hyperpgApiKey,
@@ -63,6 +64,7 @@ export async function PUT(req: Request) {
     const data: {
       admissionPrefix?: string;
       rollNoPrefix?: string;
+      emailDomain?: string | null;
       juspayMerchantId?: string | null;
       juspayApiKey?: string | null;
       hyperpgMerchantId?: string | null;
@@ -70,6 +72,7 @@ export async function PUT(req: Request) {
     } = {};
     if (typeof admissionPrefix === "string") data.admissionPrefix = admissionPrefix;
     if (typeof rollNoPrefix === "string") data.rollNoPrefix = rollNoPrefix;
+    if (emailDomain !== undefined) data.emailDomain = emailDomain === "" ? null : String(emailDomain);
 
     if (hyperpgMerchantId !== undefined) data.hyperpgMerchantId = hyperpgMerchantId === "" ? null : String(hyperpgMerchantId);
     if (hyperpgApiKey !== undefined) data.hyperpgApiKey = hyperpgApiKey === "" ? null : String(hyperpgApiKey);

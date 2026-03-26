@@ -5,14 +5,21 @@ import userEvent from "@testing-library/user-event";
 import LoginForm from "@/components/auth/LoginForm";
 
 const mockSignIn = jest.fn();
+const mockUseSearchParams = jest.fn();
 
 jest.mock("next-auth/react", () => ({
   signIn: (...args: unknown[]) => mockSignIn(...args),
 }));
 
+jest.mock("next/navigation", () => ({
+  useSearchParams: () => mockUseSearchParams(),
+}));
+
 describe("LoginForm", () => {
   beforeEach(() => {
     mockSignIn.mockReset();
+    mockUseSearchParams.mockReset();
+    mockUseSearchParams.mockReturnValue(new URLSearchParams(""));
   });
 
   it("renders logo, heading and form fields", () => {

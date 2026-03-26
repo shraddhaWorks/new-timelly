@@ -1,6 +1,6 @@
 "use client";
 
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import RequireRole from "@/app/frontend/auth/RequiredRoles";
 
 const mockReplace = jest.fn();
@@ -45,14 +45,15 @@ describe("RequireRole", () => {
     expect(mockReplace).not.toHaveBeenCalled();
   });
 
-  it("redirects to unauthorized when user has no role", () => {
+  it("does not redirect when role is missing (hydration safe)", () => {
     useSession.mockReturnValue({ data: { user: {} }, status: "authenticated" });
     render(
       <RequireRole allowedRoles={["SCHOOLADMIN"]}>
         <span>Protected</span>
       </RequireRole>
     );
-    expect(mockReplace).toHaveBeenCalledWith("/unauthorized");
+    expect(mockReplace).not.toHaveBeenCalledWith("/unauthorized");
+    expect(screen.getByText("Protected")).toBeInTheDocument();
   });
 
   it("redirects to unauthorized when role not in allowedRoles", () => {
@@ -65,6 +66,6 @@ describe("RequireRole", () => {
         <span>Protected</span>
       </RequireRole>
     );
-    expect(mockReplace).toHaveBeenCalledWith("/unauthorized");
+    return waitFor(() => expect(mockReplace).toHaveBeenCalledWith("/unauthorized"));
   });
 });

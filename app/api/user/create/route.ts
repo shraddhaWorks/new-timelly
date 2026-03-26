@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../lib/authOptions";
 import prisma from "../../../../lib/db";
 import bcrypt from "bcryptjs";
+import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName } from "@/lib/schoolEmail";
 
 export async function POST(req: NextRequest) {
   try {
@@ -52,23 +53,30 @@ export async function POST(req: NextRequest) {
     } = body;
 
     // Validation
-    if (!name || !email || !role || !username || !password) {
+    if (!name || !role || !username || !password) {
       return NextResponse.json(
         { message: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    // Check if email already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (existingUser) {
-      return NextResponse.json(
-        { message: "Email already in use" },
-        { status: 400 }
-      );
+    const [school, settings] = await Promise.all([
+      prisma.school.findUnique({ where: { id: session.user.schoolId as string }, select: { name: true } }),
+      prisma.schoolSettings.findUnique({ where: { schoolId: session.user.schoolId as string }, select: { emailDomain: true } }),
+    ]);
+    const schoolDomain =
+      normalizeEmailDomain(settings?.emailDomain) ?? schoolDomainFromName(school?.name ?? "school");
+    const emailTrimmed = typeof email === "string" && email.trim() ? email.trim() : "";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const local = emailLocalPartFromFullName(String(name));
+    let finalEmail = emailTrimmed && emailRegex.test(emailTrimmed) ? emailTrimmed : `${local}@${schoolDomain}`;
+    let counter = 1;
+    while (await prisma.user.findUnique({ where: { email: finalEmail }, select: { id: true } })) {
+      finalEmail = `${local}.${counter}@${schoolDomain}`;
+      counter++;
+      if (counter > 1000) {
+        return NextResponse.json({ message: "Unable to generate unique email" }, { status: 400 });
+      }
     }
 
     // Hash password
@@ -132,7 +140,7 @@ export async function POST(req: NextRequest) {
     const user = await prisma.user.create({
       data: {
         name,
-        email,
+        email: finalEmail,
         password: hashedPassword,
         role: finalRole,
         schoolId,

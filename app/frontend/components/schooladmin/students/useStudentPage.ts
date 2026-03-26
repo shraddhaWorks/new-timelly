@@ -56,16 +56,36 @@ const DEFAULT_FORM: StudentFormState = {
   gender: "",
   dob: "",
   previousSchool: "",
+  previousSchoolAddress: "",
   classId: "",
   section: "",
   status: "Active",
   fatherName: "",
+  parentOccupation: "",
+  officeAddress: "",
   phoneNo: "",
   email: "",
   address: "",
   aadhaarNo: "",
+  parentAadharNo: "",
+  parentWhatsapp: "",
+  bankAccountNo: "",
   totalFee: "",
   discountPercent: "",
+  houseNo: "",
+  street: "",
+  city: "",
+  town: "",
+  state: "",
+  pinCode: "",
+  firstLanguage: "",
+  nationality: "Indian",
+  languagesAtHome: "",
+  caste: "",
+  religion: "",
+  emergencyFatherNo: "",
+  emergencyMotherNo: "",
+  emergencyGuardianNo: "",
 };
 
 const validateForm = (
@@ -319,6 +339,7 @@ export default function useStudentPage({ classes = [], reload }: Props) {
     setErrors((prev) => ({ ...prev, [key]: undefined }));
   };
 
+
   const handleEditChange = (key: keyof StudentFormState, value: string) => {
     setEditForm((prev) => ({ ...prev, [key]: value }));
     setEditErrors((prev) => ({ ...prev, [key]: undefined }));
@@ -345,7 +366,6 @@ export default function useStudentPage({ classes = [], reload }: Props) {
         fatherName: form.fatherName,
         aadhaarNo: form.aadhaarNo,
         phoneNo: form.phoneNo,
-        email: form.email?.trim() || undefined,
         dob: form.dob,
         classId: form.classId,
         address: form.address?.trim() || undefined,
@@ -472,7 +492,6 @@ export default function useStudentPage({ classes = [], reload }: Props) {
         classId: editForm.classId || undefined,
         rollNo: editForm.rollNo.trim() || undefined,
         phoneNo: editForm.phoneNo.trim() || undefined,
-        email: editForm.email.trim() || undefined,
         address: editForm.address.trim() || undefined,
         gender: editForm.gender.trim() || undefined,
         previousSchool: editForm.previousSchool.trim() || undefined,
